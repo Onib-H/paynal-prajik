@@ -153,14 +153,12 @@ const GuestProfile = () => {
   const handleSaveProfile = (e: FormEvent) => {
     e.preventDefault();
 
-    // Simple validation
     if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.email.trim()) {
       setUpdateError("All fields are required. Please fill them out.");
       setUpdateError(null);
       return;
     }
 
-    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setUpdateError("Please enter a valid email address.");
@@ -169,6 +167,14 @@ const GuestProfile = () => {
     }
 
     updateProfileMutation.mutate(formData);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const month = date.toLocaleString('en-US', { month: 'long' });
+    const day = date.getDate().toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month} ${day}, ${year}`;
   };
 
   const handleChangePassword = (e: FormEvent) => {
@@ -590,11 +596,7 @@ const GuestProfile = () => {
                     <div>
                       <span className="block text-sm font-medium text-gray-700">Member Since</span>
                       <span className="text-gray-600">
-                        {new Date(guestData?.date_joined || Date.now()).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
+                        {formatDate(guestData?.date_joined)}
                       </span>
                     </div>
                   </div>

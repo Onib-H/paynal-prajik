@@ -153,7 +153,6 @@ const BookingDetailsModal: FC<{
   const isPaymentComplete = currentPayment === bookingPrice;
   const isReservedStatus = booking.status === "reserved";
 
-  // Get appropriate loading text based on booking status
   const getLoadingText = () => {
     if (booking.status === "pending") {
       return "Reserving booking...";

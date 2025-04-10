@@ -487,8 +487,8 @@ const AdminDashboard = () => {
             <h3 className="text-lg font-medium mb-2 text-center">Check-ins & Check-outs</h3>
             <div className="h-64">
               <Line data={checkInOutData} options={lineOptions} />
-            </div>
           </div>
+        </div>
 
           <div className="bg-white shadow-lg rounded-lg p-4 md:col-span-2">
             <h3 className="text-lg font-medium mb-2 text-center">Cancellation Trends</h3>
@@ -512,9 +512,9 @@ const AdminDashboard = () => {
                 ref={(ref) => {
                   if (ref) {
                     roomOccupancyChartRef.current = ref.canvas;
-                  }
-                }}
-              />
+                }
+              }}
+            />
             </div>
           </div>
 

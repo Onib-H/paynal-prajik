@@ -10,19 +10,14 @@ const BookingAccepted = () => {
   const isVenueBooking = searchParams.get('isVenue') === 'true';
 
   useEffect(() => {
-    if (!bookingId) {
-      // Redirect to home if no booking ID is present
-      navigate('/');
-    }
+    if (!bookingId) navigate('/');
   }, [bookingId, navigate]);
 
   const viewBookingDetails = () => {
     navigate(`/guest/bookings?bookingId=${bookingId}&success=true`);
   };
 
-  const goToHome = () => {
-    navigate('/');
-  };
+  const goToHome = () => navigate('/');
 
   return (
     <AnimatePresence>

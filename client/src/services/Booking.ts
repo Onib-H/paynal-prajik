@@ -225,14 +225,6 @@ export const createReservation = async (
       formData.append("totalPrice", reservationData.totalPrice.toString());
     }
 
-    for (const [key, value] of formData.entries()) {
-      if (key === "validId") {
-        console.log(`${key}: [File data]`);
-      } else {
-        console.log(`${key}: ${value}`);
-      }
-    }
-
     const response = await booking.post("/bookings", formData, {
       headers: {
         "Content-Type": "multipart/form-data",

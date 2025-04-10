@@ -258,7 +258,6 @@ const ManageRooms: FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(9);
 
-  // For the read-only view
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewRoomData, setViewRoomData] = useState<Room | null>(null);
 
@@ -521,19 +520,19 @@ const ManageRooms: FC = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleView(room)}
-                      className="px-3 py-2 uppercase font-semibold bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors duration-300"
+                      className="px-3 py-2 uppercase font-semibold bg-gray-600 text-white rounded cursor-pointer hover:bg-gray-700 transition-colors duration-300"
                     >
                       <Eye />
                     </button>
                     <button
                       onClick={() => handleEdit(room)}
-                      className="px-3 py-2 uppercase font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-300"
+                      className="px-3 py-2 uppercase font-semibold bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition-colors duration-300"
                     >
                       <Edit />
                     </button>
                     <button
                       onClick={() => handleDelete(room.id)}
-                      className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-300"
+                      className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
                     >
                       <Trash2 />
                     </button>

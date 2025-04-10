@@ -66,10 +66,8 @@ const VenueBookingCalendar = () => {
     const { data: areaData, isLoading: isLoadingArea } = useQuery<AreaData>({
         queryKey: ['area', areaId],
         queryFn: async () => {
-            console.log(`Fetching area details for ID: ${areaId}`);
             try {
                 const data = await fetchAreaById(areaId || '');
-                console.log('Area data received:', data);
                 return data;
             } catch (error) {
                 console.error('Error fetching area:', error);

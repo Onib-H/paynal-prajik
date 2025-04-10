@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { AlertCircle, BookOpen, Calendar, CheckCircle, Clock, LogOut } from "lucide-react";
+import { AlertCircle, BookOpen, Calendar, CheckCircle, LogOut } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 
 interface LoaderProps {
@@ -332,17 +332,6 @@ const EventLoader: FC<LoaderProps> = ({
               />
             ))}
           </div>
-        </motion.div>
-
-        {/* Type Indicator Badge */}
-        <motion.div
-          className={`mt-6 px-4 py-1.5 rounded-full ${textColor} bg-white flex items-center shadow-md`}
-          variants={itemVariants}
-        >
-          <Clock className="w-4 h-4 mr-2" />
-          <span className="text-sm font-medium capitalize">
-            {type === "default" ? "Processing" : type}
-          </span>
         </motion.div>
       </motion.div>
     </motion.div>
