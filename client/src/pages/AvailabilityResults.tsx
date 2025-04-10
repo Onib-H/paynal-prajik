@@ -56,9 +56,9 @@ const AvailabilityResults = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
-    }
+        staggerChildren: 0.1,
+      },
+    },
   };
 
   const itemVariants = {
@@ -69,9 +69,9 @@ const AvailabilityResults = () => {
       transition: {
         type: "spring",
         stiffness: 100,
-        damping: 15
-      }
-    }
+        damping: 15,
+      },
+    },
   };
 
   const sectionVariants = {
@@ -80,13 +80,19 @@ const AvailabilityResults = () => {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.5
-      }
-    }
+        duration: 0.5,
+      },
+    },
   };
 
-  const toggleLoginModal = useCallback(() => setShowLoginModal(prev => !prev), []);
-  const toggleSignupModal = useCallback(() => setShowSignupModal(prev => !prev), []);
+  const toggleLoginModal = useCallback(
+    () => setShowLoginModal((prev) => !prev),
+    []
+  );
+  const toggleSignupModal = useCallback(
+    () => setShowSignupModal((prev) => !prev),
+    []
+  );
 
   const handleSuccessfulLogin = () => window.location.reload();
 
@@ -102,12 +108,15 @@ const AvailabilityResults = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Available Accommodations</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+              Available Accommodations
+            </h1>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-gray-600 mt-3">
               <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full">
                 <Calendar className="text-blue-600 h-5 w-5" />
                 <span className="font-medium">
-                  {formattedArrival} <span className="mx-2">→</span> {formattedDeparture}
+                  {formattedArrival} <span className="mx-2">→</span>{" "}
+                  {formattedDeparture}
                 </span>
               </div>
             </div>
@@ -124,7 +133,9 @@ const AvailabilityResults = () => {
               >
                 <div className="flex flex-col items-center">
                   <div className="animate-spin h-12 w-12 border-4 border-blue-500 rounded-full border-t-transparent"></div>
-                  <p className="mt-4 text-lg text-gray-600">Finding perfect accommodations for you...</p>
+                  <p className="mt-4 text-lg text-gray-600">
+                    Finding perfect accommodations for you...
+                  </p>
                 </div>
               </motion.div>
             )}
@@ -139,8 +150,12 @@ const AvailabilityResults = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <p className="text-lg font-medium">Unable to fetch availability</p>
-                <p className="mt-1">Please try different dates or contact our support team</p>
+                <p className="text-lg font-medium">
+                  Unable to fetch availability
+                </p>
+                <p className="mt-1">
+                  Please try different dates or contact our support team
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -156,7 +171,9 @@ const AvailabilityResults = () => {
               >
                 <div className="flex items-center mb-6">
                   <div className="h-10 w-2 bg-blue-600 rounded-full mr-3"></div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800">Rooms & Suites</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+                    Rooms & Suites
+                  </h2>
                 </div>
 
                 {data.rooms && data.rooms.length > 0 ? (
@@ -173,50 +190,49 @@ const AvailabilityResults = () => {
                         variants={itemVariants}
                         whileHover={{ y: -5, transition: { duration: 0.2 } }}
                       >
-                        <div className="relative">
-                          <img
-                            loading="lazy"
-                            src={room.room_image || '/default-room.jpg'}
-                            alt={room.room_name}
-                            className="w-full h-56 object-cover"
-                          />
-                        </div>
+                        <Link to={`/rooms/${room.id}`} className="block">
+                          <div className="relative">
+                            <img
+                              loading="lazy"
+                              src={room.room_image || "/default-room.jpg"}
+                              alt={room.room_name}
+                              className="w-full h-56 object-cover"
+                            />
+                          </div>
 
-                        <div className="p-6">
-                          <h3 className="text-xl font-bold text-gray-800 mb-2">{room.room_name}</h3>
+                          <div className="p-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">
+                              {room.room_name}
+                            </h3>
 
-                          <div className="flex justify-between items-end mt-3">
-                            <div>
-                              <p className="text-2xl font-bold text-blue-600">{room.room_price}</p>
-                            </div>
+                            <div className="flex justify-between items-end mt-3">
+                              <div>
+                                <p className="text-2xl font-bold text-blue-600">
+                                  {room.room_price}
+                                </p>
+                              </div>
 
-                            <div className="flex gap-2">
-                              <Link
-                                to={`/rooms/${room.id}`}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg transition-colors flex items-center gap-1 text-md uppercase font-semibold"
-                              >
-                                <Eye size={16} /> <span>View</span>
-                              </Link>
-
-                              {isAuthenticated ? (
-                                <Link
-                                  to={`/confirm-booking?roomId=${room.id}&arrival=${arrival}&departure=${departure}`}
-                                  className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1 text-md uppercase font-semibold"
-                                >
-                                  <Book size={16} /> <span>Book</span>
-                                </Link>
-                              ) : (
-                                <button
-                                  disabled
-                                  className="bg-gray-400 text-white px-3 py-2 rounded-lg flex items-center gap-1 cursor-not-allowed text-md"
-                                  title="Please login to book"
-                                >
-                                  <Book size={16} /> <span>Book</span>
-                                </button>
-                              )}
+                              <div className="flex gap-2">
+                                {isAuthenticated ? (
+                                  <Link
+                                    to={`/confirm-booking?roomId=${room.id}&arrival=${arrival}&departure=${departure}`}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1 text-md uppercase font-semibold"
+                                  >
+                                    <Book size={16} /> <span>Book</span>
+                                  </Link>
+                                ) : (
+                                  <button
+                                    disabled
+                                    className="bg-gray-400 text-white px-3 py-2 rounded-lg flex items-center gap-1 cursor-not-allowed text-md"
+                                    title="Please login to book"
+                                  >
+                                    <Book size={16} /> <span>Book</span>
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </Link>
                       </motion.div>
                     ))}
                   </motion.div>
@@ -226,8 +242,12 @@ const AvailabilityResults = () => {
                     animate={{ opacity: 1 }}
                     className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center"
                   >
-                    <p className="text-gray-600 text-lg">No rooms available for these dates.</p>
-                    <p className="text-gray-500 mt-2">Try selecting different dates for your stay.</p>
+                    <p className="text-gray-600 text-lg">
+                      No rooms available for these dates.
+                    </p>
+                    <p className="text-gray-500 mt-2">
+                      Try selecting different dates for your stay.
+                    </p>
                   </motion.div>
                 )}
               </motion.section>
@@ -241,7 +261,9 @@ const AvailabilityResults = () => {
               >
                 <div className="flex items-center mb-6">
                   <div className="h-10 w-2 bg-green-600 rounded-full mr-3"></div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800">Venues & Event Spaces</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+                    Venues & Event Spaces
+                  </h2>
                 </div>
 
                 {data.areas && data.areas.length > 0 ? (
@@ -258,50 +280,49 @@ const AvailabilityResults = () => {
                         variants={itemVariants}
                         whileHover={{ y: -5, transition: { duration: 0.2 } }}
                       >
-                        <div className="relative">
-                          <img
-                            loading="lazy"
-                            src={area.area_image || '/default-venue.jpg'}
-                            alt={area.area_name}
-                            className="w-full h-56 object-cover"
-                          />
-                        </div>
+                        <Link to={`/venues/${area.id}`} className="block">
+                          <div className="relative">
+                            <img
+                              loading="lazy"
+                              src={area.area_image || "/default-venue.jpg"}
+                              alt={area.area_name}
+                              className="w-full h-56 object-cover"
+                            />
+                          </div>
 
-                        <div className="p-6">
-                          <h3 className="text-xl font-bold text-gray-800 mb-2">{area.area_name}</h3>
+                          <div className="p-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">
+                              {area.area_name}
+                            </h3>
 
-                          <div className="flex justify-between items-end mt-3">
-                            <div>
-                              <p className="text-2xl font-bold text-green-600">{area.price_per_hour}</p>
-                            </div>
+                            <div className="flex justify-between items-end mt-3">
+                              <div>
+                                <p className="text-2xl font-bold text-green-600">
+                                  {area.price_per_hour}
+                                </p>
+                              </div>
 
-                            <div className="flex gap-2">
-                              <button
-                                onClick={(e) => handleViewVenueDetails(e, area.id)}
-                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg transition-colors flex items-center gap-1 text-md uppercase font-semibold"
-                              >
-                                <Eye size={16} /> <span>View</span>
-                              </button>
-
-                              {isAuthenticated ? (
-                                <button
-                                  onClick={(e) => handleBookVenue(e, area.id)}
-                                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1 text-md uppercase font-semibold"
-                                >
-                                  <Book size={16} /> <span>Book</span>
-                                </button>
-                              ) : (
-                                <button
-                                  disabled
-                                  className="bg-gray-400 text-white px-3 py-2 rounded-lg flex items-center gap-1 cursor-not-allowed text-md"
-                                  title="Please login to book"
-                                >
-                                  <Book size={16} /> <span>Book</span>
-                                </button>
-                              )}
+                              <div className="flex gap-2">
+                                {isAuthenticated ? (
+                                  <button
+                                    onClick={(e) => handleBookVenue(e, area.id)}
+                                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1 text-md uppercase font-semibold"
+                                  >
+                                    <Book size={16} /> <span>Book</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    disabled
+                                    className="bg-gray-400 text-white px-3 py-2 rounded-lg flex items-center gap-1 cursor-not-allowed text-md"
+                                    title="Please login to book"
+                                  >
+                                    <Book size={16} /> <span>Book</span>
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </Link>
                       </motion.div>
                     ))}
                   </motion.div>
@@ -311,8 +332,12 @@ const AvailabilityResults = () => {
                     animate={{ opacity: 1 }}
                     className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center"
                   >
-                    <p className="text-gray-600 text-lg">No venues available for these dates.</p>
-                    <p className="text-gray-500 mt-2">Try selecting different dates for your event.</p>
+                    <p className="text-gray-600 text-lg">
+                      No venues available for these dates.
+                    </p>
+                    <p className="text-gray-500 mt-2">
+                      Try selecting different dates for your event.
+                    </p>
                   </motion.div>
                 )}
               </motion.section>
@@ -325,9 +350,12 @@ const AvailabilityResults = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.5 }}
                 >
-                  <h3 className="text-2xl font-bold mb-3">Found your perfect stay?</h3>
+                  <h3 className="text-2xl font-bold mb-3">
+                    Found your perfect stay?
+                  </h3>
                   <p className="text-gray-100 mb-6 min-w-2xl text-2xl mx-auto">
-                    Book now to secure your preferred accommodation for {formattedArrival} to {formattedDeparture}.
+                    Book now to secure your preferred accommodation for{" "}
+                    {formattedArrival} to {formattedDeparture}.
                   </p>
                   {!isAuthenticated && (
                     <motion.button
@@ -343,7 +371,6 @@ const AvailabilityResults = () => {
               )}
             </div>
           )}
-
         </div>
       </div>
 
