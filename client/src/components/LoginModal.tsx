@@ -10,6 +10,7 @@ import { FC, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserContext } from "../contexts/AuthContext";
 import { login } from "../services/Auth";
+import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
 
 interface LoginProps {
@@ -328,11 +329,24 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                     bookingInProgress ? "Login & Complete Booking" : "Login"
                   )}
                 </motion.button>
+
+                <motion.div
+                  className="mt-4"
+                  variants={formItemVariants}
+                  custom={7}
+                >
+                  <div className="flex items-center justify-center my-2">
+                    <hr className="w-full border-gray-300" />
+                    <span className="px-3 text-gray-500 text-sm">OR</span>
+                    <hr className="w-full border-gray-300" />
+                  </div>
+                  <GoogleButton />
+                </motion.div>
               </form>
               <motion.div
                 className="mt-6 text-center"
                 variants={formItemVariants}
-                custom={7}
+                custom={8}
               >
                 <span className="text-gray-600">Don't have an account? </span>
                 <motion.button

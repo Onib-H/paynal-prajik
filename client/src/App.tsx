@@ -12,8 +12,8 @@ import Footer from "./layout/Footer";
 import Navbar from "./layout/Navbar";
 
 const LoadingHydrate = lazy(() => import("./motions/loaders/LoadingHydrate"));
-
 const NotFound = lazy(() => import("./pages/_NotFound"));
+
 const Homepage = lazy(() => import("./pages/Homepage"));
 const AvailabilityResults = lazy(() => import("./pages/AvailabilityResults"));
 const ConfirmBooking = lazy(() => import("./pages/ConfirmBooking"));
@@ -27,7 +27,6 @@ const BookingAccepted = lazy(() => import("./motions/BookingAccepted"));
 
 const BookingCalendar = lazy(() => import("./pages/BookingCalendar"));
 const VenueBookingCalendar = lazy(() => import("./pages/VenueBookingCalendar"));
-const AboutUs = lazy(() => import("./pages/visitors/home/AboutUs"));
 const CancelReservation = lazy(() => import("./pages/CancelReservation"));
 const VenueDetails = lazy(() => import("./pages/VenueDetails"));
 
@@ -98,7 +97,6 @@ const App = () => {
           <Route path="/availability" element={<AvailabilityResults />} />
 
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/about-us" element={<AboutUs />} />
           <Route path="/cancel-reservation" element={<CancelReservation />} />
 
           {/* Protected guest routes */}

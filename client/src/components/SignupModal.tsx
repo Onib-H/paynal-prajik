@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { FC, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendRegisterOtp } from "../services/Auth";
+import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
 
 interface SignupModalProps {
@@ -47,15 +48,13 @@ const SignupModal: FC<SignupModalProps> = ({
   const toggleConfirmPassword = () =>
     setConfirmPasswordVisible(!confirmPasswordVisible);
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setEmail(e.target.value);
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setPassword(e.target.value);
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value);
+
   const handleConfirmPasswordChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => setConfirmPassword(e.target.value);
 
-  // Animation variants
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.3 } },
@@ -372,12 +371,25 @@ const SignupModal: FC<SignupModalProps> = ({
                     "Register"
                   )}
                 </motion.button>
+
+                <motion.div
+                  className="mt-4"
+                  variants={formItemVariants}
+                  custom={7}
+                >
+                  <div className="flex items-center justify-center my-2">
+                    <hr className="w-full border-gray-300" />
+                    <span className="px-3 text-gray-500 text-sm">OR</span>
+                    <hr className="w-full border-gray-300" />
+                  </div>
+                  <GoogleButton />
+                </motion.div>
               </form>
 
               <motion.div
                 className="mt-6 text-center"
                 variants={formItemVariants}
-                custom={7}
+                custom={8}
               >
                 <span className="text-gray-600">Already have an account? </span>
                 <motion.button

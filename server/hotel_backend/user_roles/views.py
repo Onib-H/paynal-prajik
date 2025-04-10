@@ -14,6 +14,9 @@ from booking.models import Bookings
 from booking.serializers import BookingSerializer
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from property.serializers import AreaSerializer
+from .google.oauth import google_auth as google_oauth_util
+import os
+import uuid
 
 # Create your views here.
 @api_view(['POST'])
@@ -137,8 +140,15 @@ def verify_otp(request):
         if not email or not password or not received_otp:
             return Response({"error": "Email, password, and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        purpose = "account_verification"
+        # Check if this is a Google OAuth verification
+        google_data_key = f"{email}_google_data"
+        google_data = cache.get(google_data_key)
+        is_google_auth = google_data is not None
+        
+        # Determine the purpose based on whether it's Google auth or regular auth
+        purpose = "google_account_verification" if is_google_auth else "account_verification"
         cache_key = f"{email}_{purpose}"
+        
         cached_otp = cache.get(cache_key)
 
         if cached_otp is None:
@@ -153,6 +163,12 @@ def verify_otp(request):
         
         if CustomUsers.objects.filter(email=email).exists():
             return Response({"error": "User already exists"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # If this is Google OAuth registration, use Google data for first and last name
+        if is_google_auth:
+            first_name = google_data.get('first_name', first_name)
+            last_name = google_data.get('last_name', last_name)
+            cache.delete(google_data_key)  # Clean up stored Google data
         
         user = CustomUsers.objects.create_user(
             username=email,
@@ -173,7 +189,8 @@ def verify_otp(request):
                 "message": "OTP verified and user registered successfully",
                 "access_token": str(refresh.access_token),
                 "refresh_token": str(refresh),
-                "user": CustomUserSerializer(user_auth).data
+                "user": CustomUserSerializer(user_auth).data,
+                "is_google": is_google_auth
             }, status=status.HTTP_200_OK)
             # Set access and refresh token cookies.
             response.set_cookie(
@@ -366,6 +383,128 @@ def reset_password(request):
     except Exception as e:
         return Response({
             "error": "An error occurred while resetting the password. Please try again later."
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+def google_auth(request):
+    try:
+        code = request.data.get('code')
+        if not code:
+            return Response({
+                "error": "Authorization code is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+        CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+
+        if not CLIENT_ID or not CLIENT_SECRET:
+            print("Missing Google OAuth credentials in environment variables")
+            return Response({
+                "error": "Server configuration error"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        email, username = google_oauth_util(code, CLIENT_ID, CLIENT_SECRET)
+        
+        if not email or not username:
+            return Response({
+                "error": "Failed to authenticate with Google"
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Check if user already exists
+        user_exists = CustomUsers.objects.filter(email=email).exists()
+        
+        if user_exists:
+            # If user exists, just authenticate them
+            user = CustomUsers.objects.get(email=email)
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
+            
+            user_data = {
+                'id': user.id,
+                'email': user.email,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role,
+                'profile_image': user.profile_image.url if user.profile_image else "",
+            }
+            
+            response = Response({
+                'success': True,
+                'message': f'Welcome back, {user.first_name}!',
+                'user': user_data,
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'exists': True
+            }, status=status.HTTP_200_OK)
+            
+            response.set_cookie(
+                key="access_token",
+                value=access_token,
+                httponly=True,
+                secure=False,
+                samesite='Lax',
+                max_age=timedelta(days=1)
+            )
+            
+            response.set_cookie(
+                key="refresh_token",
+                value=refresh_token,
+                httponly=True,
+                secure=False,
+                samesite='Lax',
+                max_age=timedelta(days=7)
+            )
+            
+            return response
+        else:
+            # For new users, send OTP like regular registration
+            purpose = "google_account_verification"
+            cache_key = f"{email}_{purpose}"
+            
+            # Check if OTP already sent
+            if cache.get(cache_key):
+                cache.delete(cache_key)
+            
+            message = "Your OTP for Google account verification"
+            otp_generated = send_otp_to_email(email, message)
+            
+            if otp_generated is None:
+                return Response({
+                    "error": "Failed to send verification code"
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+            # Store OTP in cache
+            OTP_EXPIRATION_TIME = 120
+            cache.set(cache_key, otp_generated, OTP_EXPIRATION_TIME)
+            
+            # Generate a temporary password for the user to be used during OTP verification
+            temp_password = str(uuid.uuid4())
+            
+            # Store Google data and temp password in cache for OTP verification
+            google_data_key = f"{email}_google_data"
+            google_data = {
+                'first_name': username.split(' ')[0] if ' ' in username else username,
+                'last_name': ' '.join(username.split(' ')[1:]) if ' ' in username else '',
+                'temp_password': temp_password,
+                'is_google': True
+            }
+            cache.set(google_data_key, google_data, OTP_EXPIRATION_TIME)
+            
+            return Response({
+                'success': True,
+                'message': 'Please verify your email with the OTP sent',
+                'email': email,
+                'password': temp_password,
+                'otp': otp_generated if os.getenv('MODE') == 'development' else None,
+                'requires_verification': True
+            }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Google auth error: {str(e)}")
+        return Response({
+            "error": f"An error occurred while authenticating with Google: {str(e)}"
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])

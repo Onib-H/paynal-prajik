@@ -97,7 +97,6 @@ const AvailabilityResults = () => {
   };
 
   const toggleLoginModal = useCallback(() => setShowLoginModal((prev) => !prev), []);
-  
   const toggleSignupModal = useCallback(() => setShowSignupModal((prev) => !prev), []);
 
   const handleSuccessfulLogin = () => window.location.reload();

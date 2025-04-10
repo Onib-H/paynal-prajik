@@ -46,7 +46,6 @@ const Navbar: FC = () => {
   const handleLogout = useCallback(async () => {
     setLoading(true);
     try {
-      console.log("Starting logout process");
       const response = await logout();
       console.log("Logout response:", response.status);
 
@@ -66,14 +65,9 @@ const Navbar: FC = () => {
     }
   }, [clearAuthState, navigate]);
 
-  const toggleLoginModal = useCallback(
-    () => setLoginModal((prev) => !prev),
-    []
-  );
-  const toggleRegisterModal = useCallback(
-    () => setRegisterModal((prev) => !prev),
-    []
-  );
+  const toggleLoginModal = useCallback(() => setLoginModal((prev) => !prev), []);
+  const toggleRegisterModal = useCallback(() => setRegisterModal((prev) => !prev), []);
+  
   const toggleMenu = useCallback(() => setMenuOpen((prev) => !prev), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 

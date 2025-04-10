@@ -12,6 +12,24 @@ export const authenticateUser = async () => {
   }
 };
 
+export const googleAuth = async (code: string) => {
+  try {
+    const response = await API.post("/auth/google-auth", 
+      { code },
+      {
+        withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return response;
+  } catch (error) {
+    console.error(`Failed to google login: ${error}`);
+    throw error;
+  }
+};
+
 export const login = async (email: string, password: string) => {
   try {
     const response = await API.post("/auth/login", { email, password }, {
@@ -47,20 +65,13 @@ export const sendRegisterOtp = async (
   }
 };
 
-export const verifyOtp = async (
-  email: string,
-  password: string,
-  otp: string
-) => {
+export const verifyOtp = async (email: string, password: string, otp: string) => {
   try {
-    const response = await API.post(
-      "/auth/verify",
-      {
+    const response = await API.post("/auth/verify", {
         email: email,
         password: password,
         otp: otp,
-      },
-      {
+      }, {
         withCredentials: true,
       }
     );

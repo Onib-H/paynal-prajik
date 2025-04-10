@@ -44,7 +44,7 @@ const Footer = () => {
                 <i className="fas fa-phone"></i> 098-765-4321
               </li>
               <li className="flex items-center gap-2 text-sm">
-                <i className="fas fa-envelope"></i> azureahotel@gmail.com
+                <i className="fas fa-envelope"></i> azureahotelmanagement@gmail.com
               </li>
             </ul>
           </div>

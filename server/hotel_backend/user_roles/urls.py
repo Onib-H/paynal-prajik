@@ -18,7 +18,8 @@ urlpatterns = [
     path('auth/reset_password', views.reset_password, name='reset_password'),
     path('auth/forgot_password', views.forgot_password, name='forgot_password'),
     path('auth/verify_reset_otp', views.verify_reset_otp, name='verify_reset_otp'),
-    
+    path('auth/google-auth', views.google_auth, name='google-auth'),
+
     # For guest profile
     path('guest/change_image', views.change_profile_picture, name='change_profile_picture'),
     path('guest/<int:id>', views.user_details, name='user_details'),
