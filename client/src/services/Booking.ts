@@ -138,10 +138,29 @@ export const fetchReservations = async () => {
 export const fetchAvailability = async (arrival: string, departure: string) => {
   try {
     const response = await booking.get("/availability", {
-      params: { arrival, departure },
+      params: { 
+        arrival, 
+        departure,
+        exclude_statuses: "reserved,checked_in"
+      },
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
     });
+    
+    if (response.data) {
+      if (response.data.rooms) {
+        response.data.rooms = response.data.rooms.filter((room: any) => 
+          !(room.status === "reserved" || room.status === "checked_in")
+        );
+      }
+      
+      if (response.data.areas) {
+        response.data.areas = response.data.areas.filter((area: any) => 
+          !(area.status === "reserved" || area.status === "checked_in")
+        );
+      }
+    }
+    
     return response.data;
   } catch (error) {
     console.error(`Failed to fetch availability: ${error}`);

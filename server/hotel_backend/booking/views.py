@@ -22,6 +22,10 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 def fetch_availability(request):
     arrival_date = request.query_params.get('arrival') or request.data.get('arrival')
     departure_date = request.query_params.get('departure') or request.data.get('departure')
+    exclude_statuses = request.query_params.get('exclude_statuses', '').split(',')
+    
+    if not exclude_statuses or '' in exclude_statuses:
+        exclude_statuses = ['reserved', 'checked_in']
     
     if not arrival_date or not departure_date:
         return Response({
@@ -40,9 +44,30 @@ def fetch_availability(request):
         return Response({
             'error': "Departure date should be greater than arrival date"
         }, status=status.HTTP_400_BAD_REQUEST)
-        
+    
+    # Get available rooms
     rooms = Rooms.objects.filter(status='available')
+    
+    # Exclude rooms that have bookings with reserved or checked_in status that overlap with requested dates
+    booked_room_ids = Bookings.objects.filter(
+        ~Q(status__in=['cancelled', 'rejected', 'checked_out', 'no_show']),
+        Q(check_in_date__lt=departure) & Q(check_out_date__gt=arrival),
+        is_venue_booking=False
+    ).values_list('room_id', flat=True)
+    
+    rooms = rooms.exclude(id__in=booked_room_ids)
+    
+    # Get available areas/venues
     areas = Areas.objects.filter(status='available')
+    
+    # Exclude areas that have bookings with reserved or checked_in status that overlap with requested dates
+    booked_area_ids = Bookings.objects.filter(
+        ~Q(status__in=['cancelled', 'rejected', 'checked_out', 'no_show']),
+        Q(check_in_date__lt=departure) & Q(check_out_date__gt=arrival),
+        is_venue_booking=True
+    ).values_list('area_id', flat=True)
+    
+    areas = areas.exclude(id__in=booked_area_ids)
     
     room_serializer = RoomSerializer(rooms, many=True, context={'request': request})
     area_serializer = AreaSerializer(areas, many=True)

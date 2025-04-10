@@ -2,7 +2,7 @@ from rest_framework import serializers
 from .models import Bookings, Reservations, Transactions, Reviews
 from user_roles.models import CustomUsers
 from property.models import Rooms, Amenities, Areas
-import cloudinary # type: ignore
+import cloudinary
 from property.serializers import AreaSerializer
 
 class AmenitySerializer(serializers.ModelSerializer):

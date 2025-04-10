@@ -1,4 +1,6 @@
+import { Link } from "react-router-dom";
 import hotel_logo from "../assets/hotel_logo.png";
+import { footerLinks } from "../constants/Footer";
 
 const Footer = () => {
   return (
@@ -16,24 +18,23 @@ const Footer = () => {
 
         {/* Footer Sections */}
         <section className="grid grid-cols-2 md:grid-cols-3 gap-8 py-2">
-          {/* Navigation */}
-          <div className="text-left">
-            <h1 className="text-base font-semibold">Navigation</h1>
-            <ul className="pt-2">
-              {["Home", "About", "Book Now", "Rooms & Suites", "Gallery"].map(
-                (link, index) => (
-                  <li key={index} className="text-sm pt-2">
-                    <a
-                      href="#"
+          {footerLinks.map((section, sectionIndex) => (
+            <div key={sectionIndex} className="text-left">
+              <h1 className="text-base font-semibold">{section.title}</h1>
+              <ul className="pt-2">
+                {section.links.map((link, linkIndex) => (
+                  <li key={linkIndex} className="text-sm pt-2">
+                    <Link
+                      to={link.to}
                       className="text-blue-600 hover:underline transition-all duration-300"
                     >
-                      {link}
-                    </a>
+                      {link.links}
+                    </Link>
                   </li>
-                )
-              )}
-            </ul>
-          </div>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           {/* Contact */}
           <div className="text-left">
@@ -62,13 +63,9 @@ const Footer = () => {
         </section>
 
         {/* Bottom Section */}
-        <section className="flex flex-col md:flex-row justify-between items-center py-5 border-t-2 border-gray-200 mt-7 gap-3 text-center md:text-left">
-          <h1 className="text-xs">
-            <span className="border-r-2 border-gray-500 pr-2 mr-2">
-              Privacy Policy
-            </span>
-            &copy; Copyright {new Date().getFullYear()} Azurea. All rights
-            reserved.
+        <section className="flex flex-col md:flex-row justify-center items-center py-5 border-t-2 border-gray-200 mt-7 gap-3 text-center md:text-left">
+          <h1 className="text-md">
+            &copy; {new Date().getFullYear()} Azurea Hotel Management System &trade; | All rights reserved.
           </h1>
         </section>
       </div>

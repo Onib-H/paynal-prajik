@@ -360,18 +360,18 @@ const VenueDetails = () => {
                                         whileHover={{ scale: 1.03 }}
                                         whileTap={{ scale: 0.97 }}
                                         className={`w-full py-4 px-6 ${isAuthenticated
-                                            ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                                            ? "bg-gradient-to-r from-indigo-600 to-purple-600 cursor-pointer hover:from-indigo-700 hover:to-purple-700"
                                             : "bg-gray-400 cursor-not-allowed"
-                                            } text-white cursor-pointer font-bold text-lg rounded-lg transition-all duration-300 flex items-center justify-center`}
+                                            } text-white font-bold text-lg rounded-lg transition-all duration-300 flex items-center justify-center`}
                                         disabled={!isAuthenticated}
                                     >
                                         {isAuthenticated ? (
                                             <>
                                                 <BookOpen className="w-5 h-5 mr-2" />
-                                                Reserve Now
+                                                Book Now
                                             </>
                                         ) : (
-                                            "Login to Reserve"
+                                            "Login to Book"
                                         )}
                                     </motion.button>
                                 </Link>

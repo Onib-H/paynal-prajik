@@ -2,7 +2,7 @@ from django.db import models
 from property.models import Rooms, Areas
 from user_roles.models import CustomUsers
 from django.utils.timezone import now
-from cloudinary.models import CloudinaryField # type: ignore
+from cloudinary.models import CloudinaryField
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from property.models import Rooms, Areas
@@ -55,19 +55,15 @@ class Bookings(models.Model):
             return f"{self.user.email} - Unknown Property - {self.status}"
     
     def is_editable(self):
-        """Check if the booking can be edited"""
         return self.status not in ['reserved', 'checked_in', 'checked_out', 'cancelled', 'rejected']
     
     def is_cancellable(self):
-        """Check if the booking can be cancelled by the user"""
         return self.status in ['pending', 'confirmed', 'reserved']
     
     def is_active(self):
-        """Check if booking is currently active"""
         return self.status in ['confirmed', 'reserved', 'checked_in']
     
     def get_duration_days(self):
-        """Calculate the duration of stay in days"""
         if self.check_in_date and self.check_out_date:
             delta = self.check_out_date - self.check_in_date
             return delta.days

@@ -2,14 +2,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
-import { Book, Calendar, Eye } from "lucide-react";
+import { Book, Calendar } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import LoginModal from "../components/LoginModal";
+import RoomAvailabilityCalendar from "../components/rooms/RoomAvailabilityCalendar";
 import SignupModal from "../components/SignupModal";
 import { useUserContext } from "../contexts/AuthContext";
 import { fetchAvailability } from "../services/Booking";
-import RoomAvailabilityCalendar from "../components/rooms/RoomAvailabilityCalendar";
 
 const AvailabilityResults = () => {
   const [searchParams] = useSearchParams();
@@ -41,9 +41,20 @@ const AvailabilityResults = () => {
   const formattedArrival = formatDisplayDate(arrival);
   const formattedDeparture = formatDisplayDate(departure);
 
-  const handleViewVenueDetails = (e: React.MouseEvent, id: number) => {
-    e.preventDefault();
-    navigate(`/venues/${id}`);
+  const getAvailableRooms = () => {
+    if (!data || !data.rooms) return [];
+    return data.rooms.filter((room: any) =>
+      room.status !== "reserved" &&
+      room.status !== "checked_in"
+    );
+  };
+
+  const getAvailableAreas = () => {
+    if (!data || !data.areas) return [];
+    return data.areas.filter((area: any) =>
+      area.status !== "reserved" &&
+      area.status !== "checked_in"
+    );
   };
 
   const handleBookVenue = (e: React.MouseEvent, id: number) => {
@@ -85,14 +96,9 @@ const AvailabilityResults = () => {
     },
   };
 
-  const toggleLoginModal = useCallback(
-    () => setShowLoginModal((prev) => !prev),
-    []
-  );
-  const toggleSignupModal = useCallback(
-    () => setShowSignupModal((prev) => !prev),
-    []
-  );
+  const toggleLoginModal = useCallback(() => setShowLoginModal((prev) => !prev), []);
+  
+  const toggleSignupModal = useCallback(() => setShowSignupModal((prev) => !prev), []);
 
   const handleSuccessfulLogin = () => window.location.reload();
 
@@ -172,18 +178,18 @@ const AvailabilityResults = () => {
                 <div className="flex items-center mb-6">
                   <div className="h-10 w-2 bg-blue-600 rounded-full mr-3"></div>
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-                    Rooms & Suites
+                    Rooms
                   </h2>
                 </div>
 
-                {data.rooms && data.rooms.length > 0 ? (
+                {getAvailableRooms().length > 0 ? (
                   <motion.div
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
                   >
-                    {data.rooms.map((room: any) => (
+                    {getAvailableRooms().map((room: any) => (
                       <motion.div
                         key={room.id}
                         className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300"
@@ -246,7 +252,8 @@ const AvailabilityResults = () => {
                       No rooms available for these dates.
                     </p>
                     <p className="text-gray-500 mt-2">
-                      Try selecting different dates for your stay.
+                      Rooms may be fully booked, reserved, or currently checked in.
+                      Please try selecting different dates for your stay.
                     </p>
                   </motion.div>
                 )}
@@ -262,18 +269,18 @@ const AvailabilityResults = () => {
                 <div className="flex items-center mb-6">
                   <div className="h-10 w-2 bg-green-600 rounded-full mr-3"></div>
                   <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-                    Venues & Event Spaces
+                    Venues
                   </h2>
                 </div>
 
-                {data.areas && data.areas.length > 0 ? (
+                {getAvailableAreas().length > 0 ? (
                   <motion.div
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
                   >
-                    {data.areas.map((area: any) => (
+                    {getAvailableAreas().map((area: any) => (
                       <motion.div
                         key={area.id}
                         className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300"
@@ -336,14 +343,15 @@ const AvailabilityResults = () => {
                       No venues available for these dates.
                     </p>
                     <p className="text-gray-500 mt-2">
-                      Try selecting different dates for your event.
+                      Venues may be fully booked, reserved, or currently in use.
+                      Please try selecting different dates for your event.
                     </p>
                   </motion.div>
                 )}
               </motion.section>
 
               {/* Call to action footer */}
-              {(data.rooms?.length > 0 || data.areas?.length > 0) && (
+              {(getAvailableRooms().length > 0 || getAvailableAreas().length > 0) && (
                 <motion.div
                   className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl p-6 text-center mt-12"
                   initial={{ opacity: 0, y: 20 }}

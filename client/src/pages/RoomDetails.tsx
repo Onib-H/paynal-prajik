@@ -299,8 +299,7 @@ const RoomDetails = () => {
               className="bg-white rounded-xl overflow-hidden shadow-lg sticky top-24"
             >
               <div className="p-6 bg-gradient-to-r from-indigo-600 to-purple-700 text-white">
-                <h3 className="text-3xl font-bold mb-2">Book Your Stay</h3>
-                <p className="opacity-90">Secure your reservation now!</p>
+                <h3 className="text-4xl font-bold">Book Your Stay</h3>
               </div>
 
               <div className="p-6">
@@ -310,7 +309,7 @@ const RoomDetails = () => {
                     <Home className="w-5 h-5 text-blue-500 mr-3" />
                     <div>
                       <h4 className="font-medium text-gray-800">Room Type</h4>
-                      <p className="text-indigo-600 text-lg font-semibold">{roomDetail.room_name}</p>
+                      <p className="text-indigo-600 text-lg font-semibold">{roomDetail.room_type}</p>
                     </div>
                   </div>
 
@@ -342,9 +341,9 @@ const RoomDetails = () => {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       className={`w-full py-4 px-6 ${isAuthenticated
-                        ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                        ? "bg-gradient-to-r cursor-pointer from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
                         : "bg-gray-400 cursor-not-allowed"
-                        } text-white cursor-pointer font-bold text-lg rounded-lg transition-all duration-300 flex items-center justify-center`}
+                        } text-white font-bold text-lg rounded-lg transition-all duration-300 flex items-center justify-center`}
                       disabled={!isAuthenticated}
                     >
                       {isAuthenticated ? (

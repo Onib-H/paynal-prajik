@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { useNavigate } from "react-router-dom";
 import RoomAvailabilityCalendar from "../components/rooms/RoomAvailabilityCalendar";
 import { slides } from "../constants/HomepageHeroSlides";
 

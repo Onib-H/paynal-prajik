@@ -156,9 +156,11 @@ def fetch_rooms(request):
     try:
         rooms = Rooms.objects.all().order_by('id')
         
+        # Get pagination parameters
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
         
+        # Create paginator
         paginator = Paginator(rooms, page_size)
         
         try:
@@ -301,9 +303,11 @@ def fetch_areas(request):
     try:
         areas = Areas.objects.all().order_by('id')
         
+        # Get pagination parameters
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
         
+        # Create paginator
         paginator = Paginator(areas, page_size)
         
         try:

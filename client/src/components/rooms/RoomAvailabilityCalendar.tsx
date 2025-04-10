@@ -24,8 +24,7 @@ const RoomAvailabilityCalendar = () => {
   const handleCheckAvailability = () => {
     if (!arrivalDate || !departureDate) {
       setAlertInfo({
-        message:
-          "Please provide both arrival and departure dates. Please try again",
+        message: "Please provide both arrival and departure dates. Please try again",
         type: "error",
       });
       return;
@@ -48,8 +47,7 @@ const RoomAvailabilityCalendar = () => {
     }
     if (departureDate <= arrivalDate) {
       setAlertInfo({
-        message:
-          "Departure date must be greater than arrival date. Please try again",
+        message: "Departure date must be greater than arrival date. Please try again",
         type: "error",
       });
       return;
@@ -64,7 +62,6 @@ const RoomAvailabilityCalendar = () => {
     setArrivalDate(newDate);
 
     if (newDate && (!departureDate || departureDate <= newDate)) {
-      // Set departure date to the day after arrival
       const nextDay = new Date(newDate);
       nextDay.setDate(nextDay.getDate() + 1);
 
@@ -76,7 +73,6 @@ const RoomAvailabilityCalendar = () => {
     }
   };
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0, y: 30 },
     visible: {
@@ -159,10 +155,13 @@ const RoomAvailabilityCalendar = () => {
             >
               <motion.h1
                 variants={itemVariants}
-                className="text-lg md:text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text"
+                className="text-lg md:text-2xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text"
               >
                 Find Your Perfect Stay
               </motion.h1>
+              <p className="text-gray-600 text-sm mt-1">
+                Search only shows rooms and venues that are available (not reserved or occupied)
+              </p>
             </motion.div>
 
             {/* Form Section */}
