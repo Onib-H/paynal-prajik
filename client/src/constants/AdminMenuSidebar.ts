@@ -3,7 +3,6 @@ import {
   faBookBookmark,
   faBed, 
   faUsers,
-  faChartLine,
   faConciergeBell,
   faCalendarCheck,
 } from "@fortawesome/free-solid-svg-icons";
@@ -36,12 +35,7 @@ export const menuItems = [
   },
   {
     icon: faUsers,
-    label: "Manage Users",
+    label: "Manage Admins",
     link: '/admin/users'
   },
-  // {
-  //   icon: faChartLine,
-  //   label: "Reports",
-  //   link: '/admin/reports'
-  // },
 ];

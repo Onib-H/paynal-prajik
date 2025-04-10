@@ -83,24 +83,19 @@ class BookingSerializer(serializers.ModelSerializer):
         
     def get_valid_id(self, obj):
         if obj.valid_id:
-            # Handle both CloudinaryField objects and string URLs
             if hasattr(obj.valid_id, 'url'):
                 return obj.valid_id.url
             else:
-                # If it's already a string URL, return it directly
                 return obj.valid_id
         return None
     
     def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        
-        # Format total_price with peso sign for all bookings
+        representation = super().to_representation(instance)        
         if instance.total_price is not None:
             try:
                 representation['total_price'] = f"₱{float(instance.total_price):,.2f}"
             except (ValueError, TypeError):
-                pass
-                
+                pass 
         return representation
 
 class BookingRequestSerializer(serializers.Serializer):
@@ -248,7 +243,6 @@ class ReservationSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         
-        # Format total_price with peso sign
         if instance.total_price is not None:
             try:
                 representation['total_price'] = f"₱{float(instance.total_price):,.2f}"

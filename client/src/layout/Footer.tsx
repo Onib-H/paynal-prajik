@@ -15,9 +15,9 @@ const Footer = () => {
         </h6>
 
         {/* Footer Sections */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 py-2">
+        <section className="grid grid-cols-2 md:grid-cols-3 gap-8 py-2">
           {/* Navigation */}
-          <div className="text-center sm:text-left">
+          <div className="text-left">
             <h1 className="text-base font-semibold">Navigation</h1>
             <ul className="pt-2">
               {["Home", "About", "Book Now", "Rooms & Suites", "Gallery"].map(
@@ -36,9 +36,9 @@ const Footer = () => {
           </div>
 
           {/* Contact */}
-          <div className="text-center sm:text-left">
+          <div className="text-left">
             <h1 className="text-base font-semibold">Contact</h1>
-            <ul className="pt-2 space-y-2 flex flex-col items-center sm:items-start">
+            <ul className="pt-2 space-y-2 flex flex-col items-start">
               <li className="flex items-center gap-2 text-sm">
                 <i className="fas fa-phone"></i> 098-765-4321
               </li>
@@ -49,9 +49,9 @@ const Footer = () => {
           </div>
 
           {/* Social Media (Wrapped on smaller screens) */}
-          <div className="sm:col-span-2 md:col-span-1 text-center sm:text-left">
+          <div className="col-span-2 md:col-span-1 text-left sm:text-left">
             <h1 className="text-base font-semibold">Follow Us</h1>
-            <div className="flex flex-wrap justify-center sm:justify-start gap-3 pt-4">
+            <div className="flex flex-wrap justify-start gap-3 pt-4">
               <i className="fa-brands fa-instagram text-xl transition-all duration-300 border border-gray-800 p-2 rounded-full hover:bg-black hover:text-white"></i>
               <i className="fa-brands fa-facebook-f text-xl transition-all duration-300 border border-black p-2 px-3 rounded-full hover:text-white hover:bg-blue-500"></i>
               <i className="fa-brands fa-x-twitter text-xl transition-all duration-300 border border-black p-2 rounded-full hover:text-white hover:bg-black"></i>

@@ -30,7 +30,7 @@ const VenueList = () => {
         </h2>
         <ContentLoader />
       </div>
-    );
+    );  
   }
 
   if (isError) {
@@ -71,7 +71,6 @@ const VenueList = () => {
                 priceRange={area.price_per_hour}
                 capacity={area.capacity}
                 image={area.area_image}
-                status={area.status}
               />
             </div>
           ))}

@@ -23,4 +23,5 @@ urlpatterns = [
     path('guest/change_image', views.change_profile_picture, name='change_profile_picture'),
     path('guest/<int:id>', views.user_details, name='user_details'),
     path('guest/update/<int:id>', views.update_user_details, name='update_user_details'),
+    path('guest/bookings', views.get_guest_bookings, name='get_guest_bookings'),
 ]

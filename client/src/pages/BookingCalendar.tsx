@@ -90,17 +90,14 @@ const BookingCalendar = () => {
         enabled: !!roomId,
     });
 
-    // Fetch room bookings data
     const { data: bookingsData, isLoading: isLoadingBookings } = useQuery<{ data: BookingData[] }>({
         queryKey: ['roomBookings', roomId, dateRange.startDate, dateRange.endDate],
         queryFn: async () => {
             return fetchRoomBookings(roomId || '', dateRange.startDate, dateRange.endDate);
         },
         enabled: !!roomId,
-        staleTime: 1000 * 60 * 2, // 2 minutes - bookings change more frequently
     });
 
-    // Process bookings data to map by date - memoized for performance
     useEffect(() => {
         if (bookingsData?.data) {
             const newBookingsByDate: BookingsByDate = {};
@@ -109,7 +106,6 @@ const BookingCalendar = () => {
                 const checkInDate = parseISO(booking.check_in_date);
                 const checkOutDate = parseISO(booking.check_out_date);
 
-                // Mark all dates in the booking range
                 const datesInRange = eachDayOfInterval({ start: checkInDate, end: checkOutDate });
 
                 datesInRange.forEach(date => {
@@ -125,7 +121,6 @@ const BookingCalendar = () => {
         }
     }, [bookingsData]);
 
-    // Prefetch next month's data when currentMonth changes
     useEffect(() => {
         if (roomId) {
             const nextMonth = addMonths(currentMonth, 2);
@@ -139,19 +134,15 @@ const BookingCalendar = () => {
         }
     }, [currentMonth, roomId, queryClient]);
 
-    // Calculate price when dates or room data changes - memoized for performance
     useEffect(() => {
         if (checkInDate && checkOutDate && roomData) {
             const days = Math.round((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24));
             setNumberOfNights(days);
 
-            // Get price from either price_per_night or room_price field
             const priceString = roomData.price_per_night || roomData.room_price || '0';
 
-            // Convert price string to a number, handling various formats
             let priceValue = 0;
             try {
-                // Remove any non-numeric characters except decimal point
                 const numericValue = priceString.toString().replace(/[^\d.]/g, '');
                 priceValue = parseFloat(numericValue) || 0;
             } catch (error) {
@@ -166,13 +157,14 @@ const BookingCalendar = () => {
     const months = useMemo(() => [currentMonth, addMonths(currentMonth, 1)], [currentMonth]);
     const prevMonth = useCallback(() => setCurrentMonth(prev => addMonths(prev, -1)), []);
     const nextMonth = useCallback(() => setCurrentMonth(prev => addMonths(prev, 1)), []);
-    
+
     const isDateBooked = useCallback((date: Date): boolean => {
         const dateString = format(date, 'yyyy-MM-dd');
         const booking = bookingsByDate[dateString];
 
-        if (booking && booking.status && ['checked_in', 'reserved', 'occupied', 'pending'].includes(booking.status.toLowerCase())) {
-            return true;
+        if (booking && booking.status) {
+            const status = booking.status.toLowerCase();
+            return ['checked_in', 'reserved'].includes(status);
         }
 
         return false;
@@ -240,59 +232,48 @@ const BookingCalendar = () => {
         const isHovered = !isUnavailable && hoveredDate && isEqual(date, hoveredDate);
         const dateStatus = getDateStatus(date);
 
+        // Base class for all date cells
         let className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
 
-        if (isUnavailable) {
-            className += " bg-gray-300 text-gray-500 cursor-not-allowed";
-            return className;
+        // Handle selection first (highest priority)
+        if (isCheckinDate || isCheckoutDate) {
+            return `${className} bg-blue-600 text-white font-medium`;
         }
 
-        if (dateStatus) {
-            if (['checked_in', 'reserved', 'occupied', 'pending'].includes(dateStatus.toLowerCase())) {
-                switch (dateStatus.toLowerCase()) {
-                    case 'reserved':
-                        className += " bg-green-100 text-green-800 border border-green-500 cursor-not-allowed";
-                        break;
-                    case 'checked_in':
-                    case 'occupied':
-                        className += " bg-blue-100 text-blue-800 border border-blue-500 cursor-not-allowed";
-                        break;
-                    case 'pending':
-                        className += " bg-yellow-100 text-yellow-800 border border-yellow-500 cursor-not-allowed";
-                        break;
-                    default:
-                        className += " bg-gray-300 text-gray-500 cursor-not-allowed";
-                }
-                return className;
-            }
-
-            if (isCheckinDate || isCheckoutDate) {
-                className += " bg-blue-600 text-white";
-            } else if (isInRange) {
-                className += " bg-blue-200 text-blue-800";
-            } else if (isHovered) {
-                className += " bg-blue-100 border border-blue-300";
-            } else {
-                className += " bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer";
-            }
-        } else {
-            if (isCheckinDate || isCheckoutDate) {
-                className += " bg-blue-600 text-white";
-            } else if (isInRange) {
-                className += " bg-blue-200 text-blue-800";
-            } else if (isHovered) {
-                className += " bg-blue-100 border border-blue-300";
-            } else {
-                className += " bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer";
-            }
+        // Handle date range
+        if (isInRange) {
+            return `${className} bg-blue-200 text-blue-800`;
         }
 
-        // Add today indicator
-        if (isToday && !isCheckinDate && !isCheckoutDate) {
+        // Handle hover effect for available dates
+        if (isHovered && !isUnavailable) {
+            return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
+        }
+
+        // Handle today indicator
+        if (isToday && !isUnavailable) {
             className += " border-blue-500 border-2";
         }
 
-        return className;
+        // Handle specific booked statuses
+        if (dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
+            switch (dateStatus.toLowerCase()) {
+                case 'reserved':
+                    return `${className} bg-green-200 text-green-800 border-2 border-green-600 font-medium cursor-not-allowed`;
+                case 'checked_in':
+                    return `${className} bg-blue-200 text-blue-800 border-2 border-blue-600 font-medium cursor-not-allowed`;
+                default:
+                    return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
+            }
+        }
+
+        // Handle past dates
+        if (isUnavailable) {
+            return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
+        }
+
+        // Default available date styling (including checked_out, cancelled, rejected, pending)
+        return `${className} bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer`;
     };
 
     const handleProceed = () => {
@@ -431,11 +412,11 @@ const BookingCalendar = () => {
 
                                 {/* Calendar Legend */}
                                 <div className="mt-6 border-t pt-4">
-                                    <h4 className="text-sm font-medium mb-3">LEGEND</h4>
+                                    <h4 className="text-sm font-medium mb-3">CALENDAR LEGEND</h4>
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">
                                         <div className="flex items-center">
                                             <div className="h-6 w-6 bg-white border border-gray-300 mr-2 rounded-full"></div>
-                                            <span className="text-sm">Available Date</span>
+                                            <span className="text-sm">Available</span>
                                         </div>
                                         <div className="flex items-center">
                                             <div className="h-6 w-6 bg-blue-600 mr-2 rounded-full"></div>
@@ -443,19 +424,19 @@ const BookingCalendar = () => {
                                         </div>
                                         <div className="flex items-center">
                                             <div className="h-6 w-6 bg-blue-200 mr-2 rounded-full"></div>
-                                            <span className="text-sm">Date Range</span>
+                                            <span className="text-sm">Selected Range</span>
                                         </div>
                                         <div className="flex items-center">
                                             <div className="h-6 w-6 bg-gray-300 mr-2 rounded-full"></div>
-                                            <span className="text-sm">Unavailable Date</span>
+                                            <span className="text-sm">Unavailable</span>
                                         </div>
                                         <div className="flex items-center">
-                                            <div className="h-6 w-6 bg-green-100 border border-green-500 mr-2 rounded-full"></div>
+                                            <div className="h-6 w-6 bg-green-200 border-2 border-green-600 mr-2 rounded-full"></div>
                                             <span className="text-sm">Reserved</span>
                                         </div>
                                         <div className="flex items-center">
-                                            <div className="h-6 w-6 bg-blue-100 border border-blue-500 mr-2 rounded-full"></div>
-                                            <span className="text-sm">Occupied</span>
+                                            <div className="h-6 w-6 bg-blue-200 border-2 border-blue-600 mr-2 rounded-full"></div>
+                                            <span className="text-sm">Checked In</span>
                                         </div>
                                     </div>
                                 </div>

@@ -243,7 +243,7 @@ const ManageUsers: FC = () => {
   return (
     <div className="min-h-[calc(100vh-25px)] p-3 md:p-3 overflow-y-auto container mx-auto">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl md:text-3xl font-semibold">Manage Users</h1>
+        <h1 className="text-2xl md:text-3xl font-semibold">Manage Admins</h1>
         <button
           onClick={() => setShowCreateModal(true)}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors duration-300"

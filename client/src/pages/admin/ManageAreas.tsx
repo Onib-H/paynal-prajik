@@ -218,7 +218,6 @@ const ManageAreas = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(9);
 
-  // For view modal
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewAreaData, setViewAreaData] = useState<Area | null>(null);
 
@@ -243,7 +242,6 @@ const ManageAreas = () => {
   const areas = areasResponse?.data || [];
   const pagination = areasResponse?.pagination;
 
-  // Pagination handlers
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(prev => prev - 1);
@@ -324,8 +322,6 @@ const ManageAreas = () => {
       });
       setShowModal(false);
 
-      // If we're on a page with only one item and it's not the first page,
-      // go back to the previous page
       if (areas.length === 1 && currentPage > 1) {
         setCurrentPage(prev => prev - 1);
       }
@@ -336,19 +332,16 @@ const ManageAreas = () => {
     },
   });
 
-  // Open modal to add a new area
   const handleAddNew = () => {
     setEditAreaData(null);
     setShowFormModal(true);
   };
 
-  // View area details
   const handleView = (area: Area) => {
     setViewAreaData(area);
     setShowViewModal(true);
   };
 
-  // Map the API data to the modal's IEditArea shape when editing
   const handleEdit = (area: Area) => {
     setEditAreaData({
       id: area.id,
@@ -379,7 +372,6 @@ const ManageAreas = () => {
     setShowModal(false);
   };
 
-  // When saving, convert area data to FormData
   const handleSave = async (areaData: IEditArea): Promise<void> => {
     const formData = new FormData();
     formData.append("area_name", areaData.area_name);
@@ -388,7 +380,6 @@ const ManageAreas = () => {
     formData.append("price_per_hour", areaData.price_per_hour.toString());
     formData.append("status", areaData.status);
 
-    // Only append the image if it's a File object (new upload)
     if (areaData.area_image instanceof File) {
       formData.append("area_image", areaData.area_image);
     }
@@ -473,19 +464,19 @@ const ManageAreas = () => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleView(area)}
-                        className="px-3 py-2 uppercase font-semibold bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors duration-300"
+                        className="px-3 py-2 uppercase font-semibold bg-gray-600 text-white rounded cursor-pointer hover:bg-gray-700 transition-colors duration-300"
                       >
                         <Eye />
                       </button>
                       <button
                         onClick={() => handleEdit(area)}
-                        className="px-3 py-2 uppercase font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors duration-300"
+                        className="px-3 py-2 uppercase font-semibold bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition-colors duration-300"
                       >
                         <Edit />
                       </button>
                       <button
                         onClick={() => handleDelete(area.id)}
-                        className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-300"
+                        className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
                       >
                         <Trash2 />
                       </button>

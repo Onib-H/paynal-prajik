@@ -6,7 +6,6 @@ const LoadingHydrate: FC = () => {
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState("Preparing your luxury experience");
 
-  // Simulate progress
   useEffect(() => {
     const timer = setInterval(() => {
       setProgress(prevProgress => {
@@ -21,7 +20,6 @@ const LoadingHydrate: FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Change loading text
   useEffect(() => {
     const messages = [
       "Preparing your luxury experience",
@@ -38,7 +36,6 @@ const LoadingHydrate: FC = () => {
     return () => clearInterval(textTimer);
   }, []);
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -60,7 +57,6 @@ const LoadingHydrate: FC = () => {
     }
   };
 
-  // Hotel key effect elements
   const keyElements = [
     { rotation: 0, delay: 0 },
     { rotation: 120, delay: 0.4 },

@@ -162,7 +162,7 @@ const ManageAmenities = () => {
         {/* Loader Overlay */}
         {loading && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-900/80 z-[500]">
-            <ManageRoomLoader size="80px" color="white" text={loaderText} />
+            <ManageRoomLoader size="80px" text={loaderText} />
           </div>
         )}
 
@@ -205,13 +205,13 @@ const ManageAmenities = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEditAmenity(amenity)}
-                      className="px-3 py-2 uppercase font-semibold bg-green-600 text-white rounded hover:bg-green-700 transition-colors duration-300"
+                      className="px-3 py-2 uppercase font-semibold bg-green-600 text-white rounded cursor-pointer hover:bg-green-700 transition-colors duration-300"
                     >
                       <Edit size={22} />
                     </button>
                     <button
                       onClick={() => handleDeleteAmenity(amenity.id)}
-                      className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-300"
+                      className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
                     >
                       <Trash2 size={22} />
                     </button>
@@ -228,7 +228,7 @@ const ManageAmenities = () => {
             <button
               onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
               disabled={page === 1}
-              className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+              className="px-4 py-2 cursor-pointer bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -242,7 +242,7 @@ const ManageAmenities = () => {
                 )
               }
               disabled={page >= amenitiesResponse.pages}
-              className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+              className="px-4 py-2 cursor-pointer bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>

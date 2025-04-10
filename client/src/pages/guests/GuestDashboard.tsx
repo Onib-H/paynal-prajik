@@ -17,13 +17,12 @@ const GuestDashboard: FC = () => {
 
   const { data: bookings, isLoading: bookingsLoading } = useQuery({
     queryKey: ["guestBookings", userDetails?.id],
-    queryFn: () => getGuestBookings(userDetails?.id as string),
+    queryFn: () => getGuestBookings(userDetails?.id as string, 1, 10),
     enabled: !!userDetails?.id,
   });
 
   if (profileLoading || bookingsLoading) return <LoadingHydrate />;
 
-  // Stats cards data
   const statsCards = [
     {
       title: "Total Bookings",

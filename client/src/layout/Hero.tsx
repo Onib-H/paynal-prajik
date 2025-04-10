@@ -10,7 +10,7 @@ const Hero = () => {
 
   const getTodayString = () => {
     const today = new Date();
-    return today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+    return today.toISOString().split("T")[0];
   };
 
   const getTomorrowString = () => {
@@ -56,7 +56,7 @@ const Hero = () => {
               <div className="flex flex-col justify-center items-center h-screen z-10 relative text-center px-6 sm:px-12 md:px-20">
                 <div className="text-white max-w-4xl">
                   <motion.h1
-                    className="font-playfair mb-4 text-6xl leading-tight"
+                    className="font-playfair mb-4 text-4xl leading-tight md:text-5xl sm:text-6xl"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
@@ -68,7 +68,7 @@ const Hero = () => {
                     {slide.heading}
                   </motion.h1>
                   <motion.p
-                    className="font-montserrat text-xl leading-relaxed"
+                    className="font-montserrat text-3xl leading-relaxed sm:text-xl md:text-2xl"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{

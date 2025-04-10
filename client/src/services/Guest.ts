@@ -12,9 +12,35 @@ export const getGuestDetails = async (id: string) => {
   }
 };
 
-export const getGuestBookings = async (page: number, pageSize: number) => {
+export const getGuestBookings = async (
+  guestId: string,
+  page: number = 1,
+  pageSize: number = 5
+) => {
   try {
-    const response = await guest.get(`/bookings`, {
+    const response = await guest.get(`/bookings/${guestId}`, {
+      params: {
+        page,
+        page_size: pageSize,
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch guest bookings: ${error}`);
+    throw error;
+  }
+};
+
+export const fetchGuestBookings = async ({
+  page = 1,
+  pageSize = 5,
+}: {
+  page?: number;
+  pageSize?: number;
+} = {}) => {
+  try {
+    const response = await guest.get("/bookings", {
       params: {
         page,
         page_size: pageSize,

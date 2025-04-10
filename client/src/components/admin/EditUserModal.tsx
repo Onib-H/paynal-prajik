@@ -296,26 +296,6 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                         </motion.p>
                                     )}
                                 </motion.div>
-
-                                <motion.div
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.4 }}
-                                >
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Role
-                                    </label>
-                                    <select
-                                        name="role"
-                                        value={formState.role || "guest"}
-                                        onChange={handleChange}
-                                        className={`w-full p-2 border rounded-md border-gray-300`}
-                                        disabled={loading}
-                                    >
-                                        <option value="admin">Admin</option>
-                                        <option value="guest">Guest</option>
-                                    </select>
-                                </motion.div>
                             </div>
 
                             <motion.div

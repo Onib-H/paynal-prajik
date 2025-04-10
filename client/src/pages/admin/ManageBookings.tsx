@@ -153,7 +153,6 @@ const BookingDetailsModal: FC<{
   const isPaymentComplete = currentPayment === bookingPrice;
   const isReservedStatus = booking.status === "reserved";
 
-  // Get appropriate loading text based on booking status
   const getLoadingText = () => {
     if (booking.status === "pending") {
       return "Reserving booking...";
@@ -202,10 +201,10 @@ const BookingDetailsModal: FC<{
           <motion.button
             whileHover={{ scale: 1.1, rotate: 90 }}
             whileTap={{ scale: 0.9 }}
-          onClick={onClose}
+            onClick={onClose}
             className="absolute top-4 right-4 text-gray-500 hover:text-red-500 transition-colors z-10"
-        >
-          <X size={24} />
+          >
+            <X size={24} />
           </motion.button>
 
           <motion.h2
@@ -213,7 +212,7 @@ const BookingDetailsModal: FC<{
             animate={{ y: 0 }}
             className="text-xl sm:text-2xl font-bold mb-4 text-center pb-2 border-b bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
           >
-          User Booking Details
+            User Booking Details
           </motion.h2>
 
           <motion.div
@@ -454,19 +453,19 @@ const BookingDetailsModal: FC<{
               <motion.button
                 whileHover={{ scale: 1.02, backgroundColor: "#dc2626" }}
                 whileTap={{ scale: 0.98 }}
-              onClick={onReject}
+                onClick={onReject}
                 className="px-4 py-2 bg-red-600 text-white rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm"
-            >
-              <X size={18} />
-              Reject Booking
+              >
+                <X size={18} />
+                Reject Booking
               </motion.button>
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={onConfirm}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm"
-            >
-              <Check size={18} />
-              Reserve Booking
+              >
+                <Check size={18} />
+                Reserve Booking
               </motion.button>
             </motion.div>
           )}
@@ -480,7 +479,7 @@ const BookingDetailsModal: FC<{
             >
               <motion.button
                 whileTap={{ scale: 0.98 }}
-              onClick={onNoShow}
+                onClick={onNoShow}
                 className="px-4 py-2 bg-amber-600 text-white rounded-md flex items-center justify-center gap-2 shadow-sm"
               >
                 <X size={18} />
@@ -488,15 +487,15 @@ const BookingDetailsModal: FC<{
               </motion.button>
               <motion.button
                 whileTap={isPaymentComplete ? { scale: 0.98 } : {}}
-              onClick={() => onCheckIn && isPaymentComplete && onCheckIn(currentPayment)}
+                onClick={() => onCheckIn && isPaymentComplete && onCheckIn(currentPayment)}
                 className={`px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 shadow-sm ${isPaymentComplete
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-gray-400 cursor-not-allowed'
-                }`}
-              disabled={!isPaymentComplete}
-            >
-              <Check size={18} />
-              Check In Guest
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-gray-400 cursor-not-allowed'
+                  }`}
+                disabled={!isPaymentComplete}
+              >
+                <Check size={18} />
+                Check In Guest
               </motion.button>
             </motion.div>
           )}
@@ -510,11 +509,11 @@ const BookingDetailsModal: FC<{
             >
               <motion.button
                 whileTap={{ scale: 0.95 }}
-              onClick={onCheckOut}
+                onClick={onCheckOut}
                 className="px-6 py-3 bg-indigo-600 text-white rounded-md transition-colors flex items-center justify-center gap-2 shadow-md"
-            >
-              <Check size={18} />
-              Check Out Guest
+              >
+                <Check size={18} />
+                Check Out Guest
               </motion.button>
             </motion.div>
           )}
@@ -549,7 +548,7 @@ const ManageBookings: FC = () => {
         const response = await getAllBookings({ page: currentPage, pageSize });
         return response;
       } catch (err) {
-        console.error('Error fetching admin bookings:', err);
+        console.error(`Error fetching admin bookings: ${err}`);
         throw err;
       }
     },
@@ -641,6 +640,7 @@ const ManageBookings: FC = () => {
       updateBookingStatusMutation.mutate({
         bookingId: selectedBooking.id,
         status: "reserved",
+        setRoomAvailable: false
       });
     }
   };
@@ -671,9 +671,9 @@ const ManageBookings: FC = () => {
   const confirmNoShow = () => {
     if (selectedBooking) {
       try {
-      updateBookingStatusMutation.mutate({
-        bookingId: selectedBooking.id,
-        status: "no_show",
+        updateBookingStatusMutation.mutate({
+          bookingId: selectedBooking.id,
+          status: "no_show",
           setRoomAvailable: true
         });
         setShowNoShowModal(false);

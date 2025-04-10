@@ -1,0 +1,125 @@
+/* Print styles for monthly report */
+@media print {
+  /* Hide all elements that are not part of the report */
+  body > *:not(#report-print-wrapper) {
+    display: none !important;
+  }
+
+  /* Show the report wrapper */
+  #report-print-wrapper {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    background-color: white;
+  }
+
+  /* Hide print controls */
+  .print\\:hidden,
+  button,
+  .sticky {
+    display: none !important;
+  }
+
+  /* Reset page margins and ensure full page use */
+  @page {
+    margin: 0.5cm;
+    size: portrait;
+  }
+
+  /* Basic styling for the printed page */
+  html,
+  body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: white;
+    font-size: 12pt;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* Make sure charts render properly */
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Ensure proper text contrast */
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  li,
+  td,
+  th {
+    color: black !important;
+  }
+
+  /* Force background colors to print */
+  .bg-gray-100,
+  .bg-gray-50,
+  .bg-gray-200 {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background-color: #f3f4f6 !important;
+  }
+
+  /* Improve table appearance */
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    page-break-inside: avoid;
+  }
+
+  th,
+  td {
+    border: 1px solid #ddd !important;
+    padding: 8px;
+    text-align: left;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f9fafb;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Page break controls */
+  .page-break-after-avoid {
+    page-break-after: avoid;
+  }
+
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  /* Improve KPI cards contrast */
+  .border-l-4 {
+    border-left-width: 8px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Ensure images print at proper size */
+  img {
+    max-width: 100% !important;
+  }
+
+  /* Footer styling */
+  .border-t {
+    border-top: 1px solid #ddd !important;
+    margin-top: 2cm !important;
+    padding-top: 0.5cm !important;
+  }
+}

@@ -1,10 +1,10 @@
 from django.utils import timezone
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
 from .email.booking import send_booking_confirmation_email, send_booking_rejection_email
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from booking.models import Bookings, Reservations, Transactions
 from django.core.exceptions import ValidationError
 from user_roles.serializers import CustomUserSerializer
@@ -13,6 +13,7 @@ from property.models import Rooms, Amenities, Areas
 from property.serializers import RoomSerializer, AmenitySerializer, AreaSerializer
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from booking.serializers import BookingSerializer
+import datetime
 
 # Create your views here.
 @api_view(['GET'])
@@ -41,53 +42,101 @@ def get_admin_details(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def dashboard_stats(request):
-    now = timezone.now()
-    
     try:
-        active_bookings = Bookings.objects.filter(status__in=['confirmed', 'checked_in']).count()
+        now = timezone.now()
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        current_month_end = (current_month_start.replace(month=current_month_start.month % 12 + 1, day=1) - datetime.timedelta(days=1)).replace(hour=23, minute=59, second=59)
+        
+        if current_month_start.month == 12:
+            current_month_end = current_month_start.replace(year=current_month_start.year + 1, month=1, day=1) - datetime.timedelta(days=1)
+        
+        total_rooms = Rooms.objects.count()
         available_rooms = Rooms.objects.filter(status='available').count()
-        occupied_rooms = Rooms.objects.filter(status='occupied').count()
+        occupied_rooms = Bookings.objects.filter(
+            Q(status='checked_in') & 
+            Q(is_venue_booking=False) & 
+            Q(check_in_date__lte=now.date()) & 
+            Q(check_out_date__gte=now.date())
+        ).count()
         maintenance_rooms = Rooms.objects.filter(status='maintenance').count()
-        upcoming_reservations = Reservations.objects.filter(start_time__gte=now).count()
         
-        revenue = Transactions.objects.filter(status='completed').aggregate(total=Sum('amount'))['total']
-        if revenue is None:
-            revenue = 0.0
-            
-        room_transactions = Transactions.objects.filter(
-            status='completed',
-            booking__isnull=False,
-            booking__is_venue_booking=False
+        active_bookings = Bookings.objects.filter(
+            Q(status__in=['confirmed', 'reserved', 'checked_in']) &
+            Q(created_at__range=(current_month_start, current_month_end))
+        ).count()
+        
+        pending_bookings = Bookings.objects.filter(
+            Q(status='pending') &
+            Q(created_at__range=(current_month_start, current_month_end))
+        ).count()
+        
+        unpaid_bookings = Bookings.objects.filter(
+            Q(payment_status='unpaid') &
+            Q(created_at__range=(current_month_start, current_month_end))
+        ).count()
+        
+        checked_in_count = Bookings.objects.filter(
+            Q(status='checked_in') &
+            Q(created_at__range=(current_month_start, current_month_end))
+        ).count()
+        
+        total_bookings = Bookings.objects.filter(
+            created_at__range=(current_month_start, current_month_end)
+        ).count()
+        
+        upcoming_reservations = Bookings.objects.filter(
+            Q(is_venue_booking=True) &
+            Q(status__in=['confirmed', 'reserved']) &
+            Q(check_in_date__gte=now.date())
+        ).count()
+        
+        transactions_this_month = Transactions.objects.filter(
+            transaction_date__range=(current_month_start, current_month_end),
+            status='completed'
         )
-        room_revenue = room_transactions.aggregate(total=Sum('amount'))['total'] or 0.0
         
-        venue_transactions = Transactions.objects.filter(
-            status='completed',
-            booking__isnull=False,
-            booking__is_venue_booking=True
-        )
-        venue_revenue = venue_transactions.aggregate(total=Sum('amount'))['total'] or 0.0
+        revenue = transactions_this_month.aggregate(Sum('amount'))['amount__sum'] or 0
         
-        # Format revenue values with peso sign and proper formatting
-        formatted_revenue = f"₱{float(revenue):,.2f}"
-        formatted_room_revenue = f"₱{float(room_revenue):,.2f}"
-        formatted_venue_revenue = f"₱{float(venue_revenue):,.2f}"
+        room_revenue = transactions_this_month.filter(
+            Q(booking__isnull=False) & 
+            Q(booking__is_venue_booking=False)
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
         
-        return Response({
-            "active_bookings": active_bookings,
-            "available_rooms": available_rooms,
-            "occupied_rooms": occupied_rooms,
-            "maintenance_rooms": maintenance_rooms,
-            "upcoming_reservations": upcoming_reservations,
-            "revenue": float(revenue),
-            "room_revenue": float(room_revenue),
-            "venue_revenue": float(venue_revenue),
-            "formatted_revenue": formatted_revenue,
-            "formatted_room_revenue": formatted_room_revenue,
-            "formatted_venue_revenue": formatted_venue_revenue
-        }, status=status.HTTP_200_OK)
+        venue_revenue = transactions_this_month.filter(
+            Q(booking__isnull=False) & 
+            Q(booking__is_venue_booking=True) | 
+            Q(reservation__isnull=False)
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        formatted_revenue = f"₱{revenue:,.2f}"
+        formatted_room_revenue = f"₱{room_revenue:,.2f}"
+        formatted_venue_revenue = f"₱{venue_revenue:,.2f}"
+        
+        response_data = {
+            'total_rooms': total_rooms,
+            'available_rooms': available_rooms,
+            'occupied_rooms': occupied_rooms,
+            'maintenance_rooms': maintenance_rooms,
+            'active_bookings': active_bookings,
+            'pending_bookings': pending_bookings,
+            'unpaid_bookings': unpaid_bookings,
+            'checked_in_count': checked_in_count,
+            'total_bookings': total_bookings,
+            'upcoming_reservations': upcoming_reservations,
+            'revenue': revenue,
+            'room_revenue': room_revenue,
+            'venue_revenue': venue_revenue,
+            'formatted_revenue': formatted_revenue,
+            'formatted_room_revenue': formatted_room_revenue,
+            'formatted_venue_revenue': formatted_venue_revenue
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        print(f"Error in dashboard_stats: {str(e)}")
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -107,11 +156,9 @@ def fetch_rooms(request):
     try:
         rooms = Rooms.objects.all().order_by('id')
         
-        # Get pagination parameters
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
         
-        # Create paginator
         paginator = Paginator(rooms, page_size)
         
         try:
@@ -254,11 +301,9 @@ def fetch_areas(request):
     try:
         areas = Areas.objects.all().order_by('id')
         
-        # Get pagination parameters
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
         
-        # Create paginator
         paginator = Paginator(areas, page_size)
         
         try:
@@ -586,7 +631,12 @@ def update_booking_status(request, booking_id):
         return Response({"error": f"Invalid status value. Valid values are: {', '.join(valid_statuses)}"}, 
                             status=status.HTTP_400_BAD_REQUEST)
         
-    if status_value in ['reserved', 'confirmed', 'checked_in']:
+    # Check if set_available is explicitly set to False to prevent maintenance
+    set_available = request.data.get('set_available')
+    prevent_maintenance = set_available is False
+
+    # Only set to maintenance if not prevented and status requires it
+    if status_value in ['reserved', 'confirmed', 'checked_in'] and not prevent_maintenance:
         if booking.is_venue_booking and booking.area:
             area = booking.area
             area.status = 'maintenance'
@@ -595,7 +645,7 @@ def update_booking_status(request, booking_id):
             room = booking.room
             room.status = 'maintenance'
             room.save()
-    else:
+    elif status_value not in ['reserved', 'confirmed', 'checked_in']:
         if booking.is_venue_booking and booking.area:
             area = booking.area
             area.status = 'available'
@@ -605,7 +655,7 @@ def update_booking_status(request, booking_id):
             room.status = 'available'
             room.save()
     
-    set_available = request.data.get('set_available', False)
+    # If set_available is True, always set property to available
     if set_available:
         if booking.is_venue_booking and booking.area:
             area = booking.area

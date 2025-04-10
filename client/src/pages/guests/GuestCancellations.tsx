@@ -4,12 +4,11 @@ import { ChevronLeft, ChevronRight, Eye, Loader, Search } from "lucide-react";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import BookingData from "../../components/bookings/BookingData";
-import LoadingHydrate from "../../motions/loaders/LoadingHydrate";
 import { fetchBookingDetail, fetchUserBookings } from "../../services/Booking";
+import { BookingsTableSkeleton, BookingDetailsSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return 'N/A';
-
   try {
     const options: Intl.DateTimeFormatOptions = {
       month: 'long',
@@ -57,7 +56,6 @@ const GuestCancellations: FC = () => {
     enabled: !!bookingId,
   });
 
-  // Effect to turn off page loading state when data is fetched
   useEffect(() => {
     if (changingPage && !userBookingsQuery.isPending) {
       setChangingPage(false);
@@ -67,13 +65,10 @@ const GuestCancellations: FC = () => {
   const { bookings, totalPages, isLoading, errorMessage } = useMemo(() => {
     const allBookings = userBookingsQuery.data?.data || [];
 
-    // Filter to show only cancelled bookings
     const cancelledBookings = allBookings.filter(
     (booking: any) => booking.status.toLowerCase() === "cancelled"
   );
 
-    // Calculate correct number of pages based only on cancelled bookings
-    // Since the API doesn't filter on the server side, we calculate pagination manually
     const totalCancelledItems = cancelledBookings.length;
     const calculatedTotalPages = Math.max(1, Math.ceil(totalCancelledItems / pageSize));
 
@@ -96,7 +91,6 @@ const GuestCancellations: FC = () => {
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
 
-    // Apply search filter to all cancelled bookings
     const searchFilteredBookings = bookings.filter((booking: any) => {
       const matchesSearch =
         (booking.is_venue_booking
@@ -115,7 +109,6 @@ const GuestCancellations: FC = () => {
       return matchesSearch;
     });
 
-    // Only return bookings for the current page
     return searchFilteredBookings.slice(startIndex, endIndex);
   }, [bookings, searchTerm, currentPage, pageSize]);
 
@@ -142,7 +135,12 @@ const GuestCancellations: FC = () => {
     setCurrentPage(1);
   }, []);
 
-  if (isLoading && !bookingId) return <LoadingHydrate />;
+  if (isLoading) {
+    return (
+      bookingId ? <BookingDetailsSkeleton /> : <BookingsTableSkeleton />
+    )
+  }
+
   if (errorMessage) return <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">{errorMessage}</div>;
 
   if (bookingId) {
@@ -158,7 +156,7 @@ const GuestCancellations: FC = () => {
           </button>
         </div>
 
-        {bookingDetailsQuery.isPending ? <LoadingHydrate /> : <BookingData bookingId={bookingId} />}
+        {bookingDetailsQuery.isPending ? <BookingDetailsSkeleton /> : <BookingData bookingId={bookingId} />}
       </div>
     );
   }
@@ -226,7 +224,7 @@ const GuestCancellations: FC = () => {
                           const start = new Date(startTime);
                           const end = new Date(endTime);
                           const diffTime = Math.abs(end.getTime() - start.getTime());
-                          duration = Math.ceil(diffTime / (1000 * 60 * 60)) || 1; // Hours
+                          duration = Math.ceil(diffTime / (1000 * 60 * 60)) || 1;
                         } catch (e) {
                           console.error("Error calculating venue duration:", e);
                         }

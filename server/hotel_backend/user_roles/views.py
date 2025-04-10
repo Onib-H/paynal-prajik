@@ -1,8 +1,8 @@
 from django.contrib.auth import authenticate, logout, login
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken # type: ignore
 from .models import CustomUsers
 from .serializers import CustomUserSerializer
@@ -10,21 +10,18 @@ from .email.email import send_otp_to_email, send_reset_password
 from django.core.cache import cache
 from .validation.validation import RegistrationForm
 from datetime import timedelta
+from booking.models import Bookings
+from booking.serializers import BookingSerializer
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from property.serializers import AreaSerializer
 
 # Create your views here.
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def auth_logout(request):
     try:
-        # Log user activity before logout
-        print(f"Logging out user: {request.user.username} (ID: {request.user.id})")
-        
-        # Logout the user
         logout(request)
-        
         response = Response({'message': 'User logged out successfully'}, status=status.HTTP_200_OK)
-        
-        # Clear all authentication cookies with proper parameters
         response.delete_cookie('access_token')
         response.delete_cookie('refresh_token')
         
@@ -499,8 +496,9 @@ def change_profile_picture(request):
 def update_user_details(request, id):
     try:
         if request.user.id != id:
-            return Response({'error': 'You are not authorized to update this profile'}, 
-                           status=status.HTTP_403_FORBIDDEN)
+            return Response({
+                'error': 'You are not authorized to update this profile'
+            }, status=status.HTTP_403_FORBIDDEN)
             
         user = CustomUsers.objects.get(id=id)
         data = request.data.get('data', [])
@@ -521,10 +519,63 @@ def update_user_details(request, id):
                 'data': serializer.data
             }, status=status.HTTP_200_OK)
         else:
-            return Response({'error': 'Insufficient data provided'}, 
-                           status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                'error': 'Insufficient data provided'
+            }, status=status.HTTP_400_BAD_REQUEST)
             
     except CustomUsers.DoesNotExist:
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_guest_bookings(request):
+    try:        
+        user = request.user
+        bookings = Bookings.objects.filter(user=user).order_by('-created_at')
+        
+        page = request.query_params.get('page', 1)
+        page_size = request.query_params.get('page_size', 5)
+        
+        paginator = Paginator(bookings, page_size)
+        
+        try:
+            paginated_bookings = paginator.page(page)
+        except PageNotAnInteger:
+            paginated_bookings = paginator.page(1)
+        except EmptyPage:
+            paginated_bookings = paginator.page(paginator.num_pages)
+            
+        booking_data = []
+        for booking in paginated_bookings:
+            booking_serializer = BookingSerializer(booking)
+            data = booking_serializer.data
+            
+            if booking.is_venue_booking and booking.area:
+                area_serializer = AreaSerializer(booking.area)
+                data['area_details'] = area_serializer.data
+            elif booking.room:
+                from property.serializers import RoomSerializer
+                room_serializer = RoomSerializer(booking.room)
+                data['room_details'] = room_serializer.data
+            
+            if booking.valid_id:
+                if hasattr(booking.valid_id, 'url'):
+                    data['valid_id'] = booking.valid_id.url
+                else:
+                    data['valid_id'] = booking.valid_id
+            
+            booking_data.append(data)
+        
+        return Response({
+            "data": booking_data,
+            "pagination": {
+                "total_pages": paginator.num_pages,
+                "current_page": int(page),
+                "total_items": paginator.count,
+                "page_size": int(page_size)
+            }
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

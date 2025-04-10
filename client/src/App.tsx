@@ -13,7 +13,6 @@ import Navbar from "./layout/Navbar";
 
 const LoadingHydrate = lazy(() => import("./motions/loaders/LoadingHydrate"));
 
-// Lazy load page components
 const NotFound = lazy(() => import("./pages/_NotFound"));
 const Homepage = lazy(() => import("./pages/Homepage"));
 const AvailabilityResults = lazy(() => import("./pages/AvailabilityResults"));
@@ -39,7 +38,6 @@ const ManageBookings = lazy(() => import("./pages/admin/ManageBookings"));
 const ManageRooms = lazy(() => import("./pages/admin/ManageRooms"));
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 
-// Lazy load guest pages
 const GuestProfile = lazy(() => import("./pages/guests/GuestProfile"));
 const GuestDashboard = lazy(() => import("./pages/guests/GuestDashboard"));
 const GuestBookings = lazy(() => import("./pages/guests/GuestBookings"));
