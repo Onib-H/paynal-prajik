@@ -19,6 +19,7 @@ const VenueCard: FC<AreaCardProps> = ({
   title,
   priceRange,
   capacity,
+  desciption,
   image,
 }) => {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ const VenueCard: FC<AreaCardProps> = ({
             </span>
           </div>
         </div>
-
+    
         <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
           <span className="font-semibold text-lg font-montserrat">
             {priceRange}
