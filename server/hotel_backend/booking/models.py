@@ -3,7 +3,6 @@ from property.models import Rooms, Areas
 from user_roles.models import CustomUsers
 from django.utils.timezone import now
 from cloudinary.models import CloudinaryField
-from django.utils import timezone
 from django.contrib.auth import get_user_model
 from property.models import Rooms, Areas
 

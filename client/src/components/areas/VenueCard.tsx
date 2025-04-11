@@ -12,6 +12,7 @@ interface AreaCardProps {
   priceRange: string;
   capacity: number;
   image: string;
+  description: string;
 }
 
 const VenueCard: FC<AreaCardProps> = ({
@@ -20,6 +21,7 @@ const VenueCard: FC<AreaCardProps> = ({
   priceRange,
   capacity,
   image,
+  description,
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
@@ -32,6 +34,11 @@ const VenueCard: FC<AreaCardProps> = ({
       navigate(`/venues/${id}?showLogin=true`);
     }
   };
+
+  // Truncate description to 50 characters
+  const truncatedDescription = description && description.length > 50
+    ? `${description.substring(0, 50)}...`
+    : description || "No description available.";
 
   return (
     <div
@@ -54,6 +61,11 @@ const VenueCard: FC<AreaCardProps> = ({
             <h3 className="text-xl font-bold">{title}</h3>
           </div>
 
+          {/* Description with 50 character limit */}
+          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+            {truncatedDescription}
+          </p>
+
           <div className="flex justify-between items-center text-sm mt-4 text-gray-700">
             <span className="font-medium flex items-center gap-1">
               <FontAwesomeIcon icon={faUsers} className="text-blue-500" />{" "}
@@ -67,11 +79,10 @@ const VenueCard: FC<AreaCardProps> = ({
             {priceRange}
           </span>
           <button
-            className={`${
-              isAuthenticated
-                ? "bg-green-600 hover:bg-green-700"
-                : "bg-gray-400 cursor-not-allowed"
-            } text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 cursor-pointer`}
+            className={`${isAuthenticated
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-gray-400 cursor-not-allowed"
+              } text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 cursor-pointer`}
             onClick={handleBookNow}
             title={
               isAuthenticated ? "Book this venue" : "Login required to book"

@@ -420,7 +420,7 @@ const ManageAreas = () => {
           </div>
           <button
             onClick={handleAddNew}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold transition-colors duration-300"
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer font-semibold transition-colors duration-300"
           >
             + Add New Area
           </button>
@@ -451,7 +451,7 @@ const ManageAreas = () => {
                     </span>
                   </div>
                   <p className="text-gray-600 text-sm mb-1">
-                    Capacity: {area.capacity} people
+                    {area.capacity} people
                   </p>
                   <p className="text-gray-700 text-sm mb-2 line-clamp-2">
                     {area.description || "No description provided."}

@@ -186,7 +186,7 @@ const ViewRoomModal: FC<{
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                       </svg>
-                      <span className="text-lg font-bold text-gray-800">{roomData.room_type}</span>
+                      <span className="text-lg font-bold text-gray-800">{roomData.room_type === 'premium' ? 'Premium' : 'Suites'}</span>
                     </div>
                   </div>
 
@@ -476,7 +476,7 @@ const ManageRooms: FC = () => {
           </div>
           <button
             onClick={handleAddNew}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-semibold transition-colors duration-300"
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer font-semibold transition-colors duration-300"
           >
             + Add New Room
           </button>
@@ -505,8 +505,14 @@ const ManageRooms: FC = () => {
                     {room.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
                   </span>
                 </div>
-                <p className="text-gray-600 text-sm mb-1">
-                  {room.room_type} | Capacity: {room.capacity}
+                <p className="text-gray-600 text-sm mb-1 flex items-center">
+                  <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs uppercase font-semibold mr-2 ${room.room_type === 'premium'
+                    ? 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20'
+                    : 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20'
+                    }`}>
+                    {room.room_type === 'premium' ? 'Premium' : 'Suites'}
+                  </span>
+                  <span>{room.capacity}</span>
                 </p>
                 {/* Limit the description to 2 lines */}
                 <p className="text-gray-700 text-sm mb-2 line-clamp-2">

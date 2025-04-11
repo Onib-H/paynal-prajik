@@ -232,7 +232,7 @@ const SignupModal: FC<SignupModalProps> = ({
                       type="email"
                       id="email"
                       value={email}
-                      placeholder="name@gmail.com"
+                      placeholder="email@gmail.com"
                       onChange={handleEmailChange}
                       className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-sm mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
                       required
@@ -359,7 +359,7 @@ const SignupModal: FC<SignupModalProps> = ({
                   whileTap={{ scale: 0.95 }}
                   type="submit"
                   disabled={!email || !password || !confirmPassword || loading}
-                  className={`w-full bg-purple-700 text-white py-2 rounded-lg hover:bg-purple-800 transition-colors duration-300 flex items-center justify-center ${loading ? "opacity-50 cursor-not-allowed" : ""
+                  className={`w-full bg-purple-700 text-white py-2 rounded-lg hover:bg-purple-800 cursor-pointer transition-colors duration-300 flex items-center justify-center ${loading ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                 >
                   {loading ? (
@@ -382,7 +382,7 @@ const SignupModal: FC<SignupModalProps> = ({
                     <span className="px-3 text-gray-500 text-sm">OR</span>
                     <hr className="w-full border-gray-300" />
                   </div>
-                  <GoogleButton />
+                  <GoogleButton text="Sign up with Google" />
                 </motion.div>
               </form>
 

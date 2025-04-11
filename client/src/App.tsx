@@ -1,7 +1,7 @@
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { Suspense, lazy, useEffect } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
 import GuestChangePassword from "./components/guests/GuestChangePassword";
 import ScrollToTop from "./components/ScrollToTop";
@@ -46,6 +46,7 @@ const GuestLayout = lazy(() => import("./layout/guest/GuestLayout"));
 const App = () => {
   const { isAuthenticated, role } = useUserContext();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     AOS.init({
@@ -54,6 +55,14 @@ const App = () => {
       delay: 100,
     });
   }, [])
+
+  useEffect(() => {
+    const redirectPath = sessionStorage.getItem('redirectAfterReload');
+    if (redirectPath) {
+      sessionStorage.removeItem('redirectAfterReload');
+      navigate(redirectPath);
+    }
+  }, [navigate]);
 
   const isAdminRoute =
     location.pathname.startsWith("/admin") ||

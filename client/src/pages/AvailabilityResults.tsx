@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { Book, Calendar } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import LoginModal from "../components/LoginModal";
 import RoomAvailabilityCalendar from "../components/rooms/RoomAvailabilityCalendar";
@@ -11,18 +11,61 @@ import SignupModal from "../components/SignupModal";
 import { useUserContext } from "../contexts/AuthContext";
 import { fetchAvailability } from "../services/Booking";
 
+// Same key constants as used in RoomAvailabilityCalendar
+const ARRIVAL_DATE_KEY = "hotel_arrival_date";
+const DEPARTURE_DATE_KEY = "hotel_departure_date";
+
 const AvailabilityResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
-  const arrival = searchParams.get("arrival") || "";
-  const departure = searchParams.get("departure") || "";
 
-  if (!arrival || !departure) {
-    navigate("/");
-  }
+  // Initialize with values from URL params or localStorage
+  const [arrival, setArrival] = useState<string>(searchParams.get("arrival") || "");
+  const [departure, setDeparture] = useState<string>(searchParams.get("departure") || "");
+
+  // Attempt to load from localStorage if URL params are not available
+  useEffect(() => {
+    if (!arrival) {
+      const savedArrival = localStorage.getItem(ARRIVAL_DATE_KEY);
+      if (savedArrival) {
+        setArrival(savedArrival);
+        // Update URL to include the saved date
+        if (departure || localStorage.getItem(DEPARTURE_DATE_KEY)) {
+          const depDate = departure || localStorage.getItem(DEPARTURE_DATE_KEY) || "";
+          navigate(`/availability?arrival=${savedArrival}&departure=${depDate}`, { replace: true });
+        }
+      }
+    }
+
+    if (!departure) {
+      const savedDeparture = localStorage.getItem(DEPARTURE_DATE_KEY);
+      if (savedDeparture) {
+        setDeparture(savedDeparture);
+        // Update URL to include the saved date
+        if (arrival || localStorage.getItem(ARRIVAL_DATE_KEY)) {
+          const arrDate = arrival || localStorage.getItem(ARRIVAL_DATE_KEY) || "";
+          navigate(`/availability?arrival=${arrDate}&departure=${savedDeparture}`, { replace: true });
+        }
+      }
+    }
+  }, [arrival, departure, navigate]);
+
+  // Redirect to home if no dates are available
+  useEffect(() => {
+    if (!arrival || !departure) {
+      const savedArrival = localStorage.getItem(ARRIVAL_DATE_KEY);
+      const savedDeparture = localStorage.getItem(DEPARTURE_DATE_KEY);
+
+      if (savedArrival && savedDeparture) {
+        navigate(`/availability?arrival=${savedArrival}&departure=${savedDeparture}`, { replace: true });
+      } else if (!arrival || !departure) {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [arrival, departure, navigate]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["availability", arrival, departure],
@@ -55,11 +98,6 @@ const AvailabilityResults = () => {
       area.status !== "reserved" &&
       area.status !== "checked_in"
     );
-  };
-
-  const handleBookVenue = (e: React.MouseEvent, id: number) => {
-    e.preventDefault();
-    navigate(`/venue-booking/${id}?arrival=${arrival}&departure=${departure}`);
   };
 
   const containerVariants = {
@@ -253,97 +291,6 @@ const AvailabilityResults = () => {
                     <p className="text-gray-500 mt-2">
                       Rooms may be fully booked, reserved, or currently checked in.
                       Please try selecting different dates for your stay.
-                    </p>
-                  </motion.div>
-                )}
-              </motion.section>
-
-              {/* Areas/Venues Section */}
-              <motion.section
-                variants={sectionVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.2 }}
-              >
-                <div className="flex items-center mb-6">
-                  <div className="h-10 w-2 bg-green-600 rounded-full mr-3"></div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-                    Venues
-                  </h2>
-                </div>
-
-                {getAvailableAreas().length > 0 ? (
-                  <motion.div
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {getAvailableAreas().map((area: any) => (
-                      <motion.div
-                        key={area.id}
-                        className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300"
-                        variants={itemVariants}
-                        whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                      >
-                        <Link to={`/venues/${area.id}`} className="block">
-                          <div className="relative">
-                            <img
-                              loading="lazy"
-                              src={area.area_image || "/default-venue.jpg"}
-                              alt={area.area_name}
-                              className="w-full h-56 object-cover"
-                            />
-                          </div>
-
-                          <div className="p-6">
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">
-                              {area.area_name}
-                            </h3>
-
-                            <div className="flex justify-between items-end mt-3">
-                              <div>
-                                <p className="text-2xl font-bold text-green-600">
-                                  {area.price_per_hour}
-                                </p>
-                              </div>
-
-                              <div className="flex gap-2">
-                                {isAuthenticated ? (
-                                  <button
-                                    onClick={(e) => handleBookVenue(e, area.id)}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1 text-md uppercase font-semibold"
-                                  >
-                                    <Book size={16} /> <span>Book</span>
-                                  </button>
-                                ) : (
-                                  <button
-                                    disabled
-                                    className="bg-gray-400 text-white px-3 py-2 rounded-lg flex items-center gap-1 cursor-not-allowed text-md"
-                                    title="Please login to book"
-                                  >
-                                    <Book size={16} /> <span>Book</span>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center"
-                  >
-                    <p className="text-gray-600 text-lg">
-                      No venues available for these dates.
-                    </p>
-                    <p className="text-gray-500 mt-2">
-                      Venues may be fully booked, reserved, or currently in use.
-                      Please try selecting different dates for your event.
                     </p>
                   </motion.div>
                 )}

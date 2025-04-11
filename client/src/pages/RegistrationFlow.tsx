@@ -100,14 +100,16 @@ const RegistrationFlow: FC = () => {
         setOtpError("");
 
         let hasErrors = false;
-        if (!firstName.trim()) {
-            hasErrors = true;
-        }
-        if (!lastName.trim()) {
-            hasErrors = true;
-        }
-        if (hasErrors) {
-            return;
+        if (!isGoogleAuth) {
+            if (!firstName.trim()) {
+                hasErrors = true;
+            }
+            if (!lastName.trim()) {
+                hasErrors = true;
+            }
+            if (hasErrors) {
+                return;
+            }
         }
 
         setIsVerifying(true);
@@ -136,33 +138,43 @@ const RegistrationFlow: FC = () => {
                     }
                 }
 
-                setNotification({
-                    message: "Registration completed successfully!",
-                    type: "success",
-                    icon: "fas fa-check-circle"
-                });
-
-                setIsAuthenticated(true);
-                setUserDetails({
-                    ...response.data.user,
-                    first_name: firstName,
-                    last_name: lastName
-                });
-
-                const hasPendingBooking = localStorage.getItem('pendingBookingCallback');
-                const returnUrl = localStorage.getItem('bookingReturnUrl');
-
-                if (hasPendingBooking) {
-                    localStorage.removeItem('pendingBookingCallback');
-
-                    if (returnUrl) {
-                        localStorage.removeItem('bookingReturnUrl');
-                        navigate(returnUrl);
-                    } else {
-                        navigate(-1);
+                if (response.data.user && response.data.user.id) {
+                    if (response.data.access_token) {
+                        localStorage.setItem('access_token', response.data.access_token);
                     }
+                    if (response.data.refresh_token) {
+                        localStorage.setItem('refresh_token', response.data.refresh_token);
+                    }
+
+                    setIsAuthenticated(true);
+                    setUserDetails({
+                        ...response.data.user,
+                        id: response.data.user.id,
+                        role: response.data.user.role || 'guest'
+                    });
+
+                    setNotification({
+                        message: "Registration completed successfully! Redirecting...",
+                        type: "success",
+                        icon: "fas fa-check-circle"
+                    });
+
+                    setTimeout(() => {
+                        const hasPendingBooking = localStorage.getItem('pendingBookingCallback');
+                        const returnUrl = localStorage.getItem('bookingReturnUrl');
+
+                        if (hasPendingBooking) {
+                            sessionStorage.setItem('redirectAfterReload', returnUrl || '/');
+                            localStorage.removeItem('pendingBookingCallback');
+                            if (returnUrl) {
+                                localStorage.removeItem('bookingReturnUrl');
+                            }
+                        }
+
+                        window.location.href = '/';
+                    }, 1500);
                 } else {
-                    navigate("/");
+                    setOtpError("Registration successful but user data is incomplete. Please try logging in.");
                 }
             }
         } catch (error: any) {
@@ -228,9 +240,6 @@ const RegistrationFlow: FC = () => {
                     </div>
                 )}
                 <form onSubmit={handleOTPSubmit}>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Verification Code
-                    </label>
                     <div className="flex justify-center gap-2 mb-4">
                         {otp.map((digit, index) => (
                             <input

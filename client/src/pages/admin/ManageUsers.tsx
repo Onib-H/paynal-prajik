@@ -246,9 +246,9 @@ const ManageUsers: FC = () => {
         <h1 className="text-2xl md:text-3xl font-semibold">Manage Admins</h1>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors duration-300"
+          className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer font-semibold px-4 py-2 rounded-lg flex items-center transition-colors duration-300"
         >
-          <Plus size={20} className="mr-2" /> Create User
+          <Plus size={20} className="mr-2" /> Add New Admin
         </button>
       </div>
 

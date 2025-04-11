@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Amenities, Rooms, Areas
-from cloudinary.utils import cloudinary_url # type: ignore
 
 class AmenitySerializer(serializers.ModelSerializer):
     class Meta:

@@ -1,5 +1,5 @@
 from django.db import models
-from cloudinary.models import CloudinaryField # type: ignore
+from cloudinary.models import CloudinaryField
 
 # Create your models here.
 class Amenities(models.Model):
@@ -13,8 +13,16 @@ class Rooms(models.Model):
         ('available', 'Available'),
         ('maintenance', 'Maintenance'),
     ]
+    ROOM_TYPE_CHOICES = [
+        ('premium', 'Premium'),
+        ('suites', 'Suites'),
+    ]
     room_name = models.CharField(max_length=100, null=False, default="Room")
-    room_type = models.CharField(max_length=100, null=False)
+    room_type = models.CharField(
+        max_length=20,
+        choices=ROOM_TYPE_CHOICES,
+        default='premium',
+    )
     status = models.CharField(
         max_length=20,
         choices=ROOM_STATUS_CHOICES,
