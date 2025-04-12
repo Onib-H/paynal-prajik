@@ -451,8 +451,16 @@ export const generateMonthlyReport = async (
 export const prepareReportData = (
   dashboardData: any,
   bookingStatusData: any,
-  currentMonth = getCurrentMonthYear()
+  month?: number,
+  year?: number
 ): ReportData => {
+  let periodText = getCurrentMonthYear();
+  
+  // If month and year are provided, format them
+  if (month !== undefined && year !== undefined) {
+    periodText = format(new Date(year, month), "MMMM yyyy");
+  }
+
   const occupancyRate =
     dashboardData.total_rooms > 0
       ? Math.round(
@@ -462,7 +470,7 @@ export const prepareReportData = (
 
   return {
     title: "Monthly Performance Report",
-    period: currentMonth,
+    period: periodText,
     stats: {
       totalBookings: dashboardData.total_bookings || 0,
       activeBookings: dashboardData.active_bookings || 0,

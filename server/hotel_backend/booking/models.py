@@ -38,6 +38,7 @@ class Bookings(models.Model):
     is_venue_booking = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    time_of_arrival = models.TimeField(null=True, blank=True, default=None)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     payment_status = models.CharField(max_length=20, default='unpaid')

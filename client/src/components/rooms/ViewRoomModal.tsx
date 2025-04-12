@@ -7,11 +7,11 @@ export interface IRoom {
     roomImage: string | File;
     roomAdmission: "Regular" | "VIP";
     roomType: string;
+    bedType: string;
     roomNumber: string;
     status: "Available" | "Occupied" | "Maintenance";
     roomPrice: number;
     description: string;
-    bedSize: string | number;
     pax: number;
 }
 
@@ -46,7 +46,7 @@ const ViewRoomModal: FC<IViewRoomModalProps> = ({ isOpen, roomData, onClose }) =
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    onClick={onClose} // close on background click
+                    onClick={onClose}
                 >
                     <motion.div
                         className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg relative"
@@ -54,7 +54,7 @@ const ViewRoomModal: FC<IViewRoomModalProps> = ({ isOpen, roomData, onClose }) =
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.9, opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        onClick={(e) => e.stopPropagation()} // prevent closing when clicking inside
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <button
                             onClick={onClose}
@@ -93,8 +93,10 @@ const ViewRoomModal: FC<IViewRoomModalProps> = ({ isOpen, roomData, onClose }) =
                                 <p className="font-semibold">{roomData.roomAdmission}</p>
                             </div>
                             <div>
-                                <p className="text-sm text-gray-500">Bed Size:</p>
-                                <p className="font-semibold">{roomData.bedSize}</p>
+                                <p className="text-sm text-gray-500">Bed Type:</p>
+                                <p className="font-semibold capitalize">
+                                    {roomData.bedType}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Pax:</p>

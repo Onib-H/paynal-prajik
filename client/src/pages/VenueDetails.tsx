@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, BookOpen, DollarSign, ArrowLeft as LeftArrow, MapPin, Star, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, ArrowLeft as LeftArrow, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
 import { lazy, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
@@ -225,7 +225,7 @@ const VenueDetails = () => {
 
                                     <div className="flex items-center">
                                         <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
-                                            <DollarSign className="w-6 h-6 text-green-600" />
+                                            <PhilippinePeso className="w-6 h-6 text-green-600" />
                                         </div>
                                         <div>
                                             <h3 className="font-medium text-gray-900">Pricing</h3>
@@ -338,7 +338,7 @@ const VenueDetails = () => {
                                 {/* Venue Information */}
                                 <div className="space-y-4 mb-6">
                                     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                        <DollarSign className="w-5 h-5 text-indigo-500 mr-3" />
+                                        <PhilippinePeso className="w-5 h-5 text-indigo-500 mr-3" />
                                         <div>
                                             <h4 className="font-medium text-gray-800">Pricing</h4>
                                             <p className="text-indigo-600 text-lg font-semibold">{formattedPrice}</p>

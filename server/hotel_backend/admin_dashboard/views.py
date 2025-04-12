@@ -51,7 +51,21 @@ def dashboard_stats(request):
             current_month_end = current_month_start.replace(year=current_month_start.year + 1, month=1, day=1) - datetime.timedelta(days=1)
         
         total_rooms = Rooms.objects.count()
-        available_rooms = Rooms.objects.filter(status='available').count()
+        
+        # Get all rooms that have active check-ins (current or future)
+        checked_in_room_ids = Bookings.objects.filter(
+            Q(status='checked_in') & 
+            Q(is_venue_booking=False) & 
+            Q(check_out_date__gte=now.date())
+        ).values_list('room_id', flat=True).distinct()
+        
+        # Available rooms are those with 'available' status and not checked in
+        available_rooms = Rooms.objects.filter(
+            status='available'
+        ).exclude(
+            id__in=checked_in_room_ids
+        ).count()
+        
         occupied_rooms = Bookings.objects.filter(
             Q(status='checked_in') & 
             Q(is_venue_booking=False) & 
@@ -156,11 +170,8 @@ def fetch_rooms(request):
     try:
         rooms = Rooms.objects.all().order_by('id')
         
-        # Get pagination parameters
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
-        
-        # Create paginator
         paginator = Paginator(rooms, page_size)
         
         try:
@@ -303,13 +314,10 @@ def fetch_areas(request):
     try:
         areas = Areas.objects.all().order_by('id')
         
-        # Get pagination parameters
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
-        
-        # Create paginator
         paginator = Paginator(areas, page_size)
-        
+
         try:
             paginated_areas = paginator.page(page)
         except PageNotAnInteger:
@@ -635,11 +643,9 @@ def update_booking_status(request, booking_id):
         return Response({"error": f"Invalid status value. Valid values are: {', '.join(valid_statuses)}"}, 
                             status=status.HTTP_400_BAD_REQUEST)
         
-    # Check if set_available is explicitly set to False to prevent maintenance
     set_available = request.data.get('set_available')
     prevent_maintenance = set_available is False
 
-    # Only set to maintenance if not prevented and status requires it
     if status_value in ['reserved', 'confirmed', 'checked_in'] and not prevent_maintenance:
         if booking.is_venue_booking and booking.area:
             area = booking.area
@@ -816,7 +822,6 @@ def manage_user(request, user_id):
                 data = request.POST
                 files = request.FILES
                 
-                # Create new user logic
                 email = data.get('email')
                 password = data.get('password')
                 first_name = data.get('first_name')
@@ -911,3 +916,453 @@ def archive_user(request, user_id):
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_revenue(request):
+    try:
+        # Get month and year from request, default to current month and year
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        # Calculate start and end dates for the month
+        start_date = datetime.datetime(year, month, 1)
+        
+        # Calculate the end date (first day of next month minus one day)
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        # Set the end date to the end of the day
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        # Calculate the number of days in the month
+        days_in_month = (end_date.day)
+        
+        # Initialize daily revenue data with zeros
+        daily_revenue = [0] * days_in_month
+        
+        # Query for transactions in the specified month
+        transactions = Transactions.objects.filter(
+            transaction_date__gte=start_date,
+            transaction_date__lte=end_date,
+            status='completed'
+        )
+        
+        # Group transactions by day and calculate revenue for each day
+        for transaction in transactions:
+            # Get the day of the month (1-based) and subtract 1 to get 0-based index
+            day_idx = transaction.transaction_date.day - 1
+            daily_revenue[day_idx] += float(transaction.amount)
+        
+        return Response({
+            "data": daily_revenue,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Error in daily_revenue: {str(e)}")
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_bookings(request):
+    try:
+        # Get month and year from request, default to current month and year
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        # Calculate start and end dates for the month
+        start_date = datetime.datetime(year, month, 1)
+        
+        # Calculate the end date (first day of next month minus one day)
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        # Set the end date to the end of the day
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        # Calculate the number of days in the month
+        days_in_month = (end_date.day)
+        
+        # Initialize daily booking data with zeros
+        daily_bookings = [0] * days_in_month
+        
+        # Query for bookings created in the specified month
+        bookings = Bookings.objects.filter(
+            created_at__gte=start_date,
+            created_at__lte=end_date
+        )
+        
+        # Group bookings by day and count
+        for booking in bookings:
+            # Get the day of the month (1-based) and subtract 1 to get 0-based index
+            day_idx = booking.created_at.day - 1
+            daily_bookings[day_idx] += 1
+        
+        return Response({
+            "data": daily_bookings,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Error in daily_bookings: {str(e)}")
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_occupancy(request):
+    try:
+        # Get month and year from request, default to current month and year
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        # Calculate start and end dates for the month
+        start_date = datetime.datetime(year, month, 1).date()
+        
+        # Calculate the end date (first day of next month minus one day)
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1).date() - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1).date() - datetime.timedelta(days=1)
+        
+        # Calculate the number of days in the month
+        days_in_month = (end_date.day)
+        
+        # Initialize daily occupancy data with zeros
+        daily_occupancy = [0] * days_in_month
+        
+        # Get total number of rooms
+        total_rooms = Rooms.objects.count()
+        if total_rooms == 0:
+            return Response({
+                "data": daily_occupancy,
+                "month": month,
+                "year": year,
+                "days_in_month": days_in_month
+            }, status=status.HTTP_200_OK)
+        
+        # For each day in the month, calculate occupancy rate
+        for day in range(1, days_in_month + 1):
+            current_date = datetime.date(year, month, day)
+            
+            # Count occupied rooms on this day
+            occupied_rooms = Bookings.objects.filter(
+                Q(check_in_date__lte=current_date) & 
+                Q(check_out_date__gte=current_date) &
+                Q(status__in=['reserved', 'confirmed', 'checked_in']) &
+                Q(is_venue_booking=False)
+            ).count()
+            
+            # Calculate occupancy rate as percentage
+            occupancy_rate = (occupied_rooms / total_rooms) * 100
+            daily_occupancy[day - 1] = round(occupancy_rate, 2)
+        
+        return Response({
+            "data": daily_occupancy,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Error in daily_occupancy: {str(e)}")
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_checkins_checkouts(request):
+    try:
+        # Get month and year from request, default to current month and year
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        # Calculate start and end dates for the month
+        start_date = datetime.datetime(year, month, 1)
+        
+        # Calculate the end date (first day of next month minus one day)
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        # Set the end date to the end of the day
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        # Calculate the number of days in the month
+        days_in_month = (end_date.day)
+        
+        # Initialize daily check-in and check-out data with zeros
+        daily_checkins = [0] * days_in_month
+        daily_checkouts = [0] * days_in_month
+        
+        # Find all bookings with status updates in this month
+        bookings = Bookings.objects.all()
+        
+        # For each booking, check if its status changed to 'checked_in' or 'checked_out' during this month
+        for booking in bookings:
+            # Check-ins (based on check_in_date, if status is or was 'checked_in')
+            if booking.check_in_date and booking.check_in_date.month == month and booking.check_in_date.year == year:
+                if booking.status == 'checked_in' or booking.status == 'checked_out':
+                    day_idx = booking.check_in_date.day - 1
+                    if 0 <= day_idx < days_in_month:
+                        daily_checkins[day_idx] += 1
+            
+            # Check-outs (based on check_out_date, if status is 'checked_out')
+            if booking.check_out_date and booking.check_out_date.month == month and booking.check_out_date.year == year:
+                if booking.status == 'checked_out':
+                    day_idx = booking.check_out_date.day - 1
+                    if 0 <= day_idx < days_in_month:
+                        daily_checkouts[day_idx] += 1
+        
+        return Response({
+            "checkins": daily_checkins,
+            "checkouts": daily_checkouts,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Error in daily_checkins_checkouts: {str(e)}")
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_cancellations(request):
+    try:
+        # Get month and year from request, default to current month and year
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        # Calculate start and end dates for the month
+        start_date = datetime.datetime(year, month, 1)
+        
+        # Calculate the end date (first day of next month minus one day)
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        # Set the end date to the end of the day
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        # Calculate the number of days in the month
+        days_in_month = (end_date.day)
+        
+        # Initialize daily cancellation data with zeros
+        daily_cancellations = [0] * days_in_month
+        
+        # Query for bookings cancelled in the specified month
+        cancelled_bookings = Bookings.objects.filter(
+            status='cancelled',
+            cancellation_date__gte=start_date,
+            cancellation_date__lte=end_date
+        )
+        
+        # Group cancellations by day and count
+        for booking in cancelled_bookings:
+            # Get the day of the month (1-based) and subtract 1 to get 0-based index
+            day_idx = booking.cancellation_date.day - 1
+            daily_cancellations[day_idx] += 1
+        
+        return Response({
+            "data": daily_cancellations,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Error in daily_cancellations: {str(e)}")
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def room_revenue(request):
+    try:
+        # Get month and year from request, default to current month and year
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        # Calculate start and end dates for the month
+        start_date = datetime.datetime(year, month, 1)
+        
+        # Calculate the end date (first day of next month minus one day)
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        # Set the end date to the end of the day
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        # Initialize the response data structure
+        response_data = {
+            "room_names": [],
+            "revenue_data": [],
+            "month": month,
+            "year": year
+        }
+        
+        # Get all rooms
+        rooms = Rooms.objects.all()
+        
+        # Calculate revenue for each room
+        for room in rooms:
+            # Get completed transactions for this room within the date range
+            room_revenue = Transactions.objects.filter(
+                booking__room=room,
+                transaction_date__gte=start_date,
+                transaction_date__lte=end_date,
+                status='completed',
+                booking__is_venue_booking=False
+            ).aggregate(Sum('amount'))['amount__sum'] or 0
+            
+            # Add to response
+            response_data["room_names"].append(room.room_name)
+            response_data["revenue_data"].append(float(room_revenue))
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Error in room_revenue: {str(e)}")
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def room_bookings(request):
+    try:
+        # Get month and year from request, default to current month and year
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        # Calculate start and end dates for the month
+        start_date = datetime.datetime(year, month, 1)
+        
+        # Calculate the end date (first day of next month minus one day)
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        # Set the end date to the end of the day
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        # Initialize the response data structure
+        response_data = {
+            "room_names": [],
+            "booking_counts": [],
+            "month": month,
+            "year": year
+        }
+        
+        # Get all rooms
+        rooms = Rooms.objects.all()
+        
+        # Calculate booking count for each room
+        for room in rooms:
+            # Count bookings for this room within the date range
+            room_bookings = Bookings.objects.filter(
+                room=room,
+                created_at__gte=start_date,
+                created_at__lte=end_date,
+                is_venue_booking=False
+            ).count()
+            
+            # Add to response
+            response_data["room_names"].append(room.room_name)
+            response_data["booking_counts"].append(room_bookings)
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Error in room_bookings: {str(e)}")
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_no_shows_rejected(request):
+    try:
+        # Get month and year from request, default to current month and year
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        # Calculate start and end dates for the month
+        start_date = datetime.datetime(year, month, 1)
+        
+        # Calculate the end date (first day of next month minus one day)
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        # Set the end date to the end of the day
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        # Calculate the number of days in the month
+        days_in_month = (end_date.day)
+        
+        # Initialize daily data with zeros
+        daily_no_shows = [0] * days_in_month
+        daily_rejected = [0] * days_in_month
+        
+        # Query for no-show bookings in the specified month
+        no_show_bookings = Bookings.objects.filter(
+            status='missed_reservation',  # or whatever the status is for no-shows
+            updated_at__gte=start_date,
+            updated_at__lte=end_date
+        )
+        
+        # Query for rejected bookings in the specified month
+        rejected_bookings = Bookings.objects.filter(
+            status='rejected',
+            updated_at__gte=start_date,
+            updated_at__lte=end_date
+        )
+        
+        # Group by day and count
+        for booking in no_show_bookings:
+            # Get the day of the month (1-based) and subtract 1 to get 0-based index
+            day_idx = booking.updated_at.day - 1
+            daily_no_shows[day_idx] += 1
+        
+        for booking in rejected_bookings:
+            # Get the day of the month (1-based) and subtract 1 to get 0-based index
+            day_idx = booking.updated_at.day - 1
+            daily_rejected[day_idx] += 1
+        
+        return Response({
+            "no_shows": daily_no_shows,
+            "rejected": daily_rejected,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"Error in daily_no_shows_rejected: {str(e)}")
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

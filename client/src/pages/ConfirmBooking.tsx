@@ -51,7 +51,8 @@ const ConfirmBooking = () => {
     phoneNumber: '',
     emailAddress: '',
     validId: null as File | null,
-    specialRequests: ''
+    specialRequests: '',
+    arrivalTime: ''
   });
 
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
@@ -203,6 +204,11 @@ const ConfirmBooking = () => {
       return;
     }
 
+    if (!formData.arrivalTime) {
+      setError('Please specify your expected time of arrival');
+      return;
+    }
+
     // Create booking data object
     const bookingData: BookingFormData = {
       firstName: formData.firstName,
@@ -215,7 +221,8 @@ const ConfirmBooking = () => {
       checkIn: selectedArrival,
       checkOut: selectedDeparture,
       status: 'pending',
-      totalPrice: calculatedTotalPrice
+      totalPrice: calculatedTotalPrice,
+      arrivalTime: formData.arrivalTime
     };
 
     if (!isAuthenticated) {
@@ -274,14 +281,12 @@ const ConfirmBooking = () => {
   };
 
   useEffect(() => {
-    // Prevent scrolling when the loader is active
     if (isSubmitting) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'auto';
     }
 
-    // Cleanup function to restore scrolling when component unmounts
     return () => {
       document.body.style.overflow = 'auto';
     };
@@ -301,7 +306,6 @@ const ConfirmBooking = () => {
     );
   }
 
-  // If dates are not selected yet, show date selection form
   if (!dateSelectionCompleted) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-7xl mt-16">
@@ -363,6 +367,24 @@ const ConfirmBooking = () => {
                   min={selectedArrival || today}
                 />
               </div>
+            </div>
+
+            {/* Time of Arrival */}
+            <div className="mb-6">
+              <label htmlFor="arrivalTime" className="block text-sm font-medium text-gray-700 mb-1">
+                Expected Time of Arrival <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="time"
+                id="arrivalTime"
+                name="arrivalTime"
+                value={formData.arrivalTime}
+                onChange={handleInputChange}
+                required
+                placeholder="Select arrival time"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100"
+              />
+              <p className="mt-1 text-sm text-gray-500">Please indicate your expected time of arrival</p>
             </div>
 
             {selectedArrival && selectedDeparture && (
@@ -603,6 +625,24 @@ const ConfirmBooking = () => {
                 </div>
               </div>
 
+              {/* Time of Arrival */}
+              <div className="mb-6">
+                <label htmlFor="arrivalTime" className="block text-md font-medium text-gray-700 mb-1">
+                  Expected Time of Arrival <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="time"
+                  id="arrivalTime"
+                  name="arrivalTime"
+                  value={formData.arrivalTime}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Select arrival time"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100"
+                />
+                <p className="mt-1 text-sm text-gray-500">Please indicate your expected time of arrival</p>
+              </div>
+
               {/* Special Requests */}
               <div className="mb-6">
                 <label htmlFor="specialRequests" className="block text-md font-medium text-gray-700 mb-1">
@@ -687,9 +727,18 @@ const ConfirmBooking = () => {
                 </div>
               </div>
 
+              <div className="mb-4">
+                <p className="text-lg text-gray-800 font-semibold">Arrival Time :</p>
+                <p className="font-semibold">
+                  {formData.arrivalTime
+                    ? new Date(`2000-01-01T${formData.arrivalTime}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    : 'Not specified'}
+                </p>
+              </div>
+
               <div className="mb-2">
                 <p className="text-md font-medium">{roomData?.room_name || "Deluxe Room"}</p>
-                <p className="text-md text-gray-600">{nights} day{nights > 1 ? 's' : ''}</p>
+                <p className="text-md text-gray-600">{nights} night{nights > 1 ? 's' : ''}</p>
               </div>
             </div>
 
@@ -697,12 +746,12 @@ const ConfirmBooking = () => {
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
               <h3 className="text-xl font-semibold mb-4">Pricing Summary</h3>
               <div className="text-md mb-2">
-                <p className="text-gray-600">1 room x {nights} day{nights > 1 ? 's' : ''}</p>
+                <p className="text-gray-600">1 room x {nights} night{nights > 1 ? 's' : ''}</p>
               </div>
               <div className="text-md mb-4">
                 <p className="font-medium">{roomData?.room_name || "Room"}</p>
                 <p className="text-lg text-gray-700">
-                  {roomData?.room_price} per day
+                  {roomData?.room_price} per night
                 </p>
               </div>
               <div className="border-t pt-3 flex justify-between items-center">

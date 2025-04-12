@@ -101,7 +101,7 @@ const getBookingPrice = (booking: BookingResponse): number => {
 
     return basePrice;
   } catch (error) {
-    console.error('Error parsing booking price:', error);
+    console.error(`Error parsing booking price: ${error}`);
     return 0;
   }
 };
@@ -114,14 +114,13 @@ const BookingDetailsModal: FC<{
   onCheckIn?: (paymentAmount: number) => void;
   onCheckOut?: () => void;
   onNoShow?: () => void;
+  onCancel?: () => void;
   canManage: boolean;
   isUpdating: boolean;
-}> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, canManage, isUpdating }) => {
+}> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, onCancel, canManage, isUpdating }) => {
   const [paymentAmount, setPaymentAmount] = useState<string>("");
-
-  if (!booking) return null;
-
   const isVenueBooking = booking.is_venue_booking;
+  if (!booking) return null;
 
   const renderValidId = () => {
     if (!booking.valid_id) {
@@ -153,32 +152,37 @@ const BookingDetailsModal: FC<{
   const isPaymentComplete = currentPayment === bookingPrice;
   const isReservedStatus = booking.status === "reserved";
 
-  // Get appropriate loading text based on booking status
   const getLoadingText = () => {
-    if (booking.status === "pending") {
-      return "Reserving booking...";
-    } else if (booking.status === "reserved") {
-      return "Checking in guest...";
-    } else if (booking.status === "checked_in") {
-      return "Checking out guest...";
-    } else if (booking.status === "no_show") {
-      return "Marking as no-show...";
+    switch (booking.status) {
+      case "pending":
+        return "Reserving booking...";
+      case "reserved":
+        return "Checking in guest...";
+      case "checked_in":
+        return "Checking out guest...";
+      case "no_show":
+        return "Marking as no-show...";
+      case "cancelled":
+        return "Cancelling booking...";
+      default:
+        return "Processing booking...";
     }
-    return "Processing booking...";
   };
 
-  // Get appropriate loader type based on booking status
   const getLoaderType = () => {
-    if (booking.status === "pending") {
-      return "reserve";
-    } else if (booking.status === "reserved") {
-      return "checkin";
-    } else if (booking.status === "checked_in") {
-      return "checkout";
-    } else if (booking.status === "no_show") {
-      return "noshow";
+    switch (booking.status) {
+      case "pending":
+        return "reserve";
+      case "reserved":
+        return "checkin";
+      case "checked_in":
+        return "checkout";
+      case "no_show":
+      case "cancelled":
+        return "noshow";
+      default:
+        return "default";
     }
-    return "default";
   };
 
   return (
@@ -252,7 +256,7 @@ const BookingDetailsModal: FC<{
                 <span className="font-semibold text-gray-700">Property Type:</span>
                 <span>
                   {isVenueBooking ? (
-                    <span className="bg-blue-100 text-blue-800 px-2 uppercase py-1 rounded-full text-md font-semibold">Venue</span>
+                    <span className="bg-blue-100 text-blue-800 px-2 uppercase py-1 rounded-full text-md font-semibold">Area</span>
                   ) : (
                     <span className="bg-green-100 text-green-800 px-2 uppercase py-1 rounded-full text-md font-semibold">Room</span>
                   )}
@@ -262,9 +266,9 @@ const BookingDetailsModal: FC<{
               <motion.div
                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
               >
-                <span className="font-semibold text-gray-700">{isVenueBooking ? "Venue:" : "Room:"}</span>
+                <span className="font-semibold text-gray-700">{isVenueBooking ? "Area:" : "Room:"}</span>
                 <span className="sm:text-right font-medium">{isVenueBooking
-                  ? (booking.area_details?.area_name || "Unknown Venue")
+                  ? (booking.area_details?.area_name || "Unknown Area")
                   : (booking.room_details?.room_name || "Unknown Room")}
                 </span>
               </motion.div>
@@ -296,6 +300,21 @@ const BookingDetailsModal: FC<{
                 </span>
               </motion.div>
 
+              {!isVenueBooking && booking.time_of_arrival && (
+                <motion.div
+                  className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
+                >
+                  <span className="font-semibold text-gray-700">Expected Arrival Time:</span>
+                  <span className="font-medium">
+                    {new Date(`2000-01-01T${booking.time_of_arrival}`).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
+                  </span>
+                </motion.div>
+              )}
+
               <motion.div
                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
               >
@@ -310,12 +329,11 @@ const BookingDetailsModal: FC<{
               <motion.div
                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
               >
-                <span className="font-semibold text-gray-700">Price:</span>
+                <span className="font-semibold text-gray-700">{isVenueBooking ? "Area Price:" : "Room Price:"}</span>
                 <span className="font-medium">
                   {isVenueBooking
                     ? booking.area_details?.price_per_hour
                     : booking.room_details?.room_price}
-                  <span className="text-gray-500 text-sm">{isVenueBooking ? '/hour' : '/night'}</span>
                 </span>
               </motion.div>
 
@@ -433,10 +451,10 @@ const BookingDetailsModal: FC<{
               >
                 <h3 className="font-semibold mb-2 text-blue-800 flex items-center">
                   <Calendar className="w-4 h-4 mr-2" />
-                  Venue Booking Note
+                  Area Booking Note
                 </h3>
                 <p className="text-sm text-blue-700">
-                  Standard venue bookings are scheduled from 8:00 AM to 5:00 PM (9 hours) on the selected date.
+                  Standard area bookings are scheduled from 8:00 AM to 5:00 PM (9 hours) on the selected date.
                   {booking.check_in_date !== booking.check_out_date && " This booking spans multiple days."}
                 </p>
               </motion.div>
@@ -487,6 +505,14 @@ const BookingDetailsModal: FC<{
                 Mark as No Show
               </motion.button>
               <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={onCancel}
+                className="px-4 py-2 bg-red-600 text-white rounded-md flex items-center justify-center gap-2 shadow-sm"
+              >
+                <X size={18} />
+                Cancel Booking
+              </motion.button>
+              <motion.button
                 whileTap={isPaymentComplete ? { scale: 0.98 } : {}}
                 onClick={() => onCheckIn && isPaymentComplete && onCheckIn(currentPayment)}
                 className={`px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 shadow-sm ${isPaymentComplete
@@ -531,6 +557,7 @@ const ManageBookings: FC = () => {
   const [selectedBooking, setSelectedBooking] = useState<BookingResponse | null>(null);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [showNoShowModal, setShowNoShowModal] = useState(false);
+  const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 9;
 
@@ -728,6 +755,24 @@ const ManageBookings: FC = () => {
     return searchMatch && statusMatch;
   });
 
+  const handleCancellationInitiate = () => {
+    if (selectedBooking) setShowCancellationModal(true);
+  };
+
+  const handleCancellationConfirm = (reason: string) => {
+    if (selectedBooking) {
+      updateBookingStatusMutation.mutate({
+        bookingId: selectedBooking.id,
+        status: "cancelled",
+        reason: reason,
+        setRoomAvailable: true
+      });
+      setShowCancellationModal(false);
+    }
+  };
+
+  const closeCancellationModal = () => setShowCancellationModal(false);
+
   return (
     <div className="min-h-[calc(100vh-25px)] p-3 md:p-3 overflow-y-auto container mx-auto">
       <h1 className="text-2xl md:text-3xl font-semibold mb-4 md:mb-6">Manage Bookings</h1>
@@ -809,7 +854,7 @@ const ManageBookings: FC = () => {
                 filteredBookings.map((booking) => {
                   const isVenueBooking = booking.is_venue_booking;
                   const propertyName = isVenueBooking
-                    ? booking.area_details?.area_name || "Unknown Venue"
+                    ? booking.area_details?.area_name || "Unknown Area"
                     : booking.room_details?.room_name || "Unknown Room";
 
                   return (
@@ -827,7 +872,7 @@ const ManageBookings: FC = () => {
                         <div className="flex flex-col">
                           <span className="truncate max-w-[120px] md:max-w-full">{propertyName}</span>
                           {isVenueBooking ? (
-                            <span className="inline-block px-2 py-0.5 mt-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Venue</span>
+                            <span className="inline-block px-2 py-0.5 mt-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Area</span>
                           ) : (
                             <span className="inline-block px-2 py-0.5 mt-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Room</span>
                           )}
@@ -935,12 +980,13 @@ const ManageBookings: FC = () => {
           onCheckIn={handleCheckIn}
           onCheckOut={handleCheckOut}
           onNoShow={handleNoShow}
+          onCancel={handleCancellationInitiate}
           canManage={true}
           isUpdating={updateBookingStatusMutation.isPending}
         />
       )}
 
-      {/* Use CancellationModal instead of RejectionReasonModal */}
+      {/* Use CancellationModal for rejection */}
       {showRejectionModal && (
         <CancellationModal
           isOpen={showRejectionModal}
@@ -956,12 +1002,28 @@ const ManageBookings: FC = () => {
         />
       )}
 
+      {/* Use CancellationModal for guest cancellation */}
+      {showCancellationModal && (
+        <CancellationModal
+          isOpen={showCancellationModal}
+          onClose={closeCancellationModal}
+          onConfirm={handleCancellationConfirm}
+          bookingId={selectedBooking?.id}
+          title="Cancel Booking"
+          description="Please provide a reason for cancelling this booking on behalf of the guest. This will be recorded in the system."
+          reasonLabel="Reason for Cancellation"
+          reasonPlaceholder="Enter reason for guest's cancellation request..."
+          confirmButtonText="Confirm Cancellation"
+          showPolicyNote={true}
+        />
+      )}
+
       {/* No Show Confirmation Modal */}
       <Modal
         isOpen={showNoShowModal}
         title="Mark as No Show"
         description={`Are you sure you want to mark this booking as 'No Show'? 
-        This will immediately make the ${selectedBooking?.is_venue_booking ? 'venue' : 'room'} available for new bookings.
+        This will immediately make the ${selectedBooking?.is_venue_booking ? 'area' : 'room'} available for new bookings.
         This action cannot be undone.`}
         confirmText="Mark as No Show"
         cancelText="Cancel"

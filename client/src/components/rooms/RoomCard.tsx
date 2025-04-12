@@ -18,7 +18,6 @@ const RoomCard: FC<RoomCardProps> = ({
   name,
   image,
   title,
-  capacity,
   price,
   description,
 }) => {
@@ -26,7 +25,7 @@ const RoomCard: FC<RoomCardProps> = ({
   const { isAuthenticated } = useUserContext();
 
   const handleReserveClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevents triggering the card click event
+    e.stopPropagation();
     if (isAuthenticated) {
       navigate(`/booking/${id}`);
     } else {
@@ -34,11 +33,17 @@ const RoomCard: FC<RoomCardProps> = ({
     }
   };
 
+<<<<<<< HEAD
   // Truncate description to 50 characters
   const truncatedDescription =
     description && description.length > 50
       ? `${description.substring(0, 50)}...`
       : description || "No description available.";
+=======
+  const truncatedDescription = description && description.length > 65
+    ? `${description.substring(0, 65)}...`
+    : description || "No description available.";
+>>>>>>> 94947ace39ad53c765ae70efddb61253a8bd17f9
 
   return (
     <div
@@ -55,12 +60,6 @@ const RoomCard: FC<RoomCardProps> = ({
         <div className="mb-3">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-bold text-gray-800">{name}</h1>
-          </div>
-        </div>
-        <div className="flex flex-wrap pb-2 gap-4 text-sm text-gray-600">
-          <div className="flex items-center space-x-1">
-            <i className="fa fa-users text-green-500"></i>
-            <span>{capacity}</span>
           </div>
         </div>
 

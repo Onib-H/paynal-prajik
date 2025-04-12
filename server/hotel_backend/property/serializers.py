@@ -15,6 +15,7 @@ class RoomSerializer(serializers.ModelSerializer):
             'id',
             'room_name',
             'room_type',
+            'bed_type',
             'status',
             'room_price',
             'room_image',

@@ -232,30 +232,24 @@ const BookingCalendar = () => {
         const isHovered = !isUnavailable && hoveredDate && isEqual(date, hoveredDate);
         const dateStatus = getDateStatus(date);
 
-        // Base class for all date cells
         let className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
 
-        // Handle selection first (highest priority)
         if (isCheckinDate || isCheckoutDate) {
             return `${className} bg-blue-600 text-white font-medium`;
         }
 
-        // Handle date range
         if (isInRange) {
             return `${className} bg-blue-200 text-blue-800`;
         }
 
-        // Handle hover effect for available dates
         if (isHovered && !isUnavailable) {
             return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
         }
 
-        // Handle today indicator
         if (isToday && !isUnavailable) {
             className += " border-blue-500 border-2";
         }
 
-        // Handle specific booked statuses
         if (dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
             switch (dateStatus.toLowerCase()) {
                 case 'reserved':
@@ -267,12 +261,10 @@ const BookingCalendar = () => {
             }
         }
 
-        // Handle past dates
         if (isUnavailable) {
             return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
         }
 
-        // Default available date styling (including checked_out, cancelled, rejected, pending)
         return `${className} bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer`;
     };
 
@@ -314,7 +306,7 @@ const BookingCalendar = () => {
                                 </span>
                             </div>
                             <div className="mt-2 md:mt-0">
-                                <span className="text-gray-600">Days:</span>
+                                <span className="text-gray-600">Nights:</span>
                                 <span className="ml-2 font-semibold">
                                     {checkInDate && checkOutDate ? numberOfNights : 0}
                                 </span>
@@ -479,9 +471,9 @@ const BookingCalendar = () => {
                             </p>
 
                             <div className="flex flex-col space-y-2 mb-4">
-                                <div className="flex items-center text-gray-600">
+                                <div className="flex items-center text-gray-800">
                                     <span className="mr-2">🏠</span>
-                                    <span>{roomData.room_type}</span>
+                                    <span className='font-semibold uppercase'>{roomData.room_type}</span>
                                 </div>
                                 <div className="flex items-center text-gray-600">
                                     <span className="mr-2">👥</span>
@@ -516,7 +508,7 @@ const BookingCalendar = () => {
                                             <span className="font-medium">{format(checkOutDate, 'MMM dd, yyyy')}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span>Days:</span>
+                                            <span>Nights:</span>
                                             <span className="font-medium">{numberOfNights}</span>
                                         </div>
                                         <div className="flex justify-between text-3xl font-semibold text-blue-600 pt-2 border-t border-gray-200">

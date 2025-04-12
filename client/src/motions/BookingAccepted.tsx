@@ -85,7 +85,7 @@ const BookingAccepted = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">
-                    {isVenueBooking ? 'Venue Reservation' : 'Room Booking'} Confirmed
+                    {isVenueBooking ? 'Area Booking' : 'Room Booking'} Confirmed
                   </h3>
                   <p className="text-gray-600 text-md mt-1">
                     Booking ID: <span className="font-medium">{bookingId}</span>
