@@ -88,8 +88,8 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
                   end={item.link === "/admin"}
                   className={({ isActive }) =>
                     `flex items-center space-x-2 justify-baseline rounded-md cursor-pointer ${isActive
-                      ? "border-r-3 border-blue-600 bg-blue-100/80 text-blue-700 font-bold"
-                      : "hover:bg-black/15"
+                      ? "border-r-3 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
+                      : "hover:bg-purple-100/80 transition-colors duration-300"
                     }`
                   }
                 >

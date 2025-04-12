@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Edit, Plus, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import EditAmenityModal, { IAmenity } from "../../components/admin/EditAmenityModal";
 import Modal from "../../components/Modal";
@@ -11,7 +13,6 @@ import {
   fetchAmenities,
   updateAmenity,
 } from "../../services/Admin";
-import { Edit, Trash2 } from "lucide-react";
 import Error from "../_ErrorBoundary";
 
 interface Amenity {
@@ -38,6 +39,7 @@ const ManageAmenities = () => {
   const [deleteAmenityId, setDeleteAmenityId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loaderText, setLoaderText] = useState("");
+  const [pageTransition, setPageTransition] = useState<"next" | "prev" | null>(null);
 
   const [page, setPage] = useState<number>(1);
   const pageSize = 15;
@@ -110,7 +112,6 @@ const ManageAmenities = () => {
 
   const amenities: Amenity[] = amenitiesResponse?.data || [];
 
-  // Filter amenities based on search and filter criteria
   const filteredAmenities = amenities.filter((amenity: Amenity) => {
     const matchesSearch = amenity.description
       .toLowerCase()
@@ -156,126 +157,320 @@ const ManageAmenities = () => {
     }
   };
 
+  const handlePrevPage = () => {
+    if (page > 1) {
+      setPageTransition("prev");
+      setTimeout(() => {
+        setPage((prev) => Math.max(prev - 1, 1));
+      }, 200);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (amenitiesResponse && page < amenitiesResponse.pages) {
+      setPageTransition("next");
+      setTimeout(() => {
+        setPage((prev) => (prev < amenitiesResponse.pages ? prev + 1 : prev));
+      }, 200);
+    }
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    },
+    exit: {
+      opacity: 0,
+      transition: {
+        staggerChildren: 0.05,
+        staggerDirection: -1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 12
+      }
+    },
+    exit: {
+      y: -20,
+      opacity: 0,
+      transition: {
+        duration: 0.2
+      }
+    }
+  };
+
+  const pageVariants = {
+    enter: (direction: "next" | "prev" | null) => ({
+      x: direction === "next" ? 50 : direction === "prev" ? -50 : 0,
+      opacity: 0
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.3,
+        ease: "easeInOut"
+      }
+    },
+    exit: (direction: "next" | "prev" | null) => ({
+      x: direction === "next" ? -50 : direction === "prev" ? 50 : 0,
+      opacity: 0,
+      transition: {
+        duration: 0.3,
+        ease: "easeInOut"
+      }
+    })
+  };
+
+  const fadeIn = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { duration: 0.4 }
+    }
+  };
+
   return (
-    <div className="overflow-y-auto h-[calc(100vh-25px)]">
+    <motion.div
+      initial="hidden"
+      animate="visible"
+      variants={fadeIn}
+      className="overflow-y-auto h-[calc(100vh-25px)] bg-gray-50"
+    >
       <div className="p-3 container mx-auto">
         {/* Loader Overlay */}
-        {loading && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-900/80 z-[500]">
-            <ManageRoomLoader size="80px" text={loaderText} />
-          </div>
-        )}
+        <AnimatePresence>
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 flex items-center justify-center bg-gray-900/80 z-[500] backdrop-blur-sm"
+            >
+              <ManageRoomLoader size="80px" text={loaderText} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-          <h1 className="text-3xl font-semibold">Manage Amenities</h1>
-          <button
-            onClick={handleAddAmenity}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded transition-colors duration-300"
+        <motion.div
+          variants={fadeIn}
+          className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"
+        >
+          <motion.h1
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            className="text-3xl font-bold text-gray-800"
           >
-            + Add New Amenity
-          </button>
-        </div>
+            Manage Amenities
+          </motion.h1>
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={handleAddAmenity}
+            className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer font-semibold py-2.5 px-5 rounded-lg shadow-md transition-colors duration-300 flex items-center gap-2"
+          >
+            <Plus size={18} />
+            <span>Add New Amenity</span>
+          </motion.button>
+        </motion.div>
 
         {/* Search & Filter Bar */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <input
-            type="text"
-            placeholder="Search by description"
-            className="p-3 px-6 ring-1 rounded-full w-full md:w-1/2"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <motion.div
+          variants={fadeIn}
+          className="mb-8"
+        >
+          <div className="relative w-full md:w-1/2">
+            <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-gray-500">
+              <Search size={20} />
+            </div>
+            <input
+              type="text"
+              placeholder="Search amenities..."
+              className="p-3.5 ps-10 ring-1 ring-gray-300 rounded-lg w-full bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all duration-200"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </motion.div>
 
         {/* Grid of Amenity Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredAmenities.map((amenity: Amenity) => (
-            <div
-              key={amenity.id}
-              className="bg-white shadow-md rounded-lg overflow-hidden"
+        <AnimatePresence mode="wait" custom={pageTransition}>
+          <motion.div
+            key={page}
+            custom={pageTransition}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            variants={pageVariants}
+            className="min-h-[500px]"
+          >
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
             >
-              <div className="p-4 flex flex-col space-y-2">
-                {/* Display description as main text */}
-                <p className="text-gray-700 text-lg mb-2 line-clamp-4">
-                  {amenity.description || "No description provided."}
-                </p>
-                {/* Action Buttons */}
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleEditAmenity(amenity)}
-                      className="px-3 py-2 uppercase font-semibold bg-green-600 text-white rounded cursor-pointer hover:bg-green-700 transition-colors duration-300"
-                    >
-                      <Edit size={22} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAmenity(amenity.id)}
-                      className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
-                    >
-                      <Trash2 size={22} />
-                    </button>
+              {filteredAmenities.map((amenity: Amenity) => (
+                <motion.div
+                  key={amenity.id}
+                  variants={itemVariants}
+                  layout
+                  className="bg-white shadow-md hover:shadow-lg rounded-xl overflow-hidden border border-gray-100 transition-all duration-300"
+                >
+                  <div className="p-5 flex flex-col space-y-3">
+                    {/* Display description as main text */}
+                    <p className="text-gray-700 text-lg mb-2 line-clamp-4 min-h-[5rem]">
+                      {amenity.description || "No description provided."}
+                    </p>
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-end mt-3 gap-3">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleEditAmenity(amenity)}
+                        className="p-2.5 bg-emerald-600 text-white rounded-lg cursor-pointer hover:bg-emerald-700 transition-colors duration-300 flex items-center gap-2"
+                      >
+                        <Edit size={18} />
+                        <span className="hidden sm:inline">Edit</span>
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleDeleteAmenity(amenity.id)}
+                        className="p-2.5 bg-red-600 text-white rounded-lg cursor-pointer hover:bg-red-700 transition-colors duration-300 flex items-center gap-2"
+                      >
+                        <Trash2 size={18} />
+                        <span className="hidden sm:inline">Delete</span>
+                      </motion.button>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+                </motion.div>
+              ))}
+            </motion.div>
+
+            {/* Empty state */}
+            {filteredAmenities.length === 0 && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center justify-center py-16 text-gray-500"
+              >
+                <svg
+                  className="w-16 h-16 mb-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+                <p className="text-xl">No amenities found</p>
+                <p className="text-sm mt-2">Try adjusting your search or add new amenities</p>
+              </motion.div>
+            )}
+          </motion.div>
+        </AnimatePresence>
 
         {/* Pagination Controls */}
-        {amenitiesResponse && (
-          <div className="flex justify-center items-center mt-8 gap-4">
-            <button
-              onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+        {amenitiesResponse && filteredAmenities.length > 0 && (
+          <motion.div
+            variants={fadeIn}
+            className="flex justify-center items-center mt-10 gap-3"
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handlePrevPage}
               disabled={page === 1}
-              className="px-4 py-2 cursor-pointer bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 cursor-pointer bg-white border border-gray-300 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200 shadow-sm"
             >
-              Previous
-            </button>
-            <span>
-              Page {amenitiesResponse.page} of {amenitiesResponse.pages}
-            </span>
-            <button
-              onClick={() =>
-                setPage((prev) =>
-                  prev < amenitiesResponse.pages ? prev + 1 : prev
-                )
-              }
+              <ChevronLeft size={18} />
+              <span>Previous</span>
+            </motion.button>
+
+            <motion.div
+              className="px-5 py-2.5 bg-white border border-gray-300 rounded-lg shadow-sm flex items-center gap-1"
+              whileHover={{ y: -2 }}
+              transition={{ type: "spring", stiffness: 500 }}
+            >
+              <motion.span
+                key={`page-${page}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                Page {amenitiesResponse.page} of {amenitiesResponse.pages}
+              </motion.span>
+            </motion.div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleNextPage}
               disabled={page >= amenitiesResponse.pages}
-              className="px-4 py-2 cursor-pointer bg-gray-200 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 cursor-pointer bg-white border border-gray-300 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all duration-200 shadow-sm"
             >
-              Next
-            </button>
-          </div>
+              <span>Next</span>
+              <ChevronRight size={18} />
+            </motion.button>
+          </motion.div>
         )}
 
         {/* Create/Edit Modal */}
-        {showFormModal && (
-          <EditAmenityModal
-            isOpen={showFormModal}
-            amenityData={selectedAmenity}
-            onSave={handleSaveAmenity}
-            cancel={() => setShowFormModal(false)}
-            loading={
-              createAmenityMutation.isPending || updateAmenityMutation.isPending
-            }
-          />
-        )}
+        <AnimatePresence>
+          {showFormModal && (
+            <EditAmenityModal
+              isOpen={showFormModal}
+              amenityData={selectedAmenity}
+              onSave={handleSaveAmenity}
+              cancel={() => setShowFormModal(false)}
+              loading={
+                createAmenityMutation.isPending || updateAmenityMutation.isPending
+              }
+            />
+          )}
+        </AnimatePresence>
 
         {/* Delete Confirmation Modal */}
-        <Modal
-          isOpen={showDeleteModal}
-          icon="fas fa-trash"
-          title="Delete Amenity"
-          description="Are you sure you want to delete this amenity?"
-          cancel={cancelDeleteAmenity}
-          onConfirm={confirmDeleteAmenity}
-          className="px-4 py-2 bg-red-600 text-white rounded-md uppercase font-bold hover:bg-red-700 transition-all duration-300"
-          cancelText="No"
-          confirmText="Delete Amenity"
-        />
+        <AnimatePresence>
+          {showDeleteModal && (
+            <Modal
+              isOpen={showDeleteModal}
+              icon="fas fa-trash"
+              title="Delete Amenity"
+              description="Are you sure you want to delete this amenity?"
+              cancel={cancelDeleteAmenity}
+              onConfirm={confirmDeleteAmenity}
+              className="px-4 py-2 bg-red-600 text-white rounded-md uppercase font-bold hover:bg-red-700 transition-all duration-300"
+              cancelText="No"
+              confirmText="Delete Amenity"
+            />
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

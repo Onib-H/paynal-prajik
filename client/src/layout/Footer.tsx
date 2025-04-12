@@ -26,7 +26,7 @@ const Footer = () => {
                   <li key={linkIndex} className="text-sm pt-2">
                     <Link
                       to={link.to}
-                      className="text-blue-600 hover:underline transition-all duration-300"
+                      className="text-purple-600 hover:underline transition-all duration-300"
                     >
                       {link.links}
                     </Link>

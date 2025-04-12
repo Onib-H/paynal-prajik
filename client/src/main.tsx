@@ -25,7 +25,7 @@ createRoot(document.getElementById("root")!).render(
               newestOnTop
               closeOnClick
               rtl={false}
-              theme="dark"
+              theme="light"
             />
           </BrowserRouter>
         </UserProvider>

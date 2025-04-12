@@ -13,10 +13,10 @@ const Values = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
         {/* Hospitality */}
         <div className="flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-blue-700 text-white flex justify-center items-center rounded-full mb-6 relative">
-            <i className="fa fa-users relative text-xl"></i>
+          <div className="w-20 h-20 bg-purple-600 text-white flex justify-center items-center rounded-full mb-6 relative">
+            <i className="fa fa-users fa-2xl relative"></i>
           </div>
-          <h3 className="font-playfair text-xl font-semibold mb-4">
+          <h3 className="font-playfair text-3xl font-semibold mb-4">
             Hospitality
           </h3>
           <p className="text-gray-700 max-w-xs font-medium  font-montserrat">
@@ -27,11 +27,11 @@ const Values = () => {
 
         {/* Comfort */}
         <div className="flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-blue-700 text-white flex justify-center rounded-full items-center mb-6 relative">
-            <i className="fa fa-bed relative text-xl"></i>
+          <div className="w-20 h-20 bg-purple-600 text-white flex justify-center rounded-full items-center mb-6 relative">
+            <i className="fa fa-bed fa-2xl relative"></i>
           </div>
-          <h3 className="font-playfair text-xl font-semibold mb-4">Comfort</h3>
-          <p className="text-gray-700 font-medium  font-montserrat max-w-xs">
+          <h3 className="font-playfair text-3xl font-semibold mb-4">Comfort</h3>
+          <p className="text-gray-700 font-medium font-montserrat max-w-xs">
             Our spaces are designed to offer peace and relaxation, ensuring a
             restful stay.
           </p>
@@ -39,11 +39,11 @@ const Values = () => {
 
         {/* Culture */}
         <div className="flex flex-col items-center text-center">
-          <div className="w-20 h-20 bg-blue-700 text-white flex justify-center items-center rounded-full mb-6 relative">
-            <i className="fa fa-globe  relative text-xl"></i>
+          <div className="w-20 h-20 bg-purple-600 text-white flex justify-center items-center rounded-full mb-6 relative">
+            <i className="fa fa-globe fa-2xl relative"></i>
           </div>
-          <h3 className="font-playfair text-xl font-semibold mb-4">Culture</h3>
-          <p className="text-gray-700 max-w-xs font-medium  font-montserrat">
+          <h3 className="font-playfair text-3xl font-semibold mb-4">Culture</h3>
+          <p className="text-gray-700 max-w-xs font-medium font-montserrat">
             We celebrate diversity and showcase the beauty of our local and
             global traditions.
           </p>

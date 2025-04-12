@@ -35,7 +35,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
     const [formState, setFormState] = useState<IRoom>({
         id: roomData?.id || 0,
         roomName: roomData?.roomName || "",
-        roomType: roomData?.roomType || "",
+        roomType: roomData?.roomType || "premium",
         capacity: roomData?.capacity || "",
         amenities: roomData?.amenities || [],
         roomPrice: roomData?.roomPrice ? parsePriceValue(roomData.roomPrice) : 0,
@@ -50,7 +50,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
             setFormState({
                 id: roomData.id || 0,
                 roomName: roomData.roomName || "",
-                roomType: roomData.roomType || "",
+                roomType: roomData.roomType || "premium",
                 capacity: roomData.capacity || "",
                 amenities: roomData.amenities || [],
                 roomPrice: roomData.roomPrice ? parsePriceValue(roomData.roomPrice) : 0,
@@ -262,14 +262,23 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                         <label className="block text-sm font-medium mb-1 text-gray-700">
                                             Room Type
                                         </label>
-                                        <input
-                                            type="text"
-                                            name="roomType"
-                                            value={formState.roomType}
-                                            onChange={handleChange}
-                                            placeholder="e.g., Deluxe, Suite"
-                                            className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                                        />
+                                        <div className="relative">
+                                            <select
+                                                name="roomType"
+                                                value={formState.roomType}
+                                                onChange={handleChange}
+                                                className="appearance-none border border-gray-300 rounded-md w-full p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white"
+                                            >
+                                                <option value="" disabled>Select Room Type</option>
+                                                <option value="premium">Premium</option>
+                                                <option value="suites">Suites</option>
+                                            </select>
+                                            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
                                         {errors[fieldMapping.roomType] && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"

@@ -45,10 +45,8 @@ def fetch_availability(request):
             'error': "Departure date should be greater than arrival date"
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    # Get available rooms
     rooms = Rooms.objects.filter(status='available')
     
-    # Exclude rooms that have bookings with reserved or checked_in status that overlap with requested dates
     booked_room_ids = Bookings.objects.filter(
         ~Q(status__in=['cancelled', 'rejected', 'checked_out', 'no_show']),
         Q(check_in_date__lt=departure) & Q(check_out_date__gt=arrival),
@@ -57,10 +55,8 @@ def fetch_availability(request):
     
     rooms = rooms.exclude(id__in=booked_room_ids)
     
-    # Get available areas/venues
     areas = Areas.objects.filter(status='available')
     
-    # Exclude areas that have bookings with reserved or checked_in status that overlap with requested dates
     booked_area_ids = Bookings.objects.filter(
         ~Q(status__in=['cancelled', 'rejected', 'checked_out', 'no_show']),
         Q(check_in_date__lt=departure) & Q(check_out_date__gt=arrival),

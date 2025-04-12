@@ -64,7 +64,15 @@ const RoomList: FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {availableRooms.map((room, index) => (
             <div key={index}>
-              <RoomCard {...room} />
+              <RoomCard
+                id={room.id}
+                name={room.name}
+                image={room.image}
+                title={room.title}
+                capacity={room.capacity}
+                price={room.price}
+                description={room.description}
+              />
             </div>
           ))}
         </div>

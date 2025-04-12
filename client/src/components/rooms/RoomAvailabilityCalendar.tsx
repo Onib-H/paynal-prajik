@@ -1,17 +1,56 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarRange } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../Alert";
+
+// Local storage keys
+const ARRIVAL_DATE_KEY = "hotel_arrival_date";
+const DEPARTURE_DATE_KEY = "hotel_departure_date";
 
 const RoomAvailabilityCalendar = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [arrivalDate, setArrivalDate] = useState<string>("");
   const [departureDate, setDepartureDate] = useState<string>("");
   const [alertInfo, setAlertInfo] = useState<{
     message: string;
     type: "success" | "error" | "info" | "warning";
   } | null>(null);
+
+  // Load dates from query params or localStorage on component mount
+  useEffect(() => {
+    // First try to get from URL params (highest priority)
+    const arrivalParam = searchParams.get("arrival");
+    const departureParam = searchParams.get("departure");
+
+    if (arrivalParam) {
+      setArrivalDate(arrivalParam);
+    } else {
+      // Fall back to localStorage
+      const savedArrival = localStorage.getItem(ARRIVAL_DATE_KEY);
+      if (savedArrival) setArrivalDate(savedArrival);
+    }
+
+    if (departureParam) {
+      setDepartureDate(departureParam);
+    } else {
+      // Fall back to localStorage
+      const savedDeparture = localStorage.getItem(DEPARTURE_DATE_KEY);
+      if (savedDeparture) setDepartureDate(savedDeparture);
+    }
+  }, [searchParams]);
+
+  // Save dates to localStorage whenever they change
+  useEffect(() => {
+    if (arrivalDate) {
+      localStorage.setItem(ARRIVAL_DATE_KEY, arrivalDate);
+    }
+
+    if (departureDate) {
+      localStorage.setItem(DEPARTURE_DATE_KEY, departureDate);
+    }
+  }, [arrivalDate, departureDate]);
 
   const getTodayString = (): string => {
     const today = new Date();
@@ -54,6 +93,11 @@ const RoomAvailabilityCalendar = () => {
     }
 
     setAlertInfo(null);
+
+    // Save to localStorage before navigating
+    localStorage.setItem(ARRIVAL_DATE_KEY, arrivalDate);
+    localStorage.setItem(DEPARTURE_DATE_KEY, departureDate);
+
     navigate(`/availability?arrival=${arrivalDate}&departure=${departureDate}`);
   };
 
@@ -159,8 +203,8 @@ const RoomAvailabilityCalendar = () => {
               >
                 Find Your Perfect Stay
               </motion.h1>
-              <p className="text-gray-600 text-sm mt-1">
-                Search only shows rooms and venues that are available (not reserved or occupied)
+              <p className="text-gray-600 text-md mt-1">
+                Search only shows rooms that are available (not reserved or occupied)
               </p>
             </motion.div>
 
