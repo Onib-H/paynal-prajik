@@ -33,17 +33,10 @@ const RoomCard: FC<RoomCardProps> = ({
     }
   };
 
-<<<<<<< HEAD
-  // Truncate description to 50 characters
   const truncatedDescription =
-    description && description.length > 50
-      ? `${description.substring(0, 50)}...`
+    description && description.length > 65
+      ? `${description.substring(0, 65)}...`
       : description || "No description available.";
-=======
-  const truncatedDescription = description && description.length > 65
-    ? `${description.substring(0, 65)}...`
-    : description || "No description available.";
->>>>>>> 94947ace39ad53c765ae70efddb61253a8bd17f9
 
   return (
     <div
