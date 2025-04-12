@@ -9,6 +9,7 @@ export interface IRoom {
     id: number;
     roomName: string;
     roomType: string;
+    bedType: string;
     capacity: string;
     amenities: number[];
     roomPrice: number;
@@ -36,6 +37,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
         id: roomData?.id || 0,
         roomName: roomData?.roomName || "",
         roomType: roomData?.roomType || "premium",
+        bedType: roomData?.bedType || "single",
         capacity: roomData?.capacity || "",
         amenities: roomData?.amenities || [],
         roomPrice: roomData?.roomPrice ? parsePriceValue(roomData.roomPrice) : 0,
@@ -43,14 +45,16 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
         description: roomData?.description || "",
         roomImage: roomData?.roomImage || "",
     });
+    const [previewUrl, setPreviewUrl] = useState<string>("");
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Update form when roomData changes
     useEffect(() => {
         if (roomData) {
             setFormState({
                 id: roomData.id || 0,
                 roomName: roomData.roomName || "",
                 roomType: roomData.roomType || "premium",
+                bedType: roomData.bedType || "single",
                 capacity: roomData.capacity || "",
                 amenities: roomData.amenities || [],
                 roomPrice: roomData.roomPrice ? parsePriceValue(roomData.roomPrice) : 0,
@@ -73,13 +77,10 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
 
     const availableAmenities = amenitiesData?.data || [];
 
-    const [previewUrl, setPreviewUrl] = useState<string>("");
-
-    const [errors, setErrors] = useState<Record<string, string>>({});
-
     const fieldMapping: Record<string, string> = {
         roomName: "room_name",
         roomType: "room_type",
+        bedType: "bed_type",
         capacity: "capacity",
         amenities: "amenities",
         roomPrice: "room_price",
@@ -138,19 +139,12 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
 
     useEffect(() => {
         const handleKeyDown = (evt: KeyboardEvent) => {
-            if (evt.key === "Escape") {
-                cancel();
-            }
+            if (evt.key === "Escape") cancel();
         };
-        if (isOpen) {
-            window.addEventListener("keydown", handleKeyDown);
-        }
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
+        if (isOpen) window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
     }, [cancel, isOpen]);
 
-    // Animation variants for staggered animations
     const formVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -287,6 +281,43 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                                 transition={{ duration: 0.2 }}
                                             >
                                                 {errors[fieldMapping.roomType]}
+                                            </motion.p>
+                                        )}
+                                    </motion.div>
+
+                                    {/* Bed Type */}
+                                    <motion.div variants={itemVariants}>
+                                        <label className="block text-sm font-medium mb-1 text-gray-700">
+                                            Bed Type
+                                        </label>
+                                        <div className="relative">
+                                            <select
+                                                name="bedType"
+                                                value={formState.bedType}
+                                                onChange={handleChange}
+                                                className="appearance-none border border-gray-300 rounded-md w-full p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white"
+                                            >
+                                                <option value="" disabled>Select Bed Type</option>
+                                                <option value="single">Single</option>
+                                                <option value="twin">Twin</option>
+                                                <option value="double">Double</option>
+                                                <option value="queen">Queen</option>
+                                                <option value="king">King</option>
+                                            </select>
+                                            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        {errors["bed_type"] && (
+                                            <motion.p
+                                                className="text-red-500 text-xs mt-1"
+                                                initial={{ opacity: 0, y: -5 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                            >
+                                                {errors["bed_type"]}
                                             </motion.p>
                                         )}
                                     </motion.div>

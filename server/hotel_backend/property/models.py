@@ -17,11 +17,23 @@ class Rooms(models.Model):
         ('premium', 'Premium'),
         ('suites', 'Suites'),
     ]
+    BED_TYPE_CHOICES = [
+        ('single', 'Single'),
+        ('twin', 'Twin'),
+        ('double', 'Double'),
+        ('queen', 'Queen'),
+        ('king', 'King'),
+    ]
     room_name = models.CharField(max_length=100, null=False, default="Room")
     room_type = models.CharField(
         max_length=20,
         choices=ROOM_TYPE_CHOICES,
         default='premium',
+    )
+    bed_type = models.CharField(
+        max_length=20,
+        choices=BED_TYPE_CHOICES,
+        default='single',
     )
     status = models.CharField(
         max_length=20,

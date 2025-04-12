@@ -28,7 +28,8 @@ interface Room {
   room_name: string;
   room_image: string;
   room_type: string;
-  status: "maintenance" | "occupied" | "available";
+  bed_type: string;
+  status: "available" | "occupied" | "maintenance";
   room_price: number;
   description: string;
   capacity: string;
@@ -46,7 +47,7 @@ interface PaginationData {
   page_size: number;
 }
 
-const ViewRoomModal: FC<{
+const RoomDetailsModal: FC<{
   isOpen: boolean;
   onClose: () => void;
   roomData: Room | null;
@@ -76,7 +77,6 @@ const ViewRoomModal: FC<{
             exit={{ scale: 0.9, y: 20, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
           >
-            {/* Close button - positioned on top right */}
             <motion.button
               onClick={onClose}
               className="absolute top-4 right-4 z-50 bg-white/80 hover:bg-white text-gray-700 hover:text-red-600 rounded-full p-2 transition-all duration-200 shadow-md"
@@ -153,14 +153,12 @@ const ViewRoomModal: FC<{
                 >
                   <h1 className="text-3xl font-bold text-gray-900">{roomData.room_name}</h1>
                   <div className="flex items-center mt-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${roomData.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${roomData.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
                       {roomData.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
                     </span>
                   </div>
                 </motion.div>
 
-                {/* Description with a nice background */}
                 <motion.div
                   className="bg-gray-50 p-4 rounded-lg mb-5 shadow-inner"
                   initial={{ y: 10, opacity: 0 }}
@@ -173,7 +171,6 @@ const ViewRoomModal: FC<{
                   </p>
                 </motion.div>
 
-                {/* Details in a grid */}
                 <motion.div
                   className="grid grid-cols-2 gap-4 mb-6"
                   initial={{ y: 10, opacity: 0 }}
@@ -201,6 +198,22 @@ const ViewRoomModal: FC<{
                   </div>
                 </motion.div>
 
+                {/* Bed Type */}
+                <motion.div
+                  className="bg-amber-50 p-4 rounded-lg mb-5"
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.45 }}
+                >
+                  <h3 className="text-sm uppercase tracking-wider text-amber-600 font-medium mb-2">Bed Type</h3>
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-lg font-bold text-gray-800 capitalize">{roomData.bed_type}</span>
+                  </div>
+                </motion.div>
+
                 {/* Amenities Section */}
                 <motion.div
                   className="bg-indigo-50 p-4 rounded-lg mb-5"
@@ -224,7 +237,7 @@ const ViewRoomModal: FC<{
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
-                          <span className="text-gray-700">{getAmenityDescription(amenityId)}</span>
+                          <span className="text-gray-700">{getAmenityDescription(Number(amenityId))}</span>
                         </motion.div>
                       ))}
                     </div>
@@ -240,7 +253,11 @@ const ViewRoomModal: FC<{
                 >
                   <h3 className="text-sm uppercase tracking-wider text-amber-600 font-medium mb-2">Pricing</h3>
                   <div className="flex items-center">
-                    <span className="text-2xl font-bold text-gray-800">{roomData.room_price.toLocaleString()}</span>
+                    <span className="text-2xl font-bold text-gray-800">
+                      {typeof roomData.room_price === 'string'
+                        ? roomData.room_price
+                        : `₱${roomData.room_price.toLocaleString()}`}
+                    </span>
                   </div>
                 </motion.div>
               </div>
@@ -365,24 +382,27 @@ const ManageRooms: FC = () => {
   };
 
   const handleEdit = (room: Room) => {
+    console.log("Room data for editing:", room); // Debug log
     setEditRoomData({
       id: room.id,
       roomName: room.room_name,
       roomImage: room.room_image,
       roomType: room.room_type,
+      bedType: room.bed_type,
       status:
-        room.status === "maintenance"
-          ? "Maintenance"
-          : "Available",
+        room.status === "available"
+          ? "Available"
+          : "Maintenance",
       roomPrice: room.room_price,
       description: room.description,
       capacity: room.capacity,
-      amenities: room.amenities ?? [],
+      amenities: room.amenities || [], // Ensure amenities is an array
     });
     setShowFormModal(true);
   };
 
   const handleView = (room: Room) => {
+    console.log("Room data for viewing:", room);
     setViewRoomData(room);
     setShowViewModal(true);
   };
@@ -405,6 +425,7 @@ const ManageRooms: FC = () => {
     const formData = new FormData();
     formData.append("room_name", roomData.roomName);
     formData.append("room_type", roomData.roomType);
+    formData.append("bed_type", roomData.bedType);
     formData.append("status", roomData.status.toLowerCase());
     formData.append("room_price", String(roomData.roomPrice || 0));
     formData.append("description", roomData.description || "");
@@ -512,7 +533,12 @@ const ManageRooms: FC = () => {
                     }`}>
                     {room.room_type === 'premium' ? 'Premium' : 'Suites'}
                   </span>
-                  <span>{room.capacity}</span>
+                  <span className="flex items-center">
+                    <span className="inline-flex items-center rounded-md px-2 py-1 text-xs uppercase font-semibold mr-2 bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                      {room.bed_type}
+                    </span>
+                    {room.capacity}
+                  </span>
                 </p>
                 {/* Limit the description to 2 lines */}
                 <p className="text-gray-700 text-sm mb-2 line-clamp-2">
@@ -636,12 +662,14 @@ const ManageRooms: FC = () => {
         />
 
         {/* View (Read) Modal */}
-        <ViewRoomModal
-          isOpen={showViewModal}
-          onClose={() => setShowViewModal(false)}
-          roomData={viewRoomData}
-          allAmenities={allAmenities}
-        />
+        {viewRoomData && (
+          <RoomDetailsModal
+            isOpen={showViewModal}
+            onClose={() => setShowViewModal(false)}
+            roomData={viewRoomData}
+            allAmenities={allAmenities}
+          />
+        )}
       </div>
     </div>
   );

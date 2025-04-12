@@ -11,7 +11,6 @@ import SignupModal from "../components/SignupModal";
 import { useUserContext } from "../contexts/AuthContext";
 import { fetchAvailability } from "../services/Booking";
 
-// Same key constants as used in RoomAvailabilityCalendar
 const ARRIVAL_DATE_KEY = "hotel_arrival_date";
 const DEPARTURE_DATE_KEY = "hotel_departure_date";
 
@@ -22,17 +21,14 @@ const AvailabilityResults = () => {
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
 
-  // Initialize with values from URL params or localStorage
   const [arrival, setArrival] = useState<string>(searchParams.get("arrival") || "");
   const [departure, setDeparture] = useState<string>(searchParams.get("departure") || "");
 
-  // Attempt to load from localStorage if URL params are not available
   useEffect(() => {
     if (!arrival) {
       const savedArrival = localStorage.getItem(ARRIVAL_DATE_KEY);
       if (savedArrival) {
         setArrival(savedArrival);
-        // Update URL to include the saved date
         if (departure || localStorage.getItem(DEPARTURE_DATE_KEY)) {
           const depDate = departure || localStorage.getItem(DEPARTURE_DATE_KEY) || "";
           navigate(`/availability?arrival=${savedArrival}&departure=${depDate}`, { replace: true });
@@ -44,7 +40,6 @@ const AvailabilityResults = () => {
       const savedDeparture = localStorage.getItem(DEPARTURE_DATE_KEY);
       if (savedDeparture) {
         setDeparture(savedDeparture);
-        // Update URL to include the saved date
         if (arrival || localStorage.getItem(ARRIVAL_DATE_KEY)) {
           const arrDate = arrival || localStorage.getItem(ARRIVAL_DATE_KEY) || "";
           navigate(`/availability?arrival=${arrDate}&departure=${savedDeparture}`, { replace: true });
@@ -53,7 +48,6 @@ const AvailabilityResults = () => {
     }
   }, [arrival, departure, navigate]);
 
-  // Redirect to home if no dates are available
   useEffect(() => {
     if (!arrival || !departure) {
       const savedArrival = localStorage.getItem(ARRIVAL_DATE_KEY);
@@ -157,7 +151,7 @@ const AvailabilityResults = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-gray-600 mt-3">
               <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full">
                 <Calendar className="text-blue-600 h-5 w-5" />
-                <span className="font-medium">
+                <span className="font-semibold">
                   {formattedArrival} <span className="mx-2">→</span>{" "}
                   {formattedDeparture}
                 </span>

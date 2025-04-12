@@ -156,11 +156,8 @@ def fetch_rooms(request):
     try:
         rooms = Rooms.objects.all().order_by('id')
         
-        # Get pagination parameters
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
-        
-        # Create paginator
         paginator = Paginator(rooms, page_size)
         
         try:
@@ -303,13 +300,10 @@ def fetch_areas(request):
     try:
         areas = Areas.objects.all().order_by('id')
         
-        # Get pagination parameters
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
-        
-        # Create paginator
         paginator = Paginator(areas, page_size)
-        
+
         try:
             paginated_areas = paginator.page(page)
         except PageNotAnInteger:
@@ -635,11 +629,9 @@ def update_booking_status(request, booking_id):
         return Response({"error": f"Invalid status value. Valid values are: {', '.join(valid_statuses)}"}, 
                             status=status.HTTP_400_BAD_REQUEST)
         
-    # Check if set_available is explicitly set to False to prevent maintenance
     set_available = request.data.get('set_available')
     prevent_maintenance = set_available is False
 
-    # Only set to maintenance if not prevented and status requires it
     if status_value in ['reserved', 'confirmed', 'checked_in'] and not prevent_maintenance:
         if booking.is_venue_booking and booking.area:
             area = booking.area
@@ -816,7 +808,6 @@ def manage_user(request, user_id):
                 data = request.POST
                 files = request.FILES
                 
-                # Create new user logic
                 email = data.get('email')
                 password = data.get('password')
                 first_name = data.get('first_name')

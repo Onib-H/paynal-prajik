@@ -114,14 +114,13 @@ const BookingDetailsModal: FC<{
   onCheckIn?: (paymentAmount: number) => void;
   onCheckOut?: () => void;
   onNoShow?: () => void;
+  onCancel?: () => void;
   canManage: boolean;
   isUpdating: boolean;
-}> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, canManage, isUpdating }) => {
+}> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, onCancel, canManage, isUpdating }) => {
   const [paymentAmount, setPaymentAmount] = useState<string>("");
-
-  if (!booking) return null;
-
   const isVenueBooking = booking.is_venue_booking;
+  if (!booking) return null;
 
   const renderValidId = () => {
     if (!booking.valid_id) {
@@ -153,7 +152,6 @@ const BookingDetailsModal: FC<{
   const isPaymentComplete = currentPayment === bookingPrice;
   const isReservedStatus = booking.status === "reserved";
 
-  // Get appropriate loading text based on booking status
   const getLoadingText = () => {
     if (booking.status === "pending") {
       return "Reserving booking...";
@@ -163,11 +161,12 @@ const BookingDetailsModal: FC<{
       return "Checking out guest...";
     } else if (booking.status === "no_show") {
       return "Marking as no-show...";
+    } else if (booking.status === "cancelled") {
+      return "Cancelling booking...";
     }
     return "Processing booking...";
   };
 
-  // Get appropriate loader type based on booking status
   const getLoaderType = () => {
     if (booking.status === "pending") {
       return "reserve";
@@ -175,7 +174,7 @@ const BookingDetailsModal: FC<{
       return "checkin";
     } else if (booking.status === "checked_in") {
       return "checkout";
-    } else if (booking.status === "no_show") {
+    } else if (booking.status === "no_show" || booking.status === "cancelled") {
       return "noshow";
     }
     return "default";
@@ -310,12 +309,11 @@ const BookingDetailsModal: FC<{
               <motion.div
                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
               >
-                <span className="font-semibold text-gray-700">Price:</span>
+                <span className="font-semibold text-gray-700">{isVenueBooking ? "Venue Price:" : "Room Price:"}</span>
                 <span className="font-medium">
                   {isVenueBooking
                     ? booking.area_details?.price_per_hour
                     : booking.room_details?.room_price}
-                  <span className="text-gray-500 text-sm">{isVenueBooking ? '/hour' : '/night'}</span>
                 </span>
               </motion.div>
 
@@ -487,6 +485,14 @@ const BookingDetailsModal: FC<{
                 Mark as No Show
               </motion.button>
               <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={onCancel}
+                className="px-4 py-2 bg-red-600 text-white rounded-md flex items-center justify-center gap-2 shadow-sm"
+              >
+                <X size={18} />
+                Cancel Booking
+              </motion.button>
+              <motion.button
                 whileTap={isPaymentComplete ? { scale: 0.98 } : {}}
                 onClick={() => onCheckIn && isPaymentComplete && onCheckIn(currentPayment)}
                 className={`px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 shadow-sm ${isPaymentComplete
@@ -531,6 +537,7 @@ const ManageBookings: FC = () => {
   const [selectedBooking, setSelectedBooking] = useState<BookingResponse | null>(null);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [showNoShowModal, setShowNoShowModal] = useState(false);
+  const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 9;
 
@@ -727,6 +734,24 @@ const ManageBookings: FC = () => {
 
     return searchMatch && statusMatch;
   });
+
+  const handleCancellationInitiate = () => {
+    if (selectedBooking) setShowCancellationModal(true);
+  };
+
+  const handleCancellationConfirm = (reason: string) => {
+    if (selectedBooking) {
+      updateBookingStatusMutation.mutate({
+        bookingId: selectedBooking.id,
+        status: "cancelled",
+        reason: reason,
+        setRoomAvailable: true
+      });
+      setShowCancellationModal(false);
+    }
+  };
+
+  const closeCancellationModal = () => setShowCancellationModal(false);
 
   return (
     <div className="min-h-[calc(100vh-25px)] p-3 md:p-3 overflow-y-auto container mx-auto">
@@ -935,12 +960,13 @@ const ManageBookings: FC = () => {
           onCheckIn={handleCheckIn}
           onCheckOut={handleCheckOut}
           onNoShow={handleNoShow}
+          onCancel={handleCancellationInitiate}
           canManage={true}
           isUpdating={updateBookingStatusMutation.isPending}
         />
       )}
 
-      {/* Use CancellationModal instead of RejectionReasonModal */}
+      {/* Use CancellationModal for rejection */}
       {showRejectionModal && (
         <CancellationModal
           isOpen={showRejectionModal}
@@ -953,6 +979,22 @@ const ManageBookings: FC = () => {
           reasonPlaceholder="Enter detailed reason for rejecting this booking..."
           confirmButtonText="Confirm Rejection"
           showPolicyNote={false}
+        />
+      )}
+
+      {/* Use CancellationModal for guest cancellation */}
+      {showCancellationModal && (
+        <CancellationModal
+          isOpen={showCancellationModal}
+          onClose={closeCancellationModal}
+          onConfirm={handleCancellationConfirm}
+          bookingId={selectedBooking?.id}
+          title="Cancel Booking"
+          description="Please provide a reason for cancelling this booking on behalf of the guest. This will be recorded in the system."
+          reasonLabel="Reason for Cancellation"
+          reasonPlaceholder="Enter reason for guest's cancellation request..."
+          confirmButtonText="Confirm Cancellation"
+          showPolicyNote={true}
         />
       )}
 

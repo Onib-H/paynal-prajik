@@ -57,6 +57,7 @@ export interface BookingFormData {
   checkOut: string | null;
   status?: "pending" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
   totalPrice?: number;
+  arrivalTime?: string; // Expected time of arrival in HH:MM format
 }
 
 export interface ReservationFormData {
@@ -187,6 +188,9 @@ export const createBooking = async (bookingData: BookingFormData) => {
     formData.append("checkIn", bookingData.checkIn || "");
     formData.append("checkOut", bookingData.checkOut || "");
     formData.append("status", bookingData.status || "pending");
+    
+    // Add arrival time
+    formData.append("arrivalTime", bookingData.arrivalTime || "12:00");
 
     if (bookingData.totalPrice !== undefined) {
       formData.append("totalPrice", bookingData.totalPrice.toString());
