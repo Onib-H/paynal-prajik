@@ -65,9 +65,15 @@ const Navbar: FC = () => {
     }
   }, [clearAuthState, navigate]);
 
-  const toggleLoginModal = useCallback(() => setLoginModal((prev) => !prev), []);
-  const toggleRegisterModal = useCallback(() => setRegisterModal((prev) => !prev), []);
-  
+  const toggleLoginModal = useCallback(
+    () => setLoginModal((prev) => !prev),
+    []
+  );
+  const toggleRegisterModal = useCallback(
+    () => setRegisterModal((prev) => !prev),
+    []
+  );
+
   const toggleMenu = useCallback(() => setMenuOpen((prev) => !prev), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
@@ -207,7 +213,7 @@ const Navbar: FC = () => {
                 onClick={closeMenu}
               ></div>
               <ul className="fixed top-0 right-0 w-full h-screen md:w-3/5 sm:w-4/5 bg-white shadow-md text-black z-50 flex flex-col">
-                <div className="flex justify-between items-center pt-4 p-3 sm:p-5 md:p-6 bg-gray-200">
+                <div className="flex justify-between items-center pt-4 p-3 bg-gray-200">
                   <Link to="/">
                     <img
                       loading="lazy"

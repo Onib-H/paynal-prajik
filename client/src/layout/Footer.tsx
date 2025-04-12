@@ -17,7 +17,7 @@ const Footer = () => {
         </div>
 
         {/* Footer Sections */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 py-4">
+        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 py-4 mt-2">
           {footerLinks.map((section, sectionIndex) => (
             <div key={sectionIndex} className="text-left">
               <h1 className="text-base font-semibold">{section.title}</h1>

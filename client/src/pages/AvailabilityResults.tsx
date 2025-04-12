@@ -43,17 +43,15 @@ const AvailabilityResults = () => {
 
   const getAvailableRooms = () => {
     if (!data || !data.rooms) return [];
-    return data.rooms.filter((room: any) =>
-      room.status !== "reserved" &&
-      room.status !== "checked_in"
+    return data.rooms.filter(
+      (room: any) => room.status !== "reserved" && room.status !== "checked_in"
     );
   };
 
   const getAvailableAreas = () => {
     if (!data || !data.areas) return [];
-    return data.areas.filter((area: any) =>
-      area.status !== "reserved" &&
-      area.status !== "checked_in"
+    return data.areas.filter(
+      (area: any) => area.status !== "reserved" && area.status !== "checked_in"
     );
   };
 
@@ -96,8 +94,14 @@ const AvailabilityResults = () => {
     },
   };
 
-  const toggleLoginModal = useCallback(() => setShowLoginModal((prev) => !prev), []);
-  const toggleSignupModal = useCallback(() => setShowSignupModal((prev) => !prev), []);
+  const toggleLoginModal = useCallback(
+    () => setShowLoginModal((prev) => !prev),
+    []
+  );
+  const toggleSignupModal = useCallback(
+    () => setShowSignupModal((prev) => !prev),
+    []
+  );
 
   const handleSuccessfulLogin = () => window.location.reload();
 
@@ -251,8 +255,8 @@ const AvailabilityResults = () => {
                       No rooms available for these dates.
                     </p>
                     <p className="text-gray-500 mt-2">
-                      Rooms may be fully booked, reserved, or currently checked in.
-                      Please try selecting different dates for your stay.
+                      Rooms may be fully booked, reserved, or currently checked
+                      in. Please try selecting different dates for your stay.
                     </p>
                   </motion.div>
                 )}
@@ -350,7 +354,8 @@ const AvailabilityResults = () => {
               </motion.section>
 
               {/* Call to action footer */}
-              {(getAvailableRooms().length > 0 || getAvailableAreas().length > 0) && (
+              {(getAvailableRooms().length > 0 ||
+                getAvailableAreas().length > 0) && (
                 <motion.div
                   className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl p-6 text-center mt-12"
                   initial={{ opacity: 0, y: 20 }}
