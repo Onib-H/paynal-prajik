@@ -14,11 +14,11 @@ import {
   Tooltip
 } from "chart.js";
 import { useRef, useState } from "react";
-import { Bar, Doughnut, Line, Pie } from "react-chartjs-2";
+import { Bar, Doughnut, Line } from "react-chartjs-2";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
 import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
-import { fetchBookingStatusCounts, fetchStats } from "../../services/Admin";
+import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyCheckInsCheckOuts, fetchDailyNoShowsRejected, fetchDailyOccupancy, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import '../../styles/print.css';
 import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
@@ -48,36 +48,18 @@ const getDaysInMonth = () => {
   });
 };
 
-const generateDailyData = (max: number, min: number, trend: 'up' | 'down' | 'stable' = 'stable', volatility = 0.2) => {
-  const daysInMonth = getDaysInMonth().length;
-  const range = max - min;
-
-  return Array.from({ length: daysInMonth }, (_, i) => {
-    let base;
-    if (trend === 'up') {
-      base = min + (range * i / daysInMonth);
-    } else if (trend === 'down') {
-      base = max - (range * i / daysInMonth);
-    } else {
-      base = min + range / 2;
-    }
-
-    const randomFactor = 1 + (Math.random() * volatility * 2 - volatility);
-    return Math.round(base * randomFactor);
-  });
-};
-
-const generateDailyPercentages = (max: number, min: number) => {
-  const daysInMonth = getDaysInMonth().length;
-  return Array.from({ length: daysInMonth }, () => {
-    return Math.round((Math.random() * (max - min) + min) * 100) / 100;
-  });
-};
-
 const AdminDashboard = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['stats'],
-    queryFn: fetchStats,
+    queryFn: async () => {
+      const statsData = await fetchStats();
+
+      if (!statsData.daily_revenue) {
+        statsData.daily_revenue = getDaysInMonth().map(() => 0);
+      }
+
+      return statsData;
+    },
   });
 
   const { data: bookingStatusData, isLoading: bookingStatusLoading } = useQuery({
@@ -85,14 +67,48 @@ const AdminDashboard = () => {
     queryFn: fetchBookingStatusCounts,
   });
 
+  const { data: dailyBookingsResponse, isLoading: bookingsDataLoading } = useQuery({
+    queryKey: ['dailyBookings'],
+    queryFn: fetchDailyBookings,
+  });
+
+  const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } = useQuery({
+    queryKey: ['dailyOccupancy'],
+    queryFn: fetchDailyOccupancy,
+  });
+
+  const { data: checkinCheckoutData, isLoading: checkinsDataLoading } = useQuery({
+    queryKey: ['dailyCheckInsCheckOuts'],
+    queryFn: fetchDailyCheckInsCheckOuts,
+  });
+
+  const { data: dailyCancellationsResponse, isLoading: cancellationsDataLoading } = useQuery({
+    queryKey: ['dailyCancellations'],
+    queryFn: fetchDailyCancellations,
+  });
+
+  const { data: dailyNoShowsRejectedResponse, isLoading: noShowsRejectedDataLoading } = useQuery({
+    queryKey: ['dailyNoShowsRejected'],
+    queryFn: fetchDailyNoShowsRejected,
+  });
+
+  const { data: roomRevenueResponse, isLoading: roomRevenueLoading } = useQuery({
+    queryKey: ['roomRevenue'],
+    queryFn: fetchRoomRevenue,
+  });
+
+  const { data: roomBookingsResponse, isLoading: roomBookingsLoading } = useQuery({
+    queryKey: ['roomBookings'],
+    queryFn: fetchRoomBookings,
+  });
+
   const revenueChartRef = useRef<HTMLCanvasElement | null>(null);
   const bookingTrendsChartRef = useRef<HTMLCanvasElement | null>(null);
   const bookingStatusChartRef = useRef<HTMLCanvasElement | null>(null);
-  const roomOccupancyChartRef = useRef<HTMLCanvasElement | null>(null);
 
   const [showReportView, setShowReportView] = useState(false);
 
-  if (isLoading || bookingStatusLoading) return <DashboardSkeleton />;
+  if (isLoading || bookingStatusLoading || bookingsDataLoading || occupancyDataLoading || checkinsDataLoading || cancellationsDataLoading || roomRevenueLoading || roomBookingsLoading || noShowsRejectedDataLoading) return <DashboardSkeleton />;
   if (error) return <Error />;
 
   const stats = {
@@ -125,20 +141,18 @@ const AdminDashboard = () => {
   };
 
   const daysInMonth = getDaysInMonth();
-  const dailyRevenueData = generateDailyData(stats.revenue / 20, stats.revenue / 40, 'up');
-  const dailyBookingsData = generateDailyData(Math.max(5, stats.totalBookings / 15), 0, 'stable');
-  const dailyOccupancyRates = generateDailyPercentages(95, 55);
-  const dailyCheckIns = generateDailyData(Math.max(3, stats.checkedInCount / 15), 0, 'stable');
-  const dailyCheckOuts = dailyCheckIns.map(val => Math.round(val * 0.9));
-  const dailyCancellations = generateDailyData(Math.max(2, bookingStatusCounts.cancelled / 20), 0, 'stable');
+  const dailyRevenueData = data?.daily_revenue || getDaysInMonth().map(() => 0);
+  const dailyBookingsData = dailyBookingsResponse?.data || getDaysInMonth().map(() => 0);
+  const dailyOccupancyRates = dailyOccupancyResponse?.data || getDaysInMonth().map(() => 0);
+  const dailyCheckIns = checkinCheckoutData?.checkins || getDaysInMonth().map(() => 0);
+  const dailyCheckOuts = checkinCheckoutData?.checkouts || getDaysInMonth().map(() => 0);
+  const dailyCancellations = dailyCancellationsResponse?.data || getDaysInMonth().map(() => 0);
+  const dailyNoShows = dailyNoShowsRejectedResponse?.no_shows || getDaysInMonth().map(() => 0);
+  const dailyRejected = dailyNoShowsRejectedResponse?.rejected || getDaysInMonth().map(() => 0);
 
-  const roomTypes = ['Standard', 'Deluxe', 'Suite', 'Family'];
-  const roomTypeOccupancy = roomTypes.map(() => Math.floor(Math.random() * stats.totalRooms / 4));
-  const roomTypeAvailable = roomTypes.map((_, i) => Math.floor(stats.totalRooms / 4) - roomTypeOccupancy[i]);
-
-  const roomIds = Array.from({ length: Math.min(8, stats.totalRooms) }, (_, i) => `Room ${i + 1}`);
-  const roomRevenues = roomIds.map(() => Math.floor(Math.random() * (stats.roomRevenue / roomIds.length) * 1.5));
-  const roomBookingCounts = roomIds.map(() => Math.floor(Math.random() * 10) + 1);
+  const roomNames = roomRevenueResponse?.room_names || [];
+  const roomRevenueValues = roomRevenueResponse?.revenue_data || [];
+  const roomBookingValues = roomBookingsResponse?.booking_counts || [];
 
   const lineOptions = {
     responsive: true,
@@ -276,45 +290,45 @@ const AdminDashboard = () => {
         data: dailyCancellations,
         borderColor: '#FF5722',
         backgroundColor: 'rgba(255, 87, 34, 0.1)',
-        fill: true,
+        fill: false,
+        tension: 0.3
+      },
+      {
+        label: 'No Show',
+        data: dailyNoShows,
+        borderColor: '#9C27B0',
+        backgroundColor: 'rgba(156, 39, 176, 0.1)',
+        fill: false,
+        tension: 0.3
+      },
+      {
+        label: 'Rejected',
+        data: dailyRejected,
+        borderColor: '#F44336',
+        backgroundColor: 'rgba(244, 67, 54, 0.1)',
+        fill: false,
         tension: 0.3
       }
     ]
   };
 
-  const roomTypeOccupancyData = {
-    labels: roomTypes,
-    datasets: [
-      {
-        label: 'Occupied',
-        data: roomTypeOccupancy,
-        backgroundColor: '#2196F3',
-      },
-      {
-        label: 'Available',
-        data: roomTypeAvailable,
-        backgroundColor: '#4CAF50',
-      }
-    ]
-  };
-
   const roomRevenueData = {
-    labels: roomIds,
+    labels: roomNames,
     datasets: [
       {
         label: 'Revenue (₱)',
-        data: roomRevenues,
+        data: roomRevenueValues,
         backgroundColor: '#9C27B0',
       }
     ]
   };
 
   const roomBookingCountData = {
-    labels: roomIds,
+    labels: roomNames,
     datasets: [
       {
         label: 'Booking Count',
-        data: roomBookingCounts,
+        data: roomBookingValues,
         backgroundColor: '#FF9800',
       }
     ]
@@ -346,29 +360,11 @@ const AdminDashboard = () => {
     ]
   };
 
-  const cancellationBreakdownData = {
-    labels: ['Cancelled', 'Rejected', 'No Show'],
+  const roomBookingDistributionData = {
+    labels: roomNames,
     datasets: [
       {
-        data: [
-          bookingStatusCounts.cancelled,
-          bookingStatusCounts.rejected,
-          bookingStatusCounts.no_show
-        ],
-        backgroundColor: [
-          "#F44336",
-          "#FF5722",
-          "#9C27B0"
-        ],
-      }
-    ]
-  };
-
-  const revenueContributionData = {
-    labels: roomIds,
-    datasets: [
-      {
-        data: roomRevenues,
+        data: roomBookingValues,
         backgroundColor: [
           '#3F51B5', '#4CAF50', '#FFC107', '#F44336',
           '#9C27B0', '#00BCD4', '#FF9800', '#795548'
@@ -377,11 +373,11 @@ const AdminDashboard = () => {
     ]
   };
 
-  const roomBookingDistributionData = {
-    labels: roomIds,
+  const revenueContributionData = {
+    labels: roomNames,
     datasets: [
       {
-        data: roomBookingCounts,
+        data: roomRevenueValues,
         backgroundColor: [
           '#3F51B5', '#4CAF50', '#FFC107', '#F44336',
           '#9C27B0', '#00BCD4', '#FF9800', '#795548'
@@ -409,7 +405,6 @@ const AdminDashboard = () => {
           revenueData: revenueLineData,
           bookingTrendsData: bookingTrendsData,
           bookingStatusData: bookingStatusChartData,
-          roomOccupancyData: roomTypeOccupancyData,
           revenueContributionData: revenueContributionData,
           roomBookingDistributionData: roomBookingDistributionData
         }}
@@ -425,7 +420,7 @@ const AdminDashboard = () => {
         <h1 className="text-3xl font-semibold">Admin Dashboard (Monthly Report)</h1>
         <button
           onClick={handleGenerateReport}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center cursor-pointer transition-colors duration-300"
+          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center cursor-pointer transition-colors duration-300"
           title="Generate a monthly report using HTML/CSS"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -439,7 +434,14 @@ const AdminDashboard = () => {
         <StatCard title="Total Bookings" value={stats.totalBookings} borderColor="border-blue-500" />
         <StatCard title="Active Bookings" value={stats.activeBookings} borderColor="border-green-500" />
         <StatCard title="Total Revenue" value={stats.formattedRevenue} borderColor="border-orange-500" />
-        <StatCard title="Occupancy Rate" value={`${Math.round((stats.totalRooms > 0 ? (data?.occupied_rooms || 0) / stats.totalRooms : 0) * 100)}%`} borderColor="border-purple-500" />
+        <StatCard title="Occupancy Rate" value={`${Math.round((stats.totalRooms > 0 ? stats.occupiedRooms / stats.totalRooms : 0) * 100)}%`} borderColor="border-purple-500" />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <StatCard title="Pending Bookings" value={stats.pendingBookings} borderColor="border-yellow-500" />
+        <StatCard title="Checked-in Guests" value={stats.checkedInCount} borderColor="border-indigo-500" />
+        <StatCard title="Available Rooms" value={stats.availableRooms} borderColor="border-teal-500" />
+        <StatCard title="Total Rooms" value={stats.totalRooms} borderColor="border-gray-500" />
       </div>
 
       <div className="mb-8">
@@ -451,7 +453,37 @@ const AdminDashboard = () => {
             <div className="h-64">
               <Line
                 data={revenueLineData}
-                options={lineOptions}
+                options={{
+                  ...lineOptions,
+                  plugins: {
+                    ...lineOptions.plugins,
+                    tooltip: {
+                      ...lineOptions.plugins?.tooltip,
+                      callbacks: {
+                        label: function (context: any) {
+                          let label = context.dataset.label || '';
+                          if (label) {
+                            label += ': ';
+                          }
+                          if (context.parsed.y !== null) {
+                            label += new Intl.NumberFormat('en-PH', {
+                              style: 'currency',
+                              currency: 'PHP'
+                            }).format(context.parsed.y);
+                          }
+                          return label;
+                        }
+                      }
+                    },
+                    title: {
+                      display: true,
+                      text: `Daily Revenue - ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+                      font: {
+                        size: 16
+                      }
+                    }
+                  }
+                }}
                 ref={(ref) => {
                   if (ref) {
                     revenueChartRef.current = ref.canvas;
@@ -466,7 +498,19 @@ const AdminDashboard = () => {
             <div className="h-64">
               <Line
                 data={bookingTrendsData}
-                options={lineOptions}
+                options={{
+                  ...lineOptions,
+                  plugins: {
+                    ...lineOptions.plugins,
+                    title: {
+                      display: true,
+                      text: `Daily Bookings - ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+                      font: {
+                        size: 16
+                      }
+                    }
+                  }
+                }}
                 ref={(ref) => {
                   if (ref) {
                     bookingTrendsChartRef.current = ref.canvas;
@@ -479,45 +523,68 @@ const AdminDashboard = () => {
           <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">Occupancy Rate</h3>
             <div className="h-64">
-              <Line data={occupancyRateData} options={lineOptions} />
+              <Line
+                data={occupancyRateData}
+                options={{
+                  ...lineOptions,
+                  plugins: {
+                    ...lineOptions.plugins,
+                    tooltip: {
+                      ...lineOptions.plugins?.tooltip,
+                      callbacks: {
+                        label: function (context: any) {
+                          let label = context.dataset.label || '';
+                          if (label) {
+                            label += ': ';
+                          }
+                          if (context.parsed.y !== null) {
+                            label += `${context.parsed.y.toFixed(1)}%`;
+                          }
+                          return label;
+                        }
+                      }
+                    },
+                    title: {
+                      display: true,
+                      text: `Daily Occupancy Rates - ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+                      font: {
+                        size: 16
+                      }
+                    }
+                  }
+                }}
+              />
             </div>
           </div>
 
           <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">Check-ins & Check-outs</h3>
             <div className="h-64">
-              <Line data={checkInOutData} options={lineOptions} />
-          </div>
-        </div>
-
-          <div className="bg-white shadow-lg rounded-lg p-4 md:col-span-2">
-            <h3 className="text-lg font-medium mb-2 text-center">Cancellation Trends</h3>
-            <div className="h-64">
-              <Line data={cancellationData} options={lineOptions} />
+              <Line
+                data={checkInOutData}
+                options={{
+                  ...lineOptions,
+                  plugins: {
+                    ...lineOptions.plugins,
+                    title: {
+                      display: true,
+                      text: `Daily Check-ins & Check-outs - ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+                      font: {
+                        size: 16
+                      }
+                    }
+                  }
+                }}
+              />
             </div>
           </div>
         </div>
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Comparative Analysis</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Key Business Insights</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">Room Occupancy by Type</h3>
-            <div className="h-64">
-              <Bar
-                data={roomTypeOccupancyData}
-                options={barOptions}
-                ref={(ref) => {
-                  if (ref) {
-                    roomOccupancyChartRef.current = ref.canvas;
-                }
-              }}
-            />
-            </div>
-          </div>
-
           <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">Revenue by Room</h3>
             <div className="h-64">
@@ -535,33 +602,6 @@ const AdminDashboard = () => {
           <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">Booking Status Distribution</h3>
             <div className="h-64">
-              <Bar data={bookingStatusChartData} options={barOptions} />
-            </div>
-          </div>
-
-          <div className="bg-white shadow-lg rounded-lg p-4 md:col-span-2">
-            <h3 className="text-lg font-medium mb-2 text-center">Cancellation Breakdown</h3>
-            <div className="h-64">
-              <Bar data={cancellationBreakdownData} options={barOptions} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Proportional Insights</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">Revenue by Room</h3>
-            <div className="h-64">
-              <Pie data={revenueContributionData} options={pieOptions} />
-            </div>
-          </div>
-
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">Booking Status</h3>
-            <div className="h-64">
               <Doughnut
                 data={bookingStatusChartData}
                 options={pieOptions}
@@ -575,9 +615,9 @@ const AdminDashboard = () => {
           </div>
 
           <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">Bookings by Room</h3>
+            <h3 className="text-lg font-medium mb-2 text-center">Cancellation Trends</h3>
             <div className="h-64">
-              <Pie data={roomBookingDistributionData} options={pieOptions} />
+              <Line data={cancellationData} options={lineOptions} />
             </div>
           </div>
         </div>

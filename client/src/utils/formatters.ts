@@ -17,7 +17,6 @@ export const formatCurrency = (amount: number): string => {
 export const parsePriceValue = (price: string | number): number => {
   if (typeof price === "number") return price;
 
-  // Remove the peso sign, commas, and any other non-numeric characters except decimal point
   const numericString = price.replace(/[^\d.]/g, "");
   return parseFloat(numericString) || 0;
 };

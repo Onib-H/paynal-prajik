@@ -113,6 +113,7 @@ class BookingRequestSerializer(serializers.Serializer):
     status = serializers.CharField(default='pending')
     isVenueBooking = serializers.BooleanField(required=False, default=False)
     totalPrice = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
+    arrivalTime = serializers.CharField(required=False, allow_blank=True)
 
     def create(self, validated_data):
         request = self.context.get('request')
@@ -182,7 +183,8 @@ class BookingRequestSerializer(serializers.Serializer):
                     valid_id=valid_id_url,
                     special_request=validated_data.get('specialRequests', ''),
                     total_price=total_price,
-                    is_venue_booking=True
+                    is_venue_booking=True,
+                    time_of_arrival=validated_data.get('arrivalTime', None)
                 )
                 
                 print(f"Venue booking created successfully: ID {booking.id}")
@@ -207,7 +209,8 @@ class BookingRequestSerializer(serializers.Serializer):
                     valid_id=valid_id_url,
                     special_request=validated_data.get('specialRequests', ''),
                     is_venue_booking=False,
-                    total_price=validated_data.get('totalPrice')
+                    total_price=validated_data.get('totalPrice'),
+                    time_of_arrival=validated_data.get('arrivalTime', None)
                 )
                 print(f"Booking created successfully: ID {booking.id}, Valid ID: {booking.valid_id}")
                 

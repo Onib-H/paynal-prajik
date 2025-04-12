@@ -52,7 +52,7 @@ const ConfirmBooking = () => {
     emailAddress: '',
     validId: null as File | null,
     specialRequests: '',
-    arrivalTime: '' // Empty by default
+    arrivalTime: ''
   });
 
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);

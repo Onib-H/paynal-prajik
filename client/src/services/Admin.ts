@@ -30,9 +30,148 @@ export const fetchStats = async () => {
     const response = await ADMIN.get("/stats", {
       withCredentials: true,
     });
-    return response.data;
+    
+    // If we need to get daily revenue, we can fetch it here
+    try {
+      const revenueData = await fetchDailyRevenue();
+      return {
+        ...response.data,
+        daily_revenue: revenueData.data || []
+      };
+    } catch (revenueError) {
+      console.error("Failed to fetch daily revenue:", revenueError);
+      return response.data;
+    }
   } catch (error) {
     console.error(`Failed to fetch stats: ${error}`);
+    throw error;
+  }
+};
+
+export const fetchDailyRevenue = async () => {
+  try {
+    const response = await ADMIN.get("/daily_revenue", {
+      params: {
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch daily revenue: ${error}`);
+    throw error;
+  }
+};
+
+export const fetchDailyBookings = async () => {
+  try {
+    const response = await ADMIN.get("/daily_bookings", {
+      params: {
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch daily bookings: ${error}`);
+    throw error;
+  }
+};
+
+export const fetchDailyOccupancy = async () => {
+  try {
+    const response = await ADMIN.get("/daily_occupancy", {
+      params: {
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch daily occupancy: ${error}`);
+    throw error;
+  }
+};
+
+export const fetchDailyCheckInsCheckOuts = async () => {
+  try {
+    const response = await ADMIN.get("/daily_checkins_checkouts", {
+      params: {
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch daily check-ins/check-outs: ${error}`);
+    throw error;
+  }
+};
+
+export const fetchDailyCancellations = async () => {
+  try {
+    const response = await ADMIN.get("/daily_cancellations", {
+      params: {
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch daily cancellations: ${error}`);
+    throw error;
+  }
+};
+
+export const fetchDailyNoShowsRejected = async () => {
+  try {
+    const response = await ADMIN.get("/daily_no_shows_rejected", {
+      params: {
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch daily no-shows and rejected bookings: ${error}`);
+    throw error;
+  }
+};
+
+export const fetchRoomRevenue = async () => {
+  try {
+    const response = await ADMIN.get("/room_revenue", {
+      params: {
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch room revenue: ${error}`);
+    throw error;
+  }
+};
+
+export const fetchRoomBookings = async () => {
+  try {
+    const response = await ADMIN.get("/room_bookings", {
+      params: {
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch room bookings: ${error}`);
     throw error;
   }
 };

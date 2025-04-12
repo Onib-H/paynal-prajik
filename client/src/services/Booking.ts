@@ -42,6 +42,7 @@ export interface BookingResponse {
   updated_at: string;
   cancellation_reason?: string;
   valid_id?: string;
+  time_of_arrival?: string;
 }
 
 export interface BookingFormData {
@@ -57,7 +58,7 @@ export interface BookingFormData {
   checkOut: string | null;
   status?: "pending" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
   totalPrice?: number;
-  arrivalTime?: string; // Expected time of arrival in HH:MM format
+  arrivalTime?: string;
 }
 
 export interface ReservationFormData {

@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, FC, useEffect, useState } from "react";
 import { fetchAmenities } from "../../services/Admin";
-import { parsePriceValue } from "../../utils/formatters";
 
 export interface IRoom {
     id: number;
@@ -40,7 +39,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
         bedType: roomData?.bedType || "single",
         capacity: roomData?.capacity || "",
         amenities: roomData?.amenities || [],
-        roomPrice: roomData?.roomPrice ? parsePriceValue(roomData.roomPrice) : 0,
+        roomPrice: roomData?.roomPrice,
         status: roomData?.status || "Available",
         description: roomData?.description || "",
         roomImage: roomData?.roomImage || "",
@@ -57,7 +56,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                 bedType: roomData.bedType || "single",
                 capacity: roomData.capacity || "",
                 amenities: roomData.amenities || [],
-                roomPrice: roomData.roomPrice ? parsePriceValue(roomData.roomPrice) : 0,
+                roomPrice: roomData.roomPrice,
                 status: roomData.status || "Available",
                 description: roomData.description || "",
                 roomImage: roomData.roomImage || "",
@@ -519,7 +518,6 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                                         >
                                                             <motion.div
                                                                 className="flex items-center space-x-2"
-                                                                whileHover={{ scale: 1.02 }}
                                                             >
                                                                 <input
                                                                     type="checkbox"

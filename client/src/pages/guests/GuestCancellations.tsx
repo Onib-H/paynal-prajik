@@ -4,8 +4,8 @@ import { ChevronLeft, ChevronRight, Eye, Loader, Search } from "lucide-react";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import BookingData from "../../components/bookings/BookingData";
+import { BookingDetailsSkeleton, BookingsTableSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
 import { fetchBookingDetail, fetchUserBookings } from "../../services/Booking";
-import { BookingsTableSkeleton, BookingDetailsSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
 
 const formatDate = (dateString: string): string => {
   if (!dateString) return 'N/A';
@@ -47,7 +47,35 @@ const GuestCancellations: FC = () => {
 
   const userBookingsQuery = useQuery({
     queryKey: ['userBookings', 'cancelled', currentPage, pageSize],
-    queryFn: () => fetchUserBookings({ page: currentPage, pageSize }),
+    queryFn: async () => {
+      // Fetch all user bookings - the API doesn't support status filtering
+      const response = await fetchUserBookings({ page: 1, pageSize: 100 });
+
+      // Filter cancelled bookings on the client side
+      const allBookings = response.data || [];
+      const cancelledBookings = allBookings.filter(
+        (booking: any) => booking.status.toLowerCase() === "cancelled"
+      );
+
+      // Implement manual pagination for the filtered bookings
+      const totalCancelledItems = cancelledBookings.length;
+      const calculatedTotalPages = Math.max(1, Math.ceil(totalCancelledItems / pageSize));
+
+      // Get the current page of cancelled bookings
+      const startIndex = (currentPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedBookings = cancelledBookings.slice(startIndex, endIndex);
+
+      return {
+        data: paginatedBookings,
+        pagination: {
+          total_pages: calculatedTotalPages,
+          current_page: currentPage,
+          total_items: totalCancelledItems,
+          page_size: pageSize
+        }
+      };
+    },
   });
 
   const bookingDetailsQuery = useQuery({
@@ -63,18 +91,10 @@ const GuestCancellations: FC = () => {
   }, [changingPage, userBookingsQuery.isPending]);
 
   const { bookings, totalPages, isLoading, errorMessage } = useMemo(() => {
-    const allBookings = userBookingsQuery.data?.data || [];
-
-    const cancelledBookings = allBookings.filter(
-    (booking: any) => booking.status.toLowerCase() === "cancelled"
-  );
-
-    const totalCancelledItems = cancelledBookings.length;
-    const calculatedTotalPages = Math.max(1, Math.ceil(totalCancelledItems / pageSize));
-
+    // Data is already filtered in the queryFn
     return {
-      bookings: cancelledBookings,
-      totalPages: calculatedTotalPages,
+      bookings: userBookingsQuery.data?.data || [],
+      totalPages: userBookingsQuery.data?.pagination?.total_pages || 1,
       isLoading: userBookingsQuery.isPending ||
         (bookingDetailsQuery.isPending && !!bookingId) ||
         changingPage,
@@ -85,13 +105,11 @@ const GuestCancellations: FC = () => {
           : null
     };
   }, [userBookingsQuery.data, userBookingsQuery.isPending, userBookingsQuery.isError,
-  bookingDetailsQuery.isPending, bookingDetailsQuery.isError, bookingId, changingPage, pageSize]);
+  bookingDetailsQuery.isPending, bookingDetailsQuery.isError, bookingId, changingPage]);
 
   const filteredBookings = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-
-    const searchFilteredBookings = bookings.filter((booking: any) => {
+    // Apply search filtering
+    return bookings.filter((booking: any) => {
       const matchesSearch =
         (booking.is_venue_booking
           ? (booking.area_name || booking.area_details?.area_name || '')
@@ -108,9 +126,7 @@ const GuestCancellations: FC = () => {
 
       return matchesSearch;
     });
-
-    return searchFilteredBookings.slice(startIndex, endIndex);
-  }, [bookings, searchTerm, currentPage, pageSize]);
+  }, [bookings, searchTerm]);
 
   const viewBookingDetails = useCallback((id: string) => {
     searchParams.delete('cancelled');
@@ -183,17 +199,17 @@ const GuestCancellations: FC = () => {
       </div>
 
       {/* Bookings Table */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="p-6">
           {changingPage && (
             <div className="flex justify-center items-center py-10">
               <Loader size={40} className="animate-spin text-blue-500" />
               <span className="ml-3 text-lg text-gray-600">Loading cancelled bookings...</span>
-          </div>
+            </div>
           )}
 
           {!changingPage && filteredBookings.length > 0 ? (
-              <div className="overflow-x-auto">
+            <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 table-fixed">
                 <thead>
                   <tr>
@@ -204,9 +220,9 @@ const GuestCancellations: FC = () => {
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
                   {filteredBookings.map((booking: any) => {
                     const isVenueBooking = booking.is_venue_booking;
                     let itemName, itemImage, totalAmount;
@@ -321,11 +337,11 @@ const GuestCancellations: FC = () => {
                       </tr>
                     );
                   })}
-                  </tbody>
-                </table>
-              </div>
+                </tbody>
+              </table>
+            </div>
           ) : !changingPage ? (
-              <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500">
               No cancelled bookings found.
             </div>
           ) : null}
@@ -381,10 +397,10 @@ const GuestCancellations: FC = () => {
                   <ChevronRight size={20} />
                 </button>
               </nav>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
+      </div>
     </div>
   );
 };

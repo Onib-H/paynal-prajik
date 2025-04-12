@@ -101,7 +101,7 @@ const getBookingPrice = (booking: BookingResponse): number => {
 
     return basePrice;
   } catch (error) {
-    console.error('Error parsing booking price:', error);
+    console.error(`Error parsing booking price: ${error}`);
     return 0;
   }
 };
@@ -153,31 +153,36 @@ const BookingDetailsModal: FC<{
   const isReservedStatus = booking.status === "reserved";
 
   const getLoadingText = () => {
-    if (booking.status === "pending") {
-      return "Reserving booking...";
-    } else if (booking.status === "reserved") {
-      return "Checking in guest...";
-    } else if (booking.status === "checked_in") {
-      return "Checking out guest...";
-    } else if (booking.status === "no_show") {
-      return "Marking as no-show...";
-    } else if (booking.status === "cancelled") {
-      return "Cancelling booking...";
+    switch (booking.status) {
+      case "pending":
+        return "Reserving booking...";
+      case "reserved":
+        return "Checking in guest...";
+      case "checked_in":
+        return "Checking out guest...";
+      case "no_show":
+        return "Marking as no-show...";
+      case "cancelled":
+        return "Cancelling booking...";
+      default:
+        return "Processing booking...";
     }
-    return "Processing booking...";
   };
 
   const getLoaderType = () => {
-    if (booking.status === "pending") {
-      return "reserve";
-    } else if (booking.status === "reserved") {
-      return "checkin";
-    } else if (booking.status === "checked_in") {
-      return "checkout";
-    } else if (booking.status === "no_show" || booking.status === "cancelled") {
-      return "noshow";
+    switch (booking.status) {
+      case "pending":
+        return "reserve";
+      case "reserved":
+        return "checkin";
+      case "checked_in":
+        return "checkout";
+      case "no_show":
+      case "cancelled":
+        return "noshow";
+      default:
+        return "default";
     }
-    return "default";
   };
 
   return (
@@ -251,7 +256,7 @@ const BookingDetailsModal: FC<{
                 <span className="font-semibold text-gray-700">Property Type:</span>
                 <span>
                   {isVenueBooking ? (
-                    <span className="bg-blue-100 text-blue-800 px-2 uppercase py-1 rounded-full text-md font-semibold">Venue</span>
+                    <span className="bg-blue-100 text-blue-800 px-2 uppercase py-1 rounded-full text-md font-semibold">Area</span>
                   ) : (
                     <span className="bg-green-100 text-green-800 px-2 uppercase py-1 rounded-full text-md font-semibold">Room</span>
                   )}
@@ -261,9 +266,9 @@ const BookingDetailsModal: FC<{
               <motion.div
                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
               >
-                <span className="font-semibold text-gray-700">{isVenueBooking ? "Venue:" : "Room:"}</span>
+                <span className="font-semibold text-gray-700">{isVenueBooking ? "Area:" : "Room:"}</span>
                 <span className="sm:text-right font-medium">{isVenueBooking
-                  ? (booking.area_details?.area_name || "Unknown Venue")
+                  ? (booking.area_details?.area_name || "Unknown Area")
                   : (booking.room_details?.room_name || "Unknown Room")}
                 </span>
               </motion.div>
@@ -295,6 +300,21 @@ const BookingDetailsModal: FC<{
                 </span>
               </motion.div>
 
+              {!isVenueBooking && booking.time_of_arrival && (
+                <motion.div
+                  className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
+                >
+                  <span className="font-semibold text-gray-700">Expected Arrival Time:</span>
+                  <span className="font-medium">
+                    {new Date(`2000-01-01T${booking.time_of_arrival}`).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    })}
+                  </span>
+                </motion.div>
+              )}
+
               <motion.div
                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
               >
@@ -309,7 +329,7 @@ const BookingDetailsModal: FC<{
               <motion.div
                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
               >
-                <span className="font-semibold text-gray-700">{isVenueBooking ? "Venue Price:" : "Room Price:"}</span>
+                <span className="font-semibold text-gray-700">{isVenueBooking ? "Area Price:" : "Room Price:"}</span>
                 <span className="font-medium">
                   {isVenueBooking
                     ? booking.area_details?.price_per_hour
@@ -431,10 +451,10 @@ const BookingDetailsModal: FC<{
               >
                 <h3 className="font-semibold mb-2 text-blue-800 flex items-center">
                   <Calendar className="w-4 h-4 mr-2" />
-                  Venue Booking Note
+                  Area Booking Note
                 </h3>
                 <p className="text-sm text-blue-700">
-                  Standard venue bookings are scheduled from 8:00 AM to 5:00 PM (9 hours) on the selected date.
+                  Standard area bookings are scheduled from 8:00 AM to 5:00 PM (9 hours) on the selected date.
                   {booking.check_in_date !== booking.check_out_date && " This booking spans multiple days."}
                 </p>
               </motion.div>
@@ -834,7 +854,7 @@ const ManageBookings: FC = () => {
                 filteredBookings.map((booking) => {
                   const isVenueBooking = booking.is_venue_booking;
                   const propertyName = isVenueBooking
-                    ? booking.area_details?.area_name || "Unknown Venue"
+                    ? booking.area_details?.area_name || "Unknown Area"
                     : booking.room_details?.room_name || "Unknown Room";
 
                   return (
@@ -852,7 +872,7 @@ const ManageBookings: FC = () => {
                         <div className="flex flex-col">
                           <span className="truncate max-w-[120px] md:max-w-full">{propertyName}</span>
                           {isVenueBooking ? (
-                            <span className="inline-block px-2 py-0.5 mt-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Venue</span>
+                            <span className="inline-block px-2 py-0.5 mt-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Area</span>
                           ) : (
                             <span className="inline-block px-2 py-0.5 mt-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Room</span>
                           )}
@@ -1003,7 +1023,7 @@ const ManageBookings: FC = () => {
         isOpen={showNoShowModal}
         title="Mark as No Show"
         description={`Are you sure you want to mark this booking as 'No Show'? 
-        This will immediately make the ${selectedBooking?.is_venue_booking ? 'venue' : 'room'} available for new bookings.
+        This will immediately make the ${selectedBooking?.is_venue_booking ? 'area' : 'room'} available for new bookings.
         This action cannot be undone.`}
         confirmText="Mark as No Show"
         cancelText="Cancel"

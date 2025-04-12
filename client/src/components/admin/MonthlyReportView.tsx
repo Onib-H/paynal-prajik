@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { format } from 'date-fns';
 import { useEffect, useRef } from 'react';
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import { Doughnut, Line } from 'react-chartjs-2';
 import { createPortal } from 'react-dom';
 import '../../styles/print.css';
 import { ReportData } from '../../utils/reports';
@@ -18,7 +18,7 @@ interface MonthlyReportViewProps {
         revenueData: any;
         bookingTrendsData: any;
         bookingStatusData: any;
-        roomOccupancyData: any;
+        roomOccupancyData?: any;
         revenueContributionData?: any;
         roomBookingDistributionData?: any;
     };
@@ -276,29 +276,20 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                     </p>
                 </div>
 
-                {/* Room Occupancy */}
+                {/* Recommendations Section */}
                 <div className="mb-8 page-break-inside-avoid page-break-before">
-                    <h3 className="text-xl font-bold bg-gray-100 p-2 rounded-md">4. Room Occupancy Analysis</h3>
+                    <h3 className="text-xl font-bold bg-gray-100 p-2 rounded-md">4. Recommendations</h3>
                     <p className="mt-3 mb-4 text-gray-700 italic">
-                        This section analyzes room occupancy by type, highlighting which room categories are most popular and identifying opportunities to optimize room allocation and pricing.
+                        Based on the analysis of this month's data, here are key recommendations to improve hotel performance:
                     </p>
 
-                    <div className="bg-white p-4 border rounded-md h-64 mb-6">
-                        <Bar data={chartData.roomOccupancyData} options={chartOptions.bar} />
-                    </div>
-
-                    <p className="text-sm italic text-gray-700 mb-6">
-                        Current overall occupancy rate is {reportData.stats.occupancyRate}, with {reportData.stats.availableRooms} rooms
-                        currently available for booking out of {reportData.stats.totalRooms} total rooms.
-                        Standard rooms show the highest occupancy rate, followed by Deluxe rooms.
-                    </p>
-
-                    <h4 className="text-lg font-semibold mt-6 mb-3">Recommendations</h4>
                     <ul className="list-disc pl-5 space-y-2">
-                        <li>Consider targeted promotions for room types with lower occupancy rates</li>
+                        <li>Consider targeted promotions for room types with lower booking rates</li>
                         <li>Review pricing strategy for peak booking days identified in the booking trends chart</li>
                         <li>Follow up with pending bookings to increase conversion rate</li>
                         <li>Analyze cancellation patterns to identify and address common causes</li>
+                        <li>Optimize staff scheduling based on check-in/check-out patterns</li>
+                        <li>Focus marketing efforts on room types generating the highest revenue</li>
                     </ul>
                 </div>
 
