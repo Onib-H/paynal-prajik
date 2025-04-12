@@ -223,7 +223,7 @@ const Navbar: FC = () => {
                     />
                   </Link>
                   <button onClick={closeMenu}>
-                    <i className="fa fa-times text-3xl mr-3 sm:mr-0"></i>
+                    <i className="fa fa-times text-3xl mr-3 sm:mr-0 "></i>
                   </button>
                 </div>
                 <li className="p-4 text-black/70">
@@ -232,7 +232,7 @@ const Navbar: FC = () => {
                 {navLinks.map((link, index) => (
                   <li
                     key={index}
-                    className="p-4 mx-7 hover:bg-blue-200 hover:text-blue-700 rounded-md cursor-pointer"
+                    className="p-4 mx-7 hover:bg-purple-200 hover:text-purple-700 rounded-md cursor-pointer"
                     onClick={closeMenu}
                   >
                     <NavLink
@@ -250,13 +250,13 @@ const Navbar: FC = () => {
                 {!isAuthenticated ? (
                   <>
                     <li
-                      className="p-4 border-t-2 mt-3 mx-7 border-gray-200 hover:bg-blue-200 hover:text-blue-700 rounded-md cursor-pointer"
+                      className="p-4 border-t-2 mt-3 mx-7 border-gray-200 hover:bg-purple-200 hover:text-purple-700 rounded-md cursor-pointer"
                       onClick={toggleLoginModal}
                     >
                       <i className="fa-regular fa-user mr-3"></i> Login
                     </li>
                     <li
-                      className="p-4 mx-7 hover:bg-blue-200 hover:text-blue-700 rounded-md cursor-pointer"
+                      className="p-4 mx-7 hover:bg-purple-200 hover:text-purple-700 rounded-md cursor-pointer"
                       onClick={toggleRegisterModal}
                     >
                       <i className="fa fa-user-plus mr-1"></i> Sign Up
@@ -265,13 +265,13 @@ const Navbar: FC = () => {
                 ) : (
                   <>
                     <li
-                      className="p-4 mx-7 hover:bg-blue-200 hover:text-blue-700 rounded-md cursor-pointer"
+                      className="p-4 mx-7 hover:bg-purple-200 hover:text-purple-700 rounded-md cursor-pointer"
                       onClick={() => navigate(`/guest/${userDetails?.id}`)}
                     >
                       <i className="fa fa-user-circle mr-3"></i> Account
                     </li>
                     <li
-                      className="p-4 mx-7 hover:bg-blue-200 hover:text-blue-700 rounded-md cursor-pointer"
+                      className="p-4 mx-7 hover:bg-purple-200 hover:text-purple-700 rounded-md cursor-pointer"
                       onClick={() => setIsModalOpen(true)}
                     >
                       <i className="fa fa-sign-out-alt mr-3"></i> Log Out

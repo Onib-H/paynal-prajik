@@ -1,6 +1,6 @@
 const RoomFeatures = () => {
   return (
-    <section className="bg-[#1E3A8A] py-8">
+    <section className="bg-purple-900 py-8">
       {/* Dark Blue Background */}
       <div className="max-w-6xl mx-auto flex flex-wrap justify-center gap-12 px-6">
         {/* Free Wifi */}

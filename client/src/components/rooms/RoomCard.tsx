@@ -35,13 +35,14 @@ const RoomCard: FC<RoomCardProps> = ({
   };
 
   // Truncate description to 50 characters
-  const truncatedDescription = description && description.length > 50
-    ? `${description.substring(0, 50)}...`
-    : description || "No description available.";
+  const truncatedDescription =
+    description && description.length > 50
+      ? `${description.substring(0, 50)}...`
+      : description || "No description available.";
 
   return (
     <div
-      className="rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-transform hover:-translate-y-1 hover:shadow-lg cursor-pointer"
+      className="rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-transform hover:-translate-y-1 hover:shadow-lg cursor-pointer "
       onClick={() => navigate(`/rooms/${id}`)}
     >
       <img
@@ -68,13 +69,14 @@ const RoomCard: FC<RoomCardProps> = ({
           {truncatedDescription}
         </p>
 
-        <div className="mt-auto pt-4 border-t border-gray-200 flex items-center justify-between font-montserrat">
+        <div className="mt-auto pt-4 border-t border-purple-200 flex items-center justify-between font-montserrat">
           <span className="text-xl font-semibold text-gray-900">{price}</span>
           <button
-            className={`${isAuthenticated
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-gray-400 cursor-not-allowed"
-              } text-white text-sm px-3 py-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer`}
+            className={`${
+              isAuthenticated
+                ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
+            } text-white text-sm px-3 py-2 rounded-md transition-colors flex items-center gap-1 `}
             onClick={handleReserveClick}
             title={
               isAuthenticated ? "Book this room" : "Login required to book"

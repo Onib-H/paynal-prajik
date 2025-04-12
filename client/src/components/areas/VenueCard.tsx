@@ -20,7 +20,6 @@ const VenueCard: FC<AreaCardProps> = ({
   title,
   priceRange,
   capacity,
-  desciption,
   image,
   description,
 }) => {
@@ -37,9 +36,10 @@ const VenueCard: FC<AreaCardProps> = ({
   };
 
   // Truncate description to 50 characters
-  const truncatedDescription = description && description.length > 50
-    ? `${description.substring(0, 50)}...`
-    : description || "No description available.";
+  const truncatedDescription =
+    description && description.length > 50
+      ? `${description.substring(0, 50)}...`
+      : description || "No description available.";
 
   return (
     <div
@@ -74,16 +74,17 @@ const VenueCard: FC<AreaCardProps> = ({
             </span>
           </div>
         </div>
-    
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+
+        <div className="flex justify-between items-center mt-4 pt-4 border-t border-purple-200">
           <span className="font-semibold text-lg font-montserrat">
             {priceRange}
           </span>
           <button
-            className={`${isAuthenticated
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-gray-400 cursor-not-allowed"
-              } text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 cursor-pointer`}
+            className={`${
+              isAuthenticated
+                ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
+            } text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 `}
             onClick={handleBookNow}
             title={
               isAuthenticated ? "Book this venue" : "Login required to book"

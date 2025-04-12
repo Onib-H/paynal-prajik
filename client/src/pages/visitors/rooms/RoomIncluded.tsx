@@ -21,9 +21,9 @@ const RoomIncluded = () => {
       opacity: 1,
       transition: {
         staggerChildren: 0.07,
-        delayChildren: 0.3
-      }
-    }
+        delayChildren: 0.3,
+      },
+    },
   };
 
   // Header animation with reveal effect
@@ -31,7 +31,7 @@ const RoomIncluded = () => {
     hidden: {
       opacity: 0,
       y: -20,
-      clipPath: "inset(0 0 100% 0)"
+      clipPath: "inset(0 0 100% 0)",
     },
     visible: {
       opacity: 1,
@@ -39,9 +39,9 @@ const RoomIncluded = () => {
       clipPath: "inset(0 0 0% 0)",
       transition: {
         duration: 0.6,
-        ease: [0.22, 1, 0.36, 1]
-      }
-    }
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
   };
 
   // Feature items animation (3D flip effect)
@@ -49,7 +49,7 @@ const RoomIncluded = () => {
     hidden: {
       opacity: 0,
       rotateX: 90,
-      y: 20
+      y: 20,
     },
     visible: (i: number) => ({
       opacity: 1,
@@ -59,14 +59,14 @@ const RoomIncluded = () => {
         type: "spring",
         stiffness: 80,
         damping: 12,
-        delay: i * 0.05
-      }
+        delay: i * 0.05,
+      },
     }),
     hover: {
       scale: 1.05,
       color: "#1E40AF", // blue-800
-      transition: { duration: 0.2 }
-    }
+      transition: { duration: 0.2 },
+    },
   };
 
   return (
@@ -79,7 +79,7 @@ const RoomIncluded = () => {
     >
       <div className="max-w-6xl mx-auto text-center px-4">
         <motion.h2
-          className="uppercase text-blue-800 text-base md:text-lg tracking-wide mb-8"
+          className="uppercase text-purple-800 text-lg md:text-lg tracking-wide mb-8"
           variants={headerVariants}
         >
           All hotels rooms come with:
