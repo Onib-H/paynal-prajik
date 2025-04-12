@@ -25,15 +25,19 @@ export const fetchStaffProfile = async () => {
   }
 };
 
-export const fetchStats = async () => {
+export const fetchStats = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/stats", {
+      params: {
+        month,
+        year,
+      },
       withCredentials: true,
     });
     
     // If we need to get daily revenue, we can fetch it here
     try {
-      const revenueData = await fetchDailyRevenue();
+      const revenueData = await fetchDailyRevenue({ month, year });
       return {
         ...response.data,
         daily_revenue: revenueData.data || []
@@ -48,12 +52,12 @@ export const fetchStats = async () => {
   }
 };
 
-export const fetchDailyRevenue = async () => {
+export const fetchDailyRevenue = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/daily_revenue", {
       params: {
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        month: month || new Date().getMonth() + 1,
+        year: year || new Date().getFullYear()
       },
       withCredentials: true,
     });
@@ -64,12 +68,12 @@ export const fetchDailyRevenue = async () => {
   }
 };
 
-export const fetchDailyBookings = async () => {
+export const fetchDailyBookings = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/daily_bookings", {
       params: {
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        month: month || new Date().getMonth() + 1,
+        year: year || new Date().getFullYear()
       },
       withCredentials: true,
     });
@@ -80,12 +84,12 @@ export const fetchDailyBookings = async () => {
   }
 };
 
-export const fetchDailyOccupancy = async () => {
+export const fetchDailyOccupancy = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/daily_occupancy", {
       params: {
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        month: month || new Date().getMonth() + 1,
+        year: year || new Date().getFullYear()
       },
       withCredentials: true,
     });
@@ -96,12 +100,12 @@ export const fetchDailyOccupancy = async () => {
   }
 };
 
-export const fetchDailyCheckInsCheckOuts = async () => {
+export const fetchDailyCheckInsCheckOuts = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/daily_checkins_checkouts", {
       params: {
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        month: month || new Date().getMonth() + 1,
+        year: year || new Date().getFullYear()
       },
       withCredentials: true,
     });
@@ -112,12 +116,12 @@ export const fetchDailyCheckInsCheckOuts = async () => {
   }
 };
 
-export const fetchDailyCancellations = async () => {
+export const fetchDailyCancellations = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/daily_cancellations", {
       params: {
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        month: month || new Date().getMonth() + 1,
+        year: year || new Date().getFullYear()
       },
       withCredentials: true,
     });
@@ -128,12 +132,12 @@ export const fetchDailyCancellations = async () => {
   }
 };
 
-export const fetchDailyNoShowsRejected = async () => {
+export const fetchDailyNoShowsRejected = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/daily_no_shows_rejected", {
       params: {
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        month: month || new Date().getMonth() + 1,
+        year: year || new Date().getFullYear()
       },
       withCredentials: true,
     });
@@ -144,12 +148,12 @@ export const fetchDailyNoShowsRejected = async () => {
   }
 };
 
-export const fetchRoomRevenue = async () => {
+export const fetchRoomRevenue = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/room_revenue", {
       params: {
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        month: month || new Date().getMonth() + 1,
+        year: year || new Date().getFullYear()
       },
       withCredentials: true,
     });
@@ -160,12 +164,12 @@ export const fetchRoomRevenue = async () => {
   }
 };
 
-export const fetchRoomBookings = async () => {
+export const fetchRoomBookings = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/room_bookings", {
       params: {
-        month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        month: month || new Date().getMonth() + 1,
+        year: year || new Date().getFullYear()
       },
       withCredentials: true,
     });
@@ -176,9 +180,13 @@ export const fetchRoomBookings = async () => {
   }
 };
 
-export const fetchBookingStatusCounts = async () => {
+export const fetchBookingStatusCounts = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/booking_status_counts", {
+      params: {
+        month, 
+        year
+      },
       withCredentials: true,
     });
     return response.data;

@@ -13,6 +13,7 @@ import {
   Title,
   Tooltip
 } from "chart.js";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef, useState } from "react";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
@@ -36,10 +37,7 @@ ChartJS.register(
   Filler
 );
 
-const getDaysInMonth = () => {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = date.getMonth();
+const getDaysInMonth = (month: number, year: number) => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   return Array.from({ length: daysInMonth }, (_, i) => {
@@ -48,14 +46,49 @@ const getDaysInMonth = () => {
   });
 };
 
+const formatMonthYear = (month: number, year: number) => {
+  return new Date(year, month).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric'
+  });
+};
+
 const AdminDashboard = () => {
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [showReportView, setShowReportView] = useState(false);
+
+  const isCurrentMonth = selectedMonth === new Date().getMonth() && selectedYear === new Date().getFullYear();
+  const formattedMonthYear = formatMonthYear(selectedMonth, selectedYear);
+
+  const goToPreviousMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ['stats'],
+    queryKey: ['stats', selectedMonth, selectedYear],
     queryFn: async () => {
-      const statsData = await fetchStats();
+      const statsData = await fetchStats({
+        month: selectedMonth + 1,
+        year: selectedYear
+      });
 
       if (!statsData.daily_revenue) {
-        statsData.daily_revenue = getDaysInMonth().map(() => 0);
+        statsData.daily_revenue = getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
       }
 
       return statsData;
@@ -63,50 +96,72 @@ const AdminDashboard = () => {
   });
 
   const { data: bookingStatusData, isLoading: bookingStatusLoading } = useQuery({
-    queryKey: ['bookingStatusCounts'],
-    queryFn: fetchBookingStatusCounts,
+    queryKey: ['bookingStatusCounts', selectedMonth, selectedYear],
+    queryFn: () => fetchBookingStatusCounts({
+      month: selectedMonth + 1,
+      year: selectedYear
+    }),
   });
 
   const { data: dailyBookingsResponse, isLoading: bookingsDataLoading } = useQuery({
-    queryKey: ['dailyBookings'],
-    queryFn: fetchDailyBookings,
+    queryKey: ['dailyBookings', selectedMonth, selectedYear],
+    queryFn: () => fetchDailyBookings({
+      month: selectedMonth + 1,
+      year: selectedYear
+    }),
   });
 
   const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } = useQuery({
-    queryKey: ['dailyOccupancy'],
-    queryFn: fetchDailyOccupancy,
+    queryKey: ['dailyOccupancy', selectedMonth, selectedYear],
+    queryFn: () => fetchDailyOccupancy({
+      month: selectedMonth + 1,
+      year: selectedYear
+    }),
   });
 
   const { data: checkinCheckoutData, isLoading: checkinsDataLoading } = useQuery({
-    queryKey: ['dailyCheckInsCheckOuts'],
-    queryFn: fetchDailyCheckInsCheckOuts,
+    queryKey: ['dailyCheckInsCheckOuts', selectedMonth, selectedYear],
+    queryFn: () => fetchDailyCheckInsCheckOuts({
+      month: selectedMonth + 1,
+      year: selectedYear
+    }),
   });
 
   const { data: dailyCancellationsResponse, isLoading: cancellationsDataLoading } = useQuery({
-    queryKey: ['dailyCancellations'],
-    queryFn: fetchDailyCancellations,
+    queryKey: ['dailyCancellations', selectedMonth, selectedYear],
+    queryFn: () => fetchDailyCancellations({
+      month: selectedMonth + 1,
+      year: selectedYear
+    }),
   });
 
   const { data: dailyNoShowsRejectedResponse, isLoading: noShowsRejectedDataLoading } = useQuery({
-    queryKey: ['dailyNoShowsRejected'],
-    queryFn: fetchDailyNoShowsRejected,
+    queryKey: ['dailyNoShowsRejected', selectedMonth, selectedYear],
+    queryFn: () => fetchDailyNoShowsRejected({
+      month: selectedMonth + 1,
+      year: selectedYear
+    }),
   });
 
   const { data: roomRevenueResponse, isLoading: roomRevenueLoading } = useQuery({
-    queryKey: ['roomRevenue'],
-    queryFn: fetchRoomRevenue,
+    queryKey: ['roomRevenue', selectedMonth, selectedYear],
+    queryFn: () => fetchRoomRevenue({
+      month: selectedMonth + 1,
+      year: selectedYear
+    }),
   });
 
   const { data: roomBookingsResponse, isLoading: roomBookingsLoading } = useQuery({
-    queryKey: ['roomBookings'],
-    queryFn: fetchRoomBookings,
+    queryKey: ['roomBookings', selectedMonth, selectedYear],
+    queryFn: () => fetchRoomBookings({
+      month: selectedMonth + 1,
+      year: selectedYear
+    }),
   });
 
   const revenueChartRef = useRef<HTMLCanvasElement | null>(null);
   const bookingTrendsChartRef = useRef<HTMLCanvasElement | null>(null);
   const bookingStatusChartRef = useRef<HTMLCanvasElement | null>(null);
-
-  const [showReportView, setShowReportView] = useState(false);
 
   if (isLoading || bookingStatusLoading || bookingsDataLoading || occupancyDataLoading || checkinsDataLoading || cancellationsDataLoading || roomRevenueLoading || roomBookingsLoading || noShowsRejectedDataLoading) return <DashboardSkeleton />;
   if (error) return <Error />;
@@ -140,15 +195,15 @@ const AdminDashboard = () => {
     rejected: bookingStatusData?.rejected || 0
   };
 
-  const daysInMonth = getDaysInMonth();
-  const dailyRevenueData = data?.daily_revenue || getDaysInMonth().map(() => 0);
-  const dailyBookingsData = dailyBookingsResponse?.data || getDaysInMonth().map(() => 0);
-  const dailyOccupancyRates = dailyOccupancyResponse?.data || getDaysInMonth().map(() => 0);
-  const dailyCheckIns = checkinCheckoutData?.checkins || getDaysInMonth().map(() => 0);
-  const dailyCheckOuts = checkinCheckoutData?.checkouts || getDaysInMonth().map(() => 0);
-  const dailyCancellations = dailyCancellationsResponse?.data || getDaysInMonth().map(() => 0);
-  const dailyNoShows = dailyNoShowsRejectedResponse?.no_shows || getDaysInMonth().map(() => 0);
-  const dailyRejected = dailyNoShowsRejectedResponse?.rejected || getDaysInMonth().map(() => 0);
+  const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
+  const dailyRevenueData = data?.daily_revenue || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
+  const dailyBookingsData = dailyBookingsResponse?.data || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
+  const dailyOccupancyRates = dailyOccupancyResponse?.data || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
+  const dailyCheckIns = checkinCheckoutData?.checkins || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
+  const dailyCheckOuts = checkinCheckoutData?.checkouts || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
+  const dailyCancellations = dailyCancellationsResponse?.data || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
+  const dailyNoShows = dailyNoShowsRejectedResponse?.no_shows || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
+  const dailyRejected = dailyNoShowsRejectedResponse?.rejected || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
 
   const roomNames = roomRevenueResponse?.room_names || [];
   const roomRevenueValues = roomRevenueResponse?.revenue_data || [];
@@ -394,7 +449,7 @@ const AdminDashboard = () => {
 
     return (
       <MonthlyReportView
-        reportData={prepareReportData(data, bookingStatusData)}
+        reportData={prepareReportData(data, bookingStatusData, selectedMonth, selectedYear)}
         onClose={handleCloseReport}
         chartOptions={{
           line: lineOptions,
@@ -416,18 +471,46 @@ const AdminDashboard = () => {
     <div className="h-[calc(100vh-25px)] p-3 overflow-y-auto container mx-auto">
       {renderReport()}
 
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold">Admin Dashboard (Monthly Report)</h1>
-        <button
-          onClick={handleGenerateReport}
-          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center cursor-pointer transition-colors duration-300"
-          title="Generate a monthly report using HTML/CSS"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Generate Monthly Report
-        </button>
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-2">
+        <h1 className="text-3xl font-semibold">Admin Dashboard</h1>
+
+        <div className="flex items-center space-x-4">
+          {/* Month selection controls */}
+          <div className="flex items-center bg-white rounded-lg shadow-sm">
+            <button
+              onClick={goToPreviousMonth}
+              className="p-2 hover:bg-gray-100 rounded-l-lg"
+              aria-label="Previous month"
+            >
+              <ChevronLeft size={20} />
+            </button>
+
+            <div className="px-4 py-2 font-medium">
+              {formattedMonthYear}
+              {isCurrentMonth && <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Current</span>}
+            </div>
+
+            <button
+              onClick={goToNextMonth}
+              className="p-2 hover:bg-gray-100 rounded-r-lg"
+              disabled={isCurrentMonth}
+              aria-label="Next month"
+            >
+              <ChevronRight size={20} className={isCurrentMonth ? "text-gray-300" : ""} />
+            </button>
+          </div>
+
+          <button
+            onClick={handleGenerateReport}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center cursor-pointer transition-colors duration-300"
+            title="Generate a monthly report using HTML/CSS"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Generate Monthly Report
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -445,7 +528,7 @@ const AdminDashboard = () => {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Monthly Trends</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Monthly Trends - {formattedMonthYear}</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white shadow-lg rounded-lg p-4">
@@ -477,7 +560,7 @@ const AdminDashboard = () => {
                     },
                     title: {
                       display: true,
-                      text: `Daily Revenue - ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+                      text: `Daily Revenue - ${formattedMonthYear}`,
                       font: {
                         size: 16
                       }
@@ -504,7 +587,7 @@ const AdminDashboard = () => {
                     ...lineOptions.plugins,
                     title: {
                       display: true,
-                      text: `Daily Bookings - ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+                      text: `Daily Bookings - ${formattedMonthYear}`,
                       font: {
                         size: 16
                       }
@@ -546,7 +629,7 @@ const AdminDashboard = () => {
                     },
                     title: {
                       display: true,
-                      text: `Daily Occupancy Rates - ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+                      text: `Daily Occupancy Rates - ${formattedMonthYear}`,
                       font: {
                         size: 16
                       }
@@ -568,7 +651,7 @@ const AdminDashboard = () => {
                     ...lineOptions.plugins,
                     title: {
                       display: true,
-                      text: `Daily Check-ins & Check-outs - ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+                      text: `Daily Check-ins & Check-outs - ${formattedMonthYear}`,
                       font: {
                         size: 16
                       }
@@ -582,7 +665,7 @@ const AdminDashboard = () => {
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Key Business Insights</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">Key Business Insights - {formattedMonthYear}</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white shadow-lg rounded-lg p-4">
