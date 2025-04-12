@@ -100,13 +100,13 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                     <button
                         id="print-report-button"
                         onClick={handlePrint}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer"
                     >
                         Print Report
                     </button>
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 cursor-pointer"
                     >
                         Close
                     </button>

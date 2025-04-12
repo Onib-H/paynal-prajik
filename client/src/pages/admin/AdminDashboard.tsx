@@ -14,12 +14,12 @@ import {
   Tooltip
 } from "chart.js";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
 import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
-import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyCheckInsCheckOuts, fetchDailyNoShowsRejected, fetchDailyOccupancy, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
+import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyCheckInsCheckOuts, fetchDailyNoShowsRejected, fetchDailyOccupancy, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import '../../styles/print.css';
 import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
@@ -159,11 +159,35 @@ const AdminDashboard = () => {
     }),
   });
 
+  const { data: monthlyRevenueData, isLoading: monthlyRevenueLoading } = useQuery({
+    queryKey: ['monthlyRevenue', selectedMonth, selectedYear],
+    queryFn: () => fetchMonthlyRevenue({
+      month: selectedMonth + 1,
+      year: selectedYear
+    }),
+  });
+
+  const [reportData, setReportData] = useState<any>(null);
+
+  useEffect(() => {
+    if (!isLoading && !bookingStatusLoading && data && bookingStatusData && monthlyRevenueData) {
+      // Create a modified data object with the correct revenue for the selected month
+      const modifiedData = {
+        ...data,
+        revenue: monthlyRevenueData.revenue,
+        formatted_revenue: monthlyRevenueData.formatted_revenue
+      };
+
+      const prepared = prepareReportData(modifiedData, bookingStatusData, selectedMonth, selectedYear);
+      setReportData(prepared);
+    }
+  }, [data, bookingStatusData, monthlyRevenueData, selectedMonth, selectedYear, isLoading, bookingStatusLoading]);
+
   const revenueChartRef = useRef<HTMLCanvasElement | null>(null);
   const bookingTrendsChartRef = useRef<HTMLCanvasElement | null>(null);
   const bookingStatusChartRef = useRef<HTMLCanvasElement | null>(null);
 
-  if (isLoading || bookingStatusLoading || bookingsDataLoading || occupancyDataLoading || checkinsDataLoading || cancellationsDataLoading || roomRevenueLoading || roomBookingsLoading || noShowsRejectedDataLoading) return <DashboardSkeleton />;
+  if (isLoading || bookingStatusLoading || bookingsDataLoading || occupancyDataLoading || checkinsDataLoading || cancellationsDataLoading || roomRevenueLoading || roomBookingsLoading || noShowsRejectedDataLoading || monthlyRevenueLoading) return <DashboardSkeleton />;
   if (error) return <Error />;
 
   const stats = {
@@ -182,7 +206,9 @@ const AdminDashboard = () => {
     venueRevenue: data?.venue_revenue || 0,
     formattedRevenue: data?.formatted_revenue || "₱0.00",
     formattedRoomRevenue: data?.formatted_room_revenue || "₱0.00",
-    formattedVenueRevenue: data?.formatted_venue_revenue || "₱0.00"
+    formattedVenueRevenue: data?.formatted_venue_revenue || "₱0.00",
+    revenueMonth: selectedMonth + 1,
+    revenueYear: selectedYear
   }
 
   const bookingStatusCounts = {
@@ -441,15 +467,20 @@ const AdminDashboard = () => {
     ]
   };
 
-  const handleGenerateReport = () => setShowReportView(true);
+  const handleGenerateReport = () => {
+    if (reportData) {
+      setShowReportView(true);
+    }
+  };
+
   const handleCloseReport = () => setShowReportView(false);
 
   const renderReport = () => {
-    if (!showReportView) return null;
+    if (!showReportView || !reportData) return null;
 
     return (
       <MonthlyReportView
-        reportData={prepareReportData(data, bookingStatusData, selectedMonth, selectedYear)}
+        reportData={reportData}
         onClose={handleCloseReport}
         chartOptions={{
           line: lineOptions,
@@ -516,7 +547,12 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <StatCard title="Total Bookings" value={stats.totalBookings} borderColor="border-blue-500" />
         <StatCard title="Active Bookings" value={stats.activeBookings} borderColor="border-green-500" />
-        <StatCard title="Total Revenue" value={stats.formattedRevenue} borderColor="border-orange-500" />
+        <StatCard
+          title="Monthly Revenue"
+          value={monthlyRevenueData?.formatted_revenue || "₱0.00"}
+          borderColor="border-orange-500"
+          tooltip={`Revenue from checked-in and checked-out bookings for ${formattedMonthYear}`}
+        />
         <StatCard title="Occupancy Rate" value={`${Math.round((stats.totalRooms > 0 ? stats.occupiedRooms / stats.totalRooms : 0) * 100)}%`} borderColor="border-purple-500" />
       </div>
 
