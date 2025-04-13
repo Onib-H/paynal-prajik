@@ -1,9 +1,28 @@
 import { motion } from "framer-motion";
-import { AlertCircle, Calendar, CheckCircle2, Clock, IdCard, User, XCircle } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle2, Clock, IdCard, User, Users, Watch, XCircle } from "lucide-react";
 import { FC, ReactNode, memo, useMemo } from "react";
 
 const formatStatus = (status: string): string => {
   return status.toUpperCase().replace(/_/g, ' ');
+};
+
+const formatTime = (time: string): string => {
+  if (!time) return 'N/A';
+
+  try {
+    // Parse the time (assuming format is HH:MM)
+    const [hours, minutes] = time.split(':').map(Number);
+
+    // Convert to 12-hour format
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+
+    // Format with leading zeros for minutes
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return time; // Return original if parsing fails
+  }
 };
 
 const getStatusInfo = (status: string): { color: string; icon: ReactNode } => {
@@ -82,6 +101,8 @@ interface BookingCardProps {
   cancellationReason?: string;
   cancellationDate?: string;
   totalPrice?: number;
+  numberOfGuests?: number;
+  arrivalTime?: string;
 }
 
 const cardVariants = {
@@ -131,7 +152,9 @@ const BookingCard: FC<BookingCardProps> = memo(({
   bookingDate,
   cancellationReason,
   cancellationDate,
-  totalPrice
+  totalPrice,
+  numberOfGuests,
+  arrivalTime
 }) => {
   const statusInfo = useMemo(() => getStatusInfo(status), [status]);
   const displayPrice = totalPrice || price;
@@ -193,10 +216,18 @@ const BookingCard: FC<BookingCardProps> = memo(({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center">
+              <Users className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
+              <div>
+                <span className="block text-lg text-gray-500">Room Capacity</span>
+                <span className="block font-semibold">{guests} {guests > 1 ? 'people' : 'person'}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center">
               <User className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
               <div>
-                <span className="block text-lg text-gray-500">Guests</span>
-                <span className="block font-semibold">{guests} {guests > 1 ? 'people' : 'person'}</span>
+                <span className="block text-lg text-gray-500">Number of Guests</span>
+                <span className="block font-semibold">{numberOfGuests || 1} {(numberOfGuests || 1) > 1 ? 'guests' : 'guest'}</span>
               </div>
             </div>
 
@@ -208,6 +239,18 @@ const BookingCard: FC<BookingCardProps> = memo(({
               </div>
             </div>
           </div>
+
+          {arrivalTime && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="flex items-center">
+                <Watch className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
+                <div>
+                  <span className="block text-lg text-gray-500">Expected Arrival Time</span>
+                  <span className="block font-semibold">{formatTime(arrivalTime)}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* User Information - only render when available */}

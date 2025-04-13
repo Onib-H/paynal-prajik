@@ -59,6 +59,7 @@ export interface BookingFormData {
   status?: "pending" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
   totalPrice?: number;
   arrivalTime?: string;
+  numberOfGuests?: number;
 }
 
 export interface ReservationFormData {
@@ -75,6 +76,7 @@ export interface ReservationFormData {
   totalPrice: number;
   status?: "pending" | "confirmed" | "cancelled";
   isVenueBooking?: boolean;
+  numberOfGuests?: number;
 }
 
 export interface ReviewData {
@@ -197,6 +199,11 @@ export const createBooking = async (bookingData: BookingFormData) => {
       formData.append("totalPrice", bookingData.totalPrice.toString());
     }
 
+    // Add number of guests
+    if (bookingData.numberOfGuests !== undefined) {
+      formData.append("numberOfGuests", bookingData.numberOfGuests.toString());
+    }
+
     const response = await booking.post("/bookings", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
@@ -247,6 +254,11 @@ export const createReservation = async (
 
     if (reservationData.totalPrice) {
       formData.append("totalPrice", reservationData.totalPrice.toString());
+    }
+
+    // Add number of guests
+    if (reservationData.numberOfGuests !== undefined) {
+      formData.append("numberOfGuests", reservationData.numberOfGuests.toString());
     }
 
     const response = await booking.post("/bookings", formData, {

@@ -71,18 +71,14 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
         document.head.appendChild(style);
 
         const printButton = document.getElementById('print-report-button');
-        if (printButton) {
-            printButton.focus();
-        }
+        if (printButton) printButton.focus();
 
         return () => {
             document.head.removeChild(style);
         };
     }, []);
 
-    const handlePrint = () => {
-        window.print();
-    };
+    const handlePrint = () => window.print();
 
     const totalBookingStatuses = Object.values(reportData.bookingStatusCounts).reduce((sum, count) => sum + count, 0);
 

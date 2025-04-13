@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { BookCheck } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LoginModal from '../components/LoginModal';
 import SignupModal from '../components/SignupModal';
@@ -23,6 +24,7 @@ interface RoomData {
   room_image: string;
   description: string;
   capacity: string;
+  max_guests: number;
   amenities: Amenity[];
 }
 
@@ -33,6 +35,8 @@ const ConfirmBooking = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [savedFormData, setSavedFormData] = useState(null);
+
+  const { register, handleSubmit: validateForm, formState: { errors } } = useForm();
 
   const roomId = searchParams.get('roomId');
   const arrival = searchParams.get('arrival');
@@ -52,13 +56,23 @@ const ConfirmBooking = () => {
     emailAddress: '',
     validId: null as File | null,
     specialRequests: '',
-    arrivalTime: ''
+    arrivalTime: '',
+    numberOfGuests: '1'
   });
 
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    emailAddress?: string;
+    validId?: string;
+    numberOfGuests?: string;
+    arrivalTime?: string;
+    general?: string;
+  }>({});
   const [success, setSuccess] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
@@ -71,7 +85,7 @@ const ConfirmBooking = () => {
 
   useEffect(() => {
     if (!isLoading && !roomData) {
-      setError('Failed to load room details. Please try again.');
+      setError({ general: 'Failed to load room details. Please try again.' });
     }
   }, [isLoading, roomData]);
 
@@ -168,18 +182,24 @@ const ConfirmBooking = () => {
     if (!savedFormData || isSubmitting) return;
 
     setIsSubmitting(true);
-    setError(null);
+    setError({});
 
     try {
       const response = await createBooking(savedFormData);
-
       setSuccess(true);
       setSavedFormData(null);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=false`);
-
-    } catch (err) {
-      setError('Failed to create booking. Please try again.');
-      console.error('Error creating booking:', err);
+    } catch (err: any) {
+      if (err.response && err.response.data && err.response.data.error) {
+        if (typeof err.response.data.error === 'object') {
+          setError(err.response.data.error);
+        } else {
+          setError({ general: err.response.data.error });
+        }
+      } else {
+        setError({ general: 'Failed to create booking. Please try again.' });
+      }
+      console.error(`Error creating booking:`, err);
     } finally {
       setIsSubmitting(false);
     }
@@ -194,22 +214,73 @@ const ConfirmBooking = () => {
   const handleProceedClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     if (isSubmitting) return;
-    if (!formData.firstName || !formData.lastName || !formData.phoneNumber || !formData.emailAddress) {
-      setError('Please fill in all required fields');
-      return;
+
+    const newFieldErrors: { [key: string]: string } = {};
+    let hasErrors = false;
+
+    if (!formData.firstName) {
+      newFieldErrors.firstName = "First name is required";
+      hasErrors = true;
+    }
+
+    if (!formData.lastName) {
+      newFieldErrors.lastName = "Last name is required";
+      hasErrors = true;
+    }
+
+    if (!formData.phoneNumber) {
+      newFieldErrors.phoneNumber = "Phone number is required";
+      hasErrors = true;
+    } else if (!/^09\d{9}$/.test(formData.phoneNumber.replace(/\D/g, ''))) {
+      newFieldErrors.phoneNumber = "Phone number must be in Philippine format (11 digits starting with 09)";
+      hasErrors = true;
+    }
+
+    if (!formData.emailAddress) {
+      newFieldErrors.emailAddress = "Email address is required";
+      hasErrors = true;
+    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.emailAddress)) {
+      newFieldErrors.emailAddress = "Invalid email format";
+      hasErrors = true;
     }
 
     if (!formData.validId) {
-      setError('Please upload a valid ID');
-      return;
+      newFieldErrors.validId = "Please upload a valid ID";
+      hasErrors = true;
     }
 
     if (!formData.arrivalTime) {
-      setError('Please specify your expected time of arrival');
+      newFieldErrors.arrivalTime = "Please specify your expected time of arrival";
+      hasErrors = true;
+    } else {
+      const arrivalTime = new Date(`2000-01-01T${formData.arrivalTime}`);
+      const minTime = new Date(`2000-01-01T14:00`);
+      const maxTime = new Date(`2000-01-01T22:00`);
+
+      if (arrivalTime < minTime) {
+        newFieldErrors.arrivalTime = "Early check-in is not allowed. Arrival time must be after 2:00 PM.";
+        hasErrors = true;
+      } else if (arrivalTime > maxTime) {
+        newFieldErrors.arrivalTime = "Late arrivals not accepted after 10:00 PM.";
+        hasErrors = true;
+      }
+    }
+
+    if (!formData.numberOfGuests || parseInt(formData.numberOfGuests) < 1) {
+      newFieldErrors.numberOfGuests = "Please specify the number of guests";
+      hasErrors = true;
+    } else if (roomData?.max_guests && parseInt(formData.numberOfGuests) > roomData.max_guests) {
+      newFieldErrors.numberOfGuests = `Maximum capacity for this room is ${roomData.max_guests} guests`;
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      setError(newFieldErrors);
       return;
     }
 
-    // Create booking data object
+    setError({});
+
     const bookingData: BookingFormData = {
       firstName: formData.firstName,
       lastName: formData.lastName,
@@ -222,7 +293,8 @@ const ConfirmBooking = () => {
       checkOut: selectedDeparture,
       status: 'pending',
       totalPrice: calculatedTotalPrice,
-      arrivalTime: formData.arrivalTime
+      arrivalTime: formData.arrivalTime,
+      numberOfGuests: parseInt(formData.numberOfGuests)
     };
 
     if (!isAuthenticated) {
@@ -233,12 +305,10 @@ const ConfirmBooking = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    handleProceedClick(e as unknown as React.MouseEvent<HTMLButtonElement>);
+  const handleFormSubmit = async () => {
+    handleProceedClick(new MouseEvent('click') as unknown as React.MouseEvent<HTMLButtonElement>);
   };
 
-  // Format dates for display
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '';
 
@@ -253,7 +323,6 @@ const ConfirmBooking = () => {
     return `${day}, ${dayOfMonth} ${month}, ${year}`;
   };
 
-  // Calculate number of nights
   const calculateNights = () => {
     if (!selectedArrival || !selectedDeparture) return 1;
 
@@ -269,7 +338,6 @@ const ConfirmBooking = () => {
   const formattedArrivalDate = formatDate(selectedArrival);
   const formattedDepartureDate = formatDate(selectedDeparture);
 
-  // Toggle between login and signup modals
   const openSignupModal = () => {
     setShowLoginModal(false);
     setShowSignupModal(true);
@@ -471,16 +539,16 @@ const ConfirmBooking = () => {
           </div>
         )}
 
-        {error && (
+        {error.general && (
           <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            <p>{error}</p>
+            <p>{error.general}</p>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Section - Takes 2/3 width on large screens */}
           <div className="lg:col-span-2">
-            <form id="booking-form" onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+            <form id="booking-form" onSubmit={validateForm(handleFormSubmit)} className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4">Your details</h2>
 
               {/* Name Fields */}
@@ -492,12 +560,13 @@ const ConfirmBooking = () => {
                   <input
                     type="text"
                     id="firstName"
+                    {...register("firstName")}
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100"
+                    className={`w-full px-3 py-2 border ${error.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
+                  {errors.firstName && <p className="text-red-500 text-sm mt-1">{error.firstName}</p>}
                 </div>
                 <div>
                   <label htmlFor="lastName" className="block text-md font-medium text-gray-700 mb-1">
@@ -506,12 +575,13 @@ const ConfirmBooking = () => {
                   <input
                     type="text"
                     id="lastName"
+                    {...register("lastName")}
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100"
+                    className={`w-full px-3 py-2 border ${error.lastName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
+                  {error.lastName && <p className="text-red-500 text-sm mt-1">{error.lastName}</p>}
                 </div>
               </div>
 
@@ -524,12 +594,13 @@ const ConfirmBooking = () => {
                   <input
                     type="tel"
                     id="phoneNumber"
+                    {...register("phoneNumber")}
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100"
+                    className={`w-full px-3 py-2 border ${error.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
+                  {error.phoneNumber && <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>}
                 </div>
                 <div>
                   <label htmlFor="emailAddress" className="block text-md font-medium text-gray-700 mb-1">
@@ -538,12 +609,39 @@ const ConfirmBooking = () => {
                   <input
                     type="email"
                     id="emailAddress"
+                    {...register("emailAddress")}
                     name="emailAddress"
                     value={formData.emailAddress}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100"
+                    className={`w-full px-3 py-2 border ${error.emailAddress ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
+                  {error.emailAddress && <p className="text-red-500 text-sm mt-1">{error.emailAddress}</p>}
+                </div>
+              </div>
+
+              {/* Number of Guests */}
+              <div className="mb-4">
+                <label htmlFor="numberOfGuests" className="block text-md font-medium text-gray-700 mb-1">
+                  Number of Guest(s) <span className="text-red-500">*</span>
+                </label>
+                <div className="flex flex-col">
+                  <input
+                    type="number"
+                    id="numberOfGuests"
+                    {...register("numberOfGuests")}
+                    name="numberOfGuests"
+                    value={formData.numberOfGuests}
+                    onChange={handleInputChange}
+                    min="1"
+                    max={roomData?.max_guests}
+                    className={`w-full px-3 py-2 border ${error.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                  />
+                  {error.numberOfGuests && <p className="text-red-500 text-sm mt-1">{error.numberOfGuests}</p>}
+                  {roomData?.max_guests && (
+                    <p className="mt-1 text-sm text-blue-600 font-medium">
+                      Max. Guests Allowed: {roomData.max_guests}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -560,8 +658,9 @@ const ConfirmBooking = () => {
                     onChange={handleFileChange}
                     accept="image/*"
                     required
-                    className="w-full py-2"
+                    className={`w-full py-2 ${error.validId ? 'border-red-500' : ''}`}
                   />
+                  {error.validId && <p className="text-red-500 text-sm mt-1">{error.validId}</p>}
 
                   {/* Valid ID Preview Container */}
                   {validIdPreview && (
@@ -633,13 +732,14 @@ const ConfirmBooking = () => {
                 <input
                   type="time"
                   id="arrivalTime"
+                  {...register("arrivalTime")}
                   name="arrivalTime"
                   value={formData.arrivalTime}
                   onChange={handleInputChange}
-                  required
                   placeholder="Select arrival time"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100"
+                  className={`w-full px-3 py-2 border ${error.arrivalTime ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                 />
+                {error.arrivalTime && <p className="text-red-500 text-sm mt-1">{error.arrivalTime}</p>}
                 <p className="mt-1 text-sm text-gray-500">Please indicate your expected time of arrival</p>
               </div>
 

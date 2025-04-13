@@ -512,7 +512,7 @@ def area_reviews(request, area_id):
         
         bookings = Bookings.objects.filter(area=area, is_venue_booking=True)
         booking_ids = [booking.id for booking in bookings]
-        
+
         reviews = Reviews.objects.filter(booking_id__in=booking_ids).order_by('-created_at')
         
         serializer = ReviewSerializer(reviews, many=True)

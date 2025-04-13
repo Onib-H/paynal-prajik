@@ -21,6 +21,7 @@ class RoomSerializer(serializers.ModelSerializer):
             'room_image',
             'description',
             'capacity',
+            'max_guests',
             'amenities',
         ]
         

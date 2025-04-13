@@ -73,7 +73,7 @@ const GuestProfile = () => {
       setUpdateSuccess(null);
     },
     onError: (error) => {
-      console.error("Failed to update profile:", error);
+      console.error(`Failed to update profile: ${error}`);
       setUpdateError("Failed to update profile. Please try again.");
       setUpdateError(null);
     }

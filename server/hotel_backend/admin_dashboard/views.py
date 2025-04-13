@@ -207,8 +207,14 @@ def add_new_room(request):
                 price_str = data['room_price'].replace('₱', '').replace(',', '')
                 data['room_price'] = float(price_str)
             except (ValueError, TypeError):
-                pass 
+                pass
         
+        if 'max_guests' in data and not isinstance(data['max_guests'], int):
+            try:
+                data['max_guests'] = int(data['max_guests'])
+            except (ValueError, TypeError):
+                data['max_guests'] = 2
+
         serializer = RoomSerializer(data=data)
         if serializer.is_valid():
             instance = serializer.save()
@@ -252,13 +258,19 @@ def edit_room(request, room_id):
     ).exists()
     
     if has_active_bookings:
-        allowed_fields = ['description', 'amenities', 'status']
+        allowed_fields = ['description', 'amenities', 'status', 'max_guests']
         filtered_data = {k: v for k, v in request.data.items() if k in allowed_fields}
         
         if 'status' in filtered_data and filtered_data['status'] == 'unavailable':
             return Response({
                 "error": "Cannot change status to unavailable when there are active or reserved bookings",
             }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if 'max_guests' in filtered_data and not isinstance(filtered_data['max_guests'], int):
+            try:
+                filtered_data['max_guests'] = int(filtered_data['max_guests'])
+            except (ValueError, TypeError):
+                filtered_data['max_guests'] = 2
         
         serializer = RoomSerializer(room, data=filtered_data, partial=True)
     else:
@@ -269,6 +281,12 @@ def edit_room(request, room_id):
                 data['room_price'] = float(price_str)
             except (ValueError, TypeError):
                 pass 
+        
+        if 'max_guests' in data and not isinstance(data['max_guests'], int):
+            try:
+                data['max_guests'] = int(data['max_guests'])
+            except (ValueError, TypeError):
+                data['max_guests'] = 2
         
         serializer = RoomSerializer(room, data=data, partial=True)
     

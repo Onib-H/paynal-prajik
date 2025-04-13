@@ -44,6 +44,7 @@ class Rooms(models.Model):
     room_image = CloudinaryField('room_image', null=False, blank=False)
     description = models.TextField(blank=True)
     capacity = models.TextField(max_length=100, null=False)
+    max_guests = models.PositiveIntegerField(default=2, help_text="Maximum number of guests allowed")
     amenities = models.ManyToManyField(Amenities, related_name='rooms', blank=True)
     
     class Meta:

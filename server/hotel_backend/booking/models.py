@@ -42,6 +42,7 @@ class Bookings(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     payment_status = models.CharField(max_length=20, default='unpaid')
+    number_of_guests = models.PositiveIntegerField(default=1)
     
     class Meta:
         db_table = 'bookings'

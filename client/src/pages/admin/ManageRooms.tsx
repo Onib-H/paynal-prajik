@@ -30,9 +30,10 @@ interface Room {
   room_type: string;
   bed_type: string;
   status: "available" | "occupied" | "maintenance";
-  room_price: number;
+  room_price: string | number;
   description: string;
   capacity: string;
+  max_guests: number;
   amenities: number[];
 }
 
@@ -198,6 +199,22 @@ const RoomDetailsModal: FC<{
                   </div>
                 </motion.div>
 
+                {/* Max Guests */}
+                <motion.div
+                  className="bg-green-50 p-4 rounded-lg mb-5"
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.42 }}
+                >
+                  <h3 className="text-sm uppercase tracking-wider text-green-600 font-medium mb-2">Maximum Guests</h3>
+                  <div className="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span className="text-lg font-bold text-gray-800">{roomData.max_guests || 1} Guests</span>
+                  </div>
+                </motion.div>
+
                 {/* Bed Type */}
                 <motion.div
                   className="bg-amber-50 p-4 rounded-lg mb-5"
@@ -317,9 +334,8 @@ const ManageRooms: FC = () => {
       toast.success("Room added successfully!");
       setCurrentPage(1);
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error(`Failed to add room.`);
-      console.error(`Error adding room: ${error}`);
     },
     onSettled: () => {
       setLoading(false);
@@ -344,9 +360,8 @@ const ManageRooms: FC = () => {
       setShowFormModal(false);
       toast.success("Room updated successfully!");
     },
-    onError: (error: any) => {
+    onError: () => {
       toast.error(`Failed to update room.`);
-      console.error(`Error updating room: ${error}`);
     },
     onSettled: () => {
       setLoading(false);
@@ -382,7 +397,15 @@ const ManageRooms: FC = () => {
   };
 
   const handleEdit = (room: Room) => {
-    console.log("Room data for editing:", room); // Debug log
+    let parsedRoomPrice: number;
+
+    if (typeof room.room_price === 'string') {
+      const priceString = room.room_price.replace(/[₱,]/g, '');
+      parsedRoomPrice = parseFloat(priceString);
+    } else {
+      parsedRoomPrice = room.room_price;
+    }
+
     setEditRoomData({
       id: room.id,
       roomName: room.room_name,
@@ -393,10 +416,11 @@ const ManageRooms: FC = () => {
         room.status === "available"
           ? "Available"
           : "Maintenance",
-      roomPrice: room.room_price,
+      roomPrice: parsedRoomPrice,
       description: room.description,
       capacity: room.capacity,
-      amenities: room.amenities || [], // Ensure amenities is an array
+      amenities: room.amenities || [],
+      maxGuests: room.max_guests || 1,
     });
     setShowFormModal(true);
   };
@@ -430,6 +454,7 @@ const ManageRooms: FC = () => {
     formData.append("room_price", String(roomData.roomPrice || 0));
     formData.append("description", roomData.description || "");
     formData.append("capacity", roomData.capacity || "");
+    formData.append("max_guests", String(roomData.maxGuests || 1));
 
     if (roomData.amenities && roomData.amenities.length > 0) {
       roomData.amenities.forEach((amenityId) => {
@@ -537,16 +562,21 @@ const ManageRooms: FC = () => {
                     <span className="inline-flex items-center rounded-md px-2 py-1 text-xs uppercase font-semibold mr-2 bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
                       {room.bed_type}
                     </span>
-                    {room.capacity}
+                    <span className="inline-flex items-center rounded-md px-2 py-1 text-sm font-semibold mr-2 bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Max Guests: {room.max_guests}
+                    </span>
                   </span>
                 </p>
                 {/* Limit the description to 2 lines */}
-                <p className="text-gray-700 text-sm mb-2 line-clamp-2">
+                <p className="text-gray-700 text-md mb-2 line-clamp-2">
                   {room.description || "No description provided."}
                 </p>
 
                 <div className="mt-auto flex justify-between items-center">
-                  <p className="text-lg font-bold text-gray-900">
+                  <p className="text-xl font-bold text-gray-900">
                     {typeof room.room_price === 'string' ? room.room_price : room.room_price.toLocaleString()}
                   </p>
                   <div className="flex gap-2">
