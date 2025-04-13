@@ -35,7 +35,7 @@ export const menuItems = [
   },
   {
     icon: faUsers,
-    label: "Manage Admins",
+    label: "Manage Users",
     link: '/admin/users'
   },
 ];

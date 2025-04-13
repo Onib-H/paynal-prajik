@@ -19,7 +19,7 @@ const GuestSidebar: FC = () => {
       <div className="px-3 py-4 border-b border-gray-200">
         <button
           onClick={() => navigate('/')}
-          className="w-full flex items-center space-x-2 p-2 rounded-md text-purple-600 hover:bg-purple-100 hover:text-purple-600 transition-colors duration-200"
+          className="w-full flex items-center space-x-2 p-2 rounded-md text-purple-600 hover:bg-purple-100 cursor-pointer hover:text-purple-600 transition-colors duration-200"
         >
           <Home size={25} className="mr-2" />
           <span className="text-md">Go To Homepage</span>

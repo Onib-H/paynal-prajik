@@ -17,6 +17,35 @@ from property.serializers import AreaSerializer
 from .google.oauth import google_auth as google_oauth_util
 import os
 import uuid
+import requests
+import cloudinary
+import cloudinary.uploader
+from io import BytesIO
+
+# Helper function to download and upload Google profile image to Cloudinary
+def save_google_profile_image_to_cloudinary(image_url):
+    try:
+        # Download the image from Google
+        response = requests.get(image_url)
+        if response.status_code != 200:
+            print(f"Failed to download Google profile image: {response.status_code}")
+            return None
+            
+        # Upload to Cloudinary
+        result = cloudinary.uploader.upload(
+            BytesIO(response.content),
+            folder="profile_images",
+            transformation=[
+                {"width": 300, "height": 300, "crop": "limit"},
+                {"quality": "auto:good"}
+            ]
+        )
+        
+        print(f"Successfully uploaded Google profile image to Cloudinary: {result['secure_url']}")
+        return result['secure_url']
+    except Exception as e:
+        print(f"Error saving Google profile image to Cloudinary: {e}")
+        return None
 
 # Create your views here.
 @api_view(['POST'])
@@ -140,12 +169,10 @@ def verify_otp(request):
         if not email or not password or not received_otp:
             return Response({"error": "Email, password, and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check if this is a Google OAuth verification
         google_data_key = f"{email}_google_data"
         google_data = cache.get(google_data_key)
         is_google_auth = google_data is not None
         
-        # Determine the purpose based on whether it's Google auth or regular auth
         purpose = "google_account_verification" if is_google_auth else "account_verification"
         cache_key = f"{email}_{purpose}"
         
@@ -164,11 +191,15 @@ def verify_otp(request):
         if CustomUsers.objects.filter(email=email).exists():
             return Response({"error": "User already exists"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # If this is Google OAuth registration, use Google data for first and last name
+        profile_image = DEFAULT_PROFILE_IMAGE
         if is_google_auth:
             first_name = google_data.get('first_name', first_name)
             last_name = google_data.get('last_name', last_name)
-            cache.delete(google_data_key)  # Clean up stored Google data
+            if google_data.get('profile_image'):
+                cloudinary_url = save_google_profile_image_to_cloudinary(google_data.get('profile_image'))
+                if cloudinary_url:
+                    profile_image = cloudinary_url
+            cache.delete(google_data_key)
         
         user = CustomUsers.objects.create_user(
             username=email,
@@ -177,7 +208,7 @@ def verify_otp(request):
             first_name=first_name,
             last_name=last_name,
             role="guest",
-            profile_image=DEFAULT_PROFILE_IMAGE
+            profile_image=profile_image
         )
         user.save()
 
@@ -192,7 +223,7 @@ def verify_otp(request):
                 "user": CustomUserSerializer(user_auth).data,
                 "is_google": is_google_auth
             }, status=status.HTTP_200_OK)
-            # Set access and refresh token cookies.
+            
             response.set_cookie(
                 key="access_token",
                 value=str(refresh.access_token),
@@ -403,7 +434,7 @@ def google_auth(request):
                 "error": "Server configuration error"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-        email, username = google_oauth_util(code, CLIENT_ID, CLIENT_SECRET)
+        email, username, profile_image = google_oauth_util(code, CLIENT_ID, CLIENT_SECRET)
         
         if not email or not username:
             return Response({
@@ -416,6 +447,16 @@ def google_auth(request):
         if user_exists:
             # If user exists, just authenticate them
             user = CustomUsers.objects.get(email=email)
+            
+            # Optionally update the existing user's profile image from Google if they don't have one
+            if profile_image and (not user.profile_image or not hasattr(user.profile_image, 'url')):
+                # Convert Google profile URL to Cloudinary URL
+                cloudinary_url = save_google_profile_image_to_cloudinary(profile_image)
+                # Only update if successfully uploaded to Cloudinary
+                if cloudinary_url:
+                    user.profile_image = cloudinary_url
+                    user.save()
+                
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
             refresh_token = str(refresh)
@@ -427,7 +468,7 @@ def google_auth(request):
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'role': user.role,
-                'profile_image': user.profile_image.url if user.profile_image else "",
+                'profile_image': user.profile_image.url if user.profile_image and hasattr(user.profile_image, 'url') else "",
             }
             
             response = Response({
@@ -488,7 +529,8 @@ def google_auth(request):
                 'first_name': username.split(' ')[0] if ' ' in username else username,
                 'last_name': ' '.join(username.split(' ')[1:]) if ' ' in username else '',
                 'temp_password': temp_password,
-                'is_google': True
+                'is_google': True,
+                'profile_image': profile_image
             }
             cache.set(google_data_key, google_data, OTP_EXPIRATION_TIME)
             
