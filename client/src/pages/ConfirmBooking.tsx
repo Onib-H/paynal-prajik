@@ -52,7 +52,7 @@ const ConfirmBooking = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    phoneNumber: '',
+    phoneNumber: '+63 ',
     emailAddress: '',
     validId: null as File | null,
     specialRequests: '',
@@ -117,10 +117,38 @@ const ConfirmBooking = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+
+    if (name === 'phoneNumber') {
+      const cleaned = value.replace(/[^\d+]/g, '');
+
+      if (!cleaned.startsWith('+63')) return;
+
+      let formatted = '+63 ';
+      const localNumber = cleaned.substring(3);
+
+      if (localNumber.length > 0) {
+        formatted += localNumber.substring(0, Math.min(localNumber.length, 1));
+        if (localNumber.length > 1) {
+          formatted += localNumber.substring(1, Math.min(localNumber.length, 4));
+          if (localNumber.length > 4) {
+            formatted += ' ' + localNumber.substring(4, Math.min(localNumber.length, 7));
+            if (localNumber.length > 7) {
+              formatted += ' ' + localNumber.substring(7, Math.min(localNumber.length, 11));
+            }
+          }
+        }
+      }
+
+      setFormData({
+        ...formData,
+        [name]: formatted
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,7 +227,7 @@ const ConfirmBooking = () => {
       } else {
         setError({ general: 'Failed to create booking. Please try again.' });
       }
-      console.error(`Error creating booking:`, err);
+      console.error(`Error creating booking: ${err}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -228,12 +256,17 @@ const ConfirmBooking = () => {
       hasErrors = true;
     }
 
-    if (!formData.phoneNumber) {
+    if (!formData.phoneNumber || formData.phoneNumber === '+63 ') {
       newFieldErrors.phoneNumber = "Phone number is required";
       hasErrors = true;
-    } else if (!/^09\d{9}$/.test(formData.phoneNumber.replace(/\D/g, ''))) {
-      newFieldErrors.phoneNumber = "Phone number must be in Philippine format (11 digits starting with 09)";
-      hasErrors = true;
+    } else {
+      const cleaned = formData.phoneNumber.replace(/[^\d+]/g, '');
+      const localNumber = cleaned.substring(3);
+
+      if (!cleaned.startsWith('+63') || localNumber.length !== 10 || !localNumber.startsWith('9')) {
+        newFieldErrors.phoneNumber = "Phone number must be in Philippine format: (+63) 9XX XXX XXXX";
+        hasErrors = true;
+      }
     }
 
     if (!formData.emailAddress) {
@@ -598,9 +631,11 @@ const ConfirmBooking = () => {
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleInputChange}
+                    placeholder="+63 9XX XXX XXXX"
                     className={`w-full px-3 py-2 border ${error.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
                   {error.phoneNumber && <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>}
+                  <p className="mt-1 text-xs text-gray-500">Format: +63 9XX XXX XXXX (Philippine number)</p>
                 </div>
                 <div>
                   <label htmlFor="emailAddress" className="block text-md font-medium text-gray-700 mb-1">
@@ -689,16 +724,13 @@ const ConfirmBooking = () => {
                     </div>
                   )}
                 </div>
-                <div>
-                  {/* Empty space for layout balance - you can add another field here if needed */}
-                </div>
               </div>
 
               {/* Check-in/out Dates */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
                   <label htmlFor="checkIn" className="block text-md font-medium text-gray-700 mb-1">
-                    Check in <span className="text-red-500">*</span>
+                    Check In <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="date"

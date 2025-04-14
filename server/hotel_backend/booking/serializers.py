@@ -4,7 +4,7 @@ from user_roles.models import CustomUsers
 from property.models import Rooms, Amenities, Areas
 import cloudinary
 from property.serializers import AreaSerializer
-from .validations.room_booking import validate_booking_request
+from .validations.booking import validate_booking_request
 
 class AmenitySerializer(serializers.ModelSerializer):
     class Meta:

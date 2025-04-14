@@ -17,7 +17,7 @@ def validate_guest_name(name):
     
     return name
 
-def validate_email(email, check_in_date=None, check_out_date=None):
+def validate_email(email, check_in_date=None, check_out_date=None, is_venue_booking=False):
     """Validate email format and check for overlapping bookings"""
     if not email:
         raise serializers.ValidationError("Email address is required")
@@ -25,12 +25,13 @@ def validate_email(email, check_in_date=None, check_out_date=None):
     if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
         raise serializers.ValidationError("Invalid email format")
     
-    if check_in_date and check_out_date:
+    if not is_venue_booking and check_in_date and check_out_date:
         overlapping_bookings = Bookings.objects.filter(
             user__email=email,
             check_in_date__lt=check_out_date,
             check_out_date__gt=check_in_date,
-            status__in=['pending', 'reserved', 'confirmed', 'checked_in']
+            status__in=['pending', 'reserved', 'confirmed', 'checked_in'],
+            is_venue_booking=False
         )
         
         if overlapping_bookings.exists():
@@ -39,17 +40,24 @@ def validate_email(email, check_in_date=None, check_out_date=None):
     return email
 
 def validate_phone_number(phone_number, check_in_date=None, check_out_date=None):
-    """Validate phone number format (PH format - 11 digits starting with 09)"""
+    """Validate phone number format (PH format with +63 prefix)"""
     if not phone_number:
         raise serializers.ValidationError("Phone number is required")
     
-    cleaned_number = re.sub(r'\D', '', phone_number)
+    # Remove all non-digit characters except the + sign
+    cleaned_number = re.sub(r'[^\d+]', '', phone_number)
     
-    if not re.match(r'^09\d{9}$', cleaned_number):
-        raise serializers.ValidationError("Phone number must be in Philippine format (11 digits starting with 09)")
-    
-    # Skip overlapping booking check based on phone number
-    # since we can't rely on it being in the user model
+    # Check if the phone number has the +63 prefix
+    if cleaned_number.startswith('+63'):
+        # Remove the +63 prefix to check the remaining digits
+        local_number = cleaned_number[3:]
+        # Check if the remaining number starts with 9 and has 10 digits total (9 + 9 more)
+        if not (len(local_number) == 10 and local_number.startswith('9')):
+            raise serializers.ValidationError("Philippine phone number must start with +63 followed by 9 and 9 more digits")
+    else:
+        # Legacy format starting with 09
+        if not re.match(r'^09\d{9}$', cleaned_number):
+            raise serializers.ValidationError("Phone number must be in Philippine format: (+63) 9XX XXX XXXX")
     
     return phone_number
 
@@ -85,7 +93,7 @@ def validate_number_of_guests(guests, room_max_guests):
     
     return guests
 
-def validate_dates(check_in_date, check_out_date):
+def validate_dates(check_in_date, check_out_date, is_venue_booking=False):
     """Validate check-in and check-out dates"""
     today = timezone.now().date()
     
@@ -98,8 +106,13 @@ def validate_dates(check_in_date, check_out_date):
     if check_in_date < today:
         raise serializers.ValidationError("Check-in date cannot be in the past")
     
-    if check_out_date <= check_in_date:
-        raise serializers.ValidationError("Check-out date must be after check-in date")
+    # For venue bookings, allow same-day bookings
+    if is_venue_booking:
+        if check_out_date < check_in_date:
+            raise serializers.ValidationError("Check-out date must be on or after check-in date")
+    else:
+        if check_out_date <= check_in_date:
+            raise serializers.ValidationError("Check-out date must be after check-in date")
     
     max_stay_days = 30
     stay_duration = (check_out_date - check_in_date).days
@@ -144,11 +157,14 @@ def validate_booking_request(data, room):
     except serializers.ValidationError as e:
         errors['lastName'] = str(e.detail[0])
     
+    is_venue_booking = data.get('isVenueBooking', False)
+    
     try:
         validate_email(
             data.get('emailAddress', ''),
             data.get('checkIn'),
-            data.get('checkOut')
+            data.get('checkOut'),
+            is_venue_booking
         )
     except serializers.ValidationError as e:
         errors['emailAddress'] = str(e.detail[0])
@@ -175,14 +191,19 @@ def validate_booking_request(data, room):
             errors['numberOfGuests'] = str(e.detail[0])
     
     try:
-        validate_dates(data.get('checkIn'), data.get('checkOut'))
+        validate_dates(
+            data.get('checkIn'), 
+            data.get('checkOut'),
+            is_venue_booking
+        )
     except serializers.ValidationError as e:
         errors['dates'] = str(e.detail[0])
     
-    try:
-        validate_arrival_time(data.get('arrivalTime', ''))
-    except serializers.ValidationError as e:
-        errors['arrivalTime'] = str(e.detail[0])
+    if not is_venue_booking:
+        try:
+            validate_arrival_time(data.get('arrivalTime', ''))
+        except serializers.ValidationError as e:
+            errors['arrivalTime'] = str(e.detail[0])
     
     if room and data.get('checkIn') and data.get('checkOut'):
         check_in = data.get('checkIn')
