@@ -1,10 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FC, memo, useMemo, useState } from "react";
+import { FC, memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import EditAreaModal, {
-  IArea as IEditArea,
-} from "../../components/admin/EditAreaModal";
+import EditAreaModal, { IArea as IEditArea } from "../../components/admin/EditAreaModal";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
@@ -53,6 +51,104 @@ const MemoizedImage = memo(({ src, alt, className }: { src: string, alt: string,
 
 MemoizedImage.displayName = 'MemoizedImage';
 
+const AreaCard = memo(({
+  area,
+  index,
+  onView,
+  onEdit,
+  onDelete
+}: {
+  area: Area;
+  index: number;
+  onView: (area: Area) => void;
+  onEdit: (area: Area) => void;
+  onDelete: (id: number) => void;
+}) => {
+  const areaImageProps = useMemo(() => ({
+    src: area.area_image,
+    alt: area.area_name
+  }), [area.area_image, area.area_name]);
+
+  const handleView = useCallback(() => onView(area), [area, onView]);
+  const handleEdit = useCallback(() => onEdit(area), [area, onEdit]);
+  const handleDelete = useCallback(() => onDelete(area.id), [area.id, onDelete]);
+
+  return (
+    <motion.div
+      className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.4,
+        delay: index * 0.05,
+        type: "spring",
+        damping: 12
+      }}
+      whileHover={{
+        y: -5,
+        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+      }}
+    >
+      <MemoizedImage
+        src={areaImageProps.src}
+        alt={areaImageProps.alt}
+        className="w-full h-48 object-cover"
+      />
+      <div className="p-4 flex flex-col h-full">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-bold text-gray-900">
+            {area.area_name}
+          </h2>
+          <span className={`text-sm font-semibold ${area.status === 'available' ? 'text-green-600' : 'text-amber-600'
+            } uppercase`}>
+            {area.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
+          </span>
+        </div>
+        <p className="text-gray-600 text-sm mb-1">
+          {area.capacity} people
+        </p>
+        <p className="text-gray-700 text-sm mb-2 line-clamp-2">
+          {area.description || "No description provided."}
+        </p>
+
+        <div className="mt-auto flex justify-between items-center">
+          <p className="text-lg font-bold text-gray-900">
+            {area.price_per_hour.toLocaleString()}
+          </p>
+          <div className="flex gap-2">
+            <motion.button
+              onClick={handleView}
+              className="px-3 py-2 uppercase font-semibold bg-gray-600 text-white rounded cursor-pointer hover:bg-gray-700 transition-colors duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Eye />
+            </motion.button>
+            <motion.button
+              onClick={handleEdit}
+              className="px-3 py-2 uppercase font-semibold bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition-colors duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Edit />
+            </motion.button>
+            <motion.button
+              onClick={handleDelete}
+              className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Trash2 />
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+});
+
+AreaCard.displayName = 'AreaCard';
+
 const ViewAreaModal: FC<{
   isOpen: boolean;
   onClose: () => void;
@@ -90,8 +186,7 @@ const ViewAreaModal: FC<{
             {/* Close button - positioned on top right */}
             <motion.button
               onClick={onClose}
-              className="absolute top-4 right-4 z-50 bg-white/80 hover:bg-white text-gray-700 hover:text-red-600 rounded-full p-2 transition-all duration-200 shadow-md"
-              whileHover={{ scale: 1.2, rotate: 90 }}
+              className="absolute top-4 right-4 z-50 bg-white/80 hover:bg-white text-gray-700 hover:text-red-600 rounded-full p-2 transition-all duration-200 shadow-md cursor-pointer"
               whileTap={{ scale: 0.8 }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -362,12 +457,12 @@ const ManageAreas = () => {
     setShowFormModal(true);
   };
 
-  const handleView = (area: Area) => {
+  const handleViewArea = useCallback((area: Area) => {
     setViewAreaData(area);
     setShowViewModal(true);
-  };
+  }, []);
 
-  const handleEdit = (area: Area) => {
+  const handleEditArea = useCallback((area: Area) => {
     setEditAreaData({
       id: area.id,
       area_name: area.area_name,
@@ -379,12 +474,12 @@ const ManageAreas = () => {
       status: area.status,
     });
     setShowFormModal(true);
-  };
+  }, []);
 
-  const handleDelete = (areaId: number) => {
+  const handleDeleteArea = useCallback((areaId: number) => {
     setDeleteAreaId(areaId);
     setShowModal(true);
-  };
+  }, []);
 
   const confirmDelete = () => {
     if (deleteAreaId != null) {
@@ -456,90 +551,19 @@ const ManageAreas = () => {
           </motion.button>
         </div>
 
-        {/* Grid of Area Cards */}
+        {/* Areas Grid or Empty State */}
         {areas.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {areas.map((area, index) => {
-              // Memoize each image data to prevent unnecessary re-renders
-              const areaImageProps = useMemo(() => ({
-                src: area.area_image,
-                alt: area.area_name
-              }), [area.area_image, area.area_name]);
-
-              return (
-                <motion.div
-                  key={area.id}
-                  className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.4,
-                    delay: index * 0.05,
-                    type: "spring",
-                    damping: 12
-                  }}
-                  whileHover={{
-                    y: -5,
-                    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-                  }}
-                >
-                  <MemoizedImage
-                    src={areaImageProps.src}
-                    alt={areaImageProps.alt}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-4 flex flex-col h-full">
-                    <div className="flex justify-between items-center mb-2">
-                      <h2 className="text-xl font-bold text-gray-900">
-                        {area.area_name}
-                      </h2>
-                      <span className={`text-sm font-semibold ${area.status === 'available' ? 'text-green-600' : 'text-amber-600'
-                        } uppercase`}>
-                        {area.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-1">
-                      {area.capacity} people
-                    </p>
-                    <p className="text-gray-700 text-sm mb-2 line-clamp-2">
-                      {area.description || "No description provided."}
-                    </p>
-
-                    <div className="mt-auto flex justify-between items-center">
-                      <p className="text-lg font-bold text-gray-900">
-                        {area.price_per_hour.toLocaleString()}
-                      </p>
-                      <div className="flex gap-2">
-                        <motion.button
-                          onClick={() => handleView(area)}
-                          className="px-3 py-2 uppercase font-semibold bg-gray-600 text-white rounded cursor-pointer hover:bg-gray-700 transition-colors duration-300"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <Eye />
-                        </motion.button>
-                        <motion.button
-                          onClick={() => handleEdit(area)}
-                          className="px-3 py-2 uppercase font-semibold bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition-colors duration-300"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <Edit />
-                        </motion.button>
-                        <motion.button
-                          onClick={() => handleDelete(area.id)}
-                          className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          <Trash2 />
-                        </motion.button>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+            {areas.map((area, index) => (
+              <AreaCard
+                key={area.id}
+                area={area}
+                index={index}
+                onView={handleViewArea}
+                onEdit={handleEditArea}
+                onDelete={handleDeleteArea}
+              />
+            ))}
           </div>
         ) : (
           <motion.div
@@ -592,15 +616,12 @@ const ManageAreas = () => {
             <div className="flex gap-1">
               {Array.from({ length: pagination.total_pages }).map((_, index) => {
                 const pageNumber = index + 1;
-                // Show current page, first page, last page, and pages around current
                 const isVisible =
                   pageNumber === 1 ||
                   pageNumber === pagination.total_pages ||
                   Math.abs(pageNumber - currentPage) <= 1;
 
-                // Show ellipsis for gaps
                 if (!isVisible) {
-                  // Show ellipsis only once between gaps
                   if (pageNumber === 2 || pageNumber === pagination.total_pages - 1) {
                     return <span key={`ellipsis-${pageNumber}`} className="px-3 py-1">...</span>;
                   }

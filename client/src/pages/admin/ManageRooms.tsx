@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { FC, memo, useMemo, useState } from "react";
+import { FC, memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import EditRoomModal, { IRoom } from "../../components/admin/EditRoomModal";
 import Modal from "../../components/Modal";
@@ -48,7 +48,6 @@ interface PaginationData {
   page_size: number;
 }
 
-// Memoized Image Component
 const MemoizedImage = memo(({ src, alt, className }: { src: string, alt: string, className: string }) => {
   return (
     <img
@@ -61,6 +60,121 @@ const MemoizedImage = memo(({ src, alt, className }: { src: string, alt: string,
 });
 
 MemoizedImage.displayName = 'MemoizedImage';
+
+const RoomCard = memo(({
+  room,
+  index,
+  onView,
+  onEdit,
+  onDelete
+}: {
+  room: Room;
+  index: number;
+  onView: (room: Room) => void;
+  onEdit: (room: Room) => void;
+  onDelete: (id: number) => void;
+}) => {
+  const roomImageProps = useMemo(() => ({
+    src: room.room_image,
+    alt: room.room_name
+  }), [room.room_image, room.room_name]);
+
+  const handleView = useCallback(() => onView(room), [room, onView]);
+  const handleEdit = useCallback(() => onEdit(room), [room, onEdit]);
+  const handleDelete = useCallback(() => onDelete(room.id), [room.id, onDelete]);
+
+  return (
+    <motion.div
+      className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        duration: 0.4,
+        delay: index * 0.05,
+        type: "spring",
+        damping: 12
+      }}
+      whileHover={{
+        y: -5,
+        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+      }}
+    >
+      <MemoizedImage
+        src={roomImageProps.src}
+        alt={roomImageProps.alt}
+        className="w-full h-48 object-cover"
+      />
+      <div className="p-4 flex flex-col h-full">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-xl font-bold text-gray-900">
+            {room.room_name}
+          </h2>
+          <span className={`text-sm font-semibold ${room.status === 'available' ? 'text-green-600' : 'text-amber-600'
+            } uppercase`}>
+            {room.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
+          </span>
+        </div>
+        <p className="text-gray-600 text-sm mb-1 flex items-center">
+          <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs uppercase font-semibold mr-2 ${room.room_type === 'premium'
+            ? 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20'
+            : 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20'
+            }`}>
+            {room.room_type === 'premium' ? 'Premium' : 'Suites'}
+          </span>
+          <span className="flex items-center">
+            <span className="inline-flex items-center rounded-md px-2 py-1 text-xs uppercase font-semibold mr-2 bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
+              {room.bed_type}
+            </span>
+            <span className="inline-flex items-center rounded-md px-2 py-1 text-sm font-semibold mr-2 bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Max Guests: {room.max_guests}
+            </span>
+          </span>
+        </p>
+        {/* Limit the description to 2 lines */}
+        <p className="text-gray-700 text-md mb-2 line-clamp-2">
+          {room.description || "No description provided."}
+        </p>
+
+        <div className="mt-auto flex justify-between items-center">
+          <p className="text-xl font-bold text-gray-900">
+            {typeof room.room_price === 'string' ? room.room_price : room.room_price.toLocaleString()}
+          </p>
+          <div className="flex gap-2">
+            <motion.button
+              onClick={handleView}
+              className="px-3 py-2 uppercase font-semibold bg-gray-600 text-white rounded cursor-pointer hover:bg-gray-700 transition-colors duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Eye />
+            </motion.button>
+            <motion.button
+              onClick={handleEdit}
+              className="px-3 py-2 uppercase font-semibold bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition-colors duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Edit />
+            </motion.button>
+            <motion.button
+              onClick={handleDelete}
+              className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Trash2 />
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+});
+
+RoomCard.displayName = 'RoomCard';
 
 const RoomDetailsModal: FC<{
   isOpen: boolean;
@@ -75,7 +189,6 @@ const RoomDetailsModal: FC<{
     return found ? found.description : `ID: ${id}`;
   };
 
-  // Memoize the room image data
   const roomImage = useMemo(() => ({
     src: roomData.room_image,
     alt: roomData.room_name
@@ -105,8 +218,7 @@ const RoomDetailsModal: FC<{
           >
             <motion.button
               onClick={onClose}
-              className="absolute top-4 right-4 z-50 bg-white/80 hover:bg-white text-gray-700 hover:text-red-600 rounded-full p-2 transition-all duration-200 shadow-md"
-              whileHover={{ scale: 1.2, rotate: 90 }}
+              className="absolute top-4 right-4 z-50 bg-white/80 hover:bg-white text-gray-700 hover:text-red-600 rounded-full p-2 transition-all duration-200 shadow-md cursor-pointer"
               whileTap={{ scale: 0.8 }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -432,7 +544,12 @@ const ManageRooms: FC = () => {
     setShowFormModal(true);
   };
 
-  const handleEdit = (room: Room) => {
+  const handleViewRoom = useCallback((room: Room) => {
+    setViewRoomData(room);
+    setShowViewModal(true);
+  }, []);
+
+  const handleEditRoom = useCallback((room: Room) => {
     let parsedRoomPrice: number;
 
     if (typeof room.room_price === 'string') {
@@ -459,18 +576,13 @@ const ManageRooms: FC = () => {
       maxGuests: room.max_guests || 1,
     });
     setShowFormModal(true);
-  };
+  }, []);
 
-  const handleView = (room: Room) => {
-    console.log("Room data for viewing:", room);
-    setViewRoomData(room);
-    setShowViewModal(true);
-  };
-
-  const handleDelete = (roomId: number) => {
+  const handleDeleteRoom = useCallback((roomId: number) => {
     setDeleteRoomId(roomId);
     setShowModal(true);
-  };
+  }, []);
+
   const confirmDelete = () => {
     if (deleteRoomId !== null) {
       deleteRoomMutation.mutate(deleteRoomId);
@@ -514,21 +626,17 @@ const ManageRooms: FC = () => {
     }
   };
 
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
-    }
-  };
+  const handlePreviousPage = useCallback(() => {
+    if (currentPage > 1) setCurrentPage(prev => prev - 1);
+  }, [currentPage]);
 
-  const handleNextPage = () => {
-    if (roomsResponse?.pagination && currentPage < roomsResponse.pagination.total_pages) {
-      setCurrentPage(prev => prev + 1);
-    }
-  };
+  const handleNextPage = useCallback(() => {
+    if (roomsResponse?.pagination && currentPage < roomsResponse.pagination.total_pages) setCurrentPage(prev => prev + 1);
+  }, [currentPage, roomsResponse]);
 
-  const goToPage = (page: number) => {
+  const goToPage = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, [currentPage]);
 
   if (isLoading) return <DashboardSkeleton />;
   if (isError) return <Error />;
@@ -571,104 +679,16 @@ const ManageRooms: FC = () => {
 
         {/* Grid of Room Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
-          {rooms.map((room, index) => {
-            // Memoize each room image data to prevent unnecessary re-renders
-            const roomImageProps = useMemo(() => ({
-              src: room.room_image,
-              alt: room.room_name
-            }), [room.room_image, room.room_name]);
-
-            return (
-              <motion.div
-                key={room.id}
-                className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.4,
-                  delay: index * 0.05,
-                  type: "spring",
-                  damping: 12
-                }}
-                whileHover={{
-                  y: -5,
-                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-                }}
-              >
-                <MemoizedImage
-                  src={roomImageProps.src}
-                  alt={roomImageProps.alt}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4 flex flex-col h-full">
-                  <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-xl font-bold text-gray-900">
-                      {room.room_name}
-                    </h2>
-                    <span className={`text-sm font-semibold ${room.status === 'available' ? 'text-green-600' : 'text-amber-600'
-                      } uppercase`}>
-                      {room.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
-                    </span>
-                  </div>
-                  <p className="text-gray-600 text-sm mb-1 flex items-center">
-                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs uppercase font-semibold mr-2 ${room.room_type === 'premium'
-                      ? 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20'
-                      : 'bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20'
-                      }`}>
-                      {room.room_type === 'premium' ? 'Premium' : 'Suites'}
-                    </span>
-                    <span className="flex items-center">
-                      <span className="inline-flex items-center rounded-md px-2 py-1 text-xs uppercase font-semibold mr-2 bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
-                        {room.bed_type}
-                      </span>
-                      <span className="inline-flex items-center rounded-md px-2 py-1 text-sm font-semibold mr-2 bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Max Guests: {room.max_guests}
-                      </span>
-                    </span>
-                  </p>
-                  {/* Limit the description to 2 lines */}
-                  <p className="text-gray-700 text-md mb-2 line-clamp-2">
-                    {room.description || "No description provided."}
-                  </p>
-
-                  <div className="mt-auto flex justify-between items-center">
-                    <p className="text-xl font-bold text-gray-900">
-                      {typeof room.room_price === 'string' ? room.room_price : room.room_price.toLocaleString()}
-                    </p>
-                    <div className="flex gap-2">
-                      <motion.button
-                        onClick={() => handleView(room)}
-                        className="px-3 py-2 uppercase font-semibold bg-gray-600 text-white rounded cursor-pointer hover:bg-gray-700 transition-colors duration-300"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Eye />
-                      </motion.button>
-                      <motion.button
-                        onClick={() => handleEdit(room)}
-                        className="px-3 py-2 uppercase font-semibold bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition-colors duration-300"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Edit />
-                      </motion.button>
-                      <motion.button
-                        onClick={() => handleDelete(room.id)}
-                        className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Trash2 />
-                      </motion.button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+          {rooms.map((room, index) => (
+            <RoomCard
+              key={room.id}
+              room={room}
+              index={index}
+              onView={handleViewRoom}
+              onEdit={handleEditRoom}
+              onDelete={handleDeleteRoom}
+            />
+          ))}
         </div>
 
         {/* Pagination Controls */}
