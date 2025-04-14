@@ -582,7 +582,7 @@ const ConfirmBooking = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Section - Takes 2/3 width on large screens */}
           <div className="lg:col-span-2">
-            <form id="booking-form" onSubmit={validateForm(handleFormSubmit)} className="bg-white rounded-lg shadow-md p-6">
+            <form id="booking-form" onSubmit={validateForm(handleFormSubmit)} className="bg-white rounded-lg shadow-lg p-6">
               <h2 className="text-xl font-semibold mb-4">Your details</h2>
 
               {/* Name Fields */}

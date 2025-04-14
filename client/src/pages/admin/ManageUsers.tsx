@@ -474,15 +474,15 @@ const ManageUsers: FC = () => {
           <Modal
             isOpen={showDeleteModal}
             icon="fas fa-exclamation-triangle"
-            title="Delete User"
-            description={`Are you sure you want to delete this admin account? This action cannot be undone.`}
+            title="Archive User"
+            description={`Are you sure you want to archive this guest account? This action cannot be undone.`}
             cancel={() => {
               setShowDeleteModal(false);
               setSelectedUser(null);
             }}
             onConfirm={confirmDeleteUser}
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-300 cursor-pointer uppercase font-semibold"
-            confirmText={isSubmitting ? "Deleting..." : "Delete"}
+            confirmText={isSubmitting ? "Archiving..." : "Archive"}
             cancelText="Cancel"
             loading={isSubmitting}
           />

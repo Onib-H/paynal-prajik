@@ -870,12 +870,13 @@ const ManageBookings: FC = () => {
                       </td> */}
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         <div className="flex flex-col">
-                          <span className="truncate max-w-[120px] md:max-w-full">{propertyName}</span>
-                          {isVenueBooking ? (
-                            <span className="inline-block px-2 py-0.5 mt-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">Area</span>
-                          ) : (
-                            <span className="inline-block px-2 py-0.5 mt-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Room</span>
-                          )}
+                          <span className="truncate max-w-[120px] md:max-w-full">{propertyName} {" "}
+                            {isVenueBooking ? (
+                              <span className="inline-block px-2 py-0.5 mt-1 text-sm uppercase font-semibold bg-blue-100 text-blue-800 rounded-full">Area</span>
+                            ) : (
+                              <span className="inline-block px-2 py-0.5 mt-1 text-sm uppercase font-semibold bg-green-100 text-green-800 rounded-full">Room</span>
+                            )}
+                          </span>
                         </div>
                       </td>
                       <td className="hidden md:table-cell py-3 px-4 text-base text-gray-700 whitespace-nowrap">

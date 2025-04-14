@@ -37,10 +37,17 @@ ChartJS.register(
   Filler
 );
 
-const getDaysInMonth = (month: number, year: number) => {
+const getDaysInMonth = (month: number, year: number, limitToCurrentDay = false) => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const currentDate = new Date();
 
-  return Array.from({ length: daysInMonth }, (_, i) => {
+  const maxDay = limitToCurrentDay &&
+    month === currentDate.getMonth() &&
+    year === currentDate.getFullYear()
+    ? currentDate.getDate()
+    : daysInMonth;
+
+  return Array.from({ length: maxDay }, (_, i) => {
     const day = i + 1;
     return `${day}`;
   });
@@ -88,7 +95,7 @@ const AdminDashboard = () => {
       });
 
       if (!statsData.daily_revenue) {
-        statsData.daily_revenue = getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
+        statsData.daily_revenue = getDaysInMonth(selectedMonth, selectedYear, true).map(() => 0);
       }
 
       return statsData;
@@ -221,15 +228,23 @@ const AdminDashboard = () => {
     rejected: bookingStatusData?.rejected || 0
   };
 
-  const daysInMonth = getDaysInMonth(selectedMonth, selectedYear);
-  const dailyRevenueData = data?.daily_revenue || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
-  const dailyBookingsData = dailyBookingsResponse?.data || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
-  const dailyOccupancyRates = dailyOccupancyResponse?.data || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
-  const dailyCheckIns = checkinCheckoutData?.checkins || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
-  const dailyCheckOuts = checkinCheckoutData?.checkouts || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
-  const dailyCancellations = dailyCancellationsResponse?.data || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
-  const dailyNoShows = dailyNoShowsRejectedResponse?.no_shows || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
-  const dailyRejected = dailyNoShowsRejectedResponse?.rejected || getDaysInMonth(selectedMonth, selectedYear).map(() => 0);
+  // Limit charts to current day for current month
+  const daysInMonth = getDaysInMonth(selectedMonth, selectedYear, true);
+
+  // Limit daily data arrays to match the days we're showing
+  const limitArrayToCurrentDay = (dataArray: any[] | undefined) => {
+    if (!dataArray) return daysInMonth.map(() => 0);
+    return dataArray.slice(0, daysInMonth.length);
+  };
+
+  const dailyRevenueData = limitArrayToCurrentDay(data?.daily_revenue);
+  const dailyBookingsData = limitArrayToCurrentDay(dailyBookingsResponse?.data);
+  const dailyOccupancyRates = limitArrayToCurrentDay(dailyOccupancyResponse?.data);
+  const dailyCheckIns = limitArrayToCurrentDay(checkinCheckoutData?.checkins);
+  const dailyCheckOuts = limitArrayToCurrentDay(checkinCheckoutData?.checkouts);
+  const dailyCancellations = limitArrayToCurrentDay(dailyCancellationsResponse?.data);
+  const dailyNoShows = limitArrayToCurrentDay(dailyNoShowsRejectedResponse?.no_shows);
+  const dailyRejected = limitArrayToCurrentDay(dailyNoShowsRejectedResponse?.rejected);
 
   const roomNames = roomRevenueResponse?.room_names || [];
   const roomRevenueValues = roomRevenueResponse?.revenue_data || [];
@@ -327,19 +342,19 @@ const AdminDashboard = () => {
     ]
   };
 
-  const occupancyRateData = {
-    labels: daysInMonth,
-    datasets: [
-      {
-        label: 'Occupancy Rate (%)',
-        data: dailyOccupancyRates,
-        borderColor: '#FFC107',
-        backgroundColor: 'rgba(255, 193, 7, 0.1)',
-        fill: true,
-        tension: 0.3
-      }
-    ]
-  };
+  // const occupancyRateData = {
+  //   labels: daysInMonth,
+  //   datasets: [
+  //     {
+  //       label: 'Occupancy Rate (%)',
+  //       data: dailyOccupancyRates,
+  //       borderColor: '#FFC107',
+  //       backgroundColor: 'rgba(255, 193, 7, 0.1)',
+  //       fill: true,
+  //       tension: 0.3
+  //     }
+  //   ]
+  // };
 
   const checkInOutData = {
     labels: daysInMonth,
@@ -369,26 +384,29 @@ const AdminDashboard = () => {
       {
         label: 'Cancellations',
         data: dailyCancellations,
-        borderColor: '#FF5722',
-        backgroundColor: 'rgba(255, 87, 34, 0.1)',
-        fill: false,
-        tension: 0.3
+        borderColor: '#FF9800',  // Changed to more obvious orange
+        backgroundColor: 'rgba(255, 152, 0, 0.2)',
+        fill: true,  // Changed to true for better visibility
+        tension: 0.3,
+        borderWidth: 3
       },
       {
         label: 'No Show',
         data: dailyNoShows,
-        borderColor: '#9C27B0',
-        backgroundColor: 'rgba(156, 39, 176, 0.1)',
-        fill: false,
-        tension: 0.3
+        borderColor: '#673AB7',  // Changed to deeper purple
+        backgroundColor: 'rgba(103, 58, 183, 0.2)',
+        fill: true,  // Changed to true for better visibility
+        tension: 0.3,
+        borderWidth: 3
       },
       {
         label: 'Rejected',
         data: dailyRejected,
-        borderColor: '#F44336',
-        backgroundColor: 'rgba(244, 67, 54, 0.1)',
-        fill: false,
-        tension: 0.3
+        borderColor: '#E91E63',  // Changed to pink for better contrast
+        backgroundColor: 'rgba(233, 30, 99, 0.2)',
+        fill: true,  // Changed to true for better visibility
+        tension: 0.3,
+        borderWidth: 3
       }
     ]
   };
@@ -553,14 +571,14 @@ const AdminDashboard = () => {
           borderColor="border-orange-500"
           tooltip={`Revenue from checked-in and checked-out bookings for ${formattedMonthYear}`}
         />
-        <StatCard title="Occupancy Rate" value={`${Math.round((stats.totalRooms > 0 ? stats.occupiedRooms / stats.totalRooms : 0) * 100)}%`} borderColor="border-purple-500" />
+        <StatCard title="Pending Bookings" value={stats.pendingBookings} borderColor="border-yellow-500" />
+        {/* <StatCard title="Occupancy Rate" value={`${Math.round((stats.totalRooms > 0 ? stats.occupiedRooms / stats.totalRooms : 0) * 100)}%`} borderColor="border-purple-500" /> */}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <StatCard title="Pending Bookings" value={stats.pendingBookings} borderColor="border-yellow-500" />
         <StatCard title="Checked-in Guests" value={stats.checkedInCount} borderColor="border-indigo-500" />
         <StatCard title="Available Rooms" value={stats.availableRooms} borderColor="border-teal-500" />
-        <StatCard title="Total Rooms" value={stats.totalRooms} borderColor="border-gray-500" />
+        {/* <StatCard title="Total Rooms" value={stats.totalRooms} borderColor="border-gray-500" /> */}
       </div>
 
       <div className="mb-8">
@@ -639,7 +657,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white shadow-lg rounded-lg p-4">
+          {/* <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">Occupancy Rate</h3>
             <div className="h-64">
               <Line
@@ -674,7 +692,7 @@ const AdminDashboard = () => {
                 }}
               />
             </div>
-          </div>
+          </div> */}
 
           <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">Check-ins & Check-outs</h3>
@@ -736,7 +754,27 @@ const AdminDashboard = () => {
           <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">Cancellation Trends</h3>
             <div className="h-64">
-              <Line data={cancellationData} options={lineOptions} />
+              <Line data={cancellationData} options={{
+                ...lineOptions,
+                plugins: {
+                  ...lineOptions.plugins,
+                  legend: {
+                    position: 'top',
+                    labels: {
+                      usePointStyle: true,
+                      boxWidth: 10,
+                      padding: 20
+                    }
+                  },
+                  title: {
+                    display: true,
+                    text: `Booking Cancellations - ${formattedMonthYear}`,
+                    font: {
+                      size: 16
+                    }
+                  }
+                }
+              }} />
             </div>
           </div>
         </div>

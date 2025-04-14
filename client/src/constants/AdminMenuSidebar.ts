@@ -33,9 +33,9 @@ export const menuItems = [
     label: "Manage Amenities",
     link: '/admin/amenities'
   },
-  {
-    icon: faUsers,
-    label: "Manage Users",
-    link: '/admin/users'
-  },
+  // {
+  //   icon: faUsers,
+  //   label: "Manage Users",
+  //   link: '/admin/users'
+  // },
 ];
