@@ -255,7 +255,7 @@ const VenueBookingCalendar = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-lg shadow-md ring-3 ring-blue-400 p-6">
+                    <div className="bg-white rounded-lg shadow-md ring-3 ring-purple-500 p-6">
                         <h3 className="text-2xl font-bold mb-4">Select Your Booking Date</h3>
 
                         {/* Selected Date */}
@@ -440,7 +440,7 @@ const VenueBookingCalendar = () => {
                 {/* Right Side - Area Info (1/3 width on large screens) */}
                 <div className="lg:col-span-1">
                     {areaData && (
-                        <div className="bg-white rounded-lg ring-blue-400 ring-3 shadow-md p-6 sticky top-24">
+                        <div className="bg-white rounded-lg ring-purple-500 ring-3 shadow-md p-6 sticky top-24">
                             <div className="mb-4">
                                 <img
                                     loading='lazy'

@@ -20,16 +20,6 @@ interface AreaData {
   price_per_hour: string;
 }
 
-interface FormInputs {
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  emailAddress: string;
-  validId: FileList;
-  specialRequests: string;
-  numberOfGuests: string;
-}
-
 const ConfirmVenueBooking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -43,28 +33,30 @@ const ConfirmVenueBooking = () => {
   const endTime = searchParams.get('endTime');
   const totalPrice = searchParams.get('totalPrice');
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch
-  } = useForm<FormInputs>({
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      phoneNumber: '+63 ',
-      emailAddress: '',
-      specialRequests: '',
-      numberOfGuests: '1'
-    }
+  const { register, handleSubmit: validateForm, formState: { errors } } = useForm();
+
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    phoneNumber: '+63 ',
+    emailAddress: '',
+    validId: null as File | null,
+    specialRequests: '',
+    numberOfGuests: '1'
   });
 
-  const watchPhoneNumber = watch('phoneNumber');
-
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [error, setError] = useState<{
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    emailAddress?: string;
+    validId?: string;
+    numberOfGuests?: string;
+    general?: string;
+  }>({});
   const [success, setSuccess] = useState(false);
 
   const { data: areaData, isLoading } = useQuery<AreaData>({
@@ -75,7 +67,7 @@ const ConfirmVenueBooking = () => {
 
   useEffect(() => {
     if (!isLoading && !areaData) {
-      setApiError('Failed to load venue details. Please try again.');
+      setError({ general: 'Failed to load venue details. Please try again.' });
     }
   }, [isLoading, areaData]);
 
@@ -85,13 +77,19 @@ const ConfirmVenueBooking = () => {
     }
   }, [areaId, navigate, startTime, endTime]);
 
-  // Special handling for phone number formatting
-  useEffect(() => {
-    if (watchPhoneNumber && watchPhoneNumber !== '+63 ') {
-      const cleaned = watchPhoneNumber.replace(/[^\d+]/g, '');
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
 
-      if (!cleaned.startsWith('+63')) return;
+    if (name === 'phoneNumber') {
+      // Remove all non-digit characters except the + sign
+      const cleaned = value.replace(/[^\d+]/g, '');
 
+      // Ensure the number starts with +63
+      if (!cleaned.startsWith('+63')) {
+        return;
+      }
+
+      // Format the phone number with spaces: +63 9XX XXX XXXX
       let formatted = '+63 ';
       const localNumber = cleaned.substring(3);
 
@@ -111,15 +109,25 @@ const ConfirmVenueBooking = () => {
         }
       }
 
-      if (formatted !== watchPhoneNumber) {
-        setValue('phoneNumber', formatted, { shouldValidate: true });
-      }
+      setFormData({
+        ...formData,
+        [name]: formatted
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
     }
-  }, [watchPhoneNumber, setValue]);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      setFormData({
+        ...formData,
+        validId: file
+      });
       const reader = new FileReader();
       reader.onloadend = () => {
         setValidIdPreview(reader.result as string);
@@ -140,7 +148,7 @@ const ConfirmVenueBooking = () => {
     if (!savedFormData || isSubmitting) return;
 
     setIsSubmitting(true);
-    setApiError(null);
+    setError({});
 
     try {
       const response = await createReservation(savedFormData);
@@ -159,12 +167,13 @@ const ConfirmVenueBooking = () => {
 
       if (err.response && err.response.data && err.response.data.error) {
         if (typeof err.response.data.error === 'string') {
-          errorMessage = err.response.data.error;
+          setError({ general: err.response.data.error });
         } else if (typeof err.response.data.error === 'object') {
-          errorMessage = Object.values(err.response.data.error).join('. ');
+          setError(err.response.data.error);
         }
+      } else {
+        setError({ general: errorMessage });
       }
-      setApiError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -176,28 +185,85 @@ const ConfirmVenueBooking = () => {
     }
   }, [isAuthenticated, savedFormData, handleSuccessfulLogin, isSubmitting, success]);
 
-  const onSubmit = (data: FormInputs) => {
-    if (isSubmitting || !areaId || !startTime || !endTime || !totalPrice) return;
+  const handleProceedClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (isSubmitting) return;
 
-    const validIdFile = data.validId ? data.validId[0] : null;
+    const newFieldErrors: { [key: string]: string } = {};
+    let hasErrors = false;
+
+    if (!formData.firstName) {
+      newFieldErrors.firstName = "First name is required";
+      hasErrors = true;
+    }
+
+    if (!formData.lastName) {
+      newFieldErrors.lastName = "Last name is required";
+      hasErrors = true;
+    }
+
+    if (!formData.phoneNumber || formData.phoneNumber === '+63 ') {
+      newFieldErrors.phoneNumber = "Phone number is required";
+      hasErrors = true;
+    } else {
+      // Extract the digits and check if it follows the pattern
+      const cleaned = formData.phoneNumber.replace(/[^\d+]/g, '');
+      const localNumber = cleaned.substring(3);
+
+      if (!cleaned.startsWith('+63') || localNumber.length !== 10 || !localNumber.startsWith('9')) {
+        newFieldErrors.phoneNumber = "Phone number must be in Philippine format: (+63) 9XX XXX XXXX";
+        hasErrors = true;
+      }
+    }
+
+    if (!formData.emailAddress) {
+      newFieldErrors.emailAddress = "Email address is required";
+      hasErrors = true;
+    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.emailAddress)) {
+      newFieldErrors.emailAddress = "Invalid email format";
+      hasErrors = true;
+    }
+
+    if (!formData.validId) {
+      newFieldErrors.validId = "Please upload a valid ID";
+      hasErrors = true;
+    }
+
+    if (!formData.numberOfGuests || parseInt(formData.numberOfGuests) < 1) {
+      newFieldErrors.numberOfGuests = "Please specify the number of guests";
+      hasErrors = true;
+    } else if (areaData?.capacity && parseInt(formData.numberOfGuests) > areaData.capacity) {
+      newFieldErrors.numberOfGuests = `Maximum capacity is ${areaData.capacity} guests`;
+      hasErrors = true;
+    }
+
+    if (!areaId || !startTime || !endTime || !totalPrice) {
+      newFieldErrors.general = "Missing required booking information";
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
+      setError(newFieldErrors);
+      return;
+    }
 
     const parsedStartTime = startTime ? new Date(startTime).toISOString() : null;
     const parsedEndTime = endTime ? new Date(endTime).toISOString() : null;
 
     const reservationData: ReservationFormData = {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phoneNumber: data.phoneNumber,
-      emailAddress: data.emailAddress,
-      specialRequests: data.specialRequests,
-      validId: validIdFile,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phoneNumber: formData.phoneNumber,
+      emailAddress: formData.emailAddress,
+      specialRequests: formData.specialRequests,
+      validId: formData.validId,
       areaId: areaId,
       startTime: parsedStartTime,
       endTime: parsedEndTime,
       totalPrice: parseFloat(totalPrice || '0'),
       status: 'pending',
       isVenueBooking: true,
-      numberOfGuests: parseInt(data.numberOfGuests)
+      numberOfGuests: parseInt(formData.numberOfGuests)
     };
 
     setSavedFormData(reservationData);
@@ -207,6 +273,10 @@ const ConfirmVenueBooking = () => {
     } else {
       handleSuccessfulLogin();
     }
+  };
+
+  const handleFormSubmit = async () => {
+    handleProceedClick(new MouseEvent('click') as unknown as React.MouseEvent<HTMLButtonElement>);
   };
 
   const formatDateTime = (dateTimeString: string | null) => {
@@ -303,16 +373,16 @@ const ConfirmVenueBooking = () => {
           </div>
         )}
 
-        {apiError && (
+        {error.general && (
           <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            <p>{apiError}</p>
+            <p>{error.general}</p>
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Section - Takes 2/3 width on large screens */}
           <div className="lg:col-span-2">
-            <form id="booking-form" onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-lg shadow-md p-6">
+            <form id="booking-form" onSubmit={validateForm(handleFormSubmit)} className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4">Your details</h2>
 
               {/* Name Fields */}
@@ -324,20 +394,13 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="text"
                     id="firstName"
-                    {...register("firstName", {
-                      required: "First name is required",
-                      pattern: {
-                        value: /^[A-Za-z\s]+$/,
-                        message: "Name should contain only letters and spaces"
-                      },
-                      minLength: {
-                        value: 2,
-                        message: "Name must be at least 2 characters long"
-                      }
-                    })}
-                    className={`w-full px-3 py-2 border ${errors.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                    {...register("firstName")}
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${error.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
-                  {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName.message}</p>}
+                  {error.firstName && <p className="text-red-500 text-sm mt-1">{error.firstName}</p>}
                 </div>
                 <div>
                   <label htmlFor="lastName" className="block text-md font-medium text-gray-700 mb-1">
@@ -346,20 +409,13 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="text"
                     id="lastName"
-                    {...register("lastName", {
-                      required: "Last name is required",
-                      pattern: {
-                        value: /^[A-Za-z\s]+$/,
-                        message: "Name should contain only letters and spaces"
-                      },
-                      minLength: {
-                        value: 2,
-                        message: "Name must be at least 2 characters long"
-                      }
-                    })}
-                    className={`w-full px-3 py-2 border ${errors.lastName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                    {...register("lastName")}
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${error.lastName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
-                  {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>}
+                  {error.lastName && <p className="text-red-500 text-sm mt-1">{error.lastName}</p>}
                 </div>
               </div>
 
@@ -372,22 +428,14 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="tel"
                     id="phoneNumber"
-                    {...register("phoneNumber", {
-                      required: "Phone number is required",
-                      validate: value => {
-                        const cleaned = value.replace(/[^\d+]/g, '');
-                        const localNumber = cleaned.substring(3);
-
-                        if (!cleaned.startsWith('+63') || localNumber.length !== 10 || !localNumber.startsWith('9')) {
-                          return "Phone number must be in Philippine format: (+63) 9XX XXX XXXX";
-                        }
-                        return true;
-                      }
-                    })}
+                    {...register("phoneNumber")}
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
                     placeholder="+63 9XX XXX XXXX"
-                    className={`w-full px-3 py-2 border ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                    className={`w-full px-3 py-2 border ${error.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
-                  {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber.message}</p>}
+                  {error.phoneNumber && <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>}
                   <p className="mt-1 text-xs text-gray-500">Format: +63 9XX XXX XXXX (Philippine number)</p>
                 </div>
                 <div>
@@ -397,16 +445,13 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="email"
                     id="emailAddress"
-                    {...register("emailAddress", {
-                      required: "Email is required",
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: "Invalid email address"
-                      }
-                    })}
-                    className={`w-full px-3 py-2 border ${errors.emailAddress ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                    {...register("emailAddress")}
+                    name="emailAddress"
+                    value={formData.emailAddress}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border ${error.emailAddress ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
-                  {errors.emailAddress && <p className="text-red-500 text-sm mt-1">{errors.emailAddress.message}</p>}
+                  {error.emailAddress && <p className="text-red-500 text-sm mt-1">{error.emailAddress}</p>}
                 </div>
               </div>
 
@@ -418,27 +463,15 @@ const ConfirmVenueBooking = () => {
                 <input
                   type="number"
                   id="numberOfGuests"
-                  {...register("numberOfGuests", {
-                    required: "Number of guests is required",
-                    min: {
-                      value: 1,
-                      message: "At least 1 guest is required"
-                    },
-                    max: {
-                      value: areaData?.capacity || 100,
-                      message: `Maximum capacity is ${areaData?.capacity || 100} guests`
-                    },
-                    validate: value => {
-                      const numGuests = parseInt(value);
-                      if (isNaN(numGuests)) return "Number of guests must be a number";
-                      return true;
-                    }
-                  })}
+                  {...register("numberOfGuests")}
+                  name="numberOfGuests"
+                  value={formData.numberOfGuests}
+                  onChange={handleInputChange}
                   min="1"
                   max={areaData?.capacity}
-                  className={`w-full px-3 py-2 border ${errors.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                  className={`w-full px-3 py-2 border ${error.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                 />
-                {errors.numberOfGuests && <p className="text-red-500 text-sm mt-1">{errors.numberOfGuests.message}</p>}
+                {error.numberOfGuests && <p className="text-red-500 text-sm mt-1">{error.numberOfGuests}</p>}
                 {areaData?.capacity && (
                   <p className="mt-1 text-sm text-gray-500">Maximum capacity: {areaData.capacity} guests</p>
                 )}
@@ -453,30 +486,12 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="file"
                     id="validId"
-                    {...register("validId", {
-                      required: "Valid ID is required",
-                      validate: {
-                        fileType: (fileList) => {
-                          if (!fileList.length) return "Valid ID is required";
-                          const file = fileList[0];
-                          const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-                          if (!validTypes.includes(file.type)) return "File must be an image (JPEG, PNG, or GIF)";
-                          return true;
-                        },
-                        fileSize: (fileList) => {
-                          if (!fileList.length) return true;
-                          const file = fileList[0];
-                          const maxSize = 2 * 1024 * 1024; // 2MB
-                          if (file.size > maxSize) return "File size exceeds 2MB limit";
-                          return true;
-                        }
-                      }
-                    })}
+                    name="validId"
                     onChange={handleFileChange}
                     accept="image/*"
-                    className={`w-full py-2 ${errors.validId ? 'border-red-500' : ''}`}
+                    className={`w-full py-2 ${error.validId ? 'border-red-500' : ''}`}
                   />
-                  {errors.validId && <p className="text-red-500 text-sm mt-1">{errors.validId.message}</p>}
+                  {error.validId && <p className="text-red-500 text-sm mt-1">{error.validId}</p>}
 
                   {/* Valid ID Preview Container */}
                   {validIdPreview && (
@@ -493,7 +508,7 @@ const ConfirmVenueBooking = () => {
                         type="button"
                         onClick={() => {
                           setValidIdPreview(null);
-                          setValue('validId', undefined);
+                          setFormData({ ...formData, validId: null });
                         }}
                         className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
                         aria-label="Remove image"
@@ -548,6 +563,9 @@ const ConfirmVenueBooking = () => {
                 <textarea
                   id="specialRequests"
                   {...register("specialRequests")}
+                  name="specialRequests"
+                  value={formData.specialRequests}
+                  onChange={handleInputChange}
                   rows={10}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100 resize-none"
                 ></textarea>
@@ -556,8 +574,9 @@ const ConfirmVenueBooking = () => {
               {/* Submit Button for Mobile View */}
               <div className="lg:hidden mt-6">
                 <button
-                  type="submit"
+                  type="button"
                   disabled={isSubmitting}
+                  onClick={handleProceedClick}
                   className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${isSubmitting
                     ? 'bg-blue-400 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500'
@@ -628,9 +647,9 @@ const ConfirmVenueBooking = () => {
 
             <div className="hidden lg:block">
               <button
-                type="submit"
-                form="booking-form"
+                type="button"
                 disabled={isSubmitting}
+                onClick={handleProceedClick}
                 className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex items-center justify-center ${isSubmitting
                   ? 'bg-blue-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500'

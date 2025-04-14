@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Calendar, CheckCircle, Edit, Eye, EyeOff, ImageUp, Key, Mail, Save, User, X } from "lucide-react";
+import { AlertCircle, CheckCircle, Edit, Eye, EyeOff, ImageUp, Key, Mail, Save, User, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
@@ -167,14 +167,6 @@ const GuestProfile = () => {
     }
 
     updateProfileMutation.mutate(formData);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const month = date.toLocaleString('en-US', { month: 'long' });
-    const day = date.getDate().toString().padStart(2, '0');
-    const year = date.getFullYear();
-    return `${month} ${day}, ${year}`;
   };
 
   const handleChangePassword = (e: FormEvent) => {
@@ -580,28 +572,6 @@ const GuestProfile = () => {
               </h3>
 
               <div className="space-y-5">
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <User className="h-5 w-5 text-gray-500 mr-3" />
-                    <div>
-                      <span className="block text-sm font-medium text-gray-700">Username</span>
-                      <span className="text-gray-600">{guestData?.username}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <Calendar className="h-5 w-5 text-gray-500 mr-3" />
-                    <div>
-                      <span className="block text-sm font-medium text-gray-700">Member Since</span>
-                      <span className="text-gray-600">
-                        {formatDate(guestData?.date_joined)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
                 <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
                     <Key className="h-5 w-5 text-gray-500 mr-3" />

@@ -52,7 +52,7 @@ const GoogleButton: FC<{ text: string }> = ({ text }) => {
                     }
 
                     setIsAuthenticated(true);
-                    window.location.href = '/';
+                    navigate("/guest/bookings");
                 } else {
                     navigate("/registration", {
                         state: {

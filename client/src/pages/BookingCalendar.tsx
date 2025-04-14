@@ -56,6 +56,8 @@ const BookingCalendar = () => {
     const [numberOfNights, setNumberOfNights] = useState(1);
     const [totalPrice, setTotalPrice] = useState(0);
     const [bookingsByDate, setBookingsByDate] = useState<BookingsByDate>({});
+    const [hasConflict, setHasConflict] = useState(false);
+    const [conflictMessage, setConflictMessage] = useState<string | null>(null);
 
     useEffect(() => {
         if (arrivalParam && departureParam) {
@@ -122,6 +124,36 @@ const BookingCalendar = () => {
     }, [bookingsData]);
 
     useEffect(() => {
+        if (checkInDate && checkOutDate && bookingsData?.data) {
+            // Check for overlap with existing bookings
+            const hasOverlap = bookingsData.data.some(booking => {
+                // Only consider active bookings (reserved, confirmed, checked_in)
+                if (!['reserved', 'confirmed', 'checked_in'].includes(booking.status.toLowerCase())) {
+                    return false;
+                }
+
+                const existingCheckIn = parseISO(booking.check_in_date);
+                const existingCheckOut = parseISO(booking.check_out_date);
+
+                // Check if dates overlap
+                // (start1 <= end2 AND start2 <= end1)
+                return (
+                    checkInDate <= existingCheckOut &&
+                    existingCheckIn <= checkOutDate
+                );
+            });
+
+            setHasConflict(hasOverlap);
+            setConflictMessage(hasOverlap ?
+                "Selected dates overlap with an existing booking. Please choose different dates." :
+                null);
+        } else {
+            setHasConflict(false);
+            setConflictMessage(null);
+        }
+    }, [checkInDate, checkOutDate, bookingsData]);
+
+    useEffect(() => {
         if (roomId) {
             const nextMonth = addMonths(currentMonth, 2);
             const prefetchStartDate = format(startOfMonth(nextMonth), 'yyyy-MM-dd');
@@ -184,9 +216,7 @@ const BookingCalendar = () => {
     }, [isDateBooked]);
 
     const handleDateClick = (date: Date) => {
-        if (isDateUnavailable(date)) {
-            return;
-        }
+        if (isDateUnavailable(date)) return;
 
         if (!checkInDate || (checkInDate && checkOutDate)) {
             setCheckInDate(date);
@@ -202,11 +232,8 @@ const BookingCalendar = () => {
     };
 
     const handleDateHover = (date: Date) => {
-        if (!isDateUnavailable(date)) {
-            setHoveredDate(date);
-        } else {
-            setHoveredDate(null);
-        }
+        if (!isDateUnavailable(date)) setHoveredDate(date);
+        else setHoveredDate(null);
     };
 
     const isDateInRange = (date: Date) => {
@@ -234,21 +261,10 @@ const BookingCalendar = () => {
 
         let className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
 
-        if (isCheckinDate || isCheckoutDate) {
-            return `${className} bg-blue-600 text-white font-medium`;
-        }
-
-        if (isInRange) {
-            return `${className} bg-blue-200 text-blue-800`;
-        }
-
-        if (isHovered && !isUnavailable) {
-            return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
-        }
-
-        if (isToday && !isUnavailable) {
-            className += " border-blue-500 border-2";
-        }
+        if (isCheckinDate || isCheckoutDate) return `${className} bg-blue-600 text-white font-medium`;
+        if (isInRange) return `${className} bg-blue-200 text-blue-800`;
+        if (isHovered && !isUnavailable) return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
+        if (isToday && !isUnavailable) className += " border-blue-500 border-2";
 
         if (dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
             switch (dateStatus.toLowerCase()) {
@@ -261,15 +277,12 @@ const BookingCalendar = () => {
             }
         }
 
-        if (isUnavailable) {
-            return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
-        }
-
+        if (isUnavailable) return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
         return `${className} bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer`;
     };
 
     const handleProceed = () => {
-        if (checkInDate && checkOutDate && numberOfNights > 0) {
+        if (checkInDate && checkOutDate && numberOfNights > 0 && !hasConflict) {
             navigate(`/confirm-booking?roomId=${roomId}&arrival=${format(checkInDate, 'yyyy-MM-dd')}&departure=${format(checkOutDate, 'yyyy-MM-dd')}&totalPrice=${totalPrice}`);
         }
     };
@@ -288,7 +301,7 @@ const BookingCalendar = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <div className="bg-white ring-3 ring-blue-400 rounded-lg shadow-xl p-6">
+                    <div className="bg-white ring-3 ring-purple-500 rounded-lg shadow-xl p-6">
                         <h3 className="text-2xl font-bold mb-4">Select Your Stay Dates</h3>
 
                         {/* Selected Dates */}
@@ -312,6 +325,18 @@ const BookingCalendar = () => {
                                 </span>
                             </div>
                         </div>
+
+                        {/* Display conflict warning if there's an overlap */}
+                        {conflictMessage && (
+                            <div className="mb-6 p-4 bg-red-50 border border-red-300 text-red-800 rounded-lg">
+                                <div className="flex items-center">
+                                    <svg className="h-5 w-5 text-red-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    <p>{conflictMessage}</p>
+                                </div>
+                            </div>
+                        )}
 
                         {arrivalParam && departureParam ? (
                             <div className="mb-6 p-4 bg-blue-50 rounded-lg">
@@ -439,8 +464,8 @@ const BookingCalendar = () => {
                         <div className="flex justify-end mt-6">
                             <button
                                 onClick={handleProceed}
-                                disabled={!checkInDate || !checkOutDate}
-                                className={`px-6 py-2 rounded-md font-semibold ${checkInDate && checkOutDate
+                                disabled={!checkInDate || !checkOutDate || hasConflict}
+                                className={`px-6 py-2 rounded-md font-semibold ${checkInDate && checkOutDate && !hasConflict
                                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
@@ -454,7 +479,7 @@ const BookingCalendar = () => {
                 {/* Room Info Card - Right Side */}
                 <div className="lg:col-span-1">
                     {roomData && (
-                        <div className="bg-white rounded-lg ring-blue-400 ring-3 shadow-xl p-6 sticky top-24">
+                        <div className="bg-white rounded-lg ring-purple-500 ring-3 shadow-xl p-6 sticky top-24">
                             <div className="mb-4">
                                 <img
                                     loading="lazy"
