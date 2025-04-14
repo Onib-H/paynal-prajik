@@ -71,18 +71,14 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
         document.head.appendChild(style);
 
         const printButton = document.getElementById('print-report-button');
-        if (printButton) {
-            printButton.focus();
-        }
+        if (printButton) printButton.focus();
 
         return () => {
             document.head.removeChild(style);
         };
     }, []);
 
-    const handlePrint = () => {
-        window.print();
-    };
+    const handlePrint = () => window.print();
 
     const totalBookingStatuses = Object.values(reportData.bookingStatusCounts).reduce((sum, count) => sum + count, 0);
 
@@ -154,17 +150,17 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                             <p className="text-sm text-gray-500">Total Revenue</p>
                             <p className="text-xl font-bold">{reportData.stats.formattedRevenue}</p>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-md border-l-4 border-purple-500">
+                        {/* <div className="bg-gray-50 p-4 rounded-md border-l-4 border-purple-500">
                             <p className="text-sm text-gray-500">Occupancy Rate</p>
                             <p className="text-xl font-bold">{reportData.stats.occupancyRate}</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        </div> */}
                         <div className="bg-gray-50 p-4 rounded-md border-l-4 border-yellow-500">
                             <p className="text-sm text-gray-500">Pending Bookings</p>
                             <p className="text-xl font-bold">{reportData.stats.pendingBookings}</p>
                         </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-gray-50 p-4 rounded-md border-l-4 border-indigo-500">
                             <p className="text-sm text-gray-500">Checked-in Guests</p>
                             <p className="text-xl font-bold">{reportData.stats.checkedInCount}</p>
@@ -173,10 +169,10 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                             <p className="text-sm text-gray-500">Available Rooms</p>
                             <p className="text-xl font-bold">{reportData.stats.availableRooms}</p>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-md border-l-4 border-gray-500">
+                        {/* <div className="bg-gray-50 p-4 rounded-md border-l-4 border-gray-500">
                             <p className="text-sm text-gray-500">Total Rooms</p>
                             <p className="text-xl font-bold">{reportData.stats.totalRooms}</p>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { AtSign, PencilIcon, Plus, TrashIcon, UserRound } from "lucide-react";
+import { AtSign, PencilIcon, TrashIcon, UserRound } from "lucide-react";
 import { FC, useCallback, useState } from "react";
 import { toast } from "react-toastify";
 import DefaultProfilePic from "../../assets/Default_pfp.jpg";
@@ -243,13 +243,7 @@ const ManageUsers: FC = () => {
   return (
     <div className="min-h-[calc(100vh-25px)] p-3 md:p-3 overflow-y-auto container mx-auto">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl md:text-3xl font-semibold">Manage Admins</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer font-semibold px-4 py-2 rounded-lg flex items-center transition-colors duration-300"
-        >
-          <Plus size={20} className="mr-2" /> Add New Admin
-        </button>
+        <h1 className="text-2xl md:text-3xl font-semibold">Manage Users</h1>
       </div>
 
       {users && users.length === 0 ? (
@@ -480,15 +474,15 @@ const ManageUsers: FC = () => {
           <Modal
             isOpen={showDeleteModal}
             icon="fas fa-exclamation-triangle"
-            title="Delete User"
-            description={`Are you sure you want to delete this admin account? This action cannot be undone.`}
+            title="Archive User"
+            description={`Are you sure you want to archive this guest account? This action cannot be undone.`}
             cancel={() => {
               setShowDeleteModal(false);
               setSelectedUser(null);
             }}
             onConfirm={confirmDeleteUser}
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-300 cursor-pointer uppercase font-semibold"
-            confirmText={isSubmitting ? "Deleting..." : "Delete"}
+            confirmText={isSubmitting ? "Archiving..." : "Archive"}
             cancelText="Cancel"
             loading={isSubmitting}
           />

@@ -18,7 +18,6 @@ const ForgotPassword: FC = () => {
   const { setIsAuthenticated } = useUserContext();
   const navigate = useNavigate();
 
-  // Step 1: Send OTP by submitting the email address.
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
@@ -38,7 +37,6 @@ const ForgotPassword: FC = () => {
     }
   };
 
-  // Step 2: Verify OTP submitted by the user.
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp.trim()) {
@@ -58,7 +56,6 @@ const ForgotPassword: FC = () => {
     }
   };
 
-  // Step 3: Reset password using the new password form.
   const handleNewPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword !== confirmPassword) {
@@ -79,7 +76,6 @@ const ForgotPassword: FC = () => {
     }
   };
 
-  // Resend OTP function for user convenience.
   const resendOtp = async () => {
     if (!email.trim()) {
       setError('Email is required to resend OTP.');

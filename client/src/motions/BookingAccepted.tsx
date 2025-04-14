@@ -29,7 +29,7 @@ const BookingAccepted = () => {
           transition={{ duration: 0.5 }}
         >
           {/* Success Animation */}
-          <div className="bg-blue-600 p-8 flex flex-col items-center justify-center">
+          <div className="bg-purple-600 p-8 flex flex-col items-center justify-center">
             <motion.div
               className="w-24 h-24 rounded-full bg-white flex items-center justify-center mb-6"
               initial={{ scale: 0 }}
@@ -46,7 +46,7 @@ const BookingAccepted = () => {
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                <Check className="w-12 h-12 text-blue-600" strokeWidth={3} />
+                <Check className="text-purple-600" strokeWidth={4} size={65} />
               </motion.div>
             </motion.div>
 
@@ -60,7 +60,7 @@ const BookingAccepted = () => {
             </motion.h1>
 
             <motion.p
-              className="text-blue-100 text-center mt-2"
+              className="text-gray-100 text-center mt-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.9 }}
@@ -72,13 +72,13 @@ const BookingAccepted = () => {
           {/* Booking Info */}
           <div className="p-8">
             <motion.div
-              className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4"
+              className="mb-6 bg-purple-50 border border-purple-100 rounded-lg p-4"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 1.1 }}
             >
               <div className="flex items-start">
-                <div className="bg-blue-600 p-2 rounded-md mr-4">
+                <div className="bg-purple-600 p-2 rounded-md mr-4">
                   {isVenueBooking
                     ? <Landmark className="w-6 h-6 text-white" />
                     : <Calendar className="w-6 h-6 text-white" />}
@@ -149,7 +149,7 @@ const BookingAccepted = () => {
             >
               <button
                 onClick={viewBookingDetails}
-                className="flex items-center justify-center cursor-pointer bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="flex items-center justify-center cursor-pointer bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
               >
                 <BookCheck className="w-5 h-5 mr-2" />
                 View Booking Details
@@ -175,7 +175,7 @@ const BookingAccepted = () => {
             <p className="text-center text-gray-500 text-sm flex items-center justify-center">
               <span>Need help with your booking?</span>
               <motion.div
-                className="inline-flex items-center text-blue-600 font-medium ml-2 hover:text-blue-700"
+                className="inline-flex items-center text-purple-600 font-medium ml-2 hover:text-purple-700"
                 whileHover={{ x: 5 }}
               >
                 Contact support <ArrowRight className="w-4 h-4 ml-1" />

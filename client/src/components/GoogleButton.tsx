@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -52,7 +53,7 @@ const GoogleButton: FC<{ text: string }> = ({ text }) => {
                     }
 
                     setIsAuthenticated(true);
-                    window.location.href = '/';
+                    navigate("/guest/bookings");
                 } else {
                     navigate("/registration", {
                         state: {

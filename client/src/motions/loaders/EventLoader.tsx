@@ -90,8 +90,7 @@ const EventLoader: FC<LoaderProps> = ({
     }
   };
 
-  const { primary, secondary, bgFrom, bgTo, accent, text: textColor, icon } = getColors();
-  const displayedProgress = Math.floor(progress);
+  const { primary, secondary, bgFrom, bgTo, accent, icon } = getColors();
 
   const containerVariants = {
     initial: { opacity: 0 },
@@ -288,16 +287,6 @@ const EventLoader: FC<LoaderProps> = ({
             variants={iconVariants}
           >
             {icon}
-          </motion.div>
-
-          {/* Progress Percentage */}
-          <motion.div
-            className={`absolute -bottom-2 left-1/2 transform -translate-x-1/2 ${textColor} font-semibold text-lg bg-white/90 px-3 py-1 rounded-full shadow-md`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-          >
-            {displayedProgress}%
           </motion.div>
         </motion.div>
 

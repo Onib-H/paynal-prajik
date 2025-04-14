@@ -36,11 +36,15 @@ def google_auth(code, CLIENT_ID, CLIENT_SECRET):
         
         email = user_info.get('email')
         username = user_info.get('name', user_info.get('email', 'Google User'))
+        profile_image = user_info.get('picture')
+        
+        print(f"Retrieved Google profile data - Email: {email}, Name: {username}")
+        print(f"Google profile image URL: {profile_image}")
 
         if not email:
             raise Exception("Missing email in user info")
             
-        return email, username
+        return email, username, profile_image
     except Exception as e:
         print(f"Error in google_auth: {e}")
-        return None, None
+        return None, None, None
