@@ -234,12 +234,12 @@ const BookingDetailsModal: FC<{
                 <span className="sm:text-right">{booking.user?.first_name} {booking.user?.last_name}</span>
               </motion.div>
 
-              <motion.div
+              {/* <motion.div
                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
               >
                 <span className="font-semibold text-gray-700">Email:</span>
                 <span className="sm:text-right break-words">{booking.user?.email}</span>
-              </motion.div>
+              </motion.div> */}
 
               {booking.user?.address && (
                 <motion.div
@@ -826,9 +826,9 @@ const ManageBookings: FC = () => {
                 <th className="py-2 md:py-3 px-2 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Guest
                 </th>
-                <th className="hidden md:table-cell py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {/* <th className="hidden md:table-cell py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
-                </th>
+                </th> */}
                 <th className="py-2 md:py-3 px-2 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Property
                 </th>
@@ -865,9 +865,9 @@ const ManageBookings: FC = () => {
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         {`${booking.user?.first_name || ''} ${booking.user?.last_name || ''}`}
                       </td>
-                      <td className="hidden md:table-cell py-3 px-4 text-base text-gray-700 whitespace-nowrap">
+                      {/* <td className="hidden md:table-cell py-3 px-4 text-base text-gray-700 whitespace-nowrap">
                         {booking.user?.email || ''}
-                      </td>
+                      </td> */}
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         <div className="flex flex-col">
                           <span className="truncate max-w-[120px] md:max-w-full">{propertyName}</span>

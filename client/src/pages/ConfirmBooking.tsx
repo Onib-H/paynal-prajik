@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { BookCheck } from 'lucide-react';
@@ -637,7 +638,7 @@ const ConfirmBooking = () => {
                   {error.phoneNumber && <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>}
                   <p className="mt-1 text-xs text-gray-500">Format: +63 9XX XXX XXXX (Philippine number)</p>
                 </div>
-                <div>
+                {/* <div>
                   <label htmlFor="emailAddress" className="block text-md font-medium text-gray-700 mb-1">
                     Email Address <span className="text-red-500">*</span>
                   </label>
@@ -651,34 +652,34 @@ const ConfirmBooking = () => {
                     className={`w-full px-3 py-2 border ${error.emailAddress ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
                   {error.emailAddress && <p className="text-red-500 text-sm mt-1">{error.emailAddress}</p>}
+                </div> */}
+                {/* Number of Guests */}
+                <div>
+                  <label htmlFor="numberOfGuests" className="block text-md font-medium text-gray-700 mb-1">
+                    Number of Guest(s) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-col">
+                    <input
+                      type="number"
+                      id="numberOfGuests"
+                      {...register("numberOfGuests")}
+                      name="numberOfGuests"
+                      value={formData.numberOfGuests}
+                      onChange={handleInputChange}
+                      min="1"
+                      max={roomData?.max_guests}
+                      className={`w-full px-3 py-2 border ${error.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                    />
+                    {error.numberOfGuests && <p className="text-red-500 text-sm mt-1">{error.numberOfGuests}</p>}
+                    {roomData?.max_guests && (
+                      <p className="mt-1 text-sm text-blue-600 font-medium">
+                        Max. Guests Allowed: {roomData.max_guests}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Number of Guests */}
-              <div className="mb-4">
-                <label htmlFor="numberOfGuests" className="block text-md font-medium text-gray-700 mb-1">
-                  Number of Guest(s) <span className="text-red-500">*</span>
-                </label>
-                <div className="flex flex-col">
-                  <input
-                    type="number"
-                    id="numberOfGuests"
-                    {...register("numberOfGuests")}
-                    name="numberOfGuests"
-                    value={formData.numberOfGuests}
-                    onChange={handleInputChange}
-                    min="1"
-                    max={roomData?.max_guests}
-                    className={`w-full px-3 py-2 border ${error.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
-                  />
-                  {error.numberOfGuests && <p className="text-red-500 text-sm mt-1">{error.numberOfGuests}</p>}
-                  {roomData?.max_guests && (
-                    <p className="mt-1 text-sm text-blue-600 font-medium">
-                      Max. Guests Allowed: {roomData.max_guests}
-                    </p>
-                  )}
-                </div>
-              </div>
 
               {/* Address and Valid ID */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
