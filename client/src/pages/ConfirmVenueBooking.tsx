@@ -20,6 +20,16 @@ interface AreaData {
   price_per_hour: string;
 }
 
+interface FormData {
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  emailAddress: string;
+  validId: FileList;
+  specialRequests: string;
+  numberOfGuests: string;
+}
+
 const ConfirmVenueBooking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -33,7 +43,16 @@ const ConfirmVenueBooking = () => {
   const endTime = searchParams.get('endTime');
   const totalPrice = searchParams.get('totalPrice');
 
-  const { register, handleSubmit: validateForm, formState: { errors } } = useForm();
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<FormData>({
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      phoneNumber: '+63 ',
+      emailAddress: '',
+      specialRequests: '',
+      numberOfGuests: '1'
+    }
+  });
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -113,11 +132,17 @@ const ConfirmVenueBooking = () => {
         ...formData,
         [name]: formatted
       });
+
+      // Update form value for react-hook-form
+      setValue(name as keyof FormData, formatted);
     } else {
       setFormData({
         ...formData,
         [name]: value
       });
+
+      // Update form value for react-hook-form
+      setValue(name as keyof FormData, value);
     }
   };
 
@@ -185,85 +210,42 @@ const ConfirmVenueBooking = () => {
     }
   }, [isAuthenticated, savedFormData, handleSuccessfulLogin, isSubmitting, success]);
 
-  const handleProceedClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
+  const onSubmit = (data: FormData) => {
     if (isSubmitting) return;
 
-    const newFieldErrors: { [key: string]: string } = {};
-    let hasErrors = false;
-
-    if (!formData.firstName) {
-      newFieldErrors.firstName = "First name is required";
-      hasErrors = true;
-    }
-
-    if (!formData.lastName) {
-      newFieldErrors.lastName = "Last name is required";
-      hasErrors = true;
-    }
-
-    if (!formData.phoneNumber || formData.phoneNumber === '+63 ') {
-      newFieldErrors.phoneNumber = "Phone number is required";
-      hasErrors = true;
-    } else {
-      // Extract the digits and check if it follows the pattern
-      const cleaned = formData.phoneNumber.replace(/[^\d+]/g, '');
-      const localNumber = cleaned.substring(3);
-
-      if (!cleaned.startsWith('+63') || localNumber.length !== 10 || !localNumber.startsWith('9')) {
-        newFieldErrors.phoneNumber = "Phone number must be in Philippine format: (+63) 9XX XXX XXXX";
-        hasErrors = true;
-      }
-    }
-
-    if (!formData.emailAddress) {
-      newFieldErrors.emailAddress = "Email address is required";
-      hasErrors = true;
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.emailAddress)) {
-      newFieldErrors.emailAddress = "Invalid email format";
-      hasErrors = true;
-    }
-
-    if (!formData.validId) {
-      newFieldErrors.validId = "Please upload a valid ID";
-      hasErrors = true;
-    }
-
-    if (!formData.numberOfGuests || parseInt(formData.numberOfGuests) < 1) {
-      newFieldErrors.numberOfGuests = "Please specify the number of guests";
-      hasErrors = true;
-    } else if (areaData?.capacity && parseInt(formData.numberOfGuests) > areaData.capacity) {
-      newFieldErrors.numberOfGuests = `Maximum capacity is ${areaData.capacity} guests`;
-      hasErrors = true;
-    }
+    setError({});
 
     if (!areaId || !startTime || !endTime || !totalPrice) {
-      newFieldErrors.general = "Missing required booking information";
-      hasErrors = true;
-    }
-
-    if (hasErrors) {
-      setError(newFieldErrors);
+      setError({ general: "Missing required booking information" });
       return;
     }
 
     const parsedStartTime = startTime ? new Date(startTime).toISOString() : null;
     const parsedEndTime = endTime ? new Date(endTime).toISOString() : null;
 
+    const validIdFile = formData.validId;
+    if (!validIdFile) {
+      setError({ validId: "Please upload a valid ID" });
+      return;
+    }
+
+    // Clean phone number - remove spaces and any other non-essential characters
+    const cleanedPhoneNumber = data.phoneNumber.replace(/\s+/g, '');
+
     const reservationData: ReservationFormData = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      phoneNumber: formData.phoneNumber,
-      emailAddress: formData.emailAddress,
-      specialRequests: formData.specialRequests,
-      validId: formData.validId,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phoneNumber: cleanedPhoneNumber, // Use cleaned phone number without spaces
+      emailAddress: data.emailAddress,
+      specialRequests: data.specialRequests,
+      validId: validIdFile,
       areaId: areaId,
       startTime: parsedStartTime,
       endTime: parsedEndTime,
       totalPrice: parseFloat(totalPrice || '0'),
       status: 'pending',
       isVenueBooking: true,
-      numberOfGuests: parseInt(formData.numberOfGuests)
+      numberOfGuests: parseInt(data.numberOfGuests)
     };
 
     setSavedFormData(reservationData);
@@ -273,10 +255,6 @@ const ConfirmVenueBooking = () => {
     } else {
       handleSuccessfulLogin();
     }
-  };
-
-  const handleFormSubmit = async () => {
-    handleProceedClick(new MouseEvent('click') as unknown as React.MouseEvent<HTMLButtonElement>);
   };
 
   const formatDateTime = (dateTimeString: string | null) => {
@@ -382,7 +360,7 @@ const ConfirmVenueBooking = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Section - Takes 2/3 width on large screens */}
           <div className="lg:col-span-2">
-            <form id="booking-form" onSubmit={validateForm(handleFormSubmit)} className="bg-white rounded-lg shadow-md p-6">
+            <form id="booking-form" onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold mb-4">Your details</h2>
 
               {/* Name Fields */}
@@ -394,13 +372,24 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="text"
                     id="firstName"
-                    {...register("firstName")}
+                    {...register("firstName", {
+                      required: "First name is required",
+                      pattern: {
+                        value: /^[A-Za-z\s]+$/,
+                        message: "Name should contain only letters and spaces"
+                      },
+                      minLength: {
+                        value: 2,
+                        message: "Name must be at least 2 characters long"
+                      }
+                    })}
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${error.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                    className={`w-full px-3 py-2 border ${errors.firstName || error.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
-                  {error.firstName && <p className="text-red-500 text-sm mt-1">{error.firstName}</p>}
+                  {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName.message}</p>}
+                  {!errors.firstName && error.firstName && <p className="text-red-500 text-sm mt-1">{error.firstName}</p>}
                 </div>
                 <div>
                   <label htmlFor="lastName" className="block text-md font-medium text-gray-700 mb-1">
@@ -409,13 +398,24 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="text"
                     id="lastName"
-                    {...register("lastName")}
+                    {...register("lastName", {
+                      required: "Last name is required",
+                      pattern: {
+                        value: /^[A-Za-z\s]+$/,
+                        message: "Name should contain only letters and spaces"
+                      },
+                      minLength: {
+                        value: 2,
+                        message: "Name must be at least 2 characters long"
+                      }
+                    })}
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${error.lastName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                    className={`w-full px-3 py-2 border ${errors.lastName || error.lastName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
-                  {error.lastName && <p className="text-red-500 text-sm mt-1">{error.lastName}</p>}
+                  {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>}
+                  {!errors.lastName && error.lastName && <p className="text-red-500 text-sm mt-1">{error.lastName}</p>}
                 </div>
               </div>
 
@@ -428,14 +428,25 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="tel"
                     id="phoneNumber"
-                    {...register("phoneNumber")}
+                    {...register("phoneNumber", {
+                      required: "Phone number is required",
+                      validate: (value) => {
+                        const cleaned = value.replace(/[^\d+]/g, '');
+                        const localNumber = cleaned.substring(3);
+                        if (!cleaned.startsWith('+63') || localNumber.length !== 10 || !localNumber.startsWith('9')) {
+                          return "Phone number must be in Philippine format: (+63) 9XX XXX XXXX";
+                        }
+                        return true;
+                      }
+                    })}
                     name="phoneNumber"
                     value={formData.phoneNumber}
                     onChange={handleInputChange}
                     placeholder="+63 9XX XXX XXXX"
-                    className={`w-full px-3 py-2 border ${error.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                    className={`w-full px-3 py-2 border ${errors.phoneNumber || error.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
-                  {error.phoneNumber && <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>}
+                  {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber.message}</p>}
+                  {!errors.phoneNumber && error.phoneNumber && <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>}
                   <p className="mt-1 text-xs text-gray-500">Format: +63 9XX XXX XXXX (Philippine number)</p>
                 </div>
                 <div>
@@ -445,13 +456,20 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="email"
                     id="emailAddress"
-                    {...register("emailAddress")}
+                    {...register("emailAddress", {
+                      required: "Email address is required",
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: "Invalid email format"
+                      }
+                    })}
                     name="emailAddress"
                     value={formData.emailAddress}
                     onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${error.emailAddress ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                    className={`w-full px-3 py-2 border ${errors.emailAddress || error.emailAddress ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
-                  {error.emailAddress && <p className="text-red-500 text-sm mt-1">{error.emailAddress}</p>}
+                  {errors.emailAddress && <p className="text-red-500 text-sm mt-1">{errors.emailAddress.message}</p>}
+                  {!errors.emailAddress && error.emailAddress && <p className="text-red-500 text-sm mt-1">{error.emailAddress}</p>}
                 </div>
               </div>
 
@@ -463,15 +481,26 @@ const ConfirmVenueBooking = () => {
                 <input
                   type="number"
                   id="numberOfGuests"
-                  {...register("numberOfGuests")}
+                  {...register("numberOfGuests", {
+                    required: "Number of guests is required",
+                    min: {
+                      value: 1,
+                      message: "At least 1 guest is required"
+                    },
+                    max: {
+                      value: areaData?.capacity || 100,
+                      message: `Maximum capacity is ${areaData?.capacity} guests`
+                    }
+                  })}
                   name="numberOfGuests"
                   value={formData.numberOfGuests}
                   onChange={handleInputChange}
                   min="1"
                   max={areaData?.capacity}
-                  className={`w-full px-3 py-2 border ${error.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
+                  className={`w-full px-3 py-2 border ${errors.numberOfGuests || error.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                 />
-                {error.numberOfGuests && <p className="text-red-500 text-sm mt-1">{error.numberOfGuests}</p>}
+                {errors.numberOfGuests && <p className="text-red-500 text-sm mt-1">{errors.numberOfGuests.message}</p>}
+                {!errors.numberOfGuests && error.numberOfGuests && <p className="text-red-500 text-sm mt-1">{error.numberOfGuests}</p>}
                 {areaData?.capacity && (
                   <p className="mt-1 text-sm text-gray-500">Maximum capacity: {areaData.capacity} guests</p>
                 )}
@@ -486,12 +515,14 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="file"
                     id="validId"
+                    {...register("validId", { required: "Valid ID is required" })}
                     name="validId"
                     onChange={handleFileChange}
                     accept="image/*"
-                    className={`w-full py-2 ${error.validId ? 'border-red-500' : ''}`}
+                    className={`w-full py-2 ${errors.validId || error.validId ? 'border-red-500' : ''}`}
                   />
-                  {error.validId && <p className="text-red-500 text-sm mt-1">{error.validId}</p>}
+                  {errors.validId && <p className="text-red-500 text-sm mt-1">{errors.validId.message}</p>}
+                  {!errors.validId && error.validId && <p className="text-red-500 text-sm mt-1">{error.validId}</p>}
 
                   {/* Valid ID Preview Container */}
                   {validIdPreview && (
@@ -574,9 +605,8 @@ const ConfirmVenueBooking = () => {
               {/* Submit Button for Mobile View */}
               <div className="lg:hidden mt-6">
                 <button
-                  type="button"
+                  type="submit"
                   disabled={isSubmitting}
-                  onClick={handleProceedClick}
                   className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${isSubmitting
                     ? 'bg-blue-400 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500'
@@ -647,9 +677,9 @@ const ConfirmVenueBooking = () => {
 
             <div className="hidden lg:block">
               <button
-                type="button"
+                type="submit"
+                form="booking-form"
                 disabled={isSubmitting}
-                onClick={handleProceedClick}
                 className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex items-center justify-center ${isSubmitting
                   ? 'bg-blue-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500'
