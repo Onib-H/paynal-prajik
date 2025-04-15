@@ -136,10 +136,10 @@ const ConfirmVenueBooking = () => {
       // Update form value for react-hook-form
       setValue(name as keyof FormData, formatted);
     } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
+    setFormData({
+      ...formData,
+      [name]: value
+    });
 
       // Update form value for react-hook-form
       setValue(name as keyof FormData, value);
@@ -471,37 +471,37 @@ const ConfirmVenueBooking = () => {
                   {errors.emailAddress && <p className="text-red-500 text-sm mt-1">{errors.emailAddress.message}</p>}
                   {!errors.emailAddress && error.emailAddress && <p className="text-red-500 text-sm mt-1">{error.emailAddress}</p>}
                 </div> */}
-                {/* Number of Guests */}
+              {/* Number of Guests */}
                 <div>
-                  <label htmlFor="numberOfGuests" className="block text-md font-medium text-gray-700 mb-1">
-                    Number of Guests <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    id="numberOfGuests"
-                    {...register("numberOfGuests", {
-                      required: "Number of guests is required",
-                      min: {
-                        value: 1,
-                        message: "At least 1 guest is required"
-                      },
-                      max: {
-                        value: areaData?.capacity || 100,
+                <label htmlFor="numberOfGuests" className="block text-md font-medium text-gray-700 mb-1">
+                  Number of Guests <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  id="numberOfGuests"
+                  {...register("numberOfGuests", {
+                    required: "Number of guests is required",
+                    min: {
+                      value: 1,
+                      message: "At least 1 guest is required"
+                    },
+                    max: {
+                      value: areaData?.capacity || 100,
                         message: `Maximum capacity is ${areaData?.capacity} guests`
-                      }
-                    })}
-                    name="numberOfGuests"
-                    value={formData.numberOfGuests}
-                    onChange={handleInputChange}
-                    min="1"
-                    max={areaData?.capacity}
+                    }
+                  })}
+                  name="numberOfGuests"
+                  value={formData.numberOfGuests}
+                  onChange={handleInputChange}
+                  min="1"
+                  max={areaData?.capacity}
                     className={`w-full px-3 py-2 border ${errors.numberOfGuests || error.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
-                  />
+                />
                   {errors.numberOfGuests && <p className="text-red-500 text-sm mt-1">{errors.numberOfGuests.message}</p>}
                   {!errors.numberOfGuests && error.numberOfGuests && <p className="text-red-500 text-sm mt-1">{error.numberOfGuests}</p>}
-                  {areaData?.capacity && (
-                    <p className="mt-1 text-sm text-gray-500">Maximum capacity: {areaData.capacity} guests</p>
-                  )}
+                {areaData?.capacity && (
+                  <p className="mt-1 text-sm text-gray-500">Maximum capacity: {areaData.capacity} guests</p>
+                )}
                 </div>
               </div>
 

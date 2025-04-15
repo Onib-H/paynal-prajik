@@ -4,7 +4,7 @@ import { FC, FormEvent, KeyboardEvent, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Notification from "../components/Notification";
 import { useUserContext } from "../contexts/AuthContext";
-import { completeRegistration, resendOtp, verifyOtp } from "../services/Auth";
+import { resendOtp, verifyOtp } from "../services/Auth";
 
 const RegistrationFlow: FC = () => {
     const [otp, setOTP] = useState<string[]>(Array(6).fill(""));
@@ -17,9 +17,6 @@ const RegistrationFlow: FC = () => {
         type: "success" | "error" | "info" | "warning";
         icon: string;
     } | null>(null);
-    const [firstName, setFirstName] = useState<string>("");
-    const [lastName, setLastName] = useState<string>("");
-    const [activeInput, setActiveInput] = useState<number>(-1);
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -37,18 +34,6 @@ const RegistrationFlow: FC = () => {
         }
     }, [email, password, navigate]);
 
-    useEffect(() => {
-        if (isGoogleAuth && location.state) {
-            const state = location.state as any;
-            if (state.firstName) {
-                setFirstName(state.firstName);
-            }
-            if (state.lastName) {
-                setLastName(state.lastName);
-            }
-        }
-    }, [isGoogleAuth, location.state]);
-
     const handleOTPChange = (value: string, index: number) => {
         const newOtp = [...otp];
         newOtp[index] = value.slice(0, 1);
@@ -56,7 +41,6 @@ const RegistrationFlow: FC = () => {
         if (value && index < 5) {
             const nextInput = document.getElementById(`otp-input-${index + 1}`);
             if (nextInput) nextInput.focus();
-            setActiveInput(index + 1);
         }
     };
 
@@ -65,7 +49,6 @@ const RegistrationFlow: FC = () => {
             const prevInput = document.getElementById(`otp-input-${index - 1}`);
             if (prevInput) {
                 prevInput.focus();
-                setActiveInput(index - 1);
             }
         }
     };
@@ -77,14 +60,12 @@ const RegistrationFlow: FC = () => {
             await resendOtp(email);
             setOTP(Array(6).fill(""));
 
-            // Show notification for resent OTP
             setNotification({
                 message: "Verification code has been resent to your email",
                 type: "info",
                 icon: "fas fa-paper-plane"
             });
 
-            // Clear notification after 3 seconds
             setTimeout(() => setNotification(null), 3000);
         } catch (error) {
             console.error(`Failed to resend OTP: ${error}`);
@@ -120,19 +101,6 @@ const RegistrationFlow: FC = () => {
         e.preventDefault();
         setOtpError("");
 
-        let hasErrors = false;
-        if (!isGoogleAuth) {
-            if (!firstName.trim()) {
-                hasErrors = true;
-            }
-            if (!lastName.trim()) {
-                hasErrors = true;
-            }
-            if (hasErrors) {
-                return;
-            }
-        }
-
         setIsVerifying(true);
         const otpCode = otp.join("");
         if (otpCode.length !== 6) {
@@ -143,22 +111,8 @@ const RegistrationFlow: FC = () => {
 
         try {
             const response = await verifyOtp(email, password, otpCode);
-            if (response.status === 200) {
-                if (!isGoogleAuth) {
-                    try {
-                        await completeRegistration(
-                            email,
-                            password,
-                            firstName,
-                            lastName,
-                        );
-                    } catch (error: any) {
-                        setOtpError(error.response?.data?.error || "Failed to complete registration. Please try again.");
-                        setIsVerifying(false);
-                        return;
-                    }
-                }
 
+            if (response.status === 200) {
                 if (response.data.user && response.data.user.id) {
                     if (response.data.access_token) {
                         localStorage.setItem('access_token', response.data.access_token);
@@ -180,20 +134,18 @@ const RegistrationFlow: FC = () => {
                         icon: "fas fa-check-circle"
                     });
 
-                    setTimeout(() => {
-                        const hasPendingBooking = localStorage.getItem('pendingBookingCallback');
-                        const returnUrl = localStorage.getItem('bookingReturnUrl');
+                    const hasPendingBooking = localStorage.getItem('pendingBookingCallback');
+                    const returnUrl = localStorage.getItem('bookingReturnUrl');
 
-                        if (hasPendingBooking) {
-                            sessionStorage.setItem('redirectAfterReload', returnUrl || '/');
-                            localStorage.removeItem('pendingBookingCallback');
-                            if (returnUrl) {
-                                localStorage.removeItem('bookingReturnUrl');
-                            }
+                    if (hasPendingBooking) {
+                        sessionStorage.setItem('redirectAfterReload', returnUrl || '/');
+                        localStorage.removeItem('pendingBookingCallback');
+                        if (returnUrl) {
+                            localStorage.removeItem('bookingReturnUrl');
                         }
+                    }
 
-                        window.location.href = '/';
-                    }, 1500);
+                    window.location.href = '/';
                 } else {
                     setOtpError("Registration successful but user data is incomplete. Please try logging in.");
                 }
@@ -398,8 +350,6 @@ const RegistrationFlow: FC = () => {
                                     animate="animate"
                                     custom={index}
                                     whileFocus="focus"
-                                    onFocus={() => setActiveInput(index)}
-                                    onBlur={() => setActiveInput(-1)}
                                     className="w-12 h-14 text-center text-xl font-semibold border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-0 shadow-sm transition-all duration-200"
                                     value={digit}
                                     onChange={(e) => handleOTPChange(e.target.value, index)}
