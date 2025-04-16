@@ -559,7 +559,7 @@ const BookingDetailsModal: FC<{
                 whileHover={{ scale: 1.02, backgroundColor: "#dc2626" }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onReject}
-                className="px-4 py-2 bg-red-600 text-white rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg curp transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 <X size={18} />
                 Reject Booking
@@ -567,7 +567,7 @@ const BookingDetailsModal: FC<{
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={onConfirm}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 <Check size={18} />
                 Reserve Booking
@@ -585,7 +585,7 @@ const BookingDetailsModal: FC<{
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={onNoShow}
-                className="px-4 py-2 bg-amber-600 text-white rounded-md flex items-center justify-center gap-2 shadow-sm"
+                className="px-4 py-2 bg-amber-600 text-white rounded-lg cursor-pointer flex items-center justify-center gap-2 shadow-sm"
               >
                 <X size={18} />
                 Mark as No Show
@@ -593,7 +593,7 @@ const BookingDetailsModal: FC<{
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={onCancel}
-                className="px-4 py-2 bg-red-600 text-white rounded-md flex items-center justify-center gap-2 shadow-sm"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg cursor-pointer flex items-center justify-center gap-2 shadow-sm"
               >
                 <X size={18} />
                 Cancel Booking
@@ -602,7 +602,7 @@ const BookingDetailsModal: FC<{
                 <motion.button
                   whileTap={canCheckIn ? { scale: 0.98 } : {}}
                   onClick={() => onCheckIn && canCheckIn && onCheckIn(currentPayment)}
-                  className={`px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 shadow-sm ${canCheckIn
+                  className={`px-4 py-2 text-white rounded-lg cursor-pointer flex items-center justify-center gap-2 shadow-sm ${canCheckIn
                     ? 'bg-blue-600 hover:bg-blue-700'
                     : 'bg-gray-400 cursor-not-allowed'
                     }`}
@@ -644,7 +644,7 @@ const BookingDetailsModal: FC<{
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={onCheckOut}
-                className="px-6 py-3 bg-indigo-600 text-white rounded-md transition-colors flex items-center justify-center gap-2 shadow-md"
+                className="px-6 py-3 bg-indigo-600 text-white rounded-lg cursor-pointer transition-colors flex items-center justify-center gap-2 shadow-md"
               >
                 <Check size={18} />
                 Check Out Guest
@@ -978,16 +978,13 @@ const ManageBookings: FC = () => {
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         {`${booking.user?.first_name || ''} ${booking.user?.last_name || ''}`}
                       </td>
-                      {/* <td className="hidden md:table-cell py-3 px-4 text-base text-gray-700 whitespace-nowrap">
-                        {booking.user?.email || ''}
-                      </td> */}
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="truncate max-w-[120px] md:max-w-full">{propertyName} {" "}
+                        <div className="flex flex-col items-start">
+                          <span className="max-w-[120px] md:max-w-full font-semibold">{propertyName} {" "}
                             {isVenueBooking ? (
-                              <span className="inline-block px-2 py-0.5 mt-1 text-sm uppercase font-semibold bg-blue-100 text-blue-800 rounded-full">Area</span>
+                              <span className="px-2 py-0.5 mt-1 items-end text-sm uppercase font-semibold bg-blue-100 text-blue-800 rounded-full">Area</span>
                             ) : (
-                              <span className="inline-block px-2 py-0.5 mt-1 text-sm uppercase font-semibold bg-green-100 text-green-800 rounded-full">Room</span>
+                              <span className="px-2 py-0.5 mt-1 items-end text-sm uppercase font-semibold bg-green-100 text-green-800 rounded-full">Room</span>
                             )}
                           </span>
                         </div>
@@ -1001,7 +998,7 @@ const ManageBookings: FC = () => {
                       <td className="py-2 md:py-3 px-2 md:px-4 text-center text-sm md:text-base text-gray-700 whitespace-nowrap">
                         <BookingStatusBadge status={booking.status} />
                       </td>
-                      <td className="hidden md:table-cell py-3 px-4 text-center text-base text-gray-700 whitespace-nowrap">
+                      <td className="hidden md:table-cell py-3 px-4 text-center text-xl font-semibold text-gray-900 whitespace-nowrap">
                         ₱ {getBookingPrice(booking).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="py-2 md:py-3 px-2 md:px-4 text-center whitespace-nowrap">

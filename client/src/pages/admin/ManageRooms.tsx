@@ -620,7 +620,7 @@ const ManageRooms: FC = () => {
         {/* Loader Overlay */}
         {loading && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-900/80 z-[500]">
-            <EventLoader size="80px" text={loaderText} />
+            <EventLoader text={loaderText} />
           </div>
         )}
 

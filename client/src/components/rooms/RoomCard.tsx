@@ -52,7 +52,7 @@ const RoomCard: FC<RoomCardProps> = ({
         </p>
 
         <div className="mt-auto pt-4 border-t border-gray-200 flex items-center justify-between font-montserrat">
-          <span className="text-xl font-semibold text-gray-900">{price}</span>
+          <span className="text-2xl font-semibold text-gray-900">{price}</span>
           <button
             className={`${isAuthenticated
               ? "bg-green-600 hover:bg-green-700"
