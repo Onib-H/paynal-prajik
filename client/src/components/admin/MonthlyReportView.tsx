@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { createPortal } from 'react-dom';
 import '../../styles/print.css';
-import { ReportData } from '../../utils/reports';
+import { ReportData } from '../../types/ReportsAdmin';
 
 interface MonthlyReportViewProps {
     reportData: ReportData;

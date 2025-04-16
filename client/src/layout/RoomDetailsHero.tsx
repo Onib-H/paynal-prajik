@@ -1,5 +1,6 @@
 import deluxe_single from "../assets/deluxe_single.webp";
 import { Link } from "react-router-dom";
+
 const RoomDetailsHero = () => {
   return (
     <section

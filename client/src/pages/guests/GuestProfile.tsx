@@ -7,18 +7,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
 import { changePassword } from "../../services/Auth";
 import { getGuestDetails, updateGuestDetails, updateProfileImage } from "../../services/Guest";
-
-interface FormFields {
-  first_name: string;
-  last_name: string;
-  email: string;
-}
-
-interface PasswordFields {
-  oldPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
+import { FormFields, PasswordFields } from "../../types/GuestProfileClient";
 
 const GuestProfile = () => {
   const { id } = useParams();

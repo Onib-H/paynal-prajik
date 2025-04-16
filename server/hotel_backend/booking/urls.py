@@ -20,4 +20,6 @@ urlpatterns = [
     path('rooms/<str:room_id>', views.room_detail, name='room_detail'),
     path('rooms/<str:room_id>/bookings', views.fetch_room_bookings, name='room_bookings'),
     path('rooms/<str:room_id>/reviews', views.room_reviews, name='room_reviews'),
+    path('check-max-bookings/', views.check_max_bookings, name='check_max_bookings'),
+    path('check-can-book-today/', views.check_can_book_today, name='check_can_book_today'),
 ]

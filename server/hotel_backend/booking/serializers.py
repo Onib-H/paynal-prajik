@@ -5,6 +5,8 @@ from property.models import Rooms, Amenities, Areas
 import cloudinary
 from property.serializers import AreaSerializer
 from .validations.booking import validate_booking_request
+from django.utils import timezone
+from datetime import datetime
 
 class AmenitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,7 +28,6 @@ class RoomSerializer(serializers.ModelSerializer):
             'room_price',
             'room_image',
             'description',
-            'capacity',
             'max_guests',
             'amenities'
         ]
@@ -107,7 +108,6 @@ class BookingRequestSerializer(serializers.Serializer):
     firstName = serializers.CharField(max_length=100)
     lastName = serializers.CharField(max_length=100)
     phoneNumber = serializers.CharField(max_length=20)
-    emailAddress = serializers.EmailField()
     specialRequests = serializers.CharField(required=False, allow_blank=True)
     validId = serializers.FileField(required=True)
     roomId = serializers.CharField()
@@ -141,32 +141,60 @@ class BookingRequestSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         request = self.context.get('request')
-        print(f"Creating booking with data: {validated_data.keys()}")
+        unauthenticated = self.context.get('unauthenticated', False)
         
-        if request and request.user and request.user.is_authenticated:
+        # Handle user creation/retrieval
+        if request and hasattr(request, 'user') and request.user.is_authenticated:
             user = request.user
-            print(f"Using authenticated user: {user.email}")
             if user.first_name != validated_data['firstName'] or user.last_name != validated_data['lastName']:
                 user.first_name = validated_data['firstName']
                 user.last_name = validated_data['lastName']
                 user.phone_number = validated_data['phoneNumber']
                 user.save()
         else:
-            try:
-                user = CustomUsers.objects.get(email=validated_data['emailAddress'])
-                print(f"Found existing user: {user.email}")
-            except CustomUsers.DoesNotExist:
-                user = CustomUsers.objects.create(
-                    email=validated_data['emailAddress'],
-                    first_name=validated_data['firstName'],
-                    last_name=validated_data['lastName'],
-                    phone_number=validated_data['phoneNumber'],
-                    role='guest'
-                )
-                print(f"Created new user: {user.email}")
+            # For unauthenticated users, use the user passed in context or create a guest user
+            if not 'emailAddress' in validated_data:
+                # No email address provided, use a default guest account or get from request user
+                if hasattr(request, 'user') and request.user.is_authenticated:
+                    user = request.user
+                else:
+                    # Create a guest user with a unique identifier
+                    import uuid
+                    unique_id = str(uuid.uuid4())[:8]
+                    username = f"guest_{unique_id}"
+                    email = f"{username}@example.com"
+                    user = CustomUsers.objects.create(
+                        username=username,
+                        email=email,
+                        first_name=validated_data['firstName'],
+                        last_name=validated_data['lastName'],
+                        phone_number=validated_data['phoneNumber'],
+                        role='guest'
+                    )
+            else:
+                # Email address provided, use it to find or create a user
+                try:
+                    user = CustomUsers.objects.get(email=validated_data['emailAddress'])
+                    # Update user info if needed
+                    if user.first_name != validated_data['firstName'] or user.last_name != validated_data['lastName']:
+                        user.first_name = validated_data['firstName']
+                        user.last_name = validated_data['lastName']
+                        user.phone_number = validated_data['phoneNumber']
+                        user.save()
+                except CustomUsers.DoesNotExist:
+                    # Create a new user
+                    user = CustomUsers.objects.create(
+                        username=validated_data['emailAddress'],  # Use email as username
+                        email=validated_data['emailAddress'],
+                        first_name=validated_data['firstName'],
+                        last_name=validated_data['lastName'],
+                        phone_number=validated_data['phoneNumber'],
+                        role='guest'
+                    )
 
         is_venue_booking = validated_data.get('isVenueBooking', False)
         
+        # Process the ID upload
         valid_id = validated_data.get('validId')
         if valid_id:
             try:
@@ -177,6 +205,14 @@ class BookingRequestSerializer(serializers.Serializer):
         else:
             raise serializers.ValidationError("Valid ID is required")
 
+        # Update the user's last_booking_date only for users with guest role
+        if hasattr(user, 'role') and user.role == 'guest' and validated_data.get('checkIn'):
+            check_in_date = validated_data.get('checkIn')
+            today = timezone.now().date()
+            if check_in_date == today:
+                user.last_booking_date = today
+                user.save()
+
         if is_venue_booking:
             try:
                 area_id = validated_data['roomId']
@@ -186,6 +222,22 @@ class BookingRequestSerializer(serializers.Serializer):
                     raise serializers.ValidationError("Area not found")
                 
                 total_price = validated_data.get('totalPrice', 0)
+                
+                # Process time fields for venue booking
+                start_time = None
+                end_time = None
+                
+                if 'startTime' in validated_data and validated_data['startTime']:
+                    try:
+                        start_time = datetime.strptime(validated_data['startTime'], "%H:%M").time()
+                    except (ValueError, TypeError):
+                        print(f"Invalid start time format: {validated_data['startTime']}")
+                        
+                if 'endTime' in validated_data and validated_data['endTime']:
+                    try:
+                        end_time = datetime.strptime(validated_data['endTime'], "%H:%M").time()
+                    except (ValueError, TypeError):
+                        print(f"Invalid end time format: {validated_data['endTime']}")
                 
                 booking = Bookings.objects.create(
                     user=user,
@@ -199,11 +251,14 @@ class BookingRequestSerializer(serializers.Serializer):
                     total_price=total_price,
                     is_venue_booking=True,
                     time_of_arrival=validated_data.get('arrivalTime', None),
+                    start_time=start_time,
+                    end_time=end_time,
                     number_of_guests=validated_data.get('numberOfGuests', 1)
                 )
                 
                 return booking                
             except Exception as e:
+                print(f"Error creating venue booking: {str(e)}")
                 raise serializers.ValidationError(str(e))
         else:
             try:
@@ -228,6 +283,7 @@ class BookingRequestSerializer(serializers.Serializer):
             except Rooms.DoesNotExist:
                 raise serializers.ValidationError("Room not found")
             except Exception as e:
+                print(f"Error creating room booking: {str(e)}")
                 raise serializers.ValidationError(str(e))
 
 class ReservationSerializer(serializers.ModelSerializer):

@@ -2,16 +2,7 @@ import { Book } from "lucide-react";
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
-
-interface RoomCardProps {
-  id: string | number;
-  name: string;
-  image: string;
-  title: string;
-  capacity: string;
-  price: string;
-  description: string;
-}
+import { RoomCardProps } from "../../types/RoomClient";
 
 const RoomCard: FC<RoomCardProps> = ({
   id,

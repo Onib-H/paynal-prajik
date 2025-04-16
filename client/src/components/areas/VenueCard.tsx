@@ -1,10 +1,11 @@
 import { faUsers } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { motion } from "framer-motion";
-import { Book } from "lucide-react";
+import { AlertCircle, Book } from "lucide-react";
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
+import { useBookingLimit } from "../../contexts/BookingLimitContext";
 
 interface AreaCardProps {
   id: number;
@@ -25,14 +26,22 @@ const VenueCard: FC<AreaCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
+  const { canBook, maxLimit } = useBookingLimit();
 
   const handleBookNow = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevents triggering the card click event
-    if (isAuthenticated) {
-      navigate(`/venue-booking/${id}`);
-    } else {
+
+    if (!isAuthenticated) {
       navigate(`/venues/${id}?showLogin=true`);
+      return;
     }
+
+    if (!canBook) {
+      // Don't navigate if booking limit reached
+      return;
+    }
+
+    navigate(`/venue-booking/${id}`);
   };
 
   // Truncate description to 50 characters
@@ -40,6 +49,18 @@ const VenueCard: FC<AreaCardProps> = ({
     description && description.length > 50
       ? `${description.substring(0, 50)}...`
       : description || "No description available.";
+
+  const buttonClass = isAuthenticated
+    ? canBook
+      ? "bg-green-600 hover:bg-green-700"
+      : "bg-gray-400 cursor-not-allowed"
+    : "bg-gray-400 cursor-not-allowed";
+
+  const buttonTitle = isAuthenticated
+    ? canBook
+      ? "Book this venue"
+      : `Limit of ${maxLimit} bookings per day reached`
+    : "Login required to book";
 
   return (
     <div
@@ -80,17 +101,20 @@ const VenueCard: FC<AreaCardProps> = ({
             {priceRange}
           </span>
           <button
+<<<<<<< HEAD
             className={`${
               isAuthenticated
                 ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
                 : "bg-gray-400 cursor-not-allowed"
             } text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 `}
+=======
+            className={`${buttonClass} text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 cursor-pointer`}
+>>>>>>> 0f26c1f15b7b866c47f8aaa12748d29338d2391e
             onClick={handleBookNow}
-            title={
-              isAuthenticated ? "Book this venue" : "Login required to book"
-            }
+            title={buttonTitle}
+            disabled={!isAuthenticated || !canBook}
           >
-            <Book size={16} /> <span>Book</span>
+            {isAuthenticated && !canBook ? <AlertCircle size={16} /> : <Book size={16} />} <span>Book</span>
           </button>
         </div>
       </div>

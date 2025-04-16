@@ -65,7 +65,7 @@ const BookingAccepted = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.9 }}
             >
-              Your {isVenueBooking ? 'venue' : 'room'} booking has been successfully processed.
+              Your {isVenueBooking ? 'area' : 'room'} booking has been successfully processed.
             </motion.p>
           </div>
 
@@ -110,33 +110,27 @@ const BookingAccepted = () => {
                 <div className="bg-gray-100 rounded-full p-2 mr-3 mt-1">
                   <span className="flex items-center justify-center w-4 h-4 text-xs font-bold text-gray-700">1</span>
                 </div>
-                <div>
-                  <p className="text-gray-700">
-                    Check your email for booking confirmation details.
-                  </p>
-                </div>
+                <p className="text-gray-700">
+                  Check your email for booking confirmation details.
+                </p>
               </div>
 
               <div className="flex items-start">
                 <div className="bg-gray-100 rounded-full p-2 mr-3 mt-1">
                   <span className="flex items-center justify-center w-4 h-4 text-xs font-bold text-gray-700">2</span>
                 </div>
-                <div>
-                  <p className="text-gray-700">
-                    Review your booking details in the "My Bookings" section.
-                  </p>
-                </div>
+                <p className="text-gray-700">
+                  Review your booking details in the "My Bookings" section.
+                </p>
               </div>
 
               <div className="flex items-start">
                 <div className="bg-gray-100 rounded-full p-2 mr-3 mt-1">
                   <span className="flex items-center justify-center w-4 h-4 text-xs font-bold text-gray-700">3</span>
                 </div>
-                <div>
-                  <p className="text-gray-700">
-                    Contact customer support if you need to make any changes.
-                  </p>
-                </div>
+                <p className="text-gray-700">
+                  Contact customer support if you need to make any changes.
+                </p>
               </div>
             </motion.div>
 

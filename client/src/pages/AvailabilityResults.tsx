@@ -2,11 +2,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
-import { Book, Calendar } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import LoginModal from "../components/LoginModal";
 import RoomAvailabilityCalendar from "../components/rooms/RoomAvailabilityCalendar";
+import RoomCard from "../components/rooms/RoomCard";
 import SignupModal from "../components/SignupModal";
 import { useUserContext } from "../contexts/AuthContext";
 import { fetchAvailability } from "../services/Booking";
@@ -231,7 +232,15 @@ const AvailabilityResults = () => {
                         variants={itemVariants}
                         whileHover={{ y: -5, transition: { duration: 0.2 } }}
                       >
-                        <Link to={`/rooms/${room.id}`} className="block">
+                        <RoomCard
+                          id={room.id}
+                          name={room.room_name}
+                          image={room.room_image}
+                          title={room.room_name}
+                          price={room.room_price}
+                          description={room.description}
+                        />
+                        {/* <Link to={`/rooms/${room.id}`} className="block">
                           <div className="relative">
                             <img
                               loading="lazy"
@@ -273,7 +282,7 @@ const AvailabilityResults = () => {
                               </div>
                             </div>
                           </div>
-                        </Link>
+                        </Link> */}
                       </motion.div>
                     ))}
                   </motion.div>

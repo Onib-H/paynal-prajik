@@ -359,8 +359,7 @@ const SignupModal: FC<SignupModalProps> = ({
                   whileTap={{ scale: 0.95 }}
                   type="submit"
                   disabled={!email || !password || !confirmPassword || loading}
-                  className={`w-full bg-purple-700 text-white py-2 rounded-lg hover:bg-purple-800 cursor-pointer transition-colors duration-300 flex items-center justify-center ${loading ? "opacity-50 cursor-not-allowed" : ""
-                    }`}
+                  className={`w-full bg-purple-700 text-white py-2 rounded-lg hover:bg-purple-800 cursor-pointer transition-colors duration-300 flex items-center justify-center ${loading ? "bg-purple-700/30 cursor-not-allowed" : ""}`}
                 >
                   {loading ? (
                     <div className="flex items-center">

@@ -14,7 +14,6 @@ const RoomIncluded = () => {
     "Safe for Valuables",
   ];
 
-  // Section container animation
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -26,7 +25,6 @@ const RoomIncluded = () => {
     },
   };
 
-  // Header animation with reveal effect
   const headerVariants = {
     hidden: {
       opacity: 0,
@@ -44,7 +42,6 @@ const RoomIncluded = () => {
     },
   };
 
-  // Feature items animation (3D flip effect)
   const featureVariants = {
     hidden: {
       opacity: 0,
@@ -64,9 +61,15 @@ const RoomIncluded = () => {
     }),
     hover: {
       scale: 1.05,
+<<<<<<< HEAD
       color: "#1E40AF", // blue-800
       transition: { duration: 0.2 },
     },
+=======
+      color: "#1E40AF",
+      transition: { duration: 0.2 }
+    }
+>>>>>>> 0f26c1f15b7b866c47f8aaa12748d29338d2391e
   };
 
   return (

@@ -194,6 +194,7 @@ const AdminDashboard = () => {
       }),
   });
 
+<<<<<<< HEAD
   const { data: roomRevenueResponse, isLoading: roomRevenueLoading } = useQuery(
     {
       queryKey: ["roomRevenue", selectedMonth, selectedYear],
@@ -204,6 +205,15 @@ const AdminDashboard = () => {
         }),
     }
   );
+=======
+  // const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } = useQuery({
+  //   queryKey: ['dailyOccupancy', selectedMonth, selectedYear],
+  //   queryFn: () => fetchDailyOccupancy({
+  //     month: selectedMonth + 1,
+  //     year: selectedYear
+  //   }),
+  // });
+>>>>>>> 0f26c1f15b7b866c47f8aaa12748d29338d2391e
 
   const { data: roomBookingsResponse, isLoading: roomBookingsLoading } =
     useQuery({
@@ -264,6 +274,7 @@ const AdminDashboard = () => {
   const bookingTrendsChartRef = useRef<HTMLCanvasElement | null>(null);
   const bookingStatusChartRef = useRef<HTMLCanvasElement | null>(null);
 
+<<<<<<< HEAD
   if (
     isLoading ||
     bookingStatusLoading ||
@@ -277,6 +288,9 @@ const AdminDashboard = () => {
     monthlyRevenueLoading
   )
     return <DashboardSkeleton />;
+=======
+  if (isLoading || bookingStatusLoading || bookingsDataLoading || checkinsDataLoading || cancellationsDataLoading || roomRevenueLoading || roomBookingsLoading || noShowsRejectedDataLoading || monthlyRevenueLoading) return <DashboardSkeleton />;
+>>>>>>> 0f26c1f15b7b866c47f8aaa12748d29338d2391e
   if (error) return <Error />;
 
   const stats = {
@@ -313,7 +327,6 @@ const AdminDashboard = () => {
   // Limit charts to current day for current month
   const daysInMonth = getDaysInMonth(selectedMonth, selectedYear, true);
 
-  // Limit daily data arrays to match the days we're showing
   const limitArrayToCurrentDay = (dataArray: any[] | undefined) => {
     if (!dataArray) return daysInMonth.map(() => 0);
     return dataArray.slice(0, daysInMonth.length);
@@ -321,9 +334,13 @@ const AdminDashboard = () => {
 
   const dailyRevenueData = limitArrayToCurrentDay(data?.daily_revenue);
   const dailyBookingsData = limitArrayToCurrentDay(dailyBookingsResponse?.data);
+<<<<<<< HEAD
   const dailyOccupancyRates = limitArrayToCurrentDay(
     dailyOccupancyResponse?.data
   );
+=======
+  // const dailyOccupancyRates = limitArrayToCurrentDay(dailyOccupancyResponse?.data);
+>>>>>>> 0f26c1f15b7b866c47f8aaa12748d29338d2391e
   const dailyCheckIns = limitArrayToCurrentDay(checkinCheckoutData?.checkins);
   const dailyCheckOuts = limitArrayToCurrentDay(checkinCheckoutData?.checkouts);
   const dailyCancellations = limitArrayToCurrentDay(

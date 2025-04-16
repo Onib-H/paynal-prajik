@@ -10,7 +10,8 @@ import CancellationModal from "../../components/bookings/CancellationModal";
 import GuestBookingComment from "../../components/guests/GuestBookingComment";
 import { useUserContext } from "../../contexts/AuthContext";
 import { BookingDetailsSkeleton, BookingsTableSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
-import { BookingResponse, cancelBooking, fetchBookingDetail } from "../../services/Booking";
+import { cancelBooking, fetchBookingDetail } from "../../services/Booking";
+import { BookingResponse } from "../../types/BookingClient";
 import { fetchGuestBookings } from "../../services/Guest";
 
 const formatStatus = (status: string): string => {

@@ -43,7 +43,6 @@ class Rooms(models.Model):
     room_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     room_image = CloudinaryField('room_image', null=False, blank=False)
     description = models.TextField(blank=True)
-    capacity = models.TextField(max_length=100, null=False)
     max_guests = models.PositiveIntegerField(default=2, help_text="Maximum number of guests allowed")
     amenities = models.ManyToManyField(Amenities, related_name='rooms', blank=True)
     

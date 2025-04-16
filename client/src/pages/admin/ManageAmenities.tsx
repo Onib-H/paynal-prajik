@@ -14,22 +14,7 @@ import {
   updateAmenity,
 } from "../../services/Admin";
 import Error from "../_ErrorBoundary";
-
-interface Amenity {
-  id: number;
-  description: string;
-}
-
-interface PaginatedAmenities {
-  data: Amenity[];
-  page: number;
-  pages: number;
-  total: number;
-}
-
-interface AddAmenityResponse {
-  data: any;
-}
+import { Amenity, PaginatedAmenities, AddAmenityResponse } from "../../types/AmenityClient";
 
 const ManageAmenities = () => {
   const [search, setSearch] = useState<string>("");
