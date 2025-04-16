@@ -22,16 +22,12 @@ import cloudinary
 import cloudinary.uploader
 from io import BytesIO
 
-# Helper function to download and upload Google profile image to Cloudinary
 def save_google_profile_image_to_cloudinary(image_url):
     try:
-        # Download the image from Google
         response = requests.get(image_url)
         if response.status_code != 200:
-            print(f"Failed to download Google profile image: {response.status_code}")
             return None
             
-        # Upload to Cloudinary
         result = cloudinary.uploader.upload(
             BytesIO(response.content),
             folder="profile_images",
@@ -41,10 +37,8 @@ def save_google_profile_image_to_cloudinary(image_url):
             ]
         )
         
-        print(f"Successfully uploaded Google profile image to Cloudinary: {result['secure_url']}")
         return result['secure_url']
     except Exception as e:
-        print(f"Error saving Google profile image to Cloudinary: {e}")
         return None
 
 # Create your views here.
@@ -59,7 +53,6 @@ def auth_logout(request):
         
         return response
     except Exception as e:
-        print(f"Logout error: {str(e)}")
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
@@ -150,10 +143,9 @@ def send_register_otp(request):
             'otp': otp_generated
         }, status=status.HTTP_200_OK)
     except Exception as e:
-        print(f"{e}")
         return Response({
             "error": {
-                "general": "An error occurred while sending the OTP. Please try again later."
+                "general": f"An error occurred while sending the OTP. Please try again later. {str(e)}"
             }
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -246,9 +238,8 @@ def verify_otp(request):
                 "error": "An error occurred during authentication. Please try again later."
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
-        print(f"OTP Error: {e}")
         return Response({
-            "error": "An error occurred during registration. Please try again later."
+            "error": f"An error occurred during registration. Please try again later. {str(e)}"
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
@@ -309,9 +300,8 @@ def forgot_password(request):
             "message": "OTP sent successfully",
         }, status=status.HTTP_200_OK)
     except Exception as e:
-        print(str(e))
         return Response({
-            'error': 'An error occurred while sending the OTP. Please try again later.'
+            'error': f'An error occurred while sending the OTP. Please try again later. {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
@@ -429,7 +419,6 @@ def google_auth(request):
         CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
 
         if not CLIENT_ID or not CLIENT_SECRET:
-            print("Missing Google OAuth credentials in environment variables")
             return Response({
                 "error": "Server configuration error"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -441,18 +430,13 @@ def google_auth(request):
                 "error": "Failed to authenticate with Google"
             }, status=status.HTTP_401_UNAUTHORIZED)
         
-        # Check if user already exists
         user_exists = CustomUsers.objects.filter(email=email).exists()
         
         if user_exists:
-            # If user exists, just authenticate them
             user = CustomUsers.objects.get(email=email)
             
-            # Optionally update the existing user's profile image from Google if they don't have one
             if profile_image and (not user.profile_image or not hasattr(user.profile_image, 'url')):
-                # Convert Google profile URL to Cloudinary URL
                 cloudinary_url = save_google_profile_image_to_cloudinary(profile_image)
-                # Only update if successfully uploaded to Cloudinary
                 if cloudinary_url:
                     user.profile_image = cloudinary_url
                     user.save()
@@ -500,11 +484,9 @@ def google_auth(request):
             
             return response
         else:
-            # For new users, send OTP like regular registration
             purpose = "google_account_verification"
             cache_key = f"{email}_{purpose}"
             
-            # Check if OTP already sent
             if cache.get(cache_key):
                 cache.delete(cache_key)
             
@@ -516,14 +498,11 @@ def google_auth(request):
                     "error": "Failed to send verification code"
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-            # Store OTP in cache
             OTP_EXPIRATION_TIME = 120
             cache.set(cache_key, otp_generated, OTP_EXPIRATION_TIME)
             
-            # Generate a temporary password for the user to be used during OTP verification
             temp_password = str(uuid.uuid4())
             
-            # Store Google data and temp password in cache for OTP verification
             google_data_key = f"{email}_google_data"
             google_data = {
                 'first_name': username.split(' ')[0] if ' ' in username else username,
@@ -544,7 +523,6 @@ def google_auth(request):
             }, status=status.HTTP_200_OK)
         
     except Exception as e:
-        print(f"Google auth error: {str(e)}")
         return Response({
             "error": f"An error occurred while authenticating with Google: {str(e)}"
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

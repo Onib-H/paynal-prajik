@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ADMIN } from "./_axios";
 
 export const fetchAdminProfile = async () => {
@@ -27,8 +26,6 @@ export const fetchStaffProfile = async () => {
 
 export const fetchStats = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
-    console.log(`Fetching stats for month: ${month}, year: ${year}`);
-    
     const response = await ADMIN.get("/stats", {
       params: {
         month,
@@ -36,7 +33,7 @@ export const fetchStats = async ({ month, year }: { month?: number; year?: numbe
       },
       withCredentials: true,
     });
-    
+
     try {
       const revenueData = await fetchDailyRevenue({ month, year });
       return {
@@ -45,7 +42,7 @@ export const fetchStats = async ({ month, year }: { month?: number; year?: numbe
       };
     } catch (revenueError) {
       console.error("Failed to fetch daily revenue:", revenueError);
-    return response.data;
+      return response.data;
     }
   } catch (error) {
     console.error(`Failed to fetch stats: ${error}`);
@@ -185,7 +182,7 @@ export const fetchBookingStatusCounts = async ({ month, year }: { month?: number
   try {
     const response = await ADMIN.get("/booking_status_counts", {
       params: {
-        month, 
+        month,
         year
       },
       withCredentials: true,
@@ -306,10 +303,7 @@ export const roomDetail = async (roomId: number) => {
   }
 };
 
-export const editRoom = async (
-  roomId: number,
-  payload: FormData
-): Promise<{ data: any }> => {
+export const editRoom = async (roomId: number, payload: FormData): Promise<{ data: any }> => {
   try {
     const response = await ADMIN.put(`/edit_room/${roomId}`, payload, {
       headers: {
@@ -381,10 +375,7 @@ export const areaDetail = async (areaId: number) => {
   }
 };
 
-export const editArea = async (
-  areaId: number,
-  payload: FormData
-): Promise<{ data: any }> => {
+export const editArea = async (areaId: number, payload: FormData): Promise<{ data: any }> => {
   try {
     const response = await ADMIN.put(`/edit_area/${areaId}`, payload, {
       headers: {
@@ -428,9 +419,7 @@ export const fetchAmenities = async ({ queryKey }: any) => {
   }
 };
 
-export const createAmenity = async (payload: {
-  description: string;
-}): Promise<{ data: any }> => {
+export const createAmenity = async (payload: { description: string }): Promise<{ data: any }> => {
   try {
     const response = await ADMIN.post("/add_amenity", payload, {
       withCredentials: true,
@@ -454,10 +443,7 @@ export const readAmenity = async (amenityId: number) => {
   }
 };
 
-export const updateAmenity = async (
-  amenityId: number,
-  payload: { description: string }
-) => {
+export const updateAmenity = async (amenityId: number, payload: { description: string }) => {
   try {
     const response = await ADMIN.put(`/edit_amenity/${amenityId}`, payload, {
       withCredentials: true,
@@ -481,10 +467,7 @@ export const deleteAmenity = async (amenityId: number) => {
   }
 };
 
-export const updateBookingStatus = async (
-  bookingId: number,
-  data: Record<string, any>
-) => {
+export const updateBookingStatus = async (bookingId: number, data: Record<string, any>) => {
   try {
     const payload = {
       status: data.status,
@@ -493,8 +476,6 @@ export const updateBookingStatus = async (
         : {}),
       ...(data.reason ? { reason: data.reason } : {}),
     };
-
-    console.log("Sending booking status update:", payload);
 
     const response = await ADMIN.put(`/booking/${bookingId}/status`, payload, {
       headers: {
@@ -509,18 +490,12 @@ export const updateBookingStatus = async (
   }
 };
 
-export const recordPayment = async (
-  bookingId: number,
-  amount: number,
-  transactionType: "booking" | "reservation" | "cancellation_refund" = "booking"
-) => {
+export const recordPayment = async (bookingId: number, amount: number, transactionType: "booking" | "reservation" | "cancellation_refund" = "booking") => {
   try {
-    const response = await ADMIN.post(
-      `/booking/${bookingId}/payment`,
-      {
-        amount,
-        transaction_type: transactionType,
-      },
+    const response = await ADMIN.post(`/booking/${bookingId}/payment`, {
+      amount,
+      transaction_type: transactionType,
+    },
       {
         headers: {
           "Content-Type": "application/json",
@@ -547,13 +522,7 @@ export const getBookingDetails = async (bookingId: number) => {
   }
 };
 
-export const getAllBookings = async ({
-  page = 1,
-  pageSize = 9,
-}: {
-  page?: number;
-  pageSize?: number;
-} = {}) => {
+export const getAllBookings = async ({ page = 1, pageSize = 9 }: { page?: number; pageSize?: number } = {}) => {
   try {
     const response = await ADMIN.get("/bookings", {
       params: {
@@ -569,9 +538,7 @@ export const getAllBookings = async ({
   }
 };
 
-export const fetchOccupancyRate = async (
-  period: "daily" | "weekly" | "monthly" | "yearly" = "monthly"
-) => {
+export const fetchOccupancyRate = async (period: "daily" | "weekly" | "monthly" | "yearly" = "monthly") => {
   try {
     const response = await ADMIN.get("/occupancy_rate", {
       params: { period },
@@ -584,9 +551,7 @@ export const fetchOccupancyRate = async (
   }
 };
 
-export const fetchRevenueAnalytics = async (
-  period: "daily" | "weekly" | "monthly" | "yearly" = "monthly"
-) => {
+export const fetchRevenueAnalytics = async (period: "daily" | "weekly" | "monthly" | "yearly" = "monthly") => {
   try {
     const response = await ADMIN.get("/revenue_analytics", {
       params: { period },
@@ -623,18 +588,12 @@ export const fetchCustomerAnalytics = async () => {
   }
 };
 
-export const generatePdfReport = async (
-  reportType: string,
-  dateRange?: { start: string; end: string }
-) => {
+export const generatePdfReport = async (reportType: string, dateRange?: { start: string; end: string }) => {
   try {
-    const response = await ADMIN.post(
-      "/generate_report",
-      {
-        report_type: reportType,
-        ...(dateRange && { date_range: dateRange }),
-      },
-      {
+    const response = await ADMIN.post("/generate_report", {
+      report_type: reportType,
+      ...(dateRange && { date_range: dateRange }),
+    }, {
         responseType: "blob",
         withCredentials: true,
       }
@@ -675,32 +634,32 @@ export const fetchMonthlyRevenue = async ({ month, year }: { month?: number; yea
   try {
     const currentMonth = month || new Date().getMonth() + 1;
     const currentYear = year || new Date().getFullYear();
-    
+
     const response = await ADMIN.get("/bookings", {
       params: {
         page_size: 500
       },
       withCredentials: true,
     });
-    
+
     const allBookings = response.data.data || [];
-    
+
     const relevantBookings = allBookings.filter((booking: any) => {
       if (booking.status !== "checked_in" && booking.status !== "checked_out") {
         return false;
       }
-      
+
       if (!booking.check_in_date) return false;
-      
+
       const checkInDate = new Date(booking.check_in_date);
       const bookingMonth = checkInDate.getMonth() + 1; // JavaScript months are 0-indexed
       const bookingYear = checkInDate.getFullYear();
-      
+
       return bookingMonth === currentMonth && bookingYear === currentYear;
     });
-    
+
     let totalRevenue = 0;
-    
+
     relevantBookings.forEach((booking: any) => {
       try {
         if (booking.total_price) {
@@ -743,13 +702,13 @@ export const fetchMonthlyRevenue = async ({ month, year }: { month?: number; yea
         console.error(`Error calculating booking price: ${error}`);
       }
     });
-    
+
     const formatter = new Intl.NumberFormat('en-PH', {
       style: 'currency',
       currency: 'PHP',
       minimumFractionDigits: 2
     });
-    
+
     return {
       revenue: totalRevenue,
       formatted_revenue: formatter.format(totalRevenue).replace('PHP', '₱')

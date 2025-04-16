@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Eye,
   Filter,
   IdCard,
@@ -118,8 +119,96 @@ const BookingDetailsModal: FC<{
   isUpdating: boolean;
 }> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, onCancel, canManage, isUpdating }) => {
   const [paymentAmount, setPaymentAmount] = useState<string>("");
-  const isVenueBooking = booking.is_venue_booking;
+  const isVenueBooking = booking?.is_venue_booking;
   if (!booking) return null;
+
+  const bookingPrice = getBookingPrice(booking);
+  const currentPayment = parseFloat(paymentAmount) || 0;
+  const isPaymentComplete = currentPayment === bookingPrice;
+  const isReservedStatus = booking.status === "reserved";
+
+  const isCheckInDateValid = (): { isValid: boolean; message: string } => {
+    try {
+      const currentDate = new Date();
+      const checkInDate = new Date(booking.check_in_date);
+
+      const currentDateOnly = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        currentDate.getDate()
+      );
+
+      const checkInDateOnly = new Date(
+        checkInDate.getFullYear(),
+        checkInDate.getMonth(),
+        checkInDate.getDate()
+      );
+
+      if (currentDateOnly.getTime() < checkInDateOnly.getTime()) {
+        return {
+          isValid: false,
+          message: "Check-in is not available yet. Guest is arriving earlier than the scheduled date."
+        };
+      }
+
+      if (currentDateOnly.getTime() > checkInDateOnly.getTime()) {
+        return {
+          isValid: false,
+          message: "Guest is arriving late. This was scheduled for " + formatDate(booking.check_in_date)
+        };
+      }
+
+      if (isVenueBooking) {
+        const venueStartHour = 8;
+        const currentHour = currentDate.getHours();
+
+        if (currentHour < venueStartHour) {
+          return {
+            isValid: false,
+            message: "Venue booking check-in starts at 8:00 AM"
+          };
+        }
+      }
+      else if (booking.time_of_arrival) {
+        const arrivalTimeParts = booking.time_of_arrival.split(':');
+        if (arrivalTimeParts.length >= 2) {
+          const arrivalHour = parseInt(arrivalTimeParts[0]);
+          const arrivalMinute = parseInt(arrivalTimeParts[1]);
+
+          const minCheckInHour = 14;
+          const currentHour = currentDate.getHours();
+          const currentMinute = currentDate.getMinutes();
+
+          const currentTimeInMinutes = (currentHour * 60) + currentMinute;
+          const arrivalTimeInMinutes = (arrivalHour * 60) + arrivalMinute;
+          const minCheckInTimeInMinutes = minCheckInHour * 60;
+
+          if (currentTimeInMinutes < minCheckInTimeInMinutes && arrivalTimeInMinutes >= minCheckInTimeInMinutes) {
+            return {
+              isValid: false,
+              message: "Standard check-in time is after 2:00 PM"
+            };
+          }
+
+          if (currentTimeInMinutes < arrivalTimeInMinutes && arrivalTimeInMinutes >= minCheckInTimeInMinutes) {
+            const formattedArrivalTime = `${arrivalHour % 12 || 12}:${arrivalMinute.toString().padStart(2, '0')} ${arrivalHour >= 12 ? 'PM' : 'AM'}`;
+            return {
+              isValid: false,
+              message: `Guest is expected to arrive at ${formattedArrivalTime}`
+            };
+          }
+        }
+      }
+
+      return { isValid: true, message: "" };
+    } catch (error) {
+      console.error(`Error validating check-in date: ${error}`);
+      return { isValid: true, message: "" };
+    }
+  };
+
+  const checkInValidation = isCheckInDateValid();
+  const canCheckIn = isPaymentComplete && checkInValidation.isValid;
 
   const renderValidId = () => {
     if (!booking.valid_id) {
@@ -146,11 +235,6 @@ const BookingDetailsModal: FC<{
     setPaymentAmount(e.target.value);
   };
 
-  const bookingPrice = getBookingPrice(booking);
-  const currentPayment = parseFloat(paymentAmount) || 0;
-  const isPaymentComplete = currentPayment === bookingPrice;
-  const isReservedStatus = booking.status === "reserved";
-
   const getLoadingText = () => {
     switch (booking.status) {
       case "pending":
@@ -163,6 +247,8 @@ const BookingDetailsModal: FC<{
         return "Marking as no-show...";
       case "cancelled":
         return "Cancelling booking...";
+      case "rejected":
+        return "Rejecting booking request...";
       default:
         return "Processing booking...";
     }
@@ -179,6 +265,8 @@ const BookingDetailsModal: FC<{
       case "no_show":
       case "cancelled":
         return "noshow";
+      case "rejected":
+        return "rejected";
       default:
         return "default";
     }
@@ -190,8 +278,7 @@ const BookingDetailsModal: FC<{
         <div className="flex items-center justify-center w-full h-full">
           <EventLoader
             text={getLoadingText()}
-            size="150px"
-            type={getLoaderType() as "default" | "reserve" | "checkin" | "checkout" | "noshow"}
+            type={getLoaderType() as "default" | "reserve" | "checkin" | "checkout" | "noshow" | "cancelled" | "rejected"}
           />
         </div>
       ) : (
@@ -511,18 +598,39 @@ const BookingDetailsModal: FC<{
                 <X size={18} />
                 Cancel Booking
               </motion.button>
-              <motion.button
-                whileTap={isPaymentComplete ? { scale: 0.98 } : {}}
-                onClick={() => onCheckIn && isPaymentComplete && onCheckIn(currentPayment)}
-                className={`px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 shadow-sm ${isPaymentComplete
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-gray-400 cursor-not-allowed'
-                  }`}
-                disabled={!isPaymentComplete}
-              >
-                <Check size={18} />
-                Check In Guest
-              </motion.button>
+              <div className="relative group">
+                <motion.button
+                  whileTap={canCheckIn ? { scale: 0.98 } : {}}
+                  onClick={() => onCheckIn && canCheckIn && onCheckIn(currentPayment)}
+                  className={`px-4 py-2 text-white rounded-md flex items-center justify-center gap-2 shadow-sm ${canCheckIn
+                    ? 'bg-blue-600 hover:bg-blue-700'
+                    : 'bg-gray-400 cursor-not-allowed'
+                    }`}
+                  disabled={!canCheckIn}
+                >
+                  <Check size={18} />
+                  Check In Guest
+                </motion.button>
+
+                {!canCheckIn && (
+                  <div className="absolute bottom-full left-0 mb-2 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <div className="bg-gray-900 text-white text-xs rounded py-1 px-2 w-full">
+                      {!isPaymentComplete && (
+                        <p className="flex items-center text-amber-300 mb-1">
+                          <AlertCircle className="w-3 h-3 mr-1 flex-shrink-0" />
+                          Payment must match the required total.
+                        </p>
+                      )}
+                      {!checkInValidation.isValid && (
+                        <p className="flex items-start text-amber-300">
+                          <Clock className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
+                          {checkInValidation.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
 
@@ -724,6 +832,12 @@ const ManageBookings: FC = () => {
         reason: reason
       });
       setShowRejectionModal(false);
+
+      // Set temporary status to show the correct loader
+      setSelectedBooking(prev => prev ? {
+        ...prev,
+        status: "rejected"
+      } : null);
     }
   };
 

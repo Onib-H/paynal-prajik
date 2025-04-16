@@ -26,9 +26,12 @@ const ForgotPassword: FC = () => {
     setLoading(true);
     try {
       const response = await forgotPassword(email);
-      console.log(response.data.message);
-      setError(null);
-      setStep('otp');
+      if (response.status === 200) {
+        setError(null);
+        setStep('otp');
+      } else {
+        setError(response.data.error || 'Failed to send OTP.');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to send OTP.');
     } finally {
@@ -45,9 +48,12 @@ const ForgotPassword: FC = () => {
     setLoading(true);
     try {
       const response = await verifyResetOtp(email, otp);
-      console.log(response.data.message);
-      setError(null);
-      setStep('newPassword');
+      if (response.status === 200) {
+        setError(null);
+        setStep('newPassword');
+      } else {
+        setError(response.data.error || 'Failed to verify OTP.');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'OTP verification failed.');
     } finally {
@@ -64,10 +70,13 @@ const ForgotPassword: FC = () => {
     setLoading(true);
     try {
       const response = await resetPassword(email, newPassword, confirmPassword);
-      console.log(response.data.message);
-      setError(null);
-      setIsAuthenticated(true);
-      navigate('/');
+      if (response.status === 200) {
+        setError(null);
+        setIsAuthenticated(true);
+        navigate('/');
+      } else {
+        setError(response.data.error || 'Password reset failed.');
+      }
     } catch (error: any) {
       setError(error.response?.data?.error || 'Password reset failed.');
     } finally {
@@ -83,8 +92,11 @@ const ForgotPassword: FC = () => {
     setLoading(true);
     try {
       const response = await forgotPassword(email);
-      console.log("OTP resent:", response.data.message);
-      setError(null);
+      if (response.status === 200) {
+        setError(null);
+      } else {
+        setError(response.data.error || 'Failed to resend OTP.');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to resend OTP.');
     } finally {

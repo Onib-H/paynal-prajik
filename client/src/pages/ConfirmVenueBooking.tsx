@@ -237,7 +237,6 @@ const ConfirmVenueBooking = () => {
       numberOfGuests: parseInt(data.numberOfGuests)
     };
 
-    // Store the form data and show confirmation modal
     setPendingFormData(reservationData);
     setShowConfirmModal(true);
   };
@@ -398,7 +397,6 @@ const ConfirmVenueBooking = () => {
         {isSubmitting && (
           <EventLoader
             text="Processing your booking..."
-            size="150px"
             type="reserve"
           />
         )}

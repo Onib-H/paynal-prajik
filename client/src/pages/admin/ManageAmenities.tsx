@@ -246,7 +246,7 @@ const ManageAmenities = () => {
               exit={{ opacity: 0 }}
               className="fixed inset-0 flex items-center justify-center bg-gray-900/80 z-[500] backdrop-blur-sm"
             >
-              <ManageRoomLoader size="80px" text={loaderText} />
+              <ManageRoomLoader text={loaderText} />
             </motion.div>
           )}
         </AnimatePresence>

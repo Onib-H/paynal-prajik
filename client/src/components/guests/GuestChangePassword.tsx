@@ -53,7 +53,6 @@ const GuestChangePassword = () => {
             navigate('/guest/profile');
         },
         onError: (error: any) => {
-            console.log("Password change error:", error);
             setPasswordError(error.response?.data?.error || "Failed to change password. Please try again.");
             setPasswordSuccess(null);
         }

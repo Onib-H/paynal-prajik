@@ -93,7 +93,6 @@ def send_booking_confirmation_email(email, booking_details):
         
         return True
     except Exception as e:
-        print(f"Error sending booking confirmation email: {str(e)}")
         return False
 
 def send_booking_rejection_email(email, booking_details):
@@ -194,5 +193,4 @@ def send_booking_rejection_email(email, booking_details):
         
         return True
     except Exception as e:
-        print(f"Error sending booking rejection email: {str(e)}")
         return False

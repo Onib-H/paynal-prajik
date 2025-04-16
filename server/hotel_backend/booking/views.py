@@ -76,7 +76,6 @@ def fetch_availability(request):
 @api_view(['GET', 'POST'])
 def bookings_list(request):
     try:
-        # GET method for fetching bookings
         if request.method == 'GET':
             if not request.user.is_authenticated:
                 return Response(
@@ -84,25 +83,17 @@ def bookings_list(request):
                     status=status.HTTP_401_UNAUTHORIZED
                 )
 
-            # Pagination parameters
             page = request.query_params.get('page', 1)
             page_size = request.query_params.get('page_size', 10)
-            
-            # Handle filtering by status
             status_filter = request.query_params.get('status')
-            
-            # Start with all bookings
             bookings = Bookings.objects.all().order_by('-created_at')
             
-            # Filter by status if provided
             if status_filter:
                 bookings = bookings.filter(status=status_filter)
                 
-            # If user is guest, only show their bookings
             if request.user.role == 'guest':
                 bookings = bookings.filter(user=request.user)
             
-            # Add pagination
             paginator = Paginator(bookings, page_size)
             try:
                 paginated_bookings = paginator.page(page)
@@ -111,7 +102,6 @@ def bookings_list(request):
             except EmptyPage:
                 paginated_bookings = paginator.page(paginator.num_pages)
             
-            # Serialize the paginated data
             serializer = BookingSerializer(paginated_bookings, many=True)
             
             return Response({
@@ -124,17 +114,10 @@ def bookings_list(request):
                 }
             }, status=status.HTTP_200_OK)
             
-        # POST method for creating bookings
         elif request.method == 'POST':
-            # Add request object to context to access request.user
             request_data = request.data.copy()
             request_data['_request'] = request
             
-            # Log request data for debugging
-            print(f"Booking request data: {request_data}")
-            print(f"Is user authenticated: {request.user.is_authenticated if hasattr(request, 'user') else 'No user attribute'}")
-            
-            # Allow guest bookings without authentication
             unauthenticated = not (request.user and request.user.is_authenticated)
             
             try:
@@ -156,15 +139,12 @@ def bookings_list(request):
                         "data": booking_data
                     }, status=status.HTTP_201_CREATED)
                     
-                print(f"Serializer errors: {serializer.errors}")
                 return Response({
                     "error": serializer.errors
                 }, status=status.HTTP_400_BAD_REQUEST)
             except Exception as e:
-                print(f"Error processing booking: {str(e)}")
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        print(f"Booking view error: {str(e)}")
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT', 'DELETE'])

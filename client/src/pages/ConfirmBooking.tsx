@@ -250,14 +250,12 @@ const ConfirmBooking = () => {
     setError({});
 
     try {
-      console.log("Processing booking after login:", savedFormData);
       const response = await createBooking(savedFormData);
-      console.log("Booking response after login:", response);
       setSuccess(true);
       setSavedFormData(null);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=false`);
     } catch (err: any) {
-      console.error(`Error creating booking after login:`, err);
+      console.error(`Error creating booking after login: ${err}`);
       if (err.response && err.response.data && err.response.data.error) {
         if (typeof err.response.data.error === 'object') {
           setError(err.response.data.error);
@@ -366,7 +364,6 @@ const ConfirmBooking = () => {
       totalPrice: calculatedTotalPrice
     };
 
-    // Store the form data and show confirmation modal
     setPendingFormData(bookingData);
     setShowConfirmModal(true);
   };
@@ -403,7 +400,6 @@ const ConfirmBooking = () => {
       }
 
       const response = await createBooking(pendingFormData);
-      console.log("Booking response:", response);
       setSuccess(true);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=false`);
     } catch (err: any) {
@@ -736,7 +732,6 @@ const ConfirmBooking = () => {
         {isSubmitting && (
           <EventLoader
             text="Processing your booking..."
-            size="150px"
             type="reserve"
           />
         )}
