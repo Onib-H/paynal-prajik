@@ -9,7 +9,9 @@ import { fetchAdminProfile } from "../../services/Admin";
 import { logout } from "../../services/Auth";
 import AdminProfile from "./AdminProfile";
 
-const AdminDetailSkeleton = React.lazy(() => import("../../motions/skeletons/AdminDetailSkeleton"));
+const AdminDetailSkeleton = React.lazy(
+  () => import("../../motions/skeletons/AdminDetailSkeleton")
+);
 
 interface AdminData {
   name: string;
@@ -87,9 +89,10 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
                   to={item.link}
                   end={item.link === "/admin"}
                   className={({ isActive }) =>
-                    `flex items-center space-x-2 justify-baseline rounded-md cursor-pointer ${isActive
-                      ? "border-r-3 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
-                      : "hover:bg-purple-100/80 transition-colors duration-300"
+                    `flex items-center space-x-2 justify-baseline rounded-md cursor-pointer ${
+                      isActive
+                        ? "border-r-3 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
+                        : "hover:bg-purple-100/80 transition-colors duration-300"
                     }`
                   }
                 >
@@ -121,12 +124,14 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
         cancel={modalCancel}
         onConfirm={handleLogout}
         loading={loading}
-        className={`bg-red-600 text-white hover:bg-red-700 font-bold uppercase text-sm px-6 py-3 rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-300 cursor-pointer ${loading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+        className={`bg-red-600 text-white hover:bg-red-700 font-bold uppercase text-sm px-6 py-3 rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-300 cursor-pointer ${
+          loading ? "opacity-50 cursor-not-allowed" : ""
+        }`}
         confirmText={
           loading ? (
             <>
-              <FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> Logging out...
+              <FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> Logging
+              out...
             </>
           ) : (
             "Log Out"
