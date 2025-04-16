@@ -1,18 +1,5 @@
 import { area } from "./_axios";
-
-interface Area {
-  id: number;
-  area_name: string;
-  description: string;
-  area_image: string;
-  status: string;
-  capacity: number;
-  price_per_hour: string;
-}
-
-interface AreasResponse {
-  data: Area[];
-}
+import { AreasResponse } from "../types/AreaClient";
 
 export const fetchAreas = async (): Promise<AreasResponse> => {
   try {

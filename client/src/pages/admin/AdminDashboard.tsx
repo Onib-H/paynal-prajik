@@ -19,7 +19,7 @@ import { Bar, Doughnut, Line } from "react-chartjs-2";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
 import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
-import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyCheckInsCheckOuts, fetchDailyNoShowsRejected, fetchDailyOccupancy, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
+import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyCheckInsCheckOuts, fetchDailyNoShowsRejected, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import '../../styles/print.css';
 import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
@@ -118,13 +118,13 @@ const AdminDashboard = () => {
     }),
   });
 
-  const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } = useQuery({
-    queryKey: ['dailyOccupancy', selectedMonth, selectedYear],
-    queryFn: () => fetchDailyOccupancy({
-      month: selectedMonth + 1,
-      year: selectedYear
-    }),
-  });
+  // const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } = useQuery({
+  //   queryKey: ['dailyOccupancy', selectedMonth, selectedYear],
+  //   queryFn: () => fetchDailyOccupancy({
+  //     month: selectedMonth + 1,
+  //     year: selectedYear
+  //   }),
+  // });
 
   const { data: checkinCheckoutData, isLoading: checkinsDataLoading } = useQuery({
     queryKey: ['dailyCheckInsCheckOuts', selectedMonth, selectedYear],
@@ -194,7 +194,7 @@ const AdminDashboard = () => {
   const bookingTrendsChartRef = useRef<HTMLCanvasElement | null>(null);
   const bookingStatusChartRef = useRef<HTMLCanvasElement | null>(null);
 
-  if (isLoading || bookingStatusLoading || bookingsDataLoading || occupancyDataLoading || checkinsDataLoading || cancellationsDataLoading || roomRevenueLoading || roomBookingsLoading || noShowsRejectedDataLoading || monthlyRevenueLoading) return <DashboardSkeleton />;
+  if (isLoading || bookingStatusLoading || bookingsDataLoading || checkinsDataLoading || cancellationsDataLoading || roomRevenueLoading || roomBookingsLoading || noShowsRejectedDataLoading || monthlyRevenueLoading) return <DashboardSkeleton />;
   if (error) return <Error />;
 
   const stats = {
@@ -231,7 +231,6 @@ const AdminDashboard = () => {
   // Limit charts to current day for current month
   const daysInMonth = getDaysInMonth(selectedMonth, selectedYear, true);
 
-  // Limit daily data arrays to match the days we're showing
   const limitArrayToCurrentDay = (dataArray: any[] | undefined) => {
     if (!dataArray) return daysInMonth.map(() => 0);
     return dataArray.slice(0, daysInMonth.length);
@@ -239,7 +238,7 @@ const AdminDashboard = () => {
 
   const dailyRevenueData = limitArrayToCurrentDay(data?.daily_revenue);
   const dailyBookingsData = limitArrayToCurrentDay(dailyBookingsResponse?.data);
-  const dailyOccupancyRates = limitArrayToCurrentDay(dailyOccupancyResponse?.data);
+  // const dailyOccupancyRates = limitArrayToCurrentDay(dailyOccupancyResponse?.data);
   const dailyCheckIns = limitArrayToCurrentDay(checkinCheckoutData?.checkins);
   const dailyCheckOuts = limitArrayToCurrentDay(checkinCheckoutData?.checkouts);
   const dailyCancellations = limitArrayToCurrentDay(dailyCancellationsResponse?.data);

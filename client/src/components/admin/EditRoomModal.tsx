@@ -3,28 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, FC, useEffect, useState } from "react";
 import { fetchAmenities } from "../../services/Admin";
-
-export interface IRoom {
-    id: number;
-    roomName: string;
-    roomType: string;
-    bedType: string;
-    capacity: string;
-    amenities: number[];
-    roomPrice: number;
-    roomImage: File | string;
-    status: "Available" | "Maintenance";
-    description: string;
-    maxGuests: number;
-}
-
-interface IRoomFormModalProps {
-    isOpen: boolean;
-    cancel: () => void;
-    onSave: (data: IRoom) => Promise<void>;
-    roomData: IRoom | null;
-    loading?: boolean;
-}
+import { IRoom, IRoomFormModalProps } from "../../types/RoomAdmin";
 
 const EditRoomModal: FC<IRoomFormModalProps> = ({
     isOpen,

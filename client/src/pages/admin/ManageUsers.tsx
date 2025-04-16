@@ -9,21 +9,13 @@ import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
 import { archiveUser, fetchAllUsers, manageUser } from "../../services/Admin";
+import { CreateUserFormData } from "../../types/UsersAdmin";
 
 const VALID_EMAIL_PROVIDERS = [
   "gmail.com", "yahoo.com", "yahoo.com.ph", "outlook.com", "hotmail.com",
   "aol.com", "icloud.com", "live.com", "msn.com", "hotmail.co.uk",
   "ymail.com", "googlemail.com"
 ];
-
-interface CreateUserFormData {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-}
 
 const ManageUsers: FC = () => {
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);

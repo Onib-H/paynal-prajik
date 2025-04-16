@@ -20,7 +20,7 @@ import CancellationModal from "../../components/bookings/CancellationModal";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
 import { getAllBookings, recordPayment, updateBookingStatus } from "../../services/Admin";
-import { BookingResponse } from "../../services/Booking";
+import { BookingResponse } from "../../types/BookingClient";
 import { formatDate } from "../../utils/formatters";
 
 const BookingStatusBadge: FC<{ status: string }> = ({ status }) => {

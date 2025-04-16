@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import RoomCard from "../../../components/rooms/RoomCard";
 import DashboardSkeleton from "../../../motions/skeletons/AdminDashboardSkeleton";
 import { fetchAllRooms } from "../../../services/Room";
@@ -28,26 +28,28 @@ const RoomList: FC = () => {
     queryFn: fetchAllRooms,
   });
 
+  const availableRooms = useMemo(() => {
+    if (!data?.data) return [];
+
+    return data.data
+      .filter((room: any) => room.status === 'available')
+      .map((room: any) => {
+        return {
+          id: room.id,
+          name: room.room_name,
+          image: room.room_image,
+          title: room.room_type,
+          status: room.status,
+          description: room.description,
+          capacity: room.capacity,
+          price: room.room_price,
+          amenities: room.amenities
+        };
+      });
+  }, [data?.data]);
+
   if (isLoading) return <DashboardSkeleton />;
   if (isError) return <Error />
-
-  if (!data?.data) return <div className="p-6">No rooms available</div>;
-
-  const availableRooms = data.data
-    .filter((room: any) => room.status === 'available')
-    .map((room: any) => {
-      return {
-        id: room.id,
-        name: room.room_name,
-        image: room.room_image,
-        title: room.room_type,
-        status: room.status,
-        description: room.description,
-        capacity: room.capacity,
-        price: room.room_price,
-        amenities: room.amenities
-      };
-    });
 
   return (
     <div className="container mx-auto p-6">
@@ -69,7 +71,6 @@ const RoomList: FC = () => {
                 name={room.name}
                 image={room.image}
                 title={room.title}
-                capacity={room.capacity}
                 price={room.price}
                 description={room.description}
               />

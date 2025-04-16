@@ -8,19 +8,10 @@ import ReviewList from "../components/reviews/ReviewList";
 import { useUserContext } from "../contexts/AuthContext";
 import { fetchAreaDetail, fetchAreas } from "../services/Area";
 import { fetchAreaReviews } from "../services/Booking";
+import { Area } from "../types/AreaClient";
 
 const LoadingDashboard = lazy(() => import("../motions/skeletons/AdminDashboardSkeleton"));
 const Error = lazy(() => import("./_ErrorBoundary"));
-
-interface Area {
-    id: number;
-    area_name: string;
-    description: string;
-    area_image: string;
-    status: string;
-    capacity: number;
-    price_per_hour: string;
-}
 
 const VenueDetails = () => {
     const { id } = useParams<{ id: string }>();
@@ -39,7 +30,7 @@ const VenueDetails = () => {
 
     const { data: allVenuesData } = useQuery<{ data: Area[] }>({
         queryKey: ["venues"],
-        queryFn: fetchAreas,
+        queryFn: fetchAreas as any,
     });
 
     const {
@@ -71,14 +62,12 @@ const VenueDetails = () => {
 
     const reviews = reviewsData?.data || [];
 
-    // Format price if needed - remove ₱ if it already exists in the string
     const formattedPrice = typeof venueDetail.price_per_hour === 'string'
         ? venueDetail.price_per_hour.startsWith('₱')
             ? venueDetail.price_per_hour
             : `${venueDetail.price_per_hour}`
         : `${venueDetail.price_per_hour}`;
 
-    // Animation variants
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {

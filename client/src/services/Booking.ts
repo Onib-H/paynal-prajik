@@ -141,29 +141,29 @@ export const fetchReservations = async () => {
 export const fetchAvailability = async (arrival: string, departure: string) => {
   try {
     const response = await booking.get("/availability", {
-      params: { 
-        arrival, 
+      params: {
+        arrival,
         departure,
         exclude_statuses: "reserved,checked_in"
       },
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
     });
-    
+
     if (response.data) {
       if (response.data.rooms) {
-        response.data.rooms = response.data.rooms.filter((room: any) => 
+        response.data.rooms = response.data.rooms.filter((room: any) =>
           !(room.status === "reserved" || room.status === "checked_in")
         );
       }
-      
+
       if (response.data.areas) {
-        response.data.areas = response.data.areas.filter((area: any) => 
+        response.data.areas = response.data.areas.filter((area: any) =>
           !(area.status === "reserved" || area.status === "checked_in")
         );
       }
     }
-    
+
     return response.data;
   } catch (error) {
     console.error(`Failed to fetch availability: ${error}`);
@@ -189,7 +189,7 @@ export const createBooking = async (bookingData: BookingFormData) => {
     formData.append("checkIn", bookingData.checkIn || "");
     formData.append("checkOut", bookingData.checkOut || "");
     formData.append("status", bookingData.status || "pending");
-    
+
     formData.append("arrivalTime", bookingData.arrivalTime || "12:00");
 
     if (bookingData.totalPrice !== undefined) {
@@ -237,7 +237,7 @@ export const createReservation = async (reservationData: ReservationFormData) =>
     }
 
     formData.append("roomId", reservationData.areaId || "");
-    
+
     if (reservationData.startTime) {
       const startDate = new Date(reservationData.startTime);
       const formattedStartDate = startDate.toISOString().split("T")[0];
@@ -436,7 +436,10 @@ export const fetchReviews = async (bookingId: string) => {
   }
 };
 
-export const createReview = async (bookingId: string,reviewData: { review_text: string; rating: number }) => {
+export const createReview = async (
+  bookingId: string,
+  reviewData: { review_text: string; rating: number }
+) => {
   try {
     const response = await booking.post(
       `/bookings/${bookingId}/reviews`,
@@ -466,7 +469,10 @@ export const fetchUserReviews = async () => {
   }
 };
 
-export const updateReview = async (reviewId: string, reviewData: { review_text?: string; rating?: number }) => {
+export const updateReview = async (
+  reviewId: string,
+  reviewData: { review_text?: string; rating?: number }
+) => {
   try {
     const response = await booking.put(`/reviews/${reviewId}`, reviewData, {
       headers: { "Content-Type": "application/json" },
@@ -545,11 +551,11 @@ export const getUserBookingsForToday = async () => {
 export const checkCanBookToday = async (): Promise<{ canBook: boolean; message?: string }> => {
   try {
     const token = localStorage.getItem('token');
-    
+
     if (!token) {
       return { canBook: true };
     }
-    
+
     const response = await booking.get('/check-can-book-today/', {
       withCredentials: true,
     });

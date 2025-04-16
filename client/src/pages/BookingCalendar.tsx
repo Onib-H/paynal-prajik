@@ -4,38 +4,7 @@ import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isEqual, is
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchRoomBookings, fetchRoomById } from '../services/Booking';
-
-interface AmenityObject {
-    id: number;
-    description: string;
-}
-
-interface RoomData {
-    id: number;
-    room_name: string;
-    room_type: string;
-    description: string;
-    room_image: string;
-    status: string;
-    max_guests: number;
-    amenities: Array<AmenityObject | string>;
-    price_per_night?: string;
-    room_price?: string;
-}
-
-interface BookingData {
-    id: number;
-    check_in_date: string;
-    check_out_date: string;
-    status: string;
-}
-
-interface BookingsByDate {
-    [date: string]: {
-        status: string;
-        bookingId: number;
-    };
-}
+import { AmenityObject, BookingsByDate, RoomData, BookingData } from '../types/BookingClient';
 
 function isAmenityObject(amenity: any): amenity is AmenityObject {
     return amenity && typeof amenity === 'object' && 'description' in amenity;

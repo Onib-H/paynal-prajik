@@ -10,24 +10,7 @@ import SignupModal from '../components/SignupModal';
 import { useUserContext } from '../contexts/AuthContext';
 import EventLoader from '../motions/loaders/EventLoader';
 import { BookingFormData, checkCanBookToday, createBooking, fetchRoomById } from '../services/Booking';
-
-interface Amenity {
-  id: number;
-  description: string;
-}
-
-interface RoomData {
-  id: number;
-  room_name: string;
-  room_type: string;
-  status: string;
-  room_price: string;
-  room_image: string;
-  description: string;
-  capacity: string;
-  max_guests: number;
-  amenities: Amenity[];
-}
+import { RoomData } from '../types/BookingClient';
 
 const ConfirmBooking = () => {
   const navigate = useNavigate();

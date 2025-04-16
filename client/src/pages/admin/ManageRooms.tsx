@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import EditRoomModal, { IRoom } from "../../components/admin/EditRoomModal";
+import { IRoom } from "../../types/RoomAdmin";
+import EditRoomModal from "../../components/admin/EditRoomModal";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
@@ -15,38 +16,8 @@ import {
   fetchRooms,
 } from "../../services/Admin";
 import Error from "../_ErrorBoundary";
-
 import { ChevronLeft, ChevronRight, Edit, Eye, Trash2 } from "lucide-react";
-
-interface Amenity {
-  id: number;
-  description: string;
-}
-
-interface Room {
-  id: number;
-  room_name: string;
-  room_image: string;
-  room_type: string;
-  bed_type: string;
-  status: "available" | "occupied" | "maintenance";
-  room_price: string | number;
-  description: string;
-  capacity: string;
-  max_guests: number;
-  amenities: number[];
-}
-
-interface AddRoomResponse {
-  data: any;
-}
-
-interface PaginationData {
-  total_pages: number;
-  current_page: number;
-  total_items: number;
-  page_size: number;
-}
+import { Amenity, Room, AddRoomResponse, PaginationData } from "../../types/RoomClient";
 
 const MemoizedImage = memo(({ src, alt, className }: { src: string, alt: string, className: string }) => {
   return (

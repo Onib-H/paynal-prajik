@@ -13,30 +13,9 @@ import {
   fetchAreas,
 } from "../../services/Admin";
 import Error from "../_ErrorBoundary";
-
+import { Area, AddAreaResponse, PaginationData } from "../../types/AreaClient";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Edit, Eye, MapPin, Trash2 } from "lucide-react";
-
-interface Area {
-  id: number;
-  area_name: string;
-  area_image: string;
-  description?: string;
-  capacity: number;
-  price_per_hour: number;
-  status: "available" | "maintenance";
-}
-
-interface AddAreaResponse {
-  data: any;
-}
-
-interface PaginationData {
-  total_pages: number;
-  current_page: number;
-  total_items: number;
-  page_size: number;
-}
 
 const MemoizedImage = memo(({ src, alt, className }: { src: string, alt: string, className: string }) => {
   return (

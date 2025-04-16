@@ -3,39 +3,7 @@ import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isSameDay, 
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchAreaBookings, fetchAreaById } from '../services/Booking';
-
-interface AreaData {
-    id: number;
-    area_name: string;
-    description: string;
-    area_image: string;
-    status: string;
-    capacity: number;
-    price_per_hour: string;
-}
-
-interface BookingData {
-    id: number;
-    check_in_date: string;
-    check_out_date: string;
-    status: string;
-    start_time: string | null;
-    end_time: string | null;
-}
-
-interface UnavailableTime {
-    start_time: string;
-    end_time: string;
-    status: string;
-}
-
-interface BookingsByDate {
-    [date: string]: {
-        status: string;
-        bookingId: number;
-        unavailableTimes: UnavailableTime[];
-    };
-}
+import { AreaData, BookingsByDate, BookingData } from '../types/BookingClient';
 
 const VenueBookingCalendar = () => {
     const { areaId } = useParams<{ areaId: string }>();

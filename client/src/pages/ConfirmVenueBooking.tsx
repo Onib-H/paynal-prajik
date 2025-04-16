@@ -9,26 +9,7 @@ import SignupModal from '../components/SignupModal';
 import { useUserContext } from '../contexts/AuthContext';
 import EventLoader from '../motions/loaders/EventLoader';
 import { ReservationFormData, checkCanBookToday, createReservation, fetchAreaById } from '../services/Booking';
-
-interface AreaData {
-  id: number;
-  area_name: string;
-  description: string;
-  area_image: string;
-  status: string;
-  capacity: number;
-  price_per_hour: string;
-}
-
-interface FormData {
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  emailAddress: string;
-  validId: FileList;
-  specialRequests: string;
-  numberOfGuests: string;
-}
+import { AreaData, FormData } from '../types/BookingClient';
 
 const ConfirmVenueBooking = () => {
   const navigate = useNavigate();
