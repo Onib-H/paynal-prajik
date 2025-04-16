@@ -9,7 +9,7 @@ import LoginModal from '../components/LoginModal';
 import SignupModal from '../components/SignupModal';
 import { useUserContext } from '../contexts/AuthContext';
 import EventLoader from '../motions/loaders/EventLoader';
-import { BookingFormData, createBooking, fetchRoomById } from '../services/Booking';
+import { BookingFormData, checkCanBookToday, createBooking, fetchRoomById } from '../services/Booking';
 
 interface Amenity {
   id: number;
@@ -37,7 +37,10 @@ const ConfirmBooking = () => {
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [savedFormData, setSavedFormData] = useState(null);
 
-  const { register, handleSubmit: validateForm, formState: { errors } } = useForm();
+  const [canBookToday, setCanBookToday] = useState<boolean>(true);
+  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(null);
+
+  const { register, handleSubmit: validateForm } = useForm();
 
   const roomId = searchParams.get('roomId');
   const arrival = searchParams.get('arrival');
@@ -115,6 +118,22 @@ const ConfirmBooking = () => {
       }
     }
   }, [roomData, selectedArrival, selectedDeparture, priceParam]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      const checkBookingEligibility = async () => {
+        try {
+          const eligibility = await checkCanBookToday();
+          setCanBookToday(eligibility.canBook);
+          setBookingLimitMessage(eligibility.message || null);
+        } catch (error) {
+          console.error('Error checking booking eligibility:', error);
+        }
+      };
+
+      checkBookingEligibility();
+    }
+  }, [isAuthenticated]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -214,21 +233,25 @@ const ConfirmBooking = () => {
     setError({});
 
     try {
+      console.log("Processing booking after login:", savedFormData);
       const response = await createBooking(savedFormData);
+      console.log("Booking response after login:", response);
       setSuccess(true);
       setSavedFormData(null);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=false`);
     } catch (err: any) {
+      console.error(`Error creating booking after login:`, err);
       if (err.response && err.response.data && err.response.data.error) {
         if (typeof err.response.data.error === 'object') {
           setError(err.response.data.error);
         } else {
           setError({ general: err.response.data.error });
         }
+      } else if (err.message) {
+        setError({ general: err.message });
       } else {
         setError({ general: 'Failed to create booking. Please try again.' });
       }
-      console.error(`Error creating booking: ${err}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -240,9 +263,13 @@ const ConfirmBooking = () => {
     }
   }, [isAuthenticated, savedFormData, handleSuccessfulLogin, isSubmitting, success]);
 
-  const handleProceedClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    if (isSubmitting) return;
+  const handleFormSubmit = async () => {
+    if (!roomData || isSubmitting) return;
+
+    if (isAuthenticated && !canBookToday) {
+      setError({ general: bookingLimitMessage || 'You have already made a booking today. You can make another booking tomorrow.' });
+      return;
+    }
 
     const newFieldErrors: { [key: string]: string } = {};
     let hasErrors = false;
@@ -268,14 +295,6 @@ const ConfirmBooking = () => {
         newFieldErrors.phoneNumber = "Phone number must be in Philippine format: (+63) 9XX XXX XXXX";
         hasErrors = true;
       }
-    }
-
-    if (!formData.emailAddress) {
-      newFieldErrors.emailAddress = "Email address is required";
-      hasErrors = true;
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.emailAddress)) {
-      newFieldErrors.emailAddress = "Invalid email format";
-      hasErrors = true;
     }
 
     if (!formData.validId) {
@@ -313,34 +332,70 @@ const ConfirmBooking = () => {
       return;
     }
 
+    setIsSubmitting(true);
     setError({});
 
-    const bookingData: BookingFormData = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      phoneNumber: formData.phoneNumber,
-      emailAddress: formData.emailAddress,
-      specialRequests: formData.specialRequests,
-      validId: formData.validId,
-      roomId: roomId || '',
-      checkIn: selectedArrival,
-      checkOut: selectedDeparture,
-      status: 'pending',
-      totalPrice: calculatedTotalPrice,
-      arrivalTime: formData.arrivalTime,
-      numberOfGuests: parseInt(formData.numberOfGuests)
-    };
+    try {
+      const arrivalDate = new Date(selectedArrival);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const isBookingForToday = arrivalDate.getTime() === today.getTime();
 
-    if (!isAuthenticated) {
-      setSavedFormData(bookingData);
-      setShowLoginModal(true);
-    } else {
-      setSavedFormData(bookingData);
+      if (isAuthenticated && isBookingForToday) {
+        const eligibility = await checkCanBookToday();
+        if (!eligibility.canBook) {
+          setCanBookToday(false);
+          setBookingLimitMessage(eligibility.message || 'You have already made a booking today');
+          setError({ general: eligibility.message || 'You have already made a booking today. You can make another booking tomorrow.' });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      const bookingData: BookingFormData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phoneNumber: formData.phoneNumber,
+        validId: formData.validId,
+        specialRequests: formData.specialRequests,
+        roomId: roomId,
+        checkIn: selectedArrival,
+        checkOut: selectedDeparture,
+        arrivalTime: formData.arrivalTime,
+        numberOfGuests: parseInt(formData.numberOfGuests),
+        totalPrice: calculatedTotalPrice
+      };
+
+      console.log("Booking data being sent:", bookingData);
+
+      if (!isAuthenticated) {
+        setSavedFormData(bookingData);
+        setShowLoginModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const response = await createBooking(bookingData);
+      console.log("Booking response:", response);
+      setSuccess(true);
+      navigate(`/booking-accepted?bookingId=${response.id}&isVenue=false`);
+    } catch (err: any) {
+      console.error(`Error creating booking:`, err);
+
+      if (err.response && err.response.data && err.response.data.error) {
+        if (typeof err.response.data.error === 'object') {
+          setError(err.response.data.error);
+        } else {
+          setError({ general: err.response.data.error });
+        }
+      } else if (err.message) {
+        setError({ general: err.message });
+      } else {
+        setError({ general: 'Failed to create booking. Please try again.' });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const handleFormSubmit = async () => {
-    handleProceedClick(new MouseEvent('click') as unknown as React.MouseEvent<HTMLButtonElement>);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -549,6 +604,24 @@ const ConfirmBooking = () => {
       <div className="container mx-auto px-4 py-8 max-w-7xl mt-16">
         <h1 className="text-2xl md:text-3xl font-bold text-center mb-8">Confirm Booking</h1>
 
+        {isAuthenticated && !canBookToday && (
+          <div className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg className="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">Booking Limit Reached</h3>
+                <p className="text-sm mt-1">
+                  {bookingLimitMessage || 'You have already made a booking today. You can make another booking tomorrow.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {!isAuthenticated && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-300 text-blue-800 rounded-lg">
             <div className="flex items-start">
@@ -600,7 +673,7 @@ const ConfirmBooking = () => {
                     onChange={handleInputChange}
                     className={`w-full px-3 py-2 border ${error.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
                   />
-                  {errors.firstName && <p className="text-red-500 text-sm mt-1">{error.firstName}</p>}
+                  {error.firstName && <p className="text-red-500 text-sm mt-1">{error.firstName}</p>}
                 </div>
                 <div>
                   <label htmlFor="lastName" className="block text-md font-medium text-gray-700 mb-1">
@@ -638,21 +711,6 @@ const ConfirmBooking = () => {
                   {error.phoneNumber && <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>}
                   <p className="mt-1 text-xs text-gray-500">Format: +63 9XX XXX XXXX (Philippine number)</p>
                 </div>
-                {/* <div>
-                  <label htmlFor="emailAddress" className="block text-md font-medium text-gray-700 mb-1">
-                    Email Address <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    id="emailAddress"
-                    {...register("emailAddress")}
-                    name="emailAddress"
-                    value={formData.emailAddress}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${error.emailAddress ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
-                  />
-                  {error.emailAddress && <p className="text-red-500 text-sm mt-1">{error.emailAddress}</p>}
-                </div> */}
                 {/* Number of Guests */}
                 <div>
                   <label htmlFor="numberOfGuests" className="block text-md font-medium text-gray-700 mb-1">
@@ -796,7 +854,7 @@ const ConfirmBooking = () => {
                 <button
                   type="button"
                   disabled={isSubmitting}
-                  onClick={handleProceedClick}
+                  onClick={handleFormSubmit}
                   className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${isSubmitting
                     ? 'bg-blue-400 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500'
@@ -897,7 +955,7 @@ const ConfirmBooking = () => {
               <button
                 type="button"
                 disabled={isSubmitting}
-                onClick={handleProceedClick}
+                onClick={handleFormSubmit}
                 className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex justify-center items-center ${isSubmitting
                   ? 'bg-blue-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500'

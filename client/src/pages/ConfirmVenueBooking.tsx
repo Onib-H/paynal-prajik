@@ -8,7 +8,7 @@ import LoginModal from '../components/LoginModal';
 import SignupModal from '../components/SignupModal';
 import { useUserContext } from '../contexts/AuthContext';
 import EventLoader from '../motions/loaders/EventLoader';
-import { ReservationFormData, createReservation, fetchAreaById } from '../services/Booking';
+import { ReservationFormData, checkCanBookToday, createReservation, fetchAreaById } from '../services/Booking';
 
 interface AreaData {
   id: number;
@@ -78,6 +78,10 @@ const ConfirmVenueBooking = () => {
   }>({});
   const [success, setSuccess] = useState(false);
 
+  // Add state for booking eligibility
+  const [canBookToday, setCanBookToday] = useState<boolean>(true);
+  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(null);
+
   const { data: areaData, isLoading } = useQuery<AreaData>({
     queryKey: ['area', areaId],
     queryFn: () => fetchAreaById(areaId as string),
@@ -95,6 +99,23 @@ const ConfirmVenueBooking = () => {
       navigate('/venues');
     }
   }, [areaId, navigate, startTime, endTime]);
+
+  // Check if user can book today
+  useEffect(() => {
+    if (isAuthenticated) {
+      const checkBookingEligibility = async () => {
+        try {
+          const eligibility = await checkCanBookToday();
+          setCanBookToday(eligibility.canBook);
+          setBookingLimitMessage(eligibility.message || null);
+        } catch (error) {
+          console.error('Error checking booking eligibility:', error);
+        }
+      };
+
+      checkBookingEligibility();
+    }
+  }, [isAuthenticated]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -136,10 +157,10 @@ const ConfirmVenueBooking = () => {
       // Update form value for react-hook-form
       setValue(name as keyof FormData, formatted);
     } else {
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+      setFormData({
+        ...formData,
+        [name]: value
+      });
 
       // Update form value for react-hook-form
       setValue(name as keyof FormData, value);
@@ -210,50 +231,113 @@ const ConfirmVenueBooking = () => {
     }
   }, [isAuthenticated, savedFormData, handleSuccessfulLogin, isSubmitting, success]);
 
-  const onSubmit = (data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     if (isSubmitting) return;
 
+    setIsSubmitting(true);
     setError({});
 
-    if (!areaId || !startTime || !endTime || !totalPrice) {
-      setError({ general: "Missing required booking information" });
-      return;
-    }
+    try {
+      // Check if user can book today
+      if (isAuthenticated && !canBookToday) {
+        setError({ general: bookingLimitMessage || 'You have already made a booking today. You can make another booking tomorrow.' });
+        setIsSubmitting(false);
+        return;
+      }
 
-    const parsedStartTime = startTime ? new Date(startTime).toISOString() : null;
-    const parsedEndTime = endTime ? new Date(endTime).toISOString() : null;
+      if (!areaId || !startTime || !endTime || !totalPrice) {
+        setError({ general: "Missing required booking information" });
+        setIsSubmitting(false);
+        return;
+      }
 
-    const validIdFile = formData.validId;
-    if (!validIdFile) {
-      setError({ validId: "Please upload a valid ID" });
-      return;
-    }
+      const parsedStartTime = startTime ? new Date(startTime).toISOString() : null;
+      const parsedEndTime = endTime ? new Date(endTime).toISOString() : null;
 
-    // Clean phone number - remove spaces and any other non-essential characters
-    const cleanedPhoneNumber = data.phoneNumber.replace(/\s+/g, '');
+      const validIdFile = formData.validId;
+      if (!validIdFile) {
+        setError({ validId: "Please upload a valid ID" });
+        setIsSubmitting(false);
+        return;
+      }
 
-    const reservationData: ReservationFormData = {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      phoneNumber: cleanedPhoneNumber,
-      emailAddress: data.emailAddress,
-      specialRequests: data.specialRequests,
-      validId: validIdFile,
-      areaId: areaId,
-      startTime: parsedStartTime,
-      endTime: parsedEndTime,
-      totalPrice: parseFloat(totalPrice || '0'),
-      status: 'pending',
-      isVenueBooking: true,
-      numberOfGuests: parseInt(data.numberOfGuests)
-    };
+      // Is this booking for today?
+      const bookingDate = startTime ? new Date(startTime) : null;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const isBookingForToday = bookingDate ?
+        bookingDate.getFullYear() === today.getFullYear() &&
+        bookingDate.getMonth() === today.getMonth() &&
+        bookingDate.getDate() === today.getDate() : false;
 
-    setSavedFormData(reservationData);
+      // If booking for today, recheck eligibility
+      if (isAuthenticated && isBookingForToday) {
+        try {
+          const eligibility = await checkCanBookToday();
+          if (!eligibility.canBook) {
+            setCanBookToday(false);
+            setBookingLimitMessage(eligibility.message || 'You have already made a booking today');
+            setError({ general: eligibility.message || 'You have already made a booking today. You can make another booking tomorrow.' });
+            setIsSubmitting(false);
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking booking eligibility:', error);
+        }
+      }
 
-    if (!isAuthenticated) {
-      setShowLoginModal(true);
-    } else {
-      handleSuccessfulLogin();
+      // Clean phone number - remove spaces and any other non-essential characters
+      const cleanedPhoneNumber = data.phoneNumber.replace(/\s+/g, '');
+
+      const reservationData: ReservationFormData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: cleanedPhoneNumber,
+        emailAddress: data.emailAddress,
+        specialRequests: data.specialRequests,
+        validId: validIdFile,
+        areaId: areaId,
+        startTime: parsedStartTime,
+        endTime: parsedEndTime,
+        totalPrice: parseFloat(totalPrice || '0'),
+        status: 'pending',
+        isVenueBooking: true,
+        numberOfGuests: parseInt(data.numberOfGuests)
+      };
+
+      if (!isAuthenticated) {
+        setSavedFormData(reservationData);
+        setShowLoginModal(true);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const response = await createReservation(reservationData);
+      console.log('Venue booking response:', response);
+
+      if (!response || !response.id) {
+        throw new Error('Invalid response from server');
+      }
+      setSuccess(true);
+      setSavedFormData(null);
+      navigate(`/booking-accepted?bookingId=${response.id}&isVenue=true`);
+    } catch (err: any) {
+      console.error(`Error creating venue booking:`, err);
+      const errorMessage = 'Failed to create venue booking. Please try again.';
+
+      if (err.response && err.response.data && err.response.data.error) {
+        if (typeof err.response.data.error === 'string') {
+          setError({ general: err.response.data.error });
+        } else if (typeof err.response.data.error === 'object') {
+          setError(err.response.data.error);
+        }
+      } else if (err.message) {
+        setError({ general: err.message });
+      } else {
+        setError({ general: errorMessage });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -318,7 +402,7 @@ const ConfirmVenueBooking = () => {
     <>
       {isSubmitting && (
         <EventLoader
-          text="Processing your area booking..."
+          text="Processing your booking..."
           size="150px"
           type="reserve"
         />
@@ -326,6 +410,24 @@ const ConfirmVenueBooking = () => {
 
       <div className="container mx-auto px-4 py-8 max-w-7xl mt-16">
         <h1 className="text-2xl md:text-3xl font-bold text-center mb-8">Confirm Booking</h1>
+
+        {isAuthenticated && !canBookToday && (
+          <div className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg className="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">Booking Limit Reached</h3>
+                <p className="text-sm mt-1">
+                  {bookingLimitMessage || 'You have already made a booking today. You can make another booking tomorrow.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {!isAuthenticated && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-300 text-blue-800 rounded-lg">
@@ -338,7 +440,7 @@ const ConfirmVenueBooking = () => {
               <div className="ml-3">
                 <h3 className="text-sm font-medium text-blue-800">Login Required</h3>
                 <p className="text-sm mt-1">
-                  You'll need to log in or create an account to complete your venue booking. Don't worry - your booking information will be saved during the process.
+                  You'll need to log in or create an account to complete your booking. Don't worry - your booking information will be saved during the process.
                 </p>
               </div>
             </div>
@@ -471,37 +573,37 @@ const ConfirmVenueBooking = () => {
                   {errors.emailAddress && <p className="text-red-500 text-sm mt-1">{errors.emailAddress.message}</p>}
                   {!errors.emailAddress && error.emailAddress && <p className="text-red-500 text-sm mt-1">{error.emailAddress}</p>}
                 </div> */}
-              {/* Number of Guests */}
+                {/* Number of Guests */}
                 <div>
-                <label htmlFor="numberOfGuests" className="block text-md font-medium text-gray-700 mb-1">
-                  Number of Guests <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="number"
-                  id="numberOfGuests"
-                  {...register("numberOfGuests", {
-                    required: "Number of guests is required",
-                    min: {
-                      value: 1,
-                      message: "At least 1 guest is required"
-                    },
-                    max: {
-                      value: areaData?.capacity || 100,
+                  <label htmlFor="numberOfGuests" className="block text-md font-medium text-gray-700 mb-1">
+                    Number of Guests <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    id="numberOfGuests"
+                    {...register("numberOfGuests", {
+                      required: "Number of guests is required",
+                      min: {
+                        value: 1,
+                        message: "At least 1 guest is required"
+                      },
+                      max: {
+                        value: areaData?.capacity || 100,
                         message: `Maximum capacity is ${areaData?.capacity} guests`
-                    }
-                  })}
-                  name="numberOfGuests"
-                  value={formData.numberOfGuests}
-                  onChange={handleInputChange}
-                  min="1"
-                  max={areaData?.capacity}
+                      }
+                    })}
+                    name="numberOfGuests"
+                    value={formData.numberOfGuests}
+                    onChange={handleInputChange}
+                    min="1"
+                    max={areaData?.capacity}
                     className={`w-full px-3 py-2 border ${errors.numberOfGuests || error.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-100`}
-                />
+                  />
                   {errors.numberOfGuests && <p className="text-red-500 text-sm mt-1">{errors.numberOfGuests.message}</p>}
                   {!errors.numberOfGuests && error.numberOfGuests && <p className="text-red-500 text-sm mt-1">{error.numberOfGuests}</p>}
-                {areaData?.capacity && (
-                  <p className="mt-1 text-sm text-gray-500">Maximum capacity: {areaData.capacity} guests</p>
-                )}
+                  {areaData?.capacity && (
+                    <p className="mt-1 text-sm text-gray-500">Maximum capacity: {areaData.capacity} guests</p>
+                  )}
                 </div>
               </div>
 

@@ -17,7 +17,7 @@ interface RoomData {
     description: string;
     room_image: string;
     status: string;
-    capacity: number;
+    max_guests: number;
     amenities: Array<AmenityObject | string>;
     price_per_night?: string;
     room_price?: string;
@@ -541,7 +541,7 @@ const BookingCalendar = () => {
                             <button
                                 onClick={handleProceed}
                                 disabled={!checkInDate || !checkOutDate || hasConflict || isSameDayBooking}
-                                className={`px-6 py-2 rounded-md font-semibold ${checkInDate && checkOutDate && !hasConflict && !isSameDayBooking
+                                className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${checkInDate && checkOutDate && !hasConflict && !isSameDayBooking
                                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
@@ -576,9 +576,9 @@ const BookingCalendar = () => {
                                     <span className="mr-2">🏠</span>
                                     <span className='font-semibold uppercase'>{roomData.room_type}</span>
                                 </div>
-                                <div className="flex items-center text-gray-600">
+                                <div className="flex items-center text-gray-800">
                                     <span className="mr-2">👥</span>
-                                    <span>{roomData.capacity}</span>
+                                    <span className='font-semibold'>Max Guests: {roomData.max_guests}</span>
                                 </div>
                             </div>
 

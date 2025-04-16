@@ -218,8 +218,8 @@ const VenueDetails = () => {
                                             <Users className="w-6 h-6 text-indigo-600" />
                                         </div>
                                         <div>
-                                            <h3 className="font-medium text-gray-900">Capacity</h3>
-                                            <p className="text-gray-600">{venueDetail.capacity} people</p>
+                                            <h3 className="font-medium text-gray-900">Max Guests</h3>
+                                            <p className="text-gray-600">{venueDetail.capacity} guests</p>
                                         </div>
                                     </div>
 
@@ -348,7 +348,7 @@ const VenueDetails = () => {
                                     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                                         <Users className="w-5 h-5 text-indigo-500 mr-3" />
                                         <div>
-                                            <h4 className="font-medium text-gray-800">Maximum Capacity</h4>
+                                            <h4 className="font-medium text-gray-800">Max Guests</h4>
                                             <p className="text-gray-900 text-lg font-semibold">{venueDetail.capacity} guests</p>
                                         </div>
                                     </div>

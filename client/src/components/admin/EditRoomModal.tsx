@@ -325,31 +325,6 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                         )}
                                     </motion.div>
 
-                                    {/* Capacity */}
-                                    <motion.div variants={itemVariants}>
-                                        <label className="block text-sm font-medium mb-1 text-gray-700">
-                                            Capacity
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="capacity"
-                                            value={formState.capacity}
-                                            onChange={handleChange}
-                                            placeholder="e.g., 2 Adults, 1 Child"
-                                            className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                                        />
-                                        {errors[fieldMapping.capacity] && (
-                                            <motion.p
-                                                className="text-red-500 text-xs mt-1"
-                                                initial={{ opacity: 0, y: -5 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.2 }}
-                                            >
-                                                {errors[fieldMapping.capacity]}
-                                            </motion.p>
-                                        )}
-                                    </motion.div>
-
                                     {/* Max Guests */}
                                     <motion.div variants={itemVariants}>
                                         <label className="block text-sm font-medium mb-1 text-gray-700">
@@ -437,7 +412,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                             name="description"
                                             value={formState.description}
                                             onChange={handleChange}
-                                            rows={4}
+                                            rows={5}
                                             placeholder="Enter room description"
                                             className="border border-gray-300 rounded-md w-full p-2 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                         />

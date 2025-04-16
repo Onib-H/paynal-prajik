@@ -205,8 +205,8 @@ const RoomDetails = () => {
                       <Users className="w-6 h-6 text-indigo-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">Capacity</h3>
-                      <p className="text-gray-600">{roomDetail.capacity} people</p>
+                      <h3 className="font-medium text-gray-900">Max Guests</h3>
+                      <p className="text-gray-600">{roomDetail.max_guests} people</p>
                     </div>
                   </div>
 

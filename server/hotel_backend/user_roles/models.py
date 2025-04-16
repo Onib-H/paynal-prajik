@@ -18,6 +18,7 @@ class CustomUsers(AbstractUser):
     )
     profile_image = CloudinaryField('profile_image', null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
+    last_booking_date = models.DateField(null=True, blank=True)
     
     class Meta:
         db_table = 'users'

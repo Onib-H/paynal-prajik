@@ -171,7 +171,6 @@ const RegistrationFlow: FC = () => {
         }
     };
 
-    // Card container animation variants
     const cardVariants = {
         initial: { opacity: 0, y: 50, scale: 0.9 },
         animate: {
@@ -192,7 +191,6 @@ const RegistrationFlow: FC = () => {
         }
     };
 
-    // Input motion variants
     const inputVariants = {
         initial: { scale: 0.8, opacity: 0 },
         animate: (i: number) => ({
@@ -216,7 +214,6 @@ const RegistrationFlow: FC = () => {
         }
     };
 
-    // Button animation
     const buttonVariants = {
         initial: { opacity: 0, y: 20 },
         animate: {
@@ -235,7 +232,6 @@ const RegistrationFlow: FC = () => {
         tap: { scale: 0.97 }
     };
 
-    // Text animation
     const textVariants = {
         initial: { opacity: 0, y: 15 },
         animate: (i: number) => ({

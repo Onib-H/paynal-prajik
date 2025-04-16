@@ -20,7 +20,6 @@ class RoomSerializer(serializers.ModelSerializer):
             'room_price',
             'room_image',
             'description',
-            'capacity',
             'max_guests',
             'amenities',
         ]

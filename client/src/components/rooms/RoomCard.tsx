@@ -8,7 +8,6 @@ interface RoomCardProps {
   name: string;
   image: string;
   title: string;
-  capacity: string;
   price: string;
   description: string;
 }

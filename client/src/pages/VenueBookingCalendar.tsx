@@ -426,8 +426,8 @@ const VenueBookingCalendar = () => {
                             <button
                                 onClick={handleProceed}
                                 disabled={!selectedDate}
-                                className={`px-6 py-2 rounded-md font-semibold ${selectedDate
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+                                className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${selectedDate
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                             >

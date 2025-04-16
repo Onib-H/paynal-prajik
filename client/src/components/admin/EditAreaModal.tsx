@@ -217,7 +217,7 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
                     {/* Capacity */}
                     <motion.div variants={itemVariants}>
                       <label className="block text-sm font-medium mb-1 text-gray-700">
-                        Capacity
+                        Maximum No. of Guests
                       </label>
                       <input
                         type="number"
