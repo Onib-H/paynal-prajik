@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isEqual, isSameDay, isWithinInterval, parseISO, startOfDay, startOfMonth } from 'date-fns';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -6,7 +5,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchRoomBookings, fetchRoomById } from '../services/Booking';
 import { AmenityObject, BookingsByDate, RoomData, BookingData } from '../types/BookingClient';
 
-function isAmenityObject(amenity: any): amenity is AmenityObject {
+const isAmenityObject = (amenity: any): amenity is AmenityObject => {
     return amenity && typeof amenity === 'object' && 'description' in amenity;
 }
 
@@ -38,7 +37,7 @@ const BookingCalendar = () => {
                 setCheckOutDate(departure);
                 setCurrentMonth(arrival);
             } catch (error) {
-                console.error('Error parsing dates from URL:', error);
+                console.error(`Error parsing dates from URL: ${error}`);
             }
         }
     }, [arrivalParam, departureParam]);
@@ -175,9 +174,7 @@ const BookingCalendar = () => {
     }, [bookingsByDate]);
 
     const isDateUnavailable = useCallback((date: Date, isCheckout = false) => {
-        if (isBefore(date, startOfDay(new Date()))) {
-            return true;
-        }
+        if (isBefore(date, startOfDay(new Date()))) return true;
 
         if (isCheckout) {
             const dateString = format(date, 'yyyy-MM-dd');

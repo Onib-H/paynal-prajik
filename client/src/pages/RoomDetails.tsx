@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowLeft, Bookmark, Check, Home, Info, PhilippinePeso, Star, Users, X } from "lucide-react";

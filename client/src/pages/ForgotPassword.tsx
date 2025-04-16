@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { forgotPassword, verifyResetOtp, resetPassword } from '../services/Auth';

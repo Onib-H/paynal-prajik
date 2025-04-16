@@ -3,7 +3,7 @@ export interface IArea {
     area_name: string;
     description: string;
     capacity: number;
-    price_per_hour: number;
+    price_per_hour: number | string;
     status: "available" | "maintenance";
     area_image: File | string;
 }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, BookOpen, ArrowLeft as LeftArrow, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
@@ -30,7 +29,7 @@ const VenueDetails = () => {
 
     const { data: allVenuesData } = useQuery<{ data: Area[] }>({
         queryKey: ["venues"],
-        queryFn: fetchAreas as any,
+        queryFn: fetchAreas,
     });
 
     const {

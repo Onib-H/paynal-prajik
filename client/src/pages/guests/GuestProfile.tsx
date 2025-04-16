@@ -82,7 +82,7 @@ const GuestProfile = () => {
       setUploadError(null);
     },
     onError: (error) => {
-      console.error("Failed to upload image:", error);
+      console.error(`Failed to upload image: ${error}`);
       setUploadError("Failed to upload image. Please try again.");
     }
   });
@@ -415,24 +415,12 @@ const GuestProfile = () => {
         className="mb-6 bg-white rounded-xl shadow-md p-1 flex"
       >
         <motion.button
-          whileHover={{ backgroundColor: activeTab === "personal" ? "" : "#f9fafb" }}
-          whileTap={{ scale: 0.98 }}
           onClick={() => setActiveTab("personal")}
-          className={`flex-1 py-3 rounded-lg flex items-center justify-center transition-colors ${activeTab === "personal" ? "bg-purple-100 text-purple-700" : "text-gray-600"
+          className={`flex-1 py-3 rounded-lg flex items-center justify-center transition-colors ${activeTab === "personal" ? "text-purple-700" : "text-gray-600"
             }`}
         >
           <User className="h-4 w-4 mr-2" />
-          <span className="font-medium">Personal Info</span>
-        </motion.button>
-        <motion.button
-          whileHover={{ backgroundColor: activeTab === "account" ? "" : "#f9fafb" }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setActiveTab("account")}
-          className={`flex-1 py-3 rounded-lg flex items-center justify-center transition-colors ${activeTab === "account" ? "bg-purple-100 text-purple-700" : "text-gray-600"
-            }`}
-        >
-          <Key className="h-4 w-4 mr-2" />
-          <span className="font-medium">Account & Security</span>
+          <span className="font-medium">Personal Information</span>
         </motion.button>
       </motion.div>
 
@@ -503,6 +491,27 @@ const GuestProfile = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                     />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center">
+                        <Key className="h-5 w-5 text-gray-500 mr-3" />
+                        <div>
+                          <span className="block text-sm font-medium text-gray-700">Password</span>
+                          <span className="text-gray-600">••••••••</span>
+                        </div>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setShowPasswordModal(true)}
+                        className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition shadow-sm"
+                        type="button"
+                      >
+                        Change
+                      </motion.button>
+                    </div>
                   </div>
                 </div>
 

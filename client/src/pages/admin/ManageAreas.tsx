@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FC, memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import EditAreaModal, { IArea as IEditArea } from "../../components/admin/EditAreaModal";
+import EditAreaModal from "../../components/admin/EditAreaModal";
+import { IArea as IEditArea } from "../../types/AreaAdmin";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
