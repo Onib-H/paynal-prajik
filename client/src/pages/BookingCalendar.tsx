@@ -51,22 +51,13 @@ const BookingCalendar = () => {
 
     const { data: roomData, isLoading: isLoadingRoom } = useQuery<RoomData>({
         queryKey: ['room', roomId],
-        queryFn: async () => {
-            try {
-                return await fetchRoomById(roomId || '');
-            } catch (error) {
-                console.error('Error fetching room:', error);
-                throw error;
-            }
-        },
+        queryFn: () => fetchRoomById(roomId),
         enabled: !!roomId,
     });
 
     const { data: bookingsData, isLoading: isLoadingBookings } = useQuery<{ data: BookingData[] }>({
         queryKey: ['roomBookings', roomId, dateRange.startDate, dateRange.endDate],
-        queryFn: async () => {
-            return fetchRoomBookings(roomId || '', dateRange.startDate, dateRange.endDate);
-        },
+        queryFn: () => fetchRoomBookings(roomId || '', dateRange.startDate, dateRange.endDate),
         enabled: !!roomId,
     });
 
@@ -95,7 +86,6 @@ const BookingCalendar = () => {
 
     useEffect(() => {
         if (checkInDate && checkOutDate) {
-            // Check if check-in and check-out dates are the same
             const sameDayBooking = isSameDay(checkInDate, checkOutDate);
             setIsSameDayBooking(sameDayBooking);
         } else {
@@ -106,19 +96,13 @@ const BookingCalendar = () => {
     useEffect(() => {
         if (checkInDate && checkOutDate && bookingsData?.data) {
             const hasOverlap = bookingsData.data.some(booking => {
-                if (!['reserved', 'confirmed', 'checked_in'].includes(booking.status.toLowerCase())) {
-                    return false;
-                }
+                if (!['reserved', 'confirmed', 'checked_in'].includes(booking.status.toLowerCase())) return false;
 
                 const existingCheckIn = parseISO(booking.check_in_date);
                 const existingCheckOut = parseISO(booking.check_out_date);
 
-                // For the checkout date, we allow it to be the same as another booking's check-in date
-                if (isSameDay(checkOutDate, existingCheckIn)) {
-                    return false; // No conflict if our checkout is on another booking's check-in
-                }
+                if (isSameDay(checkOutDate, existingCheckIn)) return false;
 
-                // Check for any overlap
                 const hasDateOverlap = (
                     checkInDate < existingCheckOut &&
                     existingCheckIn < checkOutDate
@@ -160,7 +144,7 @@ const BookingCalendar = () => {
                 const numericValue = priceString.toString().replace(/[^\d.]/g, '');
                 priceValue = parseFloat(numericValue) || 0;
             } catch (error) {
-                console.error('Error parsing room price:', error);
+                console.error(`Error parsing room price: ${error}`);
                 priceValue = 0;
             }
 
@@ -169,6 +153,7 @@ const BookingCalendar = () => {
     }, [checkInDate, checkOutDate, roomData]);
 
     const months = useMemo(() => [currentMonth, addMonths(currentMonth, 1)], [currentMonth]);
+
     const prevMonth = useCallback(() => setCurrentMonth(prev => addMonths(prev, -1)), []);
     const nextMonth = useCallback(() => setCurrentMonth(prev => addMonths(prev, 1)), []);
 
@@ -190,25 +175,20 @@ const BookingCalendar = () => {
     }, [bookingsByDate]);
 
     const isDateUnavailable = useCallback((date: Date, isCheckout = false) => {
-        // Always make past dates unavailable
         if (isBefore(date, startOfDay(new Date()))) {
             return true;
         }
 
-        // For checkout dates, allow the first day of another booking
         if (isCheckout) {
             const dateString = format(date, 'yyyy-MM-dd');
             const booking = bookingsByDate[dateString];
 
-            // Check if this is the start date of another booking
             if (booking && booking.status) {
                 const status = booking.status.toLowerCase();
                 if (['checked_in', 'reserved'].includes(status)) {
-                    // Find if this is the start date of the booking
                     const matchingBooking = bookingsData?.data.find(b => b.id === booking.bookingId);
                     if (matchingBooking) {
                         const bookingStartDate = parseISO(matchingBooking.check_in_date);
-                        // If this is exactly the start date, it's available for checkout
                         return !isSameDay(date, bookingStartDate);
                     }
                 }
@@ -216,22 +196,16 @@ const BookingCalendar = () => {
             return false;
         }
 
-        // For check-in dates, don't allow dates that are already booked
         return isDateBooked(date);
     }, [isDateBooked, bookingsByDate, bookingsData?.data]);
 
     const handleDateClick = (date: Date) => {
-        // If no check-in date selected yet or both dates are selected (starting over)
         if (!checkInDate || (checkInDate && checkOutDate)) {
-            // For check-in date, use standard unavailability check
             if (isDateUnavailable(date)) return;
 
             setCheckInDate(date);
             setCheckOutDate(null);
-        }
-        // Selecting check-out date
-        else {
-            // For checkout, use the special check with isCheckout=true
+        } else {
             if (isDateUnavailable(date, true)) return;
 
             if (isBefore(date, checkInDate)) {
@@ -244,16 +218,13 @@ const BookingCalendar = () => {
     };
 
     const handleDateHover = (date: Date) => {
-        // Use appropriate unavailability check based on whether we're selecting check-in or check-out
         const isCheckout = checkInDate !== null && checkOutDate === null;
         if (!isDateUnavailable(date, isCheckout)) setHoveredDate(date);
         else setHoveredDate(null);
     };
 
     const isDateInRange = (date: Date) => {
-        if (checkInDate && checkOutDate) {
-            return isWithinInterval(date, { start: checkInDate, end: checkOutDate });
-        }
+        if (checkInDate && checkOutDate) return isWithinInterval(date, { start: checkInDate, end: checkOutDate });
         if (checkInDate && hoveredDate && !checkOutDate) {
             if (isBefore(hoveredDate, checkInDate)) {
                 return isWithinInterval(date, { start: hoveredDate, end: checkInDate });
@@ -265,8 +236,6 @@ const BookingCalendar = () => {
     };
 
     const getDateCellClass = (date: Date) => {
-        // For visual styling, we need to know if this date would be unavailable as a check-in
-        // or as a check-out date
         const isCheckout = checkInDate !== null && checkOutDate === null;
         const isUnavailable = isDateUnavailable(date, isCheckout);
 
@@ -284,8 +253,6 @@ const BookingCalendar = () => {
         if (isHovered && !isUnavailable) return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
         if (isToday && !isUnavailable) className += " border-blue-500 border-2";
 
-        // Special case - if this is the first day of a booking but we're selecting checkout
-        // make it visually distinct but still selectable
         if (isCheckout && dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
             const matchingBooking = bookingsData?.data.find(b =>
                 bookingsByDate[format(date, 'yyyy-MM-dd')]?.bookingId === b.id
@@ -395,7 +362,6 @@ const BookingCalendar = () => {
                                 </p>
                             </div>
                         ) : (
-                            // Show calendar for date selection if no dates in URL
                             <>
                                 {/* Calendar Controls */}
                                 <div className="flex justify-between items-center mb-4">

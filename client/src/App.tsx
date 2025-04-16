@@ -1,8 +1,8 @@
+import "./App.css";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { Suspense, lazy, useEffect, useMemo } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import "./App.css";
 import GuestChangePassword from "./components/guests/GuestChangePassword";
 import ScrollToTop from "./components/ScrollToTop";
 import { useUserContext } from "./contexts/AuthContext";
