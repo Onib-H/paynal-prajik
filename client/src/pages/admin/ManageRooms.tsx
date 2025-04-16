@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Edit, Eye, Trash2 } from "lucide-react";
 import { FC, memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { IRoom } from "../../types/RoomAdmin";
 import EditRoomModal from "../../components/admin/EditRoomModal";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
-import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
+import ManageSkeleton from "../../motions/skeletons/ManageSkeleton";
 import {
   addNewRoom,
   deleteRoom,
@@ -14,9 +14,9 @@ import {
   fetchAmenities,
   fetchRooms,
 } from "../../services/Admin";
+import { IRoom } from "../../types/RoomAdmin";
+import { AddRoomResponse, Amenity, PaginationData, Room } from "../../types/RoomClient";
 import Error from "../_ErrorBoundary";
-import { ChevronLeft, ChevronRight, Edit, Eye, Trash2 } from "lucide-react";
-import { Amenity, Room, AddRoomResponse, PaginationData } from "../../types/RoomClient";
 
 const MemoizedImage = memo(({ src, alt, className }: { src: string, alt: string, className: string }) => {
   return (
@@ -608,7 +608,7 @@ const ManageRooms: FC = () => {
     setCurrentPage(page);
   }, [currentPage]);
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (isLoading) return <ManageSkeleton type="room" />;
   if (isError) return <Error />;
 
   const rooms = roomsResponse?.data || [];

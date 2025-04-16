@@ -1,21 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Edit, Eye, MapPin, Trash2 } from "lucide-react";
 import { FC, memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import EditAreaModal from "../../components/admin/EditAreaModal";
-import { IArea as IEditArea } from "../../types/AreaAdmin";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
-import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
+import ManageSkeleton from "../../motions/skeletons/ManageSkeleton";
 import {
   addNewArea,
   deleteArea,
   editArea,
   fetchAreas,
 } from "../../services/Admin";
+import { IArea as IEditArea } from "../../types/AreaAdmin";
+import { AddAreaResponse, Area, PaginationData } from "../../types/AreaClient";
 import Error from "../_ErrorBoundary";
-import { Area, AddAreaResponse, PaginationData } from "../../types/AreaClient";
-import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Edit, Eye, MapPin, Trash2 } from "lucide-react";
 
 const MemoizedImage = memo(({ src, alt, className }: { src: string, alt: string, className: string }) => {
   return (
@@ -500,7 +500,7 @@ const ManageAreas = () => {
     }
   };
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (isLoading) return <ManageSkeleton type="area" />;
   if (isError) return <Error />;
 
   return (
