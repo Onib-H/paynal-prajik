@@ -1,9 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Edit, Plus, Search, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
-import EditAmenityModal, { IAmenity } from "../../components/admin/EditAmenityModal";
+import EditAmenityModal, {
+  IAmenity,
+} from "../../components/admin/EditAmenityModal";
 import Modal from "../../components/Modal";
 import ManageRoomLoader from "../../motions/loaders/EventLoader";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
@@ -14,7 +23,11 @@ import {
   updateAmenity,
 } from "../../services/Admin";
 import Error from "../_ErrorBoundary";
-import { Amenity, PaginatedAmenities, AddAmenityResponse } from "../../types/AmenityClient";
+import {
+  Amenity,
+  PaginatedAmenities,
+  AddAmenityResponse,
+} from "../../types/AmenityClient";
 
 const ManageAmenities = () => {
   const [search, setSearch] = useState<string>("");
@@ -24,7 +37,9 @@ const ManageAmenities = () => {
   const [deleteAmenityId, setDeleteAmenityId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loaderText, setLoaderText] = useState("");
-  const [pageTransition, setPageTransition] = useState<"next" | "prev" | null>(null);
+  const [pageTransition, setPageTransition] = useState<"next" | "prev" | null>(
+    null
+  );
 
   const [page, setPage] = useState<number>(1);
   const pageSize = 15;
@@ -40,7 +55,11 @@ const ManageAmenities = () => {
     queryFn: fetchAmenities,
   });
 
-  const createAmenityMutation = useMutation<AddAmenityResponse, unknown, { description: string }>({
+  const createAmenityMutation = useMutation<
+    AddAmenityResponse,
+    unknown,
+    { description: string }
+  >({
     mutationFn: createAmenity,
     onMutate: () => {
       setLoading(true);
@@ -165,16 +184,16 @@ const ManageAmenities = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
-      }
+        staggerChildren: 0.1,
+      },
     },
     exit: {
       opacity: 0,
       transition: {
         staggerChildren: 0.05,
-        staggerDirection: -1
-      }
-    }
+        staggerDirection: -1,
+      },
+    },
   };
 
   const itemVariants = {
@@ -185,47 +204,47 @@ const ManageAmenities = () => {
       transition: {
         type: "spring",
         stiffness: 100,
-        damping: 12
-      }
+        damping: 12,
+      },
     },
     exit: {
       y: -20,
       opacity: 0,
       transition: {
-        duration: 0.2
-      }
-    }
+        duration: 0.2,
+      },
+    },
   };
 
   const pageVariants = {
     enter: (direction: "next" | "prev" | null) => ({
       x: direction === "next" ? 50 : direction === "prev" ? -50 : 0,
-      opacity: 0
+      opacity: 0,
     }),
     center: {
       x: 0,
       opacity: 1,
       transition: {
         duration: 0.3,
-        ease: "easeInOut"
-      }
+        ease: "easeInOut",
+      },
     },
     exit: (direction: "next" | "prev" | null) => ({
       x: direction === "next" ? -50 : direction === "prev" ? 50 : 0,
       opacity: 0,
       transition: {
         duration: 0.3,
-        ease: "easeInOut"
-      }
-    })
+        ease: "easeInOut",
+      },
+    }),
   };
 
   const fadeIn = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { duration: 0.4 }
-    }
+      transition: { duration: 0.4 },
+    },
   };
 
   return (
@@ -274,10 +293,7 @@ const ManageAmenities = () => {
         </motion.div>
 
         {/* Search & Filter Bar */}
-        <motion.div
-          variants={fadeIn}
-          className="mb-8"
-        >
+        <motion.div variants={fadeIn} className="mb-8">
           <div className="relative w-full md:w-1/2">
             <div className="absolute inset-y-0 start-0 flex items-center ps-3.5 pointer-events-none text-gray-500">
               <Search size={20} />
@@ -371,7 +387,9 @@ const ManageAmenities = () => {
                   ></path>
                 </svg>
                 <p className="text-xl">No amenities found</p>
-                <p className="text-sm mt-2">Try adjusting your search or add new amenities</p>
+                <p className="text-sm mt-2">
+                  Try adjusting your search or add new amenities
+                </p>
               </motion.div>
             )}
           </motion.div>
@@ -432,7 +450,8 @@ const ManageAmenities = () => {
               onSave={handleSaveAmenity}
               cancel={() => setShowFormModal(false)}
               loading={
-                createAmenityMutation.isPending || updateAmenityMutation.isPending
+                createAmenityMutation.isPending ||
+                updateAmenityMutation.isPending
               }
             />
           )}

@@ -194,7 +194,6 @@ const AdminDashboard = () => {
       }),
   });
 
-<<<<<<< HEAD
   const { data: roomRevenueResponse, isLoading: roomRevenueLoading } = useQuery(
     {
       queryKey: ["roomRevenue", selectedMonth, selectedYear],
@@ -205,15 +204,6 @@ const AdminDashboard = () => {
         }),
     }
   );
-=======
-  // const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } = useQuery({
-  //   queryKey: ['dailyOccupancy', selectedMonth, selectedYear],
-  //   queryFn: () => fetchDailyOccupancy({
-  //     month: selectedMonth + 1,
-  //     year: selectedYear
-  //   }),
-  // });
->>>>>>> 0f26c1f15b7b866c47f8aaa12748d29338d2391e
 
   const { data: roomBookingsResponse, isLoading: roomBookingsLoading } =
     useQuery({
@@ -274,7 +264,6 @@ const AdminDashboard = () => {
   const bookingTrendsChartRef = useRef<HTMLCanvasElement | null>(null);
   const bookingStatusChartRef = useRef<HTMLCanvasElement | null>(null);
 
-<<<<<<< HEAD
   if (
     isLoading ||
     bookingStatusLoading ||
@@ -288,9 +277,6 @@ const AdminDashboard = () => {
     monthlyRevenueLoading
   )
     return <DashboardSkeleton />;
-=======
-  if (isLoading || bookingStatusLoading || bookingsDataLoading || checkinsDataLoading || cancellationsDataLoading || roomRevenueLoading || roomBookingsLoading || noShowsRejectedDataLoading || monthlyRevenueLoading) return <DashboardSkeleton />;
->>>>>>> 0f26c1f15b7b866c47f8aaa12748d29338d2391e
   if (error) return <Error />;
 
   const stats = {
@@ -327,6 +313,7 @@ const AdminDashboard = () => {
   // Limit charts to current day for current month
   const daysInMonth = getDaysInMonth(selectedMonth, selectedYear, true);
 
+  // Limit daily data arrays to match the days we're showing
   const limitArrayToCurrentDay = (dataArray: any[] | undefined) => {
     if (!dataArray) return daysInMonth.map(() => 0);
     return dataArray.slice(0, daysInMonth.length);
@@ -334,13 +321,9 @@ const AdminDashboard = () => {
 
   const dailyRevenueData = limitArrayToCurrentDay(data?.daily_revenue);
   const dailyBookingsData = limitArrayToCurrentDay(dailyBookingsResponse?.data);
-<<<<<<< HEAD
   const dailyOccupancyRates = limitArrayToCurrentDay(
     dailyOccupancyResponse?.data
   );
-=======
-  // const dailyOccupancyRates = limitArrayToCurrentDay(dailyOccupancyResponse?.data);
->>>>>>> 0f26c1f15b7b866c47f8aaa12748d29338d2391e
   const dailyCheckIns = limitArrayToCurrentDay(checkinCheckoutData?.checkins);
   const dailyCheckOuts = limitArrayToCurrentDay(checkinCheckoutData?.checkouts);
   const dailyCancellations = limitArrayToCurrentDay(
@@ -647,193 +630,200 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="overflow-y-hidden">
-      <Azurea />
-      <div className="h-[calc(100vh-25px)] px-3 overflow-y-auto container mx-auto ">
-        {renderReport()}
+    <div className="">
+      {renderReport()}
 
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-2">
-          <h1 className="text-3xl font-semibold">Admin Dashboard</h1>
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-2">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
 
-          <div className="flex items-center space-x-4">
-            {/* Month selection controls */}
-            <div className="flex items-center bg-white rounded-lg shadow-sm">
-              <button
-                onClick={goToPreviousMonth}
-                className="p-2 hover:bg-gray-100 rounded-l-lg"
-                aria-label="Previous month"
-              >
-                <ChevronLeft size={20} />
-              </button>
+        <div className="flex items-center space-x-4">
+          {/* Month selection controls */}
+          <div className="flex items-center bg-white rounded-lg shadow-sm">
+            <button
+              onClick={goToPreviousMonth}
+              className="p-2 hover:bg-gray-100 rounded-l-lg"
+              aria-label="Previous month"
+            >
+              <ChevronLeft size={20} />
+            </button>
 
-              <div className="px-4 py-2 font-medium">
-                {formattedMonthYear}
-                {isCurrentMonth && (
-                  <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                    Current
-                  </span>
-                )}
-              </div>
-
-              <button
-                onClick={goToNextMonth}
-                className="p-2 hover:bg-gray-100 rounded-r-lg"
-                disabled={isCurrentMonth}
-                aria-label="Next month"
-              >
-                <ChevronRight
-                  size={20}
-                  className={isCurrentMonth ? "text-gray-300" : ""}
-                />
-              </button>
+            <div className="px-4 py-2 font-medium">
+              {formattedMonthYear}
+              {isCurrentMonth && (
+                <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                  Current
+                </span>
+              )}
             </div>
 
             <button
-              onClick={handleGenerateReport}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center cursor-pointer transition-colors duration-300"
-              title="Generate a monthly report using HTML/CSS"
+              onClick={goToNextMonth}
+              className="p-2 hover:bg-gray-100 rounded-r-lg"
+              disabled={isCurrentMonth}
+              aria-label="Next month"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 mr-2"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              Generate Monthly Report
+              <ChevronRight
+                size={20}
+                className={isCurrentMonth ? "text-gray-300" : ""}
+              />
             </button>
           </div>
+
+          <button
+            onClick={handleGenerateReport}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center cursor-pointer transition-colors duration-300"
+            title="Generate a monthly report using HTML/CSS"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Generate Monthly Report
+          </button>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <StatCard
-            title="Total Bookings"
-            value={stats.totalBookings}
-            borderColor="border-blue-500"
-          />
-          <StatCard
-            title="Active Bookings"
-            value={stats.activeBookings}
-            borderColor="border-green-500"
-          />
-          <StatCard
-            title="Monthly Revenue"
-            value={monthlyRevenueData?.formatted_revenue || "₱0.00"}
-            borderColor="border-orange-500"
-            tooltip={`Revenue from checked-in and checked-out bookings for ${formattedMonthYear}`}
-          />
-          <StatCard
-            title="Pending Bookings"
-            value={stats.pendingBookings}
-            borderColor="border-yellow-500"
-          />
-          {/* <StatCard title="Occupancy Rate" value={`${Math.round((stats.totalRooms > 0 ? stats.occupiedRooms / stats.totalRooms : 0) * 100)}%`} borderColor="border-purple-500" /> */}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          title="Active Bookings"
+          value={stats.activeBookings}
+          borderColor="border-green-500"
+        />
+        <StatCard
+          title="Pending Bookings"
+          value={stats.pendingBookings}
+          borderColor="border-yellow-500"
+        />
+        <StatCard
+          title="Checked-in Guests"
+          value={stats.checkedInCount}
+          borderColor="border-indigo-500"
+        />
+        <StatCard
+          title="Total Bookings"
+          value={stats.totalBookings}
+          borderColor="border-blue-500"
+        />
+        <StatCard
+          title="Available Rooms"
+          value={stats.availableRooms}
+          borderColor="border-teal-500"
+        />
+        <StatCard
+          title="Total Rooms"
+          value={stats.totalRooms}
+          borderColor="border-gray-500"
+        />
+        <StatCard
+          title="Occupancy Rate"
+          value={`${Math.round(
+            (stats.totalRooms > 0
+              ? stats.occupiedRooms / stats.totalRooms
+              : 0) * 100
+          )}%`}
+          borderColor="border-purple-500"
+        />
+        <StatCard
+          title="Monthly Revenue"
+          value={monthlyRevenueData?.formatted_revenue || "₱0.00"}
+          borderColor="border-orange-500"
+          tooltip={`Revenue from checked-in and checked-out bookings for ${formattedMonthYear}`}
+        />
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <StatCard
-            title="Checked-in Guests"
-            value={stats.checkedInCount}
-            borderColor="border-indigo-500"
-          />
-          <StatCard
-            title="Available Rooms"
-            value={stats.availableRooms}
-            borderColor="border-teal-500"
-          />
-          {/* <StatCard title="Total Rooms" value={stats.totalRooms} borderColor="border-gray-500" /> */}
-        </div>
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+          Monthly Trends - {formattedMonthYear}
+        </h2>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-            Monthly Trends - {formattedMonthYear}
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white shadow-lg rounded-lg p-4">
-              <h3 className="text-lg font-medium mb-2 text-center">
-                Revenue Trends
-              </h3>
-              <div className="h-64">
-                <Line
-                  data={revenueLineData}
-                  options={{
-                    ...lineOptions,
-                    plugins: {
-                      ...lineOptions.plugins,
-                      tooltip: {
-                        ...lineOptions.plugins?.tooltip,
-                        callbacks: {
-                          label: function (context: any) {
-                            let label = context.dataset.label || "";
-                            if (label) {
-                              label += ": ";
-                            }
-                            if (context.parsed.y !== null) {
-                              label += new Intl.NumberFormat("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              }).format(context.parsed.y);
-                            }
-                            return label;
-                          },
-                        },
-                      },
-                      title: {
-                        display: true,
-                        text: `Daily Revenue - ${formattedMonthYear}`,
-                        font: {
-                          size: 16,
-                        },
-                      },
-                    },
-                  }}
-                  ref={(ref) => {
-                    if (ref) {
-                      revenueChartRef.current = ref.canvas;
-                    }
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="bg-white shadow-lg rounded-lg p-4">
-              <h3 className="text-lg font-medium mb-2 text-center">
-                Booking Trends
-              </h3>
-              <div className="h-64">
-                <Line
-                  data={bookingTrendsData}
-                  options={{
-                    ...lineOptions,
-                    plugins: {
-                      ...lineOptions.plugins,
-                      title: {
-                        display: true,
-                        text: `Daily Bookings - ${formattedMonthYear}`,
-                        font: {
-                          size: 16,
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white shadow-lg rounded-lg p-4">
+            <h3 className="text-lg font-medium mb-2 text-center">
+              Revenue Trends
+            </h3>
+            <div className="h-64">
+              <Line
+                data={revenueLineData}
+                options={{
+                  ...lineOptions,
+                  plugins: {
+                    ...lineOptions.plugins,
+                    tooltip: {
+                      ...lineOptions.plugins?.tooltip,
+                      callbacks: {
+                        label: function (context: any) {
+                          let label = context.dataset.label || "";
+                          if (label) {
+                            label += ": ";
+                          }
+                          if (context.parsed.y !== null) {
+                            label += new Intl.NumberFormat("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            }).format(context.parsed.y);
+                          }
+                          return label;
                         },
                       },
                     },
-                  }}
-                  ref={(ref) => {
-                    if (ref) {
-                      bookingTrendsChartRef.current = ref.canvas;
-                    }
-                  }}
-                />
-              </div>
+                    title: {
+                      display: true,
+                      text: `Daily Revenue - ${formattedMonthYear}`,
+                      font: {
+                        size: 16,
+                      },
+                    },
+                  },
+                }}
+                ref={(ref) => {
+                  if (ref) {
+                    revenueChartRef.current = ref.canvas;
+                  }
+                }}
+              />
             </div>
+          </div>
 
-            {/* <div className="bg-white shadow-lg rounded-lg p-4">
+          <div className="bg-white shadow-lg rounded-lg p-4">
+            <h3 className="text-lg font-medium mb-2 text-center">
+              Booking Trends
+            </h3>
+            <div className="h-64">
+              <Line
+                data={bookingTrendsData}
+                options={{
+                  ...lineOptions,
+                  plugins: {
+                    ...lineOptions.plugins,
+                    title: {
+                      display: true,
+                      text: `Daily Bookings - ${formattedMonthYear}`,
+                      font: {
+                        size: 16,
+                      },
+                    },
+                  },
+                }}
+                ref={(ref) => {
+                  if (ref) {
+                    bookingTrendsChartRef.current = ref.canvas;
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {/* <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">Occupancy Rate</h3>
             <div className="h-64">
               <Line
@@ -870,103 +860,102 @@ const AdminDashboard = () => {
             </div>
           </div> */}
 
-            <div className="bg-white shadow-lg rounded-lg p-4">
-              <h3 className="text-lg font-medium mb-2 text-center">
-                Check-ins & Check-outs
-              </h3>
-              <div className="h-64">
-                <Line
-                  data={checkInOutData}
-                  options={{
-                    ...lineOptions,
-                    plugins: {
-                      ...lineOptions.plugins,
-                      title: {
-                        display: true,
-                        text: `Daily Check-ins & Check-outs - ${formattedMonthYear}`,
-                        font: {
-                          size: 16,
-                        },
+          <div className="bg-white shadow-lg rounded-lg p-4">
+            <h3 className="text-lg font-medium mb-2 text-center">
+              Check-ins & Check-outs
+            </h3>
+            <div className="h-64">
+              <Line
+                data={checkInOutData}
+                options={{
+                  ...lineOptions,
+                  plugins: {
+                    ...lineOptions.plugins,
+                    title: {
+                      display: true,
+                      text: `Daily Check-ins & Check-outs - ${formattedMonthYear}`,
+                      font: {
+                        size: 16,
                       },
                     },
-                  }}
-                />
-              </div>
+                  },
+                }}
+              />
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-            Key Business Insights - {formattedMonthYear}
-          </h2>
+      <div className="mb-8">
+        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
+          Key Business Insights - {formattedMonthYear}
+        </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white shadow-lg rounded-lg p-4">
-              <h3 className="text-lg font-medium mb-2 text-center">
-                Revenue by Room
-              </h3>
-              <div className="h-64">
-                <Bar data={roomRevenueData} options={barOptions} />
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white shadow-lg rounded-lg p-4">
+            <h3 className="text-lg font-medium mb-2 text-center">
+              Revenue by Room
+            </h3>
+            <div className="h-64">
+              <Bar data={roomRevenueData} options={barOptions} />
             </div>
+          </div>
 
-            <div className="bg-white shadow-lg rounded-lg p-4">
-              <h3 className="text-lg font-medium mb-2 text-center">
-                Bookings by Room
-              </h3>
-              <div className="h-64">
-                <Bar data={roomBookingCountData} options={barOptions} />
-              </div>
+          <div className="bg-white shadow-lg rounded-lg p-4">
+            <h3 className="text-lg font-medium mb-2 text-center">
+              Bookings by Room
+            </h3>
+            <div className="h-64">
+              <Bar data={roomBookingCountData} options={barOptions} />
             </div>
+          </div>
 
-            <div className="bg-white shadow-lg rounded-lg p-4">
-              <h3 className="text-lg font-medium mb-2 text-center">
-                Booking Status Distribution
-              </h3>
-              <div className="h-64">
-                <Doughnut
-                  data={bookingStatusChartData}
-                  options={pieOptions}
-                  ref={(ref) => {
-                    if (ref) {
-                      bookingStatusChartRef.current = ref.canvas;
-                    }
-                  }}
-                />
-              </div>
+          <div className="bg-white shadow-lg rounded-lg p-4">
+            <h3 className="text-lg font-medium mb-2 text-center">
+              Booking Status Distribution
+            </h3>
+            <div className="h-64">
+              <Doughnut
+                data={bookingStatusChartData}
+                options={pieOptions}
+                ref={(ref) => {
+                  if (ref) {
+                    bookingStatusChartRef.current = ref.canvas;
+                  }
+                }}
+              />
             </div>
+          </div>
 
-            <div className="bg-white shadow-lg rounded-lg p-4">
-              <h3 className="text-lg font-medium mb-2 text-center">
-                Cancellation Trends
-              </h3>
-              <div className="h-64">
-                <Line
-                  data={cancellationData}
-                  options={{
-                    ...lineOptions,
-                    plugins: {
-                      ...lineOptions.plugins,
-                      legend: {
-                        position: "top",
-                        labels: {
-                          usePointStyle: true,
-                          boxWidth: 10,
-                          padding: 20,
-                        },
-                      },
-                      title: {
-                        display: true,
-                        text: `Booking Cancellations - ${formattedMonthYear}`,
-                        font: {
-                          size: 16,
-                        },
+          <div className="bg-white shadow-lg rounded-lg p-4">
+            <h3 className="text-lg font-medium mb-2 text-center">
+              Cancellation Trends
+            </h3>
+            <div className="h-64">
+              <Line
+                data={cancellationData}
+                options={{
+                  ...lineOptions,
+                  plugins: {
+                    ...lineOptions.plugins,
+                    legend: {
+                      position: "top",
+                      labels: {
+                        usePointStyle: true,
+                        boxWidth: 10,
+                        padding: 20,
                       },
                     },
-                  }}
-                />
-              </div>
+                    title: {
+                      display: true,
+                      text: `Booking Cancellations - ${formattedMonthYear}`,
+                      font: {
+                        size: 16,
+                      },
+                    },
+                  },
+                }}
+              />
             </div>
           </div>
         </div>

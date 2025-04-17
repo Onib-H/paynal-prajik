@@ -1,13 +1,14 @@
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { FC, Suspense, useEffect, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, Link } from "react-router-dom";
 import Modal from "../../components/Modal";
 import { menuItems } from "../../constants/AdminMenuSidebar";
 import { useUserContext } from "../../contexts/AuthContext";
 import { fetchAdminProfile } from "../../services/Admin";
 import { logout } from "../../services/Auth";
 import AdminProfile from "./AdminProfile";
+import hotelLogo from "../../assets/hotel_logo.png";
 
 const AdminDetailSkeleton = React.lazy(
   () => import("../../motions/skeletons/AdminDetailSkeleton")
@@ -24,6 +25,7 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
   const { setIsAuthenticated, setRole } = useUserContext();
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
 
   const [admin, setAdmin] = useState<AdminData>({
     name: "",
@@ -75,12 +77,42 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
 
   return (
     <>
-      <aside className="min-h-screen flex flex-col p-4 bg-white text-black w-2xs">
-        <div className="p-2">
+      <aside
+        className={`fixed top-0 left-0 flex flex-col p-4 bg-white text-black h-full transition-all duration-300 ${
+          isSidebarOpen ? "min-w-[300px]" : "w-[100px]"
+        }`}
+      >
+        {/* Header section with toggle icon */}
+        <div className="border-b border-purple-200 pb-4 mb-4 flex justify-between items-center">
+          {/* Hide logo when sidebar is collapsed */}
+          {isSidebarOpen && (
+            <Link to="/" className="flex items-center space-y-1">
+              <img
+                loading="lazy"
+                src={hotelLogo}
+                alt="Hotel Logo"
+                className="h-16 w-auto object-contain relative right-7"
+              />
+            </Link>
+          )}
+          <i
+            className="fa fa-bars text-3xl cursor-pointer "
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          ></i>
+        </div>
+
+        {/* Admin profile */}
+        <div
+          className={`p-2 pb-4 mb-4 bg-purple-100 rounded-md shadow-sm shadow-purple-300 ${
+            !isSidebarOpen && "flex justify-center"
+          }`}
+        >
           <Suspense fallback={<AdminDetailSkeleton />}>
             {admin ? <AdminProfile admin={admin} /> : <AdminDetailSkeleton />}
           </Suspense>
         </div>
+
+        {/* Menu items */}
         <div className="flex-grow overflow-y-auto p-2">
           <ul className="space-y-4">
             {filteredMenuItems.map((item, index) => (
@@ -93,29 +125,38 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
                       isActive
                         ? "border-r-3 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
                         : "hover:bg-purple-100/80 transition-colors duration-300"
-                    }`
+                    } ${!isSidebarOpen && "justify-center space-x-0"}`
                   }
                 >
                   <FontAwesomeIcon
                     icon={item.icon}
                     className="p-2 w-5 h-5 text-xl text-left"
-                  />{" "}
-                  <span className="text-md">{item.label}</span>
+                  />
+                  {isSidebarOpen && (
+                    <span className="text-md">{item.label}</span>
+                  )}
                 </NavLink>
               </li>
             ))}
           </ul>
         </div>
+
+        {/* Logout button */}
         <div className="px-3 py-4">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full flex items-center space-x-3 py-2 px-3 rounded-md transition-all duration-300 text-red-600 hover:bg-black/15 cursor-pointer"
+            className={`w-full flex items-center ${
+              !isSidebarOpen ? "justify-center" : "space-x-3"
+            } py-2 px-3 rounded-md transition-all duration-300 text-red-600 hover:bg-black/15 cursor-pointer`}
           >
             <i className="fa fa-sign-out-alt font-light"></i>
-            <span className="font-bold uppercase">Log Out</span>
+            {isSidebarOpen && (
+              <span className="font-bold uppercase">Log Out</span>
+            )}
           </button>
         </div>
       </aside>
+
       <Modal
         isOpen={isModalOpen}
         icon="fas fa-sign-out-alt"

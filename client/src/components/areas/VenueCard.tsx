@@ -101,20 +101,21 @@ const VenueCard: FC<AreaCardProps> = ({
             {priceRange}
           </span>
           <button
-<<<<<<< HEAD
             className={`${
               isAuthenticated
                 ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
                 : "bg-gray-400 cursor-not-allowed"
             } text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 `}
-=======
-            className={`${buttonClass} text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 cursor-pointer`}
->>>>>>> 0f26c1f15b7b866c47f8aaa12748d29338d2391e
             onClick={handleBookNow}
             title={buttonTitle}
             disabled={!isAuthenticated || !canBook}
           >
-            {isAuthenticated && !canBook ? <AlertCircle size={16} /> : <Book size={16} />} <span>Book</span>
+            {isAuthenticated && !canBook ? (
+              <AlertCircle size={16} />
+            ) : (
+              <Book size={16} />
+            )}{" "}
+            <span>Book</span>
           </button>
         </div>
       </div>
