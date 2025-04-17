@@ -18,7 +18,6 @@ import { useEffect, useRef, useState } from "react";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
 import StatCard from "../../components/admin/StatCard";
-import Azurea from "../../components/Azurea";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
 import {
   fetchBookingStatusCounts,

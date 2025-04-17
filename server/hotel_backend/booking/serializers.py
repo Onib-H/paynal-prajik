@@ -205,7 +205,6 @@ class BookingRequestSerializer(serializers.Serializer):
         else:
             raise serializers.ValidationError("Valid ID is required")
 
-        # Update the user's last_booking_date only for users with guest role
         if hasattr(user, 'role') and user.role == 'guest' and validated_data.get('checkIn'):
             check_in_date = validated_data.get('checkIn')
             today = timezone.now().date()
@@ -223,21 +222,13 @@ class BookingRequestSerializer(serializers.Serializer):
                 
                 total_price = validated_data.get('totalPrice', 0)
                 
-                # Process time fields for venue booking
                 start_time = None
                 end_time = None
                 
                 if 'startTime' in validated_data and validated_data['startTime']:
-                    try:
-                        start_time = datetime.strptime(validated_data['startTime'], "%H:%M").time()
-                    except (ValueError, TypeError):
-                        print(f"Invalid start time format: {validated_data['startTime']}")
-                        
+                    start_time = datetime.strptime(validated_data['startTime'], "%H:%M").time()    
                 if 'endTime' in validated_data and validated_data['endTime']:
-                    try:
-                        end_time = datetime.strptime(validated_data['endTime'], "%H:%M").time()
-                    except (ValueError, TypeError):
-                        print(f"Invalid end time format: {validated_data['endTime']}")
+                    end_time = datetime.strptime(validated_data['endTime'], "%H:%M").time()
                 
                 booking = Bookings.objects.create(
                     user=user,
@@ -258,7 +249,6 @@ class BookingRequestSerializer(serializers.Serializer):
                 
                 return booking                
             except Exception as e:
-                print(f"Error creating venue booking: {str(e)}")
                 raise serializers.ValidationError(str(e))
         else:
             try:
@@ -283,7 +273,6 @@ class BookingRequestSerializer(serializers.Serializer):
             except Rooms.DoesNotExist:
                 raise serializers.ValidationError("Room not found")
             except Exception as e:
-                print(f"Error creating room booking: {str(e)}")
                 raise serializers.ValidationError(str(e))
 
 class ReservationSerializer(serializers.ModelSerializer):

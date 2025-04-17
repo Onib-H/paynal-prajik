@@ -76,12 +76,8 @@ const ManageUsers: FC = () => {
       const errorResponse = error as { response?: { data?: { email?: string; password?: string; error?: string } } };
       const errorData = errorResponse.response?.data || {};
 
-      if (errorData.email) {
-        setFormErrors(prev => ({ ...prev, email: errorData.email }));
-      }
-      if (errorData.password) {
-        setFormErrors(prev => ({ ...prev, password: errorData.password }));
-      }
+      if (errorData.email) setFormErrors(prev => ({ ...prev, email: errorData.email }));
+      if (errorData.password) setFormErrors(prev => ({ ...prev, password: errorData.password }));
 
       toast.error(errorData.error || "Failed to create user");
       setIsSubmitting(false);
@@ -206,7 +202,7 @@ const ManageUsers: FC = () => {
         const file = new File([blob], "default_profile.jpg", { type: "image/jpeg" });
         formData.append("profile_image", file);
       } catch (error) {
-        console.error("Error loading default profile image:", error);
+        console.error(`Error loading default profile image: ${error}`);
       }
     };
 
@@ -214,7 +210,7 @@ const ManageUsers: FC = () => {
       await fetchDefaultImage();
       await createMutation.mutateAsync(formData);
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.error(`Error creating user: ${error}`);
     }
   }, [createFormData, createMutation]);
 

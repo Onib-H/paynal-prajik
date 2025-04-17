@@ -52,7 +52,7 @@ const RoomList: FC = () => {
   if (isError) return <Error />
 
   return (
-    <div className="container mx-auto p-6">
+    <div id="room-list" className="container mx-auto p-6">
       <h2 className="text-center text-3xl sm:text-4xl font-bold mb-6">
         Our Room Accommodations
       </h2>

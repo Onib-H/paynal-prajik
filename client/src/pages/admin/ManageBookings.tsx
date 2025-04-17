@@ -1,31 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
-import {
-  AlertCircle,
-  Calendar,
-  Check,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Filter,
-  IdCard,
-  Search,
-  X,
-} from "lucide-react";
-import { FC, useState } from "react";
+import { ChevronLeft, ChevronRight, Eye, Filter, Search } from "lucide-react";
+import { useState } from "react";
 import { toast } from "react-toastify";
 import CancellationModal from "../../components/bookings/CancellationModal";
 import Modal from "../../components/Modal";
-import EventLoader from "../../motions/loaders/EventLoader";
+import BookingDetailsModal from "../../components/admin/BookingDetailsModal";
 import {
   getAllBookings,
   recordPayment,
   updateBookingStatus,
 } from "../../services/Admin";
 import { BookingResponse } from "../../types/BookingClient";
-import { formatDate } from "../../utils/formatters";
+import { formatDate, getBookingPrice } from "../../utils/formatters";
+import BookingStatusBadge from "../../components/admin/BookingStatusBadge";
 
 const BookingStatusBadge: FC<{ status: string }> = ({ status }) => {
   let bgColor = "";
@@ -676,7 +664,7 @@ const ManageBookings: FC = () => {
         try {
           await recordPayment(bookingId, paymentAmount);
         } catch (error) {
-          console.error("Failed to record payment:", error);
+          console.error(`Failed to record payment: ${error}`);
         }
       }
 
@@ -779,7 +767,7 @@ const ManageBookings: FC = () => {
         });
         setShowNoShowModal(false);
       } catch (error) {
-        console.error("Error marking booking as no-show:", error);
+        console.error(`Error marking booking as no-show: ${error}`);
         toast.error("Failed to mark booking as no-show. Please try again.");
         setShowNoShowModal(false);
       }
@@ -787,7 +775,6 @@ const ManageBookings: FC = () => {
   };
 
   const closeNoShowModal = () => setShowNoShowModal(false);
-
   const handleRejectInitiate = () => setShowRejectionModal(true);
 
   const handleRejectConfirm = (reason: string) => {
@@ -798,6 +785,15 @@ const ManageBookings: FC = () => {
         reason: reason,
       });
       setShowRejectionModal(false);
+
+      setSelectedBooking((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "rejected",
+            }
+          : null
+      );
     }
   };
 
@@ -908,9 +904,6 @@ const ManageBookings: FC = () => {
                 <th className="py-2 md:py-3 px-2 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Guest
                 </th>
-                {/* <th className="hidden md:table-cell py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Email
-                </th> */}
                 <th className="py-2 md:py-3 px-2 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Property
                 </th>
@@ -944,24 +937,19 @@ const ManageBookings: FC = () => {
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         {formatDate(booking.created_at)}
                       </td>
-                      <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
-                        {`${booking.user?.first_name || ""} ${
-                          booking.user?.last_name || ""
-                        }`}
+                      <td className="py-2 md:py-3 px-2 md:px-4 text-sm text-left md:text-base text-gray-700 whitespace-nowrap">
+                        {`${booking.user?.first_name} ${booking.user?.last_name}`}
                       </td>
-                      {/* <td className="hidden md:table-cell py-3 px-4 text-base text-gray-700 whitespace-nowrap">
-                        {booking.user?.email || ''}
-                      </td> */}
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
-                        <div className="flex flex-col">
-                          <span className="truncate max-w-[120px] md:max-w-full">
+                        <div className="flex flex-col items-start">
+                          <span className="max-w-[120px] md:max-w-full font-semibold">
                             {propertyName}{" "}
                             {isVenueBooking ? (
-                              <span className="inline-block px-2 py-0.5 mt-1 text-sm uppercase font-semibold bg-blue-100 text-blue-800 rounded-full">
+                              <span className="px-2 py-0.5 mt-1 items-end text-sm uppercase font-semibold bg-blue-100 text-blue-800 rounded-full">
                                 Area
                               </span>
                             ) : (
-                              <span className="inline-block px-2 py-0.5 mt-1 text-sm uppercase font-semibold bg-green-100 text-green-800 rounded-full">
+                              <span className="px-2 py-0.5 mt-1 items-end text-sm uppercase font-semibold bg-green-100 text-green-800 rounded-full">
                                 Room
                               </span>
                             )}
@@ -977,7 +965,7 @@ const ManageBookings: FC = () => {
                       <td className="py-2 md:py-3 px-2 md:px-4 text-center text-sm md:text-base text-gray-700 whitespace-nowrap">
                         <BookingStatusBadge status={booking.status} />
                       </td>
-                      <td className="hidden md:table-cell py-3 px-4 text-center text-base text-gray-700 whitespace-nowrap">
+                      <td className="hidden md:table-cell py-3 px-4 text-center text-xl font-semibold text-gray-900 whitespace-nowrap">
                         ₱{" "}
                         {getBookingPrice(booking).toLocaleString(undefined, {
                           minimumFractionDigits: 2,

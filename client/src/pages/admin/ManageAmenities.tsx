@@ -10,9 +10,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState } from "react";
-import EditAmenityModal, {
-  IAmenity,
-} from "../../components/admin/EditAmenityModal";
+import EditAmenityModal from "../../components/admin/EditAmenityModal";
+import { IAmenity } from "../../types/AmenityAdmin";
 import Modal from "../../components/Modal";
 import ManageRoomLoader from "../../motions/loaders/EventLoader";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
@@ -264,7 +263,7 @@ const ManageAmenities = () => {
               exit={{ opacity: 0 }}
               className="fixed inset-0 flex items-center justify-center bg-gray-900/80 z-[500] backdrop-blur-sm"
             >
-              <ManageRoomLoader size="80px" text={loaderText} />
+              <ManageRoomLoader text={loaderText} />
             </motion.div>
           )}
         </AnimatePresence>

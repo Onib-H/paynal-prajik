@@ -16,7 +16,6 @@ const GuestProfile = () => {
   const { userDetails, profileImage, setProfileImage } = useUserContext();
 
   const [editMode, setEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState("personal");
   const [formData, setFormData] = useState<FormFields>({
     first_name: '',
     last_name: '',
@@ -82,7 +81,7 @@ const GuestProfile = () => {
       setUploadError(null);
     },
     onError: (error) => {
-      console.error("Failed to upload image:", error);
+      console.error(`Failed to upload image: ${error}`);
       setUploadError("Failed to upload image. Please try again.");
     }
   });
@@ -385,7 +384,7 @@ const GuestProfile = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => setEditMode(!editMode)}
               className={`
-                flex items-center justify-center px-4 py-2 rounded-full 
+                flex items-center justify-center px-4 py-2 rounded-full cursor-pointer
                 ${editMode
                   ? "bg-purple-100 text-purple-600 hover:bg-purple-200"
                   : "bg-purple-600 text-white hover:bg-purple-700"
@@ -409,178 +408,134 @@ const GuestProfile = () => {
         </div>
       </motion.div>
 
-      {/* Tabs Navigation */}
-      <motion.div
-        variants={itemVariants}
-        className="mb-6 bg-white rounded-xl shadow-md p-1 flex"
-      >
-        <motion.button
-          whileHover={{ backgroundColor: activeTab === "personal" ? "" : "#f9fafb" }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setActiveTab("personal")}
-          className={`flex-1 py-3 rounded-lg flex items-center justify-center transition-colors ${activeTab === "personal" ? "bg-purple-100 text-purple-700" : "text-gray-600"
-            }`}
-        >
-          <User className="h-4 w-4 mr-2" />
-          <span className="font-medium">Personal Info</span>
-        </motion.button>
-        <motion.button
-          whileHover={{ backgroundColor: activeTab === "account" ? "" : "#f9fafb" }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setActiveTab("account")}
-          className={`flex-1 py-3 rounded-lg flex items-center justify-center transition-colors ${activeTab === "account" ? "bg-purple-100 text-purple-700" : "text-gray-600"
-            }`}
-        >
-          <Key className="h-4 w-4 mr-2" />
-          <span className="font-medium">Account & Security</span>
-        </motion.button>
-      </motion.div>
-
       {/* Tab content */}
       <motion.div
         variants={itemVariants}
         className="bg-white rounded-xl shadow-md overflow-hidden"
       >
         <AnimatePresence mode="wait">
-          {activeTab === "personal" && (
-            <motion.div
-              key="personal"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={fadeInVariants}
-            >
-              <form onSubmit={handleSaveProfile} className="p-6">
-                <h3 className="text-lg font-semibold flex items-center border-b border-gray-200 pb-3 mb-6">
-                  <User className="h-5 w-5 mr-2 text-purple-500" />
-                  Personal Information
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                    <motion.input
-                      whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
-                      type="text"
-                      name="first_name"
-                      disabled={!editMode}
-                      className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
-                        ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
-                        : "bg-gray-50 border-gray-200"
-                        }`}
-                      value={formData.first_name}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                    <motion.input
-                      whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
-                      type="text"
-                      name="last_name"
-                      disabled={!editMode}
-                      className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
-                        ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
-                        : "bg-gray-50 border-gray-200"
-                        }`}
-                      value={formData.last_name}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                    <motion.input
-                      whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
-                      type="email"
-                      name="email"
-                      disabled={!editMode}
-                      className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
-                        ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
-                        : "bg-gray-50 border-gray-200"
-                        }`}
-                      value={formData.email}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-
-                {editMode && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex justify-end mt-6"
-                  >
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      type="button"
-                      onClick={() => setEditMode(false)}
-                      className="mr-3 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                      disabled={updateProfileMutation.isPending}
-                    >
-                      Cancel
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02, boxShadow: "0 4px 6px -1px rgba(147, 51, 234, 0.2)" }}
-                      whileTap={{ scale: 0.98 }}
-                      type="submit"
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-70"
-                      disabled={updateProfileMutation.isPending}
-                    >
-                      {updateProfileMutation.isPending ? (
-                        <span className="flex items-center">
-                          <motion.span
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                            className="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full mr-2"
-                          />
-                          Saving...
-                        </span>
-                      ) : 'Save Changes'}
-                    </motion.button>
-                  </motion.div>
-                )}
-              </form>
-            </motion.div>
-          )}
-
-          {activeTab === "account" && (
-            <motion.div
-              key="account"
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              variants={fadeInVariants}
-              className="p-6"
-            >
+          <motion.div
+            key="personal"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={fadeInVariants}
+          >
+            <form onSubmit={handleSaveProfile} className="p-6">
               <h3 className="text-lg font-semibold flex items-center border-b border-gray-200 pb-3 mb-6">
-                <Key className="h-5 w-5 mr-2 text-purple-500" />
-                Account & Security
+                <User className="h-5 w-5 mr-2 text-purple-500" />
+                Personal Information
               </h3>
 
-              <div className="space-y-5">
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center">
-                    <Key className="h-5 w-5 text-gray-500 mr-3" />
-                    <div>
-                      <span className="block text-sm font-medium text-gray-700">Password</span>
-                      <span className="text-gray-600">••••••••</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                  <motion.input
+                    whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
+                    type="text"
+                    name="first_name"
+                    disabled={!editMode}
+                    className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
+                      ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
+                      : "bg-gray-50 border-gray-200"
+                      }`}
+                    value={formData.first_name}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                  <motion.input
+                    whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
+                    type="text"
+                    name="last_name"
+                    disabled={!editMode}
+                    className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
+                      ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
+                      : "bg-gray-50 border-gray-200"
+                      }`}
+                    value={formData.last_name}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                  <motion.input
+                    whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
+                    type="email"
+                    name="email"
+                    disabled={!editMode}
+                    className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
+                      ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
+                      : "bg-gray-50 border-gray-200"
+                      }`}
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <Key className="h-5 w-5 text-gray-500 mr-3" />
+                      <div>
+                        <span className="block text-sm font-medium text-gray-700">Password</span>
+                        <span className="text-gray-600">••••••••</span>
+                      </div>
                     </div>
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => setShowPasswordModal(true)}
+                      className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition shadow-sm"
+                      type="button"
+                    >
+                      Change
+                    </motion.button>
                   </div>
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setShowPasswordModal(true)}
-                    className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition shadow-sm"
-                  >
-                    Change
-                  </motion.button>
                 </div>
               </div>
-            </motion.div>
-          )}
+
+              {editMode && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex justify-end mt-6"
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    onClick={() => setEditMode(false)}
+                    className="mr-3 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    disabled={updateProfileMutation.isPending}
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02, boxShadow: "0 4px 6px -1px rgba(147, 51, 234, 0.2)" }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-70"
+                    disabled={updateProfileMutation.isPending}
+                  >
+                    {updateProfileMutation.isPending ? (
+                      <span className="flex items-center">
+                        <motion.span
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                          className="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full mr-2"
+                        />
+                        Saving...
+                      </span>
+                    ) : 'Save Changes'}
+                  </motion.button>
+                </motion.div>
+              )}
+            </form>
+          </motion.div>
         </AnimatePresence>
       </motion.div>
 

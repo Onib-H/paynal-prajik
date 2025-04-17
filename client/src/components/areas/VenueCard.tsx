@@ -1,5 +1,3 @@
-import { faUsers } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { motion } from "framer-motion";
 import { AlertCircle, Book } from "lucide-react";
 import { FC } from "react";
@@ -20,7 +18,6 @@ const VenueCard: FC<AreaCardProps> = ({
   id,
   title,
   priceRange,
-  capacity,
   image,
   description,
 }) => {
@@ -29,18 +26,13 @@ const VenueCard: FC<AreaCardProps> = ({
   const { canBook, maxLimit } = useBookingLimit();
 
   const handleBookNow = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevents triggering the card click event
-
+    e.stopPropagation();
     if (!isAuthenticated) {
       navigate(`/venues/${id}?showLogin=true`);
       return;
     }
 
-    if (!canBook) {
-      // Don't navigate if booking limit reached
-      return;
-    }
-
+    if (!canBook) return;
     navigate(`/venue-booking/${id}`);
   };
 
@@ -84,16 +76,9 @@ const VenueCard: FC<AreaCardProps> = ({
           </div>
 
           {/* Description with 50 character limit */}
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+          <p className="text-gray-600 text-sm line-clamp-2">
             {truncatedDescription}
           </p>
-
-          <div className="flex justify-between items-center text-sm mt-4 text-gray-700">
-            <span className="font-medium flex items-center gap-1">
-              <FontAwesomeIcon icon={faUsers} className="text-blue-500" />{" "}
-              {capacity} pax
-            </span>
-          </div>
         </div>
 
         <div className="flex justify-between items-center mt-4 pt-4 border-t border-purple-200">

@@ -1,10 +1,8 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.utils import timezone
 from rest_framework import serializers
 from booking.models import Bookings
-from rest_framework.authtoken.models import Token
-from user_roles.models import CustomUsers
 
 def validate_guest_name(name):
     """Validate guest name - letters and spaces only, minimum 2 characters"""
@@ -27,8 +25,6 @@ def validate_email(email, check_in_date=None, check_out_date=None, is_venue_book
     if not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
         raise serializers.ValidationError("Invalid email format")
     
-    # For venue bookings, we don't check for overlapping bookings since they have specific times
-    # For room bookings, we do check to prevent double-bookings
     if not is_venue_booking and check_in_date and check_out_date:
         overlapping_bookings = Bookings.objects.filter(
             user__email=email,
@@ -43,23 +39,21 @@ def validate_email(email, check_in_date=None, check_out_date=None, is_venue_book
     
     return email
 
-def validate_max_bookings_per_day(user_id, is_venue_booking=False):
+def validate_max_bookings_per_day(user_id):
     """Validate that a user hasn't exceeded the maximum number of bookings per day (3)"""
     if not user_id:
-        return True  # Skip validation if no user ID provided
+        return True
     
     today = timezone.now().date()
     
-    # Get bookings created today by this user (both regular and venue bookings)
     bookings_today = Bookings.objects.filter(
         user_id=user_id,
         created_at__date=today
     )
     
-    # Count all bookings created today
     total_bookings = bookings_today.count()
     
-    MAX_BOOKINGS_PER_DAY = 3  # Maximum daily booking limit
+    MAX_BOOKINGS_PER_DAY = 1
     
     if total_bookings >= MAX_BOOKINGS_PER_DAY:
         raise serializers.ValidationError(
@@ -73,18 +67,13 @@ def validate_phone_number(phone_number, check_in_date=None, check_out_date=None)
     if not phone_number:
         raise serializers.ValidationError("Phone number is required")
     
-    # Remove all non-digit characters except the + sign
     cleaned_number = re.sub(r'[^\d+]', '', phone_number)
     
-    # Check if the phone number has the +63 prefix
     if cleaned_number.startswith('+63'):
-        # Remove the +63 prefix to check the remaining digits
         local_number = cleaned_number[3:]
-        # Check if the remaining number starts with 9 and has 10 digits total (9 + 9 more)
         if not (len(local_number) == 10 and local_number.startswith('9')):
             raise serializers.ValidationError("Philippine phone number must start with +63 followed by 9 and 9 more digits")
     else:
-        # Legacy format starting with 09
         if not re.match(r'^09\d{9}$', cleaned_number):
             raise serializers.ValidationError("Phone number must be in Philippine format: (+63) 9XX XXX XXXX")
     
@@ -135,7 +124,6 @@ def validate_dates(check_in_date, check_out_date, is_venue_booking=False):
     if check_in_date < today:
         raise serializers.ValidationError("Check-in date cannot be in the past")
     
-    # For venue bookings, allow same-day bookings
     if is_venue_booking:
         if check_out_date < check_in_date:
             raise serializers.ValidationError("Check-out date must be on or after check-in date")
@@ -183,23 +171,19 @@ def validate_booking_request(data, room):
     """Validate the entire booking request"""
     errors = {}
     
-    # Get the request and user from context
     request = data.get('_request')
     user = None
     
     if request and hasattr(request, 'user') and request.user.is_authenticated:
         user = request.user
     
-    # Is this a venue booking?
     is_venue_booking = data.get('isVenueBooking', False)
     
-    # Validate check-in/check-out dates
     try:
         validate_dates(data.get('checkIn'), data.get('checkOut'), is_venue_booking)
     except serializers.ValidationError as e:
         errors['dates'] = str(e.detail[0]) if hasattr(e, 'detail') else str(e)
     
-    # Validate names
     try:
         validate_guest_name(data.get('firstName', ''))
     except serializers.ValidationError as e:
@@ -209,21 +193,7 @@ def validate_booking_request(data, room):
         validate_guest_name(data.get('lastName', ''))
     except serializers.ValidationError as e:
         errors['lastName'] = str(e.detail[0]) if hasattr(e, 'detail') else str(e)
-    
-    # Validate email - skip if emailAddress is not in the data
-    # Since you removed emailAddress from serializers.py, we'll skip this validation
-    # if data.get('emailAddress'):
-    #     try:
-    #         validate_email(
-    #             data.get('emailAddress', ''),
-    #             data.get('checkIn'),
-    #             data.get('checkOut'),
-    #             is_venue_booking
-    #         )
-    #     except serializers.ValidationError as e:
-    #         errors['emailAddress'] = str(e.detail[0]) if hasattr(e, 'detail') else str(e)
-    
-    # Validate phone
+
     try:
         validate_phone_number(
             data.get('phoneNumber', ''),
@@ -233,27 +203,23 @@ def validate_booking_request(data, room):
     except serializers.ValidationError as e:
         errors['phoneNumber'] = str(e.detail[0]) if hasattr(e, 'detail') else str(e)
 
-    # Validate special requests
     try:
         validate_special_request(data.get('specialRequests', ''))
     except serializers.ValidationError as e:
         errors['specialRequests'] = str(e.detail[0]) if hasattr(e, 'detail') else str(e)
     
-    # Validate valid ID
     if 'validId' in data:
         try:
             validate_valid_id(data.get('validId'))
         except serializers.ValidationError as e:
             errors['validId'] = str(e.detail[0]) if hasattr(e, 'detail') else str(e)
     
-    # Validate arrival time for room bookings (not venue bookings)
     if not is_venue_booking:
         try:
             validate_arrival_time(data.get('arrivalTime', ''))
         except serializers.ValidationError as e:
             errors['arrivalTime'] = str(e.detail[0]) if hasattr(e, 'detail') else str(e)
     
-    # Check room availability for non-venue bookings
     if not is_venue_booking and room and data.get('checkIn') and data.get('checkOut'):
         check_in = data.get('checkIn')
         check_out = data.get('checkOut')
@@ -268,19 +234,13 @@ def validate_booking_request(data, room):
         if overlapping_bookings.exists():
             errors['room'] = "This room is not available for the selected dates"
     
-    # Check if user already has a booking for the same day - ONLY for authenticated users
     if user and hasattr(user, 'last_booking_date') and user.role == 'guest' and data.get('checkIn'):
-        try:
-            check_in_date = data.get('checkIn')
-            today = timezone.now().date()
-            
-            # Safe comparison - convert to string format first to avoid type mismatch
-            user_last_booking = user.last_booking_date.strftime('%Y-%m-%d') if user.last_booking_date else None
-            today_str = today.strftime('%Y-%m-%d')
-            
-            if user_last_booking and user_last_booking == today_str and str(check_in_date) == today_str:
-                errors['booking_limit'] = "You can only make one booking per day. Please try again tomorrow."
-        except Exception as e:
-            print(f"Error checking booking limit: {str(e)}")
-    
+        check_in_date = data.get('checkIn')
+        today = timezone.now().date()
+        
+        user_last_booking = user.last_booking_date.strftime('%Y-%m-%d') if user.last_booking_date else None
+        today_str = today.strftime('%Y-%m-%d')
+        
+        if user_last_booking and user_last_booking == today_str and str(check_in_date) == today_str:
+            errors['booking_limit'] = "You can only make one booking per day. Please try again tomorrow."
     return errors

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, FC, FormEvent, memo, useCallback, useEffect, useState } from "react";
 
@@ -65,7 +64,6 @@ const EditUserModal: FC<IUserFormModalProps> = ({
             await onSave(payload);
             setErrors({});
         } catch (error: any) {
-            console.log("Error response:", error.response);
             const errorData = error.response?.data?.error;
             setErrors(errorData ? errorData : { general: "An error occurred" });
         }
@@ -73,9 +71,7 @@ const EditUserModal: FC<IUserFormModalProps> = ({
 
     useEffect(() => {
         const handleKeyDown = (evt: KeyboardEvent) => {
-            if (evt.key === "Escape") {
-                cancel();
-            }
+            if (evt.key === "Escape") cancel();
         };
         if (isOpen) window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);

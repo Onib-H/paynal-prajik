@@ -165,9 +165,7 @@ const GuestBookings: FC = () => {
   }, [bookings, searchTerm, filterStatus]);
 
   const handleCancelBooking = useCallback((reason: string) => {
-    if (!cancellationBookingId || !reason.trim()) {
-      return;
-    }
+    if (!cancellationBookingId || !reason.trim()) return;
 
     cancelBookingMutation.mutate({
       bookingId: cancellationBookingId,
@@ -428,28 +426,28 @@ const GuestBookings: FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-lg font-semibold text-gray-900">
                           {typeof totalAmount === 'number' ? totalAmount.toLocaleString() : totalAmount}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-lg font-medium">
+                        <td className="p-2 whitespace-nowrap text-sm text-right font-semibold">
                           <div className="flex justify-center space-x-2">
                             <button
-                              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
+                              className="bg-gray-600 hover:bg-gray-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
                               onClick={() => viewBookingDetails(id.toString())}
                             >
-                              <Eye size={30} className="mr-1" /> View
+                              <Eye size={24} className="pr-1" /> View
                             </button>
                             {booking.status.toLowerCase() === 'pending' && (
                               <button
-                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
+                                className="bg-red-600 hover:bg-red-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
                                 onClick={() => openCancelModal(id.toString())}
                               >
-                                <XCircle size={30} className="mr-1" /> Cancel
+                                <XCircle size={24} className="mr-1" /> Cancel
                               </button>
                             )}
                             {shouldShowReviewButton(booking) && (
                               <button
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
+                                className="bg-blue-600 hover:bg-blue-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
                                 onClick={() => openReviewModal(booking)}
                               >
-                                <MessageSquare size={30} className="mr-1" /> Review
+                                <MessageSquare size={24} className="mr-1" /> Review
                               </button>
                             )}
                           </div>

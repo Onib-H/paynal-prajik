@@ -19,14 +19,12 @@ const GuestChangePassword = () => {
         confirmPassword: ''
     });
 
-    // UI state
     const [showOldPassword, setShowOldPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [passwordError, setPasswordError] = useState<string | null>(null);
     const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
 
-    // Password validation state
     const [validations, setValidations] = useState({
         minLength: false,
         hasSpecial: false,
@@ -35,7 +33,6 @@ const GuestChangePassword = () => {
         matching: false
     });
 
-    // Password change mutation
     const passwordMutation = useMutation({
         mutationFn: () => changePassword(
             passwordData.oldPassword,
@@ -53,7 +50,6 @@ const GuestChangePassword = () => {
             navigate('/guest/profile');
         },
         onError: (error: any) => {
-            console.log("Password change error:", error);
             setPasswordError(error.response?.data?.error || "Failed to change password. Please try again.");
             setPasswordSuccess(null);
         }

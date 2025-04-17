@@ -47,12 +47,13 @@ const Navbar: FC = () => {
     setLoading(true);
     try {
       const response = await logout();
-      console.log("Logout response:", response.status);
-
-      clearAuthState();
-      setIsModalOpen(false);
-
-      navigate("/", { replace: true });
+      if (response.status === 200) {
+        clearAuthState();
+        setIsModalOpen(false);
+        navigate("/", { replace: true });
+      } else {
+        throw new Error("Logout failed");
+      }
     } catch (error) {
       console.error(`Failed to logout: ${error}`);
       setNotification({

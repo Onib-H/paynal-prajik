@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, FormEvent, KeyboardEvent, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";

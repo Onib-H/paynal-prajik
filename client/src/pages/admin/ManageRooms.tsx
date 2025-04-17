@@ -1,13 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Edit, Eye, Trash2 } from "lucide-react";
 import { FC, memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { IRoom } from "../../types/RoomAdmin";
 import EditRoomModal from "../../components/admin/EditRoomModal";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
-import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
+import ManageSkeleton from "../../motions/skeletons/ManageSkeleton";
 import {
   addNewRoom,
   deleteRoom,
@@ -15,7 +14,10 @@ import {
   fetchAmenities,
   fetchRooms,
 } from "../../services/Admin";
+import { IRoom } from "../../types/RoomAdmin";
+import { AddRoomResponse, Amenity, PaginationData, Room } from "../../types/RoomClient";
 import Error from "../_ErrorBoundary";
+<<<<<<< HEAD
 import { ChevronLeft, ChevronRight, Edit, Eye, Trash2 } from "lucide-react";
 import {
   Amenity,
@@ -23,6 +25,8 @@ import {
   AddRoomResponse,
   PaginationData,
 } from "../../types/RoomClient";
+=======
+>>>>>>> 62d490912c96215e7a7ad41a9f069e3641b5cb10
 
 const MemoizedImage = memo(
   ({
@@ -771,7 +775,7 @@ const ManageRooms: FC = () => {
     [currentPage]
   );
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (isLoading) return <ManageSkeleton type="room" />;
   if (isError) return <Error />;
 
   const rooms = roomsResponse?.data || [];
@@ -783,7 +787,7 @@ const ManageRooms: FC = () => {
         {/* Loader Overlay */}
         {loading && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-900/80 z-[500]">
-            <EventLoader size="80px" text={loaderText} />
+            <EventLoader text={loaderText} />
           </div>
         )}
 
