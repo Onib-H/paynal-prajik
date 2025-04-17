@@ -55,7 +55,7 @@ const VenueDetails = () => {
     }
 
     const allVenues = allVenuesData?.data || [];
-    const currentIndex = allVenues.findIndex((venue: any) => venue.id === Number(id));
+    const currentIndex = allVenues.findIndex((venue) => venue.id === Number(id));
     const prevVenue = currentIndex > 0 ? allVenues[currentIndex - 1] : null;
     const nextVenue = currentIndex < allVenues.length - 1 ? allVenues[currentIndex + 1] : null;
 

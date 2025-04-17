@@ -222,7 +222,7 @@ const EventLoader: FC<LoaderProps> = ({
 
   const floatingAnimation = {
     y: [0, -8, 0],
-    transition: {
+      transition: {
       duration: 3,
       repeat: Infinity,
       ease: "easeInOut"
@@ -247,7 +247,7 @@ const EventLoader: FC<LoaderProps> = ({
       {/* Background Pattern */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 opacity-[0.03]"
-          style={{
+            style={{
             backgroundImage: `radial-gradient(${primary}99 1px, transparent 1px)`,
             backgroundSize: '30px 30px'
           }}
@@ -266,9 +266,9 @@ const EventLoader: FC<LoaderProps> = ({
         <div className="w-full flex flex-col md:flex-row items-center justify-center gap-12 py-8">
 
           {/* Left Side - Booking Document */}
-          <motion.div
+        <motion.div
             className="relative w-full md:w-1/2 flex justify-center"
-            variants={itemVariants}
+          variants={itemVariants}
           >
             <div className="relative w-64 md:w-80 aspect-[3/4]">
               {/* Shadow under the document */}
@@ -282,11 +282,11 @@ const EventLoader: FC<LoaderProps> = ({
               />
 
               {/* Main Document */}
-              <motion.div
+          <motion.div
                 className={`w-full h-full ${accentLight} rounded-lg shadow-lg relative overflow-hidden`}
-                animate={{
+            animate={{
                   y: [0, -5, 0],
-                  boxShadow: [
+              boxShadow: [
                     "0 4px 6px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.1)",
                     "0 4px 6px rgba(0,0,0,0.08), 0 15px 15px -3px rgba(0,0,0,0.15)",
                     "0 4px 6px rgba(0,0,0,0.05), 0 10px 15px -3px rgba(0,0,0,0.1)"
@@ -384,7 +384,7 @@ const EventLoader: FC<LoaderProps> = ({
                             style={{ width: field.width }}
                             initial={{ width: 0 }}
                             animate={{ width: field.width }}
-                            transition={{
+            transition={{
                               duration: 0.5,
                               delay: 0.2 + i * 0.15,
                               ease: "easeOut"
@@ -522,21 +522,21 @@ const EventLoader: FC<LoaderProps> = ({
           className="mt-10 flex justify-center space-x-2"
           variants={itemVariants}
         >
-          {[0, 1, 2].map((dot) => (
-            <motion.div
-              key={dot}
+            {[0, 1, 2].map((dot) => (
+              <motion.div
+                key={dot}
               className={`w-1.5 h-1.5 rounded-full ${iconBg}`}
-              animate={{
-                opacity: [0.3, 1, 0.3],
-                scale: [0.8, 1.2, 0.8],
-              }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                delay: dot * 0.3,
-              }}
-            />
-          ))}
+                animate={{
+                  opacity: [0.3, 1, 0.3],
+                  scale: [0.8, 1.2, 0.8],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  delay: dot * 0.3,
+                }}
+              />
+            ))}
         </motion.div>
       </motion.div>
     </motion.div>
