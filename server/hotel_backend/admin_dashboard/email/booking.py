@@ -1,6 +1,7 @@
 from django.core.mail import EmailMultiAlternatives
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -55,7 +56,7 @@ def send_booking_confirmation_email(email, booking_details):
                             
                             <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                                 <p style="margin: 0; color: #6b7280; font-size: 12px;">
-                                    &copy; 2024 Azurea Hotel. All rights reserved.
+                                    &copy; {datetime.now().year} Azurea Hotel. All rights reserved.
                                 </p>
                             </div>
                         </div>
@@ -83,7 +84,7 @@ def send_booking_confirmation_email(email, booking_details):
         
         We look forward to welcoming you to Azurea Hotel. If you have any questions, please feel free to contact us.
         
-        © 2024 Azurea Hotel. All rights reserved.
+        © {datetime.now().year} Azurea Hotel. All rights reserved.
         """
         
         email_from = os.getenv('EMAIL_HOST_USER')
@@ -152,7 +153,7 @@ def send_booking_rejection_email(email, booking_details):
                             
                             <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                                 <p style="margin: 0; color: #6b7280; font-size: 12px;">
-                                    &copy; 2024 Azurea Hotel. All rights reserved.
+                                    &copy; {datetime.now().year} Azurea Hotel. All rights reserved.
                                 </p>
                             </div>
                         </div>
@@ -183,7 +184,7 @@ def send_booking_rejection_email(email, booking_details):
         
         We appreciate your interest in Azurea Hotel and hope we can serve you in the future. If you have any questions, please feel free to contact us.
         
-        © 2024 Azurea Hotel. All rights reserved.
+        © {datetime.now().year} Azurea Hotel. All rights reserved.
         """
         
         email_from = os.getenv('EMAIL_HOST_USER')
@@ -192,5 +193,5 @@ def send_booking_rejection_email(email, booking_details):
         message.send()
         
         return True
-    except Exception as e:
+    except Exception:
         return False

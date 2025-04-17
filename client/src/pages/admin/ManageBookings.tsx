@@ -78,7 +78,7 @@ const ManageBookings = () => {
         try {
           await recordPayment(bookingId, paymentAmount);
         } catch (error) {
-          console.error('Failed to record payment:', error);
+          console.error(`Failed to record payment: ${error}`);
         }
       }
 
@@ -173,7 +173,7 @@ const ManageBookings = () => {
         });
         setShowNoShowModal(false);
       } catch (error) {
-        console.error("Error marking booking as no-show:", error);
+        console.error(`Error marking booking as no-show: ${error}`);
         toast.error("Failed to mark booking as no-show. Please try again.");
         setShowNoShowModal(false);
       }
@@ -181,7 +181,6 @@ const ManageBookings = () => {
   };
 
   const closeNoShowModal = () => setShowNoShowModal(false);
-
   const handleRejectInitiate = () => setShowRejectionModal(true);
 
   const handleRejectConfirm = (reason: string) => {
@@ -331,8 +330,8 @@ const ManageBookings = () => {
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         {formatDate(booking.created_at)}
                       </td>
-                      <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
-                        {`${booking.user?.first_name || ''} ${booking.user?.last_name || ''}`}
+                      <td className="py-2 md:py-3 px-2 md:px-4 text-sm text-left md:text-base text-gray-700 whitespace-nowrap">
+                        {`${booking.user?.first_name} ${booking.user?.last_name}`}
                       </td>
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         <div className="flex flex-col items-start">

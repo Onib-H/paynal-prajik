@@ -27,6 +27,28 @@ const BookingDetailsModal: FC<{
     const isPaymentComplete = currentPayment === bookingPrice;
     const isReservedStatus = booking.status === "reserved";
 
+    const isNoShowEligible = (): boolean => {
+        const currentDate = new Date();
+        const checkInDate = new Date(booking.check_in_date);
+
+        if (isVenueBooking) {
+            const venueCheckInTime = new Date(checkInDate);
+            venueCheckInTime.setHours(8, 0, 0, 0);
+            return currentDate > venueCheckInTime;
+        } else {
+            if (!booking.time_of_arrival) return false;
+
+            const arrivalTimeParts = booking.time_of_arrival.split(':');
+            const arrivalHour = parseInt(arrivalTimeParts[0]);
+            const arrivalMinute = parseInt(arrivalTimeParts[1] || '0');
+
+            const expectedCheckInTime = new Date(checkInDate);
+            expectedCheckInTime.setHours(arrivalHour, arrivalMinute, 0, 0);
+
+            return currentDate > expectedCheckInTime;
+        }
+    };
+
     const isCheckInDateValid = (): { isValid: boolean; message: string } => {
         try {
             const currentDate = new Date();
@@ -147,6 +169,8 @@ const BookingDetailsModal: FC<{
 
     const checkOutValidation = isCheckOutDateValid();
     const canCheckOut = isPaymentComplete && checkInValidation.isValid;
+
+    const canMarkNoShow = isNoShowEligible();
 
     const renderValidId = () => {
         if (!booking.valid_id) {
@@ -414,13 +438,12 @@ const BookingDetailsModal: FC<{
                                 <div className="flex flex-col sm:flex-row items-center gap-2">
                                     <div className="relative flex-1 w-full">
                                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                            <span className="text-gray-500">₱</span>
+                                            <span className="text-gray-500 text-xl">₱</span>
                                         </div>
                                         <motion.input
                                             whileFocus={{ boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.3)" }}
                                             type="number"
                                             min="0"
-                                            step="0.01"
                                             value={paymentAmount}
                                             onChange={handlePaymentChange}
                                             placeholder={`Enter amount (${bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
@@ -513,14 +536,32 @@ const BookingDetailsModal: FC<{
                             transition={{ delay: 0.4 }}
                             className="flex flex-col sm:flex-row justify-between gap-2 mt-6"
                         >
-                            <motion.button
-                                whileTap={{ scale: 0.98 }}
-                                onClick={onNoShow}
-                                className="px-4 py-2 bg-amber-600 text-white rounded-lg cursor-pointer flex items-center justify-center gap-2 shadow-sm"
-                            >
-                                <X size={18} />
-                                Mark as No Show
-                            </motion.button>
+                            <div className="relative group">
+                                <motion.button
+                                    whileTap={canMarkNoShow ? { scale: 0.98 } : {}}
+                                    onClick={canMarkNoShow ? onNoShow : undefined}
+                                    className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 shadow-sm ${canMarkNoShow
+                                        ? 'bg-amber-600 text-white cursor-pointer'
+                                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
+                                    disabled={!canMarkNoShow}
+                                >
+                                    <X size={18} />
+                                    Mark as No Show
+                                </motion.button>
+                                {!canMarkNoShow && (
+                                    <div className="absolute bottom-full left-0 mb-2 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                        <div className="bg-gray-900 text-white text-xs rounded py-1 px-2 w-full">
+                                            <p className="flex items-start text-amber-300">
+                                                <Clock className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
+                                                {isVenueBooking
+                                                    ? "No Show can be marked after 8:00 AM on the check-in date"
+                                                    : "No Show can be marked after the guest's expected arrival time"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             <motion.button
                                 whileTap={{ scale: 0.98 }}
                                 onClick={onCancel}
@@ -533,8 +574,8 @@ const BookingDetailsModal: FC<{
                                 <motion.button
                                     whileTap={canCheckIn ? { scale: 0.98 } : {}}
                                     onClick={() => onCheckIn && canCheckIn && onCheckIn(currentPayment)}
-                                    className={`px-4 py-2 text-white rounded-lg cursor-pointer flex items-center justify-center gap-2 shadow-sm ${canCheckIn
-                                        ? 'bg-blue-600 hover:bg-blue-700'
+                                    className={`px-4 py-2 text-white rounded-lg flex items-center justify-center gap-2 shadow-sm ${canCheckIn
+                                        ? 'bg-blue-600 cursor-pointer hover:bg-blue-700'
                                         : 'bg-gray-400 cursor-not-allowed'
                                         }`}
                                     disabled={!canCheckIn}

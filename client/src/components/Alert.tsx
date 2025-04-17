@@ -46,29 +46,29 @@ const Alert = ({
   }, [autoClose, duration, handleClose, clearTimer]);
 
   const getIcon = () => {
-  switch (type) {
-    case "success":
+    switch (type) {
+      case "success":
         return <CheckCircle className="w-5 h-5 text-green-500" />;
-    case "error":
+      case "error":
         return <XCircle className="w-5 h-5 text-red-500" />;
-    case "warning":
+      case "warning":
         return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
       case "info":
-    default:
+      default:
         return <Info className="w-5 h-5 text-blue-500" />;
-  }
+    }
   };
 
   const getBgColor = () => {
-  switch (type) {
-    case "success":
+    switch (type) {
+      case "success":
         return "bg-green-50 border-green-100";
-    case "error":
+      case "error":
         return "bg-red-50 border-red-100";
-    case "warning":
+      case "warning":
         return "bg-yellow-50 border-yellow-100";
       case "info":
-    default:
+      default:
         return "bg-blue-50 border-blue-100";
     }
   };
@@ -91,7 +91,7 @@ const Alert = ({
             aria-label="Close alert"
           >
             <XCircle className="w-5 h-5" />
-            </button>
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
