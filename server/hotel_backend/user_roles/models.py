@@ -8,7 +8,6 @@ class CustomUsers(AbstractUser):
         ('admin', 'Admin'),
         ('guest', 'Guest'),
     ]
-    
     email = models.EmailField(unique=True, max_length=200)
     password = models.CharField(max_length=200)
     role = models.CharField(

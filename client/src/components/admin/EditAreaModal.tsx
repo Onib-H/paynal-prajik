@@ -21,7 +21,6 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
     area_image: areaData?.area_image || "",
   });
 
-  // State for preview URL and errors
   const [previewUrl, setPreviewUrl] = useState<string | null>("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 

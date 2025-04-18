@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Edit, Eye, MapPin, Trash2 } from "lucide-react";
@@ -51,6 +52,8 @@ const AreaCard = memo(({
   const handleView = useCallback(() => onView(area), [area, onView]);
   const handleEdit = useCallback(() => onEdit(area), [area, onEdit]);
   const handleDelete = useCallback(() => onDelete(area.id), [area.id, onDelete]);
+
+  if (!area) return null;
 
   return (
     <motion.div
@@ -138,12 +141,15 @@ const ViewAreaModal: FC<{
   onClose: () => void;
   areaData: Area | null;
 }> = ({ isOpen, onClose, areaData }) => {
-  if (!areaData) return null;
+  const areaImage = useMemo(() => {
+    if (!areaData) return { src: "", alt: "" };
+    return {
+      src: areaData.area_image,
+      alt: areaData.area_name
+    };
+  }, [areaData]);
 
-  const areaImage = useMemo(() => ({
-    src: areaData.area_image,
-    alt: areaData.area_name
-  }), [areaData.area_image, areaData.area_name]);
+  if (!areaData) return null;
 
   return (
     <AnimatePresence>
@@ -181,59 +187,42 @@ const ViewAreaModal: FC<{
             <div className="grid grid-cols-1 md:grid-cols-2">
               {/* Left Column: Image with gradient overlay */}
               <div className="relative h-64 md:h-auto">
-                {areaData.area_image ? (
-                  <div className="relative h-full">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-10"></div>
+                <div className="relative h-full">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-10"></div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="h-full"
+                  >
+                    <MemoizedImage
+                      src={areaImage.src}
+                      alt={areaImage.alt}
+                      className="w-full h-full object-cover"
+                    />
+                  </motion.div>
+                  <div className="absolute bottom-4 left-4 z-20 md:hidden">
+                    <motion.h1
+                      className="text-2xl font-bold text-white mb-1"
+                      initial={{ y: 10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      {areaData.area_name}
+                    </motion.h1>
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                      className="h-full"
+                      className="flex items-center"
+                      initial={{ y: 10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: 0.4 }}
                     >
-                      <MemoizedImage
-                        src={areaImage.src}
-                        alt={areaImage.alt}
-                        className="w-full h-full object-cover"
-                      />
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${areaData.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                        {areaData.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
+                      </span>
                     </motion.div>
-                    <div className="absolute bottom-4 left-4 z-20 md:hidden">
-                      <motion.h1
-                        className="text-2xl font-bold text-white mb-1"
-                        initial={{ y: 10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.3 }}
-                      >
-                        {areaData.area_name}
-                      </motion.h1>
-                      <motion.div
-                        className="flex items-center"
-                        initial={{ y: 10, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                      >
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${areaData.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                          }`}>
-                          {areaData.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
-                        </span>
-                      </motion.div>
-                    </div>
                   </div>
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
-                    <motion.svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-20 w-20 opacity-50"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 0.5 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </motion.svg>
-                  </div>
-                )}
+                </div>
               </div>
 
               {/* Right Column: Area Information */}
@@ -246,8 +235,7 @@ const ViewAreaModal: FC<{
                 >
                   <h1 className="text-3xl font-bold text-gray-900">{areaData.area_name}</h1>
                   <div className="flex items-center mt-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${areaData.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${areaData.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
                       {areaData.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
                     </span>
                   </div>

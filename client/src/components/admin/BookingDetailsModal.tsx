@@ -135,21 +135,19 @@ const BookingDetailsModal: FC<{
             const checkOutDate = new Date(booking.check_out_date);
 
             if (isVenueBooking) {
-                const venueCheckOutHour = 17;
-                const checkOutDateTime = new Date(checkOutDate);
-                checkOutDateTime.setHours(venueCheckOutHour, 0, 0, 0);
+                const venueCheckOutTime = new Date(checkOutDate);
+                venueCheckOutTime.setHours(17, 0, 0, 0);
 
-                if (currentDate < checkOutDateTime) {
+                if (currentDate < venueCheckOutTime) {
                     return {
                         isValid: false,
                         message: "Venue checkout is only available after 5:00 PM on the scheduled check-out date."
                     };
                 } else {
-                    const roomCheckOutHour = 12;
-                    const checkOutDateTime = new Date(checkOutDate);
-                    checkOutDateTime.setHours(roomCheckOutHour, 0, 0, 0);
+                    const roomCheckOutTime = new Date(checkOutDate);
+                    roomCheckOutTime.setHours(12, 0, 0, 0);
 
-                    if (currentDate < checkOutDateTime) {
+                    if (currentDate < roomCheckOutTime) {
                         return {
                             isValid: false,
                             message: `Room check-out is available after 12:00 PM on ${formatDate(booking.check_out_date)}`
@@ -616,8 +614,8 @@ const BookingDetailsModal: FC<{
                             <div className="relative group">
                                 <motion.button
                                     whileTap={canCheckOut ? { scale: 0.95 } : {}}
-                                    onClick={onCheckOut}
-                                    className={`px-6 py-3 text-white rounded-lg cursor-pointer transition-colors flex items-center justify-center gap-2 shadow-md duration-300 ${canCheckOut
+                                    onClick={() => onCheckOut && canCheckOut && onCheckOut()}
+                                    className={`px-6 py-3 text-white rounded-lg transition-colors flex items-center justify-center gap-2 shadow-md duration-300 ${canCheckOut
                                         ? 'bg-indigo-600 hover:bg-indigo-700'
                                         : 'bg-gray-400 cursor-not-allowed'
                                         }`}

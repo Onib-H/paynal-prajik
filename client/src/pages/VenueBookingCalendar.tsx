@@ -112,7 +112,8 @@ const VenueBookingCalendar = () => {
     };
 
     const isDateUnavailable = (date: Date) => {
-        if (isBefore(date, startOfDay(new Date()))) return true;
+        const todayStart = startOfDay(new Date());
+        if (isBefore(date, todayStart) || isSameDay(date, new Date())) return true;
         return isDateBooked(date);
     };
 
@@ -133,12 +134,15 @@ const VenueBookingCalendar = () => {
         const isToday = isSameDay(date, new Date());
         const dateStatus = getDateStatus(date);
 
-        let className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
+        const className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
+
+        if (isToday) {
+            return `${className} bg-amber-600 text-white font-medium cursor-not-allowed`;
+        }
 
         if (isSelected) return `${className} bg-blue-600 text-white font-medium`;
         if (isHovered && !isUnavailable) return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
-        if (isToday && !isUnavailable) className += " border-blue-500 border-2";
-
+        
         if (dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
             switch (dateStatus.toLowerCase()) {
                 case 'reserved':
@@ -322,7 +326,11 @@ const VenueBookingCalendar = () => {
                                 <h4 className="text-sm font-medium mb-3">CALENDAR LEGEND</h4>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">
                                     <div className="flex items-center">
-                                        <div className="h-6 w-6 bg-white border border-gray-300 mr-2 rounded-full"></div>
+                                        <div className="h-6 w-6 bg-amber-600 mr-2 rounded-full"></div>
+                                        <span className="text-sm">Today</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <div className="h-6 w-6 bg-white border-1 border-gray-800 mr-2 rounded-full"></div>
                                         <span className="text-sm">Available</span>
                                     </div>
                                     <div className="flex items-center">
