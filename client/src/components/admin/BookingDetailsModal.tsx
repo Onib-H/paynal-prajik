@@ -1,12 +1,12 @@
 import { FC, useState } from "react";
 import { motion } from "framer-motion";
-import { BookingResponse } from "../../services/Booking";
+import { BookingResponse } from "../../types/BookingClient";
 import EventLoader from "../../motions/loaders/EventLoader";
 import { AlertCircle, Calendar, Check, CheckCircle2, Clock, IdCard, X } from "lucide-react";
 import { getBookingPrice, formatDate } from "../../utils/formatters";
 import BookingStatusBadge from "./BookingStatusBadge";
 
-const BookingDetailsModal: FC<{
+interface BookingDetailProps {
     booking: BookingResponse | null;
     onClose: () => void;
     onConfirm: () => void;
@@ -17,7 +17,9 @@ const BookingDetailsModal: FC<{
     onCancel?: () => void;
     canManage: boolean;
     isUpdating: boolean;
-}> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, onCancel, canManage, isUpdating }) => {
+}
+
+const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, onCancel, canManage, isUpdating }) => {
     const [paymentAmount, setPaymentAmount] = useState<string>("");
     const isVenueBooking = booking?.is_venue_booking;
     if (!booking) return null;

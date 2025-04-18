@@ -85,13 +85,13 @@ const App = () => {
           <Route path="/" element={homepageRoute} />
 
           <Route path="/confirm-booking" element={<ConfirmBooking />} />
-          <Route path="/confirm-venue-booking" element={<ConfirmVenueBooking />} />
+          <Route path="/confirm-area-booking" element={<ConfirmVenueBooking />} />
           <Route path="/registration" element={<RegistrationFlow />} />
           <Route path="/booking-accepted" element={<BookingAccepted />} />
 
-          <Route path="/venues" element={<Venue />} />
-          <Route path="/venues/:id" element={<VenueDetails />} />
-          <Route path="/venue-booking/:areaId" element={<VenueBookingCalendar />} />
+          <Route path="/areas" element={<Venue />} />
+          <Route path="/areas/:id" element={<VenueDetails />} />
+          <Route path="/area-booking/:areaId" element={<VenueBookingCalendar />} />
           <Route path="/rooms" element={<Rooms />} />
           <Route path="/rooms/:id" element={<RoomDetails />} />
           <Route path="/booking/:roomId" element={<BookingCalendar />} />

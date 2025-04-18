@@ -165,10 +165,10 @@ const VenueBookingCalendar = () => {
     const handleProceed = () => {
         if (selectedDate) {
             const dateStr = format(selectedDate, 'yyyy-MM-dd');
-            const startTime = `${dateStr}T08:00:00`;
+            const startTime = `${dateStr}`;
             const endTime = `${dateStr}T17:00:00`;
 
-            navigate(`/confirm-venue-booking?areaId=${areaId}&startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}&totalPrice=${price}`);
+            navigate(`/confirm-area-booking?areaId=${areaId}&startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}&totalPrice=${price}`);
         }
     };
 
@@ -182,7 +182,7 @@ const VenueBookingCalendar = () => {
 
     return (
         <div className="container mx-auto px-4 py-8 mt-16">
-            <h2 className="text-4xl font-semibold mb-6 text-center">Book Your Venue</h2>
+            <h2 className="text-4xl font-semibold mb-6 text-center">Book Your Area</h2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-lg shadow-md ring-3 ring-purple-500 p-6">
@@ -358,8 +358,8 @@ const VenueBookingCalendar = () => {
                             <button
                                 onClick={handleProceed}
                                 disabled={!selectedDate}
-                                className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${selectedDate
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                className={`px-6 py-2 rounded-md font-semibold ${selectedDate
+                                    ? 'text-white bg-blue-600 hover:bg-blue-700 cursor-pointer'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                             >
