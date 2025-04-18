@@ -96,7 +96,6 @@ const App = () => {
           <Route path="/rooms/:id" element={<RoomDetails />} />
           <Route path="/booking/:roomId" element={<BookingCalendar />} />
           <Route path="/availability" element={<AvailabilityResults />} />
-
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/cancel-reservation" element={<CancelReservation />} />
 
