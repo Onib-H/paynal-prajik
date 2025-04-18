@@ -15,18 +15,13 @@ import {
   fetchRooms,
 } from "../../services/Admin";
 import { IRoom } from "../../types/RoomAdmin";
-import { AddRoomResponse, Amenity, PaginationData, Room } from "../../types/RoomClient";
-import Error from "../_ErrorBoundary";
-<<<<<<< HEAD
-import { ChevronLeft, ChevronRight, Edit, Eye, Trash2 } from "lucide-react";
 import {
-  Amenity,
-  Room,
   AddRoomResponse,
+  Amenity,
   PaginationData,
+  Room,
 } from "../../types/RoomClient";
-=======
->>>>>>> 62d490912c96215e7a7ad41a9f069e3641b5cb10
+import Error from "../_ErrorBoundary";
 
 const MemoizedImage = memo(
   ({

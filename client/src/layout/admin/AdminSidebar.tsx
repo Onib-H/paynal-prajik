@@ -78,13 +78,16 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
   return (
     <>
       <aside
-        className={`fixed top-0 left-0 flex flex-col p-4 bg-white text-black h-full transition-all duration-300 ${
-          isSidebarOpen ? "min-w-[300px]" : "w-[100px]"
+        className={`fixed top-0 left-0 flex flex-col p-4 bg-white text-black h-full transition-all duration-300  ${
+          isSidebarOpen ? "min-w-[300px]" : "w-[100px] items-center"
         }`}
       >
         {/* Header section with toggle icon */}
-        <div className="border-b border-purple-200 pb-4 mb-4 flex justify-between items-center">
-          {/* Hide logo when sidebar is collapsed */}
+        <div
+          className={`border-b border-purple-200 pb-4 mb-4 flex items-center w-full ${
+            isSidebarOpen ? "justify-between" : "justify-center"
+          }`}
+        >
           {isSidebarOpen && (
             <Link to="/" className="flex items-center space-y-1">
               <img
@@ -96,24 +99,31 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
             </Link>
           )}
           <i
-            className="fa fa-bars text-3xl cursor-pointer "
+            className="fa fa-bars text-3xl cursor-pointer"
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           ></i>
         </div>
 
         {/* Admin profile */}
         <div
-          className={`p-2 pb-4 mb-4 bg-purple-100 rounded-md shadow-sm shadow-purple-300 ${
-            !isSidebarOpen && "flex justify-center"
+          className={`p-2 pb-4 mb-4 bg-purple-100 rounded-md shadow-sm shadow-purple-300 w-full ${
+            !isSidebarOpen ? "flex justify-center" : ""
           }`}
         >
           <Suspense fallback={<AdminDetailSkeleton />}>
-            {admin ? <AdminProfile admin={admin} /> : <AdminDetailSkeleton />}
+            {admin ? (
+              <AdminProfile
+                admin={admin}
+                hideName={!isSidebarOpen} // Pass prop to hide name
+              />
+            ) : (
+              <AdminDetailSkeleton />
+            )}
           </Suspense>
         </div>
 
         {/* Menu items */}
-        <div className="flex-grow overflow-y-auto p-2">
+        <div className={`flex-grow overflow-y-auto p-2 w-full`}>
           <ul className="space-y-4">
             {filteredMenuItems.map((item, index) => (
               <li key={index}>
@@ -121,11 +131,13 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
                   to={item.link}
                   end={item.link === "/admin"}
                   className={({ isActive }) =>
-                    `flex items-center space-x-2 justify-baseline rounded-md cursor-pointer ${
+                    `flex items-center justify-baseline rounded-md cursor-pointer ${
                       isActive
                         ? "border-r-3 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
                         : "hover:bg-purple-100/80 transition-colors duration-300"
-                    } ${!isSidebarOpen && "justify-center space-x-0"}`
+                    } ${
+                      !isSidebarOpen ? "justify-center space-x-0" : "space-x-2"
+                    }`
                   }
                 >
                   <FontAwesomeIcon
@@ -142,7 +154,7 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
         </div>
 
         {/* Logout button */}
-        <div className="px-3 py-4">
+        <div className="px-3 py-4 w-full">
           <button
             onClick={() => setIsModalOpen(true)}
             className={`w-full flex items-center ${

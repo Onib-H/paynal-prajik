@@ -629,7 +629,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="">
+    <div className="py-2 px-4">
       {renderReport()}
 
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-2">

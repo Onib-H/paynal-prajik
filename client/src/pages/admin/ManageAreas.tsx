@@ -3,13 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Edit, Eye, MapPin, Trash2 } from "lucide-react";
 import { FC, memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-<<<<<<< HEAD
-import EditAreaModal, {
-  IArea as IEditArea,
-} from "../../components/admin/EditAreaModal";
-=======
 import EditAreaModal from "../../components/admin/EditAreaModal";
->>>>>>> 62d490912c96215e7a7ad41a9f069e3641b5cb10
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
 import ManageSkeleton from "../../motions/skeletons/ManageSkeleton";
@@ -22,19 +16,6 @@ import {
 import { IArea as IEditArea } from "../../types/AreaAdmin";
 import { AddAreaResponse, Area, PaginationData } from "../../types/AreaClient";
 import Error from "../_ErrorBoundary";
-<<<<<<< HEAD
-import { Area, AddAreaResponse, PaginationData } from "../../types/AreaClient";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  Eye,
-  MapPin,
-  Trash2,
-} from "lucide-react";
-=======
->>>>>>> 62d490912c96215e7a7ad41a9f069e3641b5cb10
 
 const MemoizedImage = memo(
   ({
