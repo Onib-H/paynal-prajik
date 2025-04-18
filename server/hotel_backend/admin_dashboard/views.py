@@ -51,7 +51,19 @@ def dashboard_stats(request):
             current_month_end = current_month_start.replace(year=current_month_start.year + 1, month=1, day=1) - datetime.timedelta(days=1)
         
         total_rooms = Rooms.objects.count()
-        available_rooms = Rooms.objects.filter(status='available').count()
+        
+        checked_in_room_ids = Bookings.objects.filter(
+            Q(status='checked_in') & 
+            Q(is_venue_booking=False) & 
+            Q(check_out_date__gte=now.date())
+        ).values_list('room_id', flat=True).distinct()
+        
+        available_rooms = Rooms.objects.filter(
+            status='available'
+        ).exclude(
+            id__in=checked_in_room_ids
+        ).count()
+        
         occupied_rooms = Bookings.objects.filter(
             Q(status='checked_in') & 
             Q(is_venue_booking=False) & 
@@ -133,7 +145,6 @@ def dashboard_stats(request):
         
         return Response(response_data, status=status.HTTP_200_OK)
     except Exception as e:
-        print(f"Error in dashboard_stats: {str(e)}")
         return Response({
             "error": str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -156,11 +167,8 @@ def fetch_rooms(request):
     try:
         rooms = Rooms.objects.all().order_by('id')
         
-        # Get pagination parameters
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
-        
-        # Create paginator
         paginator = Paginator(rooms, page_size)
         
         try:
@@ -196,8 +204,14 @@ def add_new_room(request):
                 price_str = data['room_price'].replace('₱', '').replace(',', '')
                 data['room_price'] = float(price_str)
             except (ValueError, TypeError):
-                pass 
+                pass
         
+        if 'max_guests' in data and not isinstance(data['max_guests'], int):
+            try:
+                data['max_guests'] = int(data['max_guests'])
+            except (ValueError, TypeError):
+                data['max_guests'] = 2
+
         serializer = RoomSerializer(data=data)
         if serializer.is_valid():
             instance = serializer.save()
@@ -241,13 +255,19 @@ def edit_room(request, room_id):
     ).exists()
     
     if has_active_bookings:
-        allowed_fields = ['description', 'amenities', 'status']
+        allowed_fields = ['description', 'amenities', 'status', 'max_guests']
         filtered_data = {k: v for k, v in request.data.items() if k in allowed_fields}
         
         if 'status' in filtered_data and filtered_data['status'] == 'unavailable':
             return Response({
                 "error": "Cannot change status to unavailable when there are active or reserved bookings",
             }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if 'max_guests' in filtered_data and not isinstance(filtered_data['max_guests'], int):
+            try:
+                filtered_data['max_guests'] = int(filtered_data['max_guests'])
+            except (ValueError, TypeError):
+                filtered_data['max_guests'] = 2
         
         serializer = RoomSerializer(room, data=filtered_data, partial=True)
     else:
@@ -258,6 +278,12 @@ def edit_room(request, room_id):
                 data['room_price'] = float(price_str)
             except (ValueError, TypeError):
                 pass 
+        
+        if 'max_guests' in data and not isinstance(data['max_guests'], int):
+            try:
+                data['max_guests'] = int(data['max_guests'])
+            except (ValueError, TypeError):
+                data['max_guests'] = 2
         
         serializer = RoomSerializer(room, data=data, partial=True)
     
@@ -303,13 +329,10 @@ def fetch_areas(request):
     try:
         areas = Areas.objects.all().order_by('id')
         
-        # Get pagination parameters
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
-        
-        # Create paginator
         paginator = Paginator(areas, page_size)
-        
+
         try:
             paginated_areas = paginator.page(page)
         except PageNotAnInteger:
@@ -635,11 +658,9 @@ def update_booking_status(request, booking_id):
         return Response({"error": f"Invalid status value. Valid values are: {', '.join(valid_statuses)}"}, 
                             status=status.HTTP_400_BAD_REQUEST)
         
-    # Check if set_available is explicitly set to False to prevent maintenance
     set_available = request.data.get('set_available')
     prevent_maintenance = set_available is False
 
-    # Only set to maintenance if not prevented and status requires it
     if status_value in ['reserved', 'confirmed', 'checked_in'] and not prevent_maintenance:
         if booking.is_venue_booking and booking.area:
             area = booking.area
@@ -659,7 +680,6 @@ def update_booking_status(request, booking_id):
             room.status = 'available'
             room.save()
     
-    # If set_available is True, always set property to available
     if set_available:
         if booking.is_venue_booking and booking.area:
             area = booking.area
@@ -685,7 +705,6 @@ def update_booking_status(request, booking_id):
             user_email = booking.user.email
             send_booking_confirmation_email(user_email, serializer.data)
         except Exception as e:
-            print(f"Error while sending booking confirmation email: {str(e)}")
             return Response({
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -695,8 +714,7 @@ def update_booking_status(request, booking_id):
             user_email = booking.user.email
             send_booking_rejection_email(user_email, serializer.data)
         except Exception as e:
-            print(f"Error while sending booking rejection email: {str(e)}")
-            return Response({
+           return Response({
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -785,7 +803,7 @@ def booking_status_counts(request):
 @permission_classes([IsAuthenticated])
 def fetch_all_users(request):
     try:
-        users = CustomUsers.objects.filter(role="admin")
+        users = CustomUsers.objects.filter(role="guest")
         serializer = CustomUserSerializer(users, many=True)
         return Response({
             "data": serializer.data
@@ -816,7 +834,6 @@ def manage_user(request, user_id):
                 data = request.POST
                 files = request.FILES
                 
-                # Create new user logic
                 email = data.get('email')
                 password = data.get('password')
                 first_name = data.get('first_name')
@@ -911,3 +928,354 @@ def archive_user(request, user_id):
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_revenue(request):
+    try:
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        start_date = datetime.datetime(year, month, 1)
+        
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        end_date = end_date.replace(hour=23, minute=59, second=59)        
+        days_in_month = (end_date.day)
+        daily_revenue = [0] * days_in_month
+        
+        transactions = Transactions.objects.filter(
+            transaction_date__gte=start_date,
+            transaction_date__lte=end_date,
+            status='completed'
+        )
+        
+        for transaction in transactions:
+            day_idx = transaction.transaction_date.day - 1
+            daily_revenue[day_idx] += float(transaction.amount)
+        
+        return Response({
+            "data": daily_revenue,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_bookings(request):
+    try:
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        
+        start_date = datetime.datetime(year, month, 1)
+        
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        end_date = end_date.replace(hour=23, minute=59, second=59)        
+        days_in_month = (end_date.day)        
+        daily_bookings = [0] * days_in_month
+        
+        bookings = Bookings.objects.filter(
+            created_at__gte=start_date,
+            created_at__lte=end_date
+        )
+        
+        for booking in bookings:
+            day_idx = booking.created_at.day - 1
+            daily_bookings[day_idx] += 1
+        
+        return Response({
+            "data": daily_bookings,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_occupancy(request):
+    try:
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))        
+        start_date = datetime.datetime(year, month, 1).date()
+        
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1).date() - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1).date() - datetime.timedelta(days=1)
+        
+        days_in_month = (end_date.day)        
+        daily_occupancy = [0] * days_in_month
+        
+        total_rooms = Rooms.objects.count()
+        if total_rooms == 0:
+            return Response({
+                "data": daily_occupancy,
+                "month": month,
+                "year": year,
+                "days_in_month": days_in_month
+            }, status=status.HTTP_200_OK)
+        
+        for day in range(1, days_in_month + 1):
+            current_date = datetime.date(year, month, day)
+            
+            occupied_rooms = Bookings.objects.filter(
+                Q(check_in_date__lte=current_date) & 
+                Q(check_out_date__gte=current_date) &
+                Q(status__in=['reserved', 'confirmed', 'checked_in']) &
+                Q(is_venue_booking=False)
+            ).count()
+            
+            occupancy_rate = (occupied_rooms / total_rooms) * 100
+            daily_occupancy[day - 1] = round(occupancy_rate, 2)
+        
+        return Response({
+            "data": daily_occupancy,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_checkins_checkouts(request):
+    try:
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        start_date = datetime.datetime(year, month, 1)
+        
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        days_in_month = (end_date.day)
+        daily_checkins = [0] * days_in_month
+        daily_checkouts = [0] * days_in_month
+        
+        bookings = Bookings.objects.all()
+        
+        for booking in bookings:
+            if booking.check_in_date and booking.check_in_date.month == month and booking.check_in_date.year == year:
+                if booking.status == 'checked_in' or booking.status == 'checked_out':
+                    day_idx = booking.check_in_date.day - 1
+                    if 0 <= day_idx < days_in_month:
+                        daily_checkins[day_idx] += 1
+            
+            if booking.check_out_date and booking.check_out_date.month == month and booking.check_out_date.year == year:
+                if booking.status == 'checked_out':
+                    day_idx = booking.check_out_date.day - 1
+                    if 0 <= day_idx < days_in_month:
+                        daily_checkouts[day_idx] += 1
+        
+        return Response({
+            "checkins": daily_checkins,
+            "checkouts": daily_checkouts,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_cancellations(request):
+    try:
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))       
+        start_date = datetime.datetime(year, month, 1)
+        
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        days_in_month = (end_date.day)
+        daily_cancellations = [0] * days_in_month        
+        cancelled_bookings = Bookings.objects.filter(
+            status='cancelled',
+            cancellation_date__gte=start_date,
+            cancellation_date__lte=end_date
+        )
+        
+        for booking in cancelled_bookings:
+            day_idx = booking.cancellation_date.day - 1
+            daily_cancellations[day_idx] += 1
+        
+        return Response({
+            "data": daily_cancellations,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def room_revenue(request):
+    try:
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))        
+        start_date = datetime.datetime(year, month, 1)
+        
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        response_data = {
+            "room_names": [],
+            "revenue_data": [],
+            "month": month,
+            "year": year
+        }
+        
+        rooms = Rooms.objects.all()
+        
+        for room in rooms:
+            room_revenue = Transactions.objects.filter(
+                booking__room=room,
+                transaction_date__gte=start_date,
+                transaction_date__lte=end_date,
+                status='completed',
+                booking__is_venue_booking=False
+            ).aggregate(Sum('amount'))['amount__sum'] or 0
+            
+            response_data["room_names"].append(room.room_name)
+            response_data["revenue_data"].append(float(room_revenue))
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def room_bookings(request):
+    try:
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))        
+        start_date = datetime.datetime(year, month, 1)
+        
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        response_data = {
+            "room_names": [],
+            "booking_counts": [],
+            "month": month,
+            "year": year
+        }
+        
+        rooms = Rooms.objects.all()
+        
+        for room in rooms:
+            room_bookings = Bookings.objects.filter(
+                room=room,
+                created_at__gte=start_date,
+                created_at__lte=end_date,
+                is_venue_booking=False
+            ).count()
+            
+            response_data["room_names"].append(room.room_name)
+            response_data["booking_counts"].append(room_bookings)
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_no_shows_rejected(request):
+    try:
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))        
+        start_date = datetime.datetime(year, month, 1)
+        
+        if month == 12:
+            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+        else:
+            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+        
+        end_date = end_date.replace(hour=23, minute=59, second=59)        
+        days_in_month = (end_date.day)
+        
+        daily_no_shows = [0] * days_in_month
+        daily_rejected = [0] * days_in_month
+        
+        no_show_bookings = Bookings.objects.filter(
+            status='missed_reservation',
+            updated_at__gte=start_date,
+            updated_at__lte=end_date
+        )
+        
+        rejected_bookings = Bookings.objects.filter(
+            status='rejected',
+            updated_at__gte=start_date,
+            updated_at__lte=end_date
+        )
+        
+        for booking in no_show_bookings:
+            day_idx = booking.updated_at.day - 1
+            daily_no_shows[day_idx] += 1
+        
+        for booking in rejected_bookings:
+            day_idx = booking.updated_at.day - 1
+            daily_rejected[day_idx] += 1
+        
+        return Response({
+            "no_shows": daily_no_shows,
+            "rejected": daily_rejected,
+            "month": month,
+            "year": year,
+            "days_in_month": days_in_month
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

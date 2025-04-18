@@ -4,20 +4,20 @@ import { footerLinks } from "../constants/Footer";
 
 const Footer = () => {
   return (
-    <footer className="relative bg-gray-100 px-6 md:px-15 py-5 font-montserrat">
+    <footer className="relative bg-gray-100 px-6 sm:px-10 md:px-15 py-6 font-montserrat">
       <img
         loading="lazy"
         src={hotel_logo}
-        className="h-10 w-auto cursor-pointer mb-3"
+        className="h-12 w-auto cursor-pointer mb-4 mx-auto sm:mx-0"
       />
       <div className="px-5">
-        <i className="fa-solid fa-location-dot text-violet-600"></i>
-        <h6 className="inline-block ml-1 text-sm italic mb-5">
-          Brgy. Bubukal Sta. Cruz, Laguna
-        </h6>
+        <div className="flex items-center gap-2 justify-center sm:justify-start">
+          <i className="fa-solid fa-location-dot text-violet-600"></i>
+          <h6 className="text-sm italic">Brgy. Bubukal, Sta. Cruz, Laguna</h6>
+        </div>
 
         {/* Footer Sections */}
-        <section className="grid grid-cols-2 md:grid-cols-3 gap-8 py-2">
+        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 py-4 mt-2">
           {footerLinks.map((section, sectionIndex) => (
             <div key={sectionIndex} className="text-left">
               <h1 className="text-base font-semibold">{section.title}</h1>
@@ -26,7 +26,7 @@ const Footer = () => {
                   <li key={linkIndex} className="text-sm pt-2">
                     <Link
                       to={link.to}
-                      className="text-blue-600 hover:underline transition-all duration-300"
+                      className="text-purple-600 hover:underline transition-all duration-300"
                     >
                       {link.links}
                     </Link>
@@ -39,33 +39,42 @@ const Footer = () => {
           {/* Contact */}
           <div className="text-left">
             <h1 className="text-base font-semibold">Contact</h1>
-            <ul className="pt-2 space-y-2 flex flex-col items-start">
+            <ul className="pt-2 space-y-2">
               <li className="flex items-center gap-2 text-sm">
                 <i className="fas fa-phone"></i> 098-765-4321
               </li>
               <li className="flex items-center gap-2 text-sm">
-                <i className="fas fa-envelope"></i> azureahotelmanagement@gmail.com
+                <i className="fas fa-envelope"></i>
+                azureahotelmanagement@gmail.com
               </li>
             </ul>
           </div>
 
-          {/* Social Media (Wrapped on smaller screens) */}
-          <div className="col-span-2 md:col-span-1 text-left sm:text-left">
+          {/* Social Media */}
+          <div className="text-left sm:text-left">
             <h1 className="text-base font-semibold">Follow Us</h1>
-            <div className="flex flex-wrap justify-start gap-3 pt-4">
-              <i className="fa-brands fa-instagram text-xl transition-all duration-300 border border-gray-800 p-2 rounded-full hover:bg-black hover:text-white"></i>
-              <i className="fa-brands fa-facebook-f text-xl transition-all duration-300 border border-black p-2 px-3 rounded-full hover:text-white hover:bg-blue-500"></i>
-              <i className="fa-brands fa-x-twitter text-xl transition-all duration-300 border border-black p-2 rounded-full hover:text-white hover:bg-black"></i>
-              <i className="fa-brands fa-tiktok text-xl transition-all duration-300 border border-black p-2 rounded-full hover:text-white hover:bg-black"></i>
-              <i className="fa-brands fa-linkedin-in text-xl transition-all duration-300 border border-black p-2 rounded-full hover:bg-[#0077b5] hover:text-white"></i>
+            <div className="flex flex-wrap justify-start gap-3 pt-3">
+              {[
+                { class: "fa-instagram", bg: "black" },
+                { class: "fa-facebook-f", bg: "blue-500" },
+                { class: "fa-x-twitter", bg: "black" },
+                { class: "fa-tiktok", bg: "black" },
+                { class: "fa-linkedin-in", bg: "[#0077b5]" },
+              ].map((icon, index) => (
+                <i
+                  key={index}
+                  className={`fa-brands ${icon.class} text-lg border border-black p-2 rounded-full transition-all duration-300 hover:bg-${icon.bg} hover:text-white`}
+                ></i>
+              ))}
             </div>
           </div>
         </section>
 
         {/* Bottom Section */}
-        <section className="flex flex-col md:flex-row justify-center items-center py-5 border-t-2 border-gray-200 mt-7 gap-3 text-center md:text-left">
-          <h1 className="text-md">
-            &copy; {new Date().getFullYear()} Azurea Hotel Management System &trade; | All rights reserved.
+        <section className="flex flex-col md:flex-row justify-center items-center py-5 border-t-2 border-gray-200 mt-5 gap-3 text-center md:text-left">
+          <h1 className="text-sm md:text-md">
+            &copy; {new Date().getFullYear()} Azurea Hotel Management System
+            &trade; | All rights reserved.
           </h1>
         </section>
       </div>

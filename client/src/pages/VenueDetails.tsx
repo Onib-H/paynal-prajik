@@ -1,26 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, BookOpen, DollarSign, ArrowLeft as LeftArrow, MapPin, Star, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, ArrowLeft as LeftArrow, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
 import { lazy, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
 import { useUserContext } from "../contexts/AuthContext";
 import { fetchAreaDetail, fetchAreas } from "../services/Area";
 import { fetchAreaReviews } from "../services/Booking";
+import { Area } from "../types/AreaClient";
 
 const LoadingDashboard = lazy(() => import("../motions/skeletons/AdminDashboardSkeleton"));
 const Error = lazy(() => import("./_ErrorBoundary"));
-
-interface Area {
-    id: number;
-    area_name: string;
-    description: string;
-    area_image: string;
-    status: string;
-    capacity: number;
-    price_per_hour: string;
-}
 
 const VenueDetails = () => {
     const { id } = useParams<{ id: string }>();
@@ -65,20 +55,18 @@ const VenueDetails = () => {
     }
 
     const allVenues = allVenuesData?.data || [];
-    const currentIndex = allVenues.findIndex((venue: any) => venue.id === Number(id));
+    const currentIndex = allVenues.findIndex((venue) => venue.id === Number(id));
     const prevVenue = currentIndex > 0 ? allVenues[currentIndex - 1] : null;
     const nextVenue = currentIndex < allVenues.length - 1 ? allVenues[currentIndex + 1] : null;
 
     const reviews = reviewsData?.data || [];
 
-    // Format price if needed - remove ₱ if it already exists in the string
     const formattedPrice = typeof venueDetail.price_per_hour === 'string'
         ? venueDetail.price_per_hour.startsWith('₱')
             ? venueDetail.price_per_hour
             : `${venueDetail.price_per_hour}`
         : `${venueDetail.price_per_hour}`;
 
-    // Animation variants
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -218,14 +206,14 @@ const VenueDetails = () => {
                                             <Users className="w-6 h-6 text-indigo-600" />
                                         </div>
                                         <div>
-                                            <h3 className="font-medium text-gray-900">Capacity</h3>
-                                            <p className="text-gray-600">{venueDetail.capacity} people</p>
+                                            <h3 className="font-medium text-gray-900">Max Guests</h3>
+                                            <p className="text-gray-600">{venueDetail.capacity} guests</p>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center">
                                         <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
-                                            <DollarSign className="w-6 h-6 text-green-600" />
+                                            <PhilippinePeso className="w-6 h-6 text-green-600" />
                                         </div>
                                         <div>
                                             <h3 className="font-medium text-gray-900">Pricing</h3>
@@ -338,7 +326,7 @@ const VenueDetails = () => {
                                 {/* Venue Information */}
                                 <div className="space-y-4 mb-6">
                                     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                        <DollarSign className="w-5 h-5 text-indigo-500 mr-3" />
+                                        <PhilippinePeso className="w-5 h-5 text-indigo-500 mr-3" />
                                         <div>
                                             <h4 className="font-medium text-gray-800">Pricing</h4>
                                             <p className="text-indigo-600 text-lg font-semibold">{formattedPrice}</p>
@@ -348,7 +336,7 @@ const VenueDetails = () => {
                                     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                                         <Users className="w-5 h-5 text-indigo-500 mr-3" />
                                         <div>
-                                            <h4 className="font-medium text-gray-800">Maximum Capacity</h4>
+                                            <h4 className="font-medium text-gray-800">Max Guests</h4>
                                             <p className="text-gray-900 text-lg font-semibold">{venueDetail.capacity} guests</p>
                                         </div>
                                     </div>

@@ -1,43 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isEqual, isWithinInterval, parseISO, startOfDay, startOfMonth } from 'date-fns';
+import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isEqual, isSameDay, isWithinInterval, parseISO, startOfDay, startOfMonth } from 'date-fns';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchRoomBookings, fetchRoomById } from '../services/Booking';
+import { AmenityObject, BookingsByDate, RoomData, BookingData } from '../types/BookingClient';
 
-interface AmenityObject {
-    id: number;
-    description: string;
-}
-
-interface RoomData {
-    id: number;
-    room_name: string;
-    room_type: string;
-    description: string;
-    room_image: string;
-    status: string;
-    capacity: number;
-    amenities: Array<AmenityObject | string>;
-    price_per_night?: string;
-    room_price?: string;
-}
-
-interface BookingData {
-    id: number;
-    check_in_date: string;
-    check_out_date: string;
-    status: string;
-}
-
-interface BookingsByDate {
-    [date: string]: {
-        status: string;
-        bookingId: number;
-    };
-}
-
-function isAmenityObject(amenity: any): amenity is AmenityObject {
+const isAmenityObject = (amenity: any): amenity is AmenityObject => {
     return amenity && typeof amenity === 'object' && 'description' in amenity;
 }
 
@@ -56,6 +24,9 @@ const BookingCalendar = () => {
     const [numberOfNights, setNumberOfNights] = useState(1);
     const [totalPrice, setTotalPrice] = useState(0);
     const [bookingsByDate, setBookingsByDate] = useState<BookingsByDate>({});
+    const [hasConflict, setHasConflict] = useState(false);
+    const [conflictMessage, setConflictMessage] = useState<string | null>(null);
+    const [isSameDayBooking, setIsSameDayBooking] = useState(false);
 
     useEffect(() => {
         if (arrivalParam && departureParam) {
@@ -66,7 +37,7 @@ const BookingCalendar = () => {
                 setCheckOutDate(departure);
                 setCurrentMonth(arrival);
             } catch (error) {
-                console.error('Error parsing dates from URL:', error);
+                console.error(`Error parsing dates from URL: ${error}`);
             }
         }
     }, [arrivalParam, departureParam]);
@@ -79,22 +50,13 @@ const BookingCalendar = () => {
 
     const { data: roomData, isLoading: isLoadingRoom } = useQuery<RoomData>({
         queryKey: ['room', roomId],
-        queryFn: async () => {
-            try {
-                return await fetchRoomById(roomId || '');
-            } catch (error) {
-                console.error('Error fetching room:', error);
-                throw error;
-            }
-        },
+        queryFn: () => fetchRoomById(roomId),
         enabled: !!roomId,
     });
 
     const { data: bookingsData, isLoading: isLoadingBookings } = useQuery<{ data: BookingData[] }>({
         queryKey: ['roomBookings', roomId, dateRange.startDate, dateRange.endDate],
-        queryFn: async () => {
-            return fetchRoomBookings(roomId || '', dateRange.startDate, dateRange.endDate);
-        },
+        queryFn: () => fetchRoomBookings(roomId || '', dateRange.startDate, dateRange.endDate),
         enabled: !!roomId,
     });
 
@@ -122,6 +84,41 @@ const BookingCalendar = () => {
     }, [bookingsData]);
 
     useEffect(() => {
+        if (checkInDate && checkOutDate) {
+            const sameDayBooking = isSameDay(checkInDate, checkOutDate);
+            setIsSameDayBooking(sameDayBooking);
+        } else {
+            setIsSameDayBooking(false);
+        }
+    }, [checkInDate, checkOutDate]);
+
+    useEffect(() => {
+        if (checkInDate && checkOutDate && bookingsData?.data) {
+            const hasOverlap = bookingsData.data.some(booking => {
+                if (!['reserved', 'confirmed', 'checked_in'].includes(booking.status.toLowerCase())) return false;
+
+                const existingCheckIn = parseISO(booking.check_in_date);
+                const existingCheckOut = parseISO(booking.check_out_date);
+
+                if (isSameDay(checkOutDate, existingCheckIn)) return false;
+
+                const hasDateOverlap = (
+                    checkInDate < existingCheckOut &&
+                    existingCheckIn < checkOutDate
+                );
+
+                return hasDateOverlap;
+            });
+
+            setHasConflict(hasOverlap);
+            setConflictMessage(hasOverlap ? "Selected dates overlap with an existing booking. Please choose different dates." : null);
+        } else {
+            setHasConflict(false);
+            setConflictMessage(null);
+        }
+    }, [checkInDate, checkOutDate, bookingsData]);
+
+    useEffect(() => {
         if (roomId) {
             const nextMonth = addMonths(currentMonth, 2);
             const prefetchStartDate = format(startOfMonth(nextMonth), 'yyyy-MM-dd');
@@ -146,7 +143,7 @@ const BookingCalendar = () => {
                 const numericValue = priceString.toString().replace(/[^\d.]/g, '');
                 priceValue = parseFloat(numericValue) || 0;
             } catch (error) {
-                console.error('Error parsing room price:', error);
+                console.error(`Error parsing room price: ${error}`);
                 priceValue = 0;
             }
 
@@ -155,6 +152,7 @@ const BookingCalendar = () => {
     }, [checkInDate, checkOutDate, roomData]);
 
     const months = useMemo(() => [currentMonth, addMonths(currentMonth, 1)], [currentMonth]);
+
     const prevMonth = useCallback(() => setCurrentMonth(prev => addMonths(prev, -1)), []);
     const nextMonth = useCallback(() => setCurrentMonth(prev => addMonths(prev, 1)), []);
 
@@ -175,23 +173,38 @@ const BookingCalendar = () => {
         return bookingsByDate[dateString]?.status || null;
     }, [bookingsByDate]);
 
-    const isDateUnavailable = useCallback((date: Date) => {
-        if (isBefore(date, startOfDay(new Date()))) {
-            return true;
+    const isDateUnavailable = useCallback((date: Date, isCheckout = false) => {
+        if (isBefore(date, startOfDay(new Date()))) return true;
+
+        if (isCheckout) {
+            const dateString = format(date, 'yyyy-MM-dd');
+            const booking = bookingsByDate[dateString];
+
+            if (booking && booking.status) {
+                const status = booking.status.toLowerCase();
+                if (['checked_in', 'reserved'].includes(status)) {
+                    const matchingBooking = bookingsData?.data.find(b => b.id === booking.bookingId);
+                    if (matchingBooking) {
+                        const bookingStartDate = parseISO(matchingBooking.check_in_date);
+                        return !isSameDay(date, bookingStartDate);
+                    }
+                }
+            }
+            return false;
         }
 
         return isDateBooked(date);
-    }, [isDateBooked]);
+    }, [isDateBooked, bookingsByDate, bookingsData?.data]);
 
     const handleDateClick = (date: Date) => {
-        if (isDateUnavailable(date)) {
-            return;
-        }
-
         if (!checkInDate || (checkInDate && checkOutDate)) {
+            if (isDateUnavailable(date)) return;
+
             setCheckInDate(date);
             setCheckOutDate(null);
         } else {
+            if (isDateUnavailable(date, true)) return;
+
             if (isBefore(date, checkInDate)) {
                 setCheckOutDate(checkInDate);
                 setCheckInDate(date);
@@ -202,17 +215,13 @@ const BookingCalendar = () => {
     };
 
     const handleDateHover = (date: Date) => {
-        if (!isDateUnavailable(date)) {
-            setHoveredDate(date);
-        } else {
-            setHoveredDate(null);
-        }
+        const isCheckout = checkInDate !== null && checkOutDate === null;
+        if (!isDateUnavailable(date, isCheckout)) setHoveredDate(date);
+        else setHoveredDate(null);
     };
 
     const isDateInRange = (date: Date) => {
-        if (checkInDate && checkOutDate) {
-            return isWithinInterval(date, { start: checkInDate, end: checkOutDate });
-        }
+        if (checkInDate && checkOutDate) return isWithinInterval(date, { start: checkInDate, end: checkOutDate });
         if (checkInDate && hoveredDate && !checkOutDate) {
             if (isBefore(hoveredDate, checkInDate)) {
                 return isWithinInterval(date, { start: hoveredDate, end: checkInDate });
@@ -224,38 +233,36 @@ const BookingCalendar = () => {
     };
 
     const getDateCellClass = (date: Date) => {
-        const isUnavailable = isDateUnavailable(date);
+        const isCheckout = checkInDate !== null && checkOutDate === null;
+        const isUnavailable = isDateUnavailable(date, isCheckout);
+
         const isToday = isEqual(date, startOfDay(new Date()));
         const isCheckinDate = checkInDate && isEqual(date, checkInDate);
         const isCheckoutDate = checkOutDate && isEqual(date, checkOutDate);
-        const isInRange = !isUnavailable && isDateInRange(date);
-        const isHovered = !isUnavailable && hoveredDate && isEqual(date, hoveredDate);
+        const isInRange = !isDateUnavailable(date, true) && isDateInRange(date);
+        const isHovered = !isDateUnavailable(date, isCheckout) && hoveredDate && isEqual(date, hoveredDate);
         const dateStatus = getDateStatus(date);
 
-        // Base class for all date cells
         let className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
 
-        // Handle selection first (highest priority)
-        if (isCheckinDate || isCheckoutDate) {
-            return `${className} bg-blue-600 text-white font-medium`;
+        if (isCheckinDate || isCheckoutDate) return `${className} bg-blue-600 text-white font-medium`;
+        if (isInRange) return `${className} bg-blue-200 text-blue-800`;
+        if (isHovered && !isUnavailable) return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
+        if (isToday && !isUnavailable) className += " border-blue-500 border-2";
+
+        if (isCheckout && dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
+            const matchingBooking = bookingsData?.data.find(b =>
+                bookingsByDate[format(date, 'yyyy-MM-dd')]?.bookingId === b.id
+            );
+
+            if (matchingBooking) {
+                const bookingStartDate = parseISO(matchingBooking.check_in_date);
+                if (isSameDay(date, bookingStartDate)) {
+                    return `${className} bg-blue-100 border-2 border-blue-500 font-medium cursor-pointer`;
+                }
+            }
         }
 
-        // Handle date range
-        if (isInRange) {
-            return `${className} bg-blue-200 text-blue-800`;
-        }
-
-        // Handle hover effect for available dates
-        if (isHovered && !isUnavailable) {
-            return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
-        }
-
-        // Handle today indicator
-        if (isToday && !isUnavailable) {
-            className += " border-blue-500 border-2";
-        }
-
-        // Handle specific booked statuses
         if (dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
             switch (dateStatus.toLowerCase()) {
                 case 'reserved':
@@ -267,17 +274,12 @@ const BookingCalendar = () => {
             }
         }
 
-        // Handle past dates
-        if (isUnavailable) {
-            return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
-        }
-
-        // Default available date styling (including checked_out, cancelled, rejected, pending)
+        if (isUnavailable) return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
         return `${className} bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer`;
     };
 
     const handleProceed = () => {
-        if (checkInDate && checkOutDate && numberOfNights > 0) {
+        if (checkInDate && checkOutDate && numberOfNights > 0 && !hasConflict && !isSameDayBooking) {
             navigate(`/confirm-booking?roomId=${roomId}&arrival=${format(checkInDate, 'yyyy-MM-dd')}&departure=${format(checkOutDate, 'yyyy-MM-dd')}&totalPrice=${totalPrice}`);
         }
     };
@@ -296,7 +298,7 @@ const BookingCalendar = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <div className="bg-white ring-3 ring-blue-400 rounded-lg shadow-xl p-6">
+                    <div className="bg-white ring-3 ring-purple-500 rounded-lg shadow-xl p-6">
                         <h3 className="text-2xl font-bold mb-4">Select Your Stay Dates</h3>
 
                         {/* Selected Dates */}
@@ -314,12 +316,36 @@ const BookingCalendar = () => {
                                 </span>
                             </div>
                             <div className="mt-2 md:mt-0">
-                                <span className="text-gray-600">Days:</span>
+                                <span className="text-gray-600">Nights:</span>
                                 <span className="ml-2 font-semibold">
                                     {checkInDate && checkOutDate ? numberOfNights : 0}
                                 </span>
                             </div>
                         </div>
+
+                        {/* Display conflict warning if there's an overlap */}
+                        {conflictMessage && (
+                            <div className="mb-6 p-4 bg-red-50 border border-red-300 text-red-800 rounded-lg">
+                                <div className="flex items-center">
+                                    <svg className="h-5 w-5 text-red-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    <p>{conflictMessage}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Display same-day booking warning */}
+                        {isSameDayBooking && (
+                            <div className="mb-6 p-4 bg-amber-50 border border-amber-300 text-amber-800 rounded-lg">
+                                <div className="flex items-center">
+                                    <svg className="h-5 w-5 text-amber-500 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                    <p>Minimum stay is 1 night. Please select different check-out date.</p>
+                                </div>
+                            </div>
+                        )}
 
                         {arrivalParam && departureParam ? (
                             <div className="mb-6 p-4 bg-blue-50 rounded-lg">
@@ -333,7 +359,6 @@ const BookingCalendar = () => {
                                 </p>
                             </div>
                         ) : (
-                            // Show calendar for date selection if no dates in URL
                             <>
                                 {/* Calendar Controls */}
                                 <div className="flex justify-between items-center mb-4">
@@ -447,8 +472,8 @@ const BookingCalendar = () => {
                         <div className="flex justify-end mt-6">
                             <button
                                 onClick={handleProceed}
-                                disabled={!checkInDate || !checkOutDate}
-                                className={`px-6 py-2 rounded-md font-semibold ${checkInDate && checkOutDate
+                                disabled={!checkInDate || !checkOutDate || hasConflict || isSameDayBooking}
+                                className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${checkInDate && checkOutDate && !hasConflict && !isSameDayBooking
                                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
@@ -462,7 +487,7 @@ const BookingCalendar = () => {
                 {/* Room Info Card - Right Side */}
                 <div className="lg:col-span-1">
                     {roomData && (
-                        <div className="bg-white rounded-lg ring-blue-400 ring-3 shadow-xl p-6 sticky top-24">
+                        <div className="bg-white rounded-lg ring-purple-500 ring-3 shadow-xl p-6 sticky top-24">
                             <div className="mb-4">
                                 <img
                                     loading="lazy"
@@ -479,13 +504,13 @@ const BookingCalendar = () => {
                             </p>
 
                             <div className="flex flex-col space-y-2 mb-4">
-                                <div className="flex items-center text-gray-600">
+                                <div className="flex items-center text-gray-800">
                                     <span className="mr-2">🏠</span>
-                                    <span>{roomData.room_type}</span>
+                                    <span className='font-semibold uppercase'>{roomData.room_type}</span>
                                 </div>
-                                <div className="flex items-center text-gray-600">
+                                <div className="flex items-center text-gray-800">
                                     <span className="mr-2">👥</span>
-                                    <span>{roomData.capacity}</span>
+                                    <span className='font-semibold'>Max Guests: {roomData.max_guests}</span>
                                 </div>
                             </div>
 
@@ -503,7 +528,8 @@ const BookingCalendar = () => {
                                 </div>
                             </div>
 
-                            {checkInDate && checkOutDate && (
+                            {/* Only show booking details if valid date range (not same day) */}
+                            {checkInDate && checkOutDate && !isSameDayBooking && (
                                 <div className="border-t border-gray-200 pt-3 mt-3">
                                     <h4 className="font-semibold text-lg mb-3">Booking Details:</h4>
                                     <div className="p-1 rounded-md space-y-2">
@@ -516,7 +542,7 @@ const BookingCalendar = () => {
                                             <span className="font-medium">{format(checkOutDate, 'MMM dd, yyyy')}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span>Days:</span>
+                                            <span>Nights:</span>
                                             <span className="font-medium">{numberOfNights}</span>
                                         </div>
                                         <div className="flex justify-between text-3xl font-semibold text-blue-600 pt-2 border-t border-gray-200">

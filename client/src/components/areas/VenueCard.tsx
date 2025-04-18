@@ -1,10 +1,9 @@
-import { faUsers } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { motion } from "framer-motion";
-import { Book } from "lucide-react";
+import { AlertCircle, Book } from "lucide-react";
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
+import { useBookingLimit } from "../../contexts/BookingLimitContext";
 
 interface AreaCardProps {
   id: number;
@@ -12,26 +11,48 @@ interface AreaCardProps {
   priceRange: string;
   capacity: number;
   image: string;
+  description: string;
 }
 
 const VenueCard: FC<AreaCardProps> = ({
   id,
   title,
   priceRange,
-  capacity,
   image,
+  description,
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
+  const { canBook, maxLimit } = useBookingLimit();
 
   const handleBookNow = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevents triggering the card click event
-    if (isAuthenticated) {
-      navigate(`/venue-booking/${id}`);
-    } else {
+    e.stopPropagation();
+    if (!isAuthenticated) {
       navigate(`/venues/${id}?showLogin=true`);
+      return;
     }
+
+    if (!canBook) return;
+    navigate(`/venue-booking/${id}`);
   };
+
+  // Truncate description to 50 characters
+  const truncatedDescription =
+    description && description.length > 50
+      ? `${description.substring(0, 50)}...`
+      : description || "No description available.";
+
+  const buttonClass = isAuthenticated
+    ? canBook
+      ? "bg-green-600 hover:bg-green-700"
+      : "bg-gray-400 cursor-not-allowed"
+    : "bg-gray-400 cursor-not-allowed";
+
+  const buttonTitle = isAuthenticated
+    ? canBook
+      ? "Book this venue"
+      : `Limit of ${maxLimit} bookings per day reached`
+    : "Login required to book";
 
   return (
     <div
@@ -54,30 +75,32 @@ const VenueCard: FC<AreaCardProps> = ({
             <h3 className="text-xl font-bold">{title}</h3>
           </div>
 
-          <div className="flex justify-between items-center text-sm mt-4 text-gray-700">
-            <span className="font-medium flex items-center gap-1">
-              <FontAwesomeIcon icon={faUsers} className="text-blue-500" />{" "}
-              {capacity} pax
-            </span>
-          </div>
+          {/* Description with 50 character limit */}
+          <p className="text-gray-600 text-sm line-clamp-2">
+            {truncatedDescription}
+          </p>
         </div>
 
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
+        <div className="flex justify-between items-center mt-4 pt-4 border-t border-purple-200">
           <span className="font-semibold text-lg font-montserrat">
             {priceRange}
           </span>
           <button
             className={`${
               isAuthenticated
-                ? "bg-green-600 hover:bg-green-700"
+                ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
                 : "bg-gray-400 cursor-not-allowed"
-            } text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 cursor-pointer`}
+            } text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 `}
             onClick={handleBookNow}
-            title={
-              isAuthenticated ? "Book this venue" : "Login required to book"
-            }
+            title={buttonTitle}
+            disabled={!isAuthenticated || !canBook}
           >
-            <Book size={16} /> <span>Book</span>
+            {isAuthenticated && !canBook ? (
+              <AlertCircle size={16} />
+            ) : (
+              <Book size={16} />
+            )}{" "}
+            <span>Book</span>
           </button>
         </div>
       </div>

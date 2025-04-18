@@ -29,7 +29,7 @@ const BookingAccepted = () => {
           transition={{ duration: 0.5 }}
         >
           {/* Success Animation */}
-          <div className="bg-blue-600 p-8 flex flex-col items-center justify-center">
+          <div className="bg-purple-600 p-8 flex flex-col items-center justify-center">
             <motion.div
               className="w-24 h-24 rounded-full bg-white flex items-center justify-center mb-6"
               initial={{ scale: 0 }}
@@ -46,7 +46,7 @@ const BookingAccepted = () => {
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                <Check className="w-12 h-12 text-blue-600" strokeWidth={3} />
+                <Check className="text-purple-600" strokeWidth={4} size={65} />
               </motion.div>
             </motion.div>
 
@@ -60,32 +60,32 @@ const BookingAccepted = () => {
             </motion.h1>
 
             <motion.p
-              className="text-blue-100 text-center mt-2"
+              className="text-gray-100 text-center mt-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.9 }}
             >
-              Your {isVenueBooking ? 'venue' : 'room'} booking has been successfully processed.
+              Your {isVenueBooking ? 'area' : 'room'} booking has been successfully processed.
             </motion.p>
           </div>
 
           {/* Booking Info */}
           <div className="p-8">
             <motion.div
-              className="mb-6 bg-blue-50 border border-blue-100 rounded-lg p-4"
+              className="mb-6 bg-purple-50 border border-purple-100 rounded-lg p-4"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 1.1 }}
             >
               <div className="flex items-start">
-                <div className="bg-blue-600 p-2 rounded-md mr-4">
+                <div className="bg-purple-600 p-2 rounded-md mr-4">
                   {isVenueBooking
                     ? <Landmark className="w-6 h-6 text-white" />
                     : <Calendar className="w-6 h-6 text-white" />}
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">
-                    {isVenueBooking ? 'Venue Reservation' : 'Room Booking'} Confirmed
+                    {isVenueBooking ? 'Area Booking' : 'Room Booking'} Confirmed
                   </h3>
                   <p className="text-gray-600 text-md mt-1">
                     Booking ID: <span className="font-medium">{bookingId}</span>
@@ -110,33 +110,27 @@ const BookingAccepted = () => {
                 <div className="bg-gray-100 rounded-full p-2 mr-3 mt-1">
                   <span className="flex items-center justify-center w-4 h-4 text-xs font-bold text-gray-700">1</span>
                 </div>
-                <div>
-                  <p className="text-gray-700">
-                    Check your email for booking confirmation details.
-                  </p>
-                </div>
+                <p className="text-gray-700">
+                  Check your email for booking confirmation details.
+                </p>
               </div>
 
               <div className="flex items-start">
                 <div className="bg-gray-100 rounded-full p-2 mr-3 mt-1">
                   <span className="flex items-center justify-center w-4 h-4 text-xs font-bold text-gray-700">2</span>
                 </div>
-                <div>
-                  <p className="text-gray-700">
-                    Review your booking details in the "My Bookings" section.
-                  </p>
-                </div>
+                <p className="text-gray-700">
+                  Review your booking details in the "My Bookings" section.
+                </p>
               </div>
 
               <div className="flex items-start">
                 <div className="bg-gray-100 rounded-full p-2 mr-3 mt-1">
                   <span className="flex items-center justify-center w-4 h-4 text-xs font-bold text-gray-700">3</span>
                 </div>
-                <div>
-                  <p className="text-gray-700">
-                    Contact customer support if you need to make any changes.
-                  </p>
-                </div>
+                <p className="text-gray-700">
+                  Contact customer support if you need to make any changes.
+                </p>
               </div>
             </motion.div>
 
@@ -149,7 +143,7 @@ const BookingAccepted = () => {
             >
               <button
                 onClick={viewBookingDetails}
-                className="flex items-center justify-center cursor-pointer bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="flex items-center justify-center cursor-pointer bg-purple-600 text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
               >
                 <BookCheck className="w-5 h-5 mr-2" />
                 View Booking Details
@@ -175,7 +169,7 @@ const BookingAccepted = () => {
             <p className="text-center text-gray-500 text-sm flex items-center justify-center">
               <span>Need help with your booking?</span>
               <motion.div
-                className="inline-flex items-center text-blue-600 font-medium ml-2 hover:text-blue-700"
+                className="inline-flex items-center text-purple-600 font-medium ml-2 hover:text-purple-700"
                 whileHover={{ x: 5 }}
               >
                 Contact support <ArrowRight className="w-4 h-4 ml-1" />

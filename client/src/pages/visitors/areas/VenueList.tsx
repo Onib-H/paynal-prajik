@@ -1,26 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import VenueCard from "../../../components/areas/VenueCard";
 import ContentLoader from "../../../motions/loaders/ContentLoader";
 import { fetchAreas } from "../../../services/Area";
-
-interface Area {
-  id: number;
-  area_name: string;
-  description: string;
-  area_image: string;
-  status: string;
-  capacity: number;
-  price_per_hour: string;
-}
+import { Area } from "../../../types/AreaClient";
 
 const VenueList = () => {
   const { data: areasData, isLoading, isError } = useQuery<{ data: Area[] }>({
     queryKey: ["venues"],
-    queryFn: fetchAreas,
+    queryFn: fetchAreas as any,
   });
 
   const [selectedArea, setSelectedArea] = useState<number | null>(null);
+
+  const availableAreas = useMemo(() => {
+    if (!areasData?.data) return [];
+    return areasData.data.filter(area => area.status === 'available') || [];
+  }, [areasData?.data]);
 
   if (isLoading) {
     return (
@@ -30,7 +26,7 @@ const VenueList = () => {
         </h2>
         <ContentLoader />
       </div>
-    );  
+    );
   }
 
   if (isError) {
@@ -45,8 +41,6 @@ const VenueList = () => {
       </div>
     );
   }
-
-  const availableAreas = areasData?.data?.filter(area => area.status === 'available') || [];
 
   return (
     <div className="container mx-auto p-6">
@@ -68,9 +62,10 @@ const VenueList = () => {
               <VenueCard
                 id={area.id}
                 title={area.area_name}
-                priceRange={area.price_per_hour}
+                priceRange={area.price_per_hour.toString()}
                 capacity={area.capacity}
                 image={area.area_image}
+                description={area.description}
               />
             </div>
           ))}

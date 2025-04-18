@@ -44,7 +44,6 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value);
 
-  // Animation variants
   const overlayVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { duration: 0.3 } },
@@ -122,10 +121,10 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
           return;
         }
 
-        if (user.role === "admin" || user.role === "staff") {
+        if (user.role === "admin") {
           navigate("/admin");
         } else {
-          navigate("/");
+          navigate(`/guest/bookings`);
         }
       }
     } catch (error: any) {
@@ -318,7 +317,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                   whileTap={{ scale: 0.95 }}
                   type="submit"
                   disabled={!email || !password || loading}
-                  className={`w-full bg-purple-700 text-white py-2 rounded-lg hover:bg-purple-800 transition-all duration-300 flex items-center justify-center ${loading ? "bg-purple-700/30 cursor-not-allowed" : ""}`}
+                  className={`w-full bg-purple-700 text-white py-2 rounded-lg hover:bg-purple-800 cursor-pointer transition-all duration-300 flex items-center justify-center ${loading ? "bg-purple-700/30 cursor-not-allowed" : ""}`}
                 >
                   {loading ? (
                     <div className="flex items-center">
@@ -340,7 +339,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                     <span className="px-3 text-gray-500 text-sm">OR</span>
                     <hr className="w-full border-gray-300" />
                   </div>
-                  <GoogleButton />
+                  <GoogleButton text="Login with Google" />
                 </motion.div>
               </form>
               <motion.div

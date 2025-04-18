@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { AtSign, PencilIcon, Plus, TrashIcon, UserRound } from "lucide-react";
+import { AtSign, PencilIcon, TrashIcon, UserRound } from "lucide-react";
 import { FC, useCallback, useState } from "react";
 import { toast } from "react-toastify";
 import DefaultProfilePic from "../../assets/Default_pfp.jpg";
@@ -9,21 +9,13 @@ import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
 import { archiveUser, fetchAllUsers, manageUser } from "../../services/Admin";
+import { CreateUserFormData } from "../../types/UsersAdmin";
 
 const VALID_EMAIL_PROVIDERS = [
   "gmail.com", "yahoo.com", "yahoo.com.ph", "outlook.com", "hotmail.com",
   "aol.com", "icloud.com", "live.com", "msn.com", "hotmail.co.uk",
   "ymail.com", "googlemail.com"
 ];
-
-interface CreateUserFormData {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-}
 
 const ManageUsers: FC = () => {
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
@@ -84,12 +76,8 @@ const ManageUsers: FC = () => {
       const errorResponse = error as { response?: { data?: { email?: string; password?: string; error?: string } } };
       const errorData = errorResponse.response?.data || {};
 
-      if (errorData.email) {
-        setFormErrors(prev => ({ ...prev, email: errorData.email }));
-      }
-      if (errorData.password) {
-        setFormErrors(prev => ({ ...prev, password: errorData.password }));
-      }
+      if (errorData.email) setFormErrors(prev => ({ ...prev, email: errorData.email }));
+      if (errorData.password) setFormErrors(prev => ({ ...prev, password: errorData.password }));
 
       toast.error(errorData.error || "Failed to create user");
       setIsSubmitting(false);
@@ -214,7 +202,7 @@ const ManageUsers: FC = () => {
         const file = new File([blob], "default_profile.jpg", { type: "image/jpeg" });
         formData.append("profile_image", file);
       } catch (error) {
-        console.error("Error loading default profile image:", error);
+        console.error(`Error loading default profile image: ${error}`);
       }
     };
 
@@ -222,7 +210,7 @@ const ManageUsers: FC = () => {
       await fetchDefaultImage();
       await createMutation.mutateAsync(formData);
     } catch (error) {
-      console.error("Error creating user:", error);
+      console.error(`Error creating user: ${error}`);
     }
   }, [createFormData, createMutation]);
 
@@ -243,13 +231,7 @@ const ManageUsers: FC = () => {
   return (
     <div className="min-h-[calc(100vh-25px)] p-3 md:p-3 overflow-y-auto container mx-auto">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl md:text-3xl font-semibold">Manage Admins</h1>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center transition-colors duration-300"
-        >
-          <Plus size={20} className="mr-2" /> Create User
-        </button>
+        <h1 className="text-2xl md:text-3xl font-semibold">Manage Users</h1>
       </div>
 
       {users && users.length === 0 ? (
@@ -480,15 +462,15 @@ const ManageUsers: FC = () => {
           <Modal
             isOpen={showDeleteModal}
             icon="fas fa-exclamation-triangle"
-            title="Delete User"
-            description={`Are you sure you want to delete this admin account? This action cannot be undone.`}
+            title="Archive User"
+            description={`Are you sure you want to archive this guest account? This action cannot be undone.`}
             cancel={() => {
               setShowDeleteModal(false);
               setSelectedUser(null);
             }}
             onConfirm={confirmDeleteUser}
             className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-300 cursor-pointer uppercase font-semibold"
-            confirmText={isSubmitting ? "Deleting..." : "Delete"}
+            confirmText={isSubmitting ? "Archiving..." : "Archive"}
             cancelText="Cancel"
             loading={isSubmitting}
           />

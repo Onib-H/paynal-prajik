@@ -3,27 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, FC, useEffect, useState } from "react";
 import { fetchAmenities } from "../../services/Admin";
-import { parsePriceValue } from "../../utils/formatters";
-
-export interface IRoom {
-    id: number;
-    roomName: string;
-    roomType: string;
-    capacity: string;
-    amenities: number[];
-    roomPrice: number;
-    roomImage: File | string;
-    status: "Available" | "Maintenance";
-    description: string;
-}
-
-interface IRoomFormModalProps {
-    isOpen: boolean;
-    cancel: () => void;
-    onSave: (data: IRoom) => Promise<void>;
-    roomData: IRoom | null;
-    loading?: boolean;
-}
+import { IRoom, IRoomFormModalProps } from "../../types/RoomAdmin";
 
 const EditRoomModal: FC<IRoomFormModalProps> = ({
     isOpen,
@@ -35,28 +15,33 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
     const [formState, setFormState] = useState<IRoom>({
         id: roomData?.id || 0,
         roomName: roomData?.roomName || "",
-        roomType: roomData?.roomType || "",
+        roomType: roomData?.roomType || "premium",
+        bedType: roomData?.bedType || "single",
         capacity: roomData?.capacity || "",
         amenities: roomData?.amenities || [],
-        roomPrice: roomData?.roomPrice ? parsePriceValue(roomData.roomPrice) : 0,
+        roomPrice: roomData?.roomPrice,
         status: roomData?.status || "Available",
         description: roomData?.description || "",
         roomImage: roomData?.roomImage || "",
+        maxGuests: roomData?.maxGuests || 1,
     });
+    const [previewUrl, setPreviewUrl] = useState<string>("");
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Update form when roomData changes
     useEffect(() => {
         if (roomData) {
             setFormState({
                 id: roomData.id || 0,
                 roomName: roomData.roomName || "",
-                roomType: roomData.roomType || "",
+                roomType: roomData.roomType || "premium",
+                bedType: roomData.bedType || "single",
                 capacity: roomData.capacity || "",
                 amenities: roomData.amenities || [],
-                roomPrice: roomData.roomPrice ? parsePriceValue(roomData.roomPrice) : 0,
+                roomPrice: roomData.roomPrice,
                 status: roomData.status || "Available",
                 description: roomData.description || "",
                 roomImage: roomData.roomImage || "",
+                maxGuests: roomData.maxGuests || 1,
             });
         }
     }, [roomData]);
@@ -73,19 +58,17 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
 
     const availableAmenities = amenitiesData?.data || [];
 
-    const [previewUrl, setPreviewUrl] = useState<string>("");
-
-    const [errors, setErrors] = useState<Record<string, string>>({});
-
     const fieldMapping: Record<string, string> = {
         roomName: "room_name",
         roomType: "room_type",
+        bedType: "bed_type",
         capacity: "capacity",
         amenities: "amenities",
         roomPrice: "room_price",
         status: "status",
         description: "description",
         roomImage: "room_image",
+        maxGuests: "max_guests",
     };
 
     useEffect(() => {
@@ -138,19 +121,12 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
 
     useEffect(() => {
         const handleKeyDown = (evt: KeyboardEvent) => {
-            if (evt.key === "Escape") {
-                cancel();
-            }
+            if (evt.key === "Escape") cancel();
         };
-        if (isOpen) {
-            window.addEventListener("keydown", handleKeyDown);
-        }
-        return () => {
-            window.removeEventListener("keydown", handleKeyDown);
-        };
+        if (isOpen) window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
     }, [cancel, isOpen]);
 
-    // Animation variants for staggered animations
     const formVariants = {
         hidden: { opacity: 0 },
         visible: {
@@ -262,14 +238,23 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                         <label className="block text-sm font-medium mb-1 text-gray-700">
                                             Room Type
                                         </label>
-                                        <input
-                                            type="text"
-                                            name="roomType"
-                                            value={formState.roomType}
-                                            onChange={handleChange}
-                                            placeholder="e.g., Deluxe, Suite"
-                                            className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                                        />
+                                        <div className="relative">
+                                            <select
+                                                name="roomType"
+                                                value={formState.roomType}
+                                                onChange={handleChange}
+                                                className="appearance-none border border-gray-300 rounded-md w-full p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white"
+                                            >
+                                                <option value="" disabled>Select Room Type</option>
+                                                <option value="premium">Premium</option>
+                                                <option value="suites">Suites</option>
+                                            </select>
+                                            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
                                         {errors[fieldMapping.roomType] && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
@@ -282,27 +267,65 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                         )}
                                     </motion.div>
 
-                                    {/* Capacity */}
+                                    {/* Bed Type */}
                                     <motion.div variants={itemVariants}>
                                         <label className="block text-sm font-medium mb-1 text-gray-700">
-                                            Capacity
+                                            Bed Type
                                         </label>
-                                        <input
-                                            type="text"
-                                            name="capacity"
-                                            value={formState.capacity}
-                                            onChange={handleChange}
-                                            placeholder="e.g., 2 Adults, 1 Child"
-                                            className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                                        />
-                                        {errors[fieldMapping.capacity] && (
+                                        <div className="relative">
+                                            <select
+                                                name="bedType"
+                                                value={formState.bedType}
+                                                onChange={handleChange}
+                                                className="appearance-none border border-gray-300 rounded-md w-full p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white"
+                                            >
+                                                <option value="" disabled>Select Bed Type</option>
+                                                <option value="single">Single</option>
+                                                <option value="twin">Twin</option>
+                                                <option value="double">Double</option>
+                                                <option value="queen">Queen</option>
+                                                <option value="king">King</option>
+                                            </select>
+                                            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        {errors["bed_type"] && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                {errors[fieldMapping.capacity]}
+                                                {errors["bed_type"]}
+                                            </motion.p>
+                                        )}
+                                    </motion.div>
+
+                                    {/* Max Guests */}
+                                    <motion.div variants={itemVariants}>
+                                        <label className="block text-sm font-medium mb-1 text-gray-700">
+                                            No. of Guest(s)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="maxGuests"
+                                            value={formState.maxGuests}
+                                            onChange={handleChange}
+                                            min="1"
+                                            placeholder="Maximum number of guests"
+                                            className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                                        />
+                                        {errors[fieldMapping.maxGuests] && (
+                                            <motion.p
+                                                className="text-red-500 text-xs mt-1"
+                                                initial={{ opacity: 0, y: -5 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                            >
+                                                {errors[fieldMapping.maxGuests]}
                                             </motion.p>
                                         )}
                                     </motion.div>
@@ -368,7 +391,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                             name="description"
                                             value={formState.description}
                                             onChange={handleChange}
-                                            rows={4}
+                                            rows={5}
                                             placeholder="Enter room description"
                                             className="border border-gray-300 rounded-md w-full p-2 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                         />
@@ -454,7 +477,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
 
                                     {/* Amenities Section */}
                                     <motion.div variants={itemVariants} className="mt-4">
-                                        <label className="block text-sm font-medium mb-1 text-gray-700">
+                                        <label className="block text-md font-medium mb-1 text-gray-700">
                                             Amenities
                                         </label>
                                         <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
@@ -469,7 +492,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                             ) : isErrorAmenities ? (
                                                 <p className="text-red-500">Failed to load amenities</p>
                                             ) : (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
                                                     {availableAmenities.map((amenity: any, index: number) => (
                                                         <motion.div
                                                             key={amenity.id}
@@ -479,7 +502,6 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                                         >
                                                             <motion.div
                                                                 className="flex items-center space-x-2"
-                                                                whileHover={{ scale: 1.02 }}
                                                             >
                                                                 <input
                                                                     type="checkbox"
@@ -511,32 +533,32 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                             </motion.p>
                                         )}
                                     </motion.div>
+
+                                    {/* Action Buttons */}
+                                    <motion.div
+                                        className="flex justify-end space-x-3"
+                                        variants={itemVariants}
+                                    >
+                                        <motion.button
+                                            type="submit"
+                                            disabled={loading}
+                                            className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300 font-medium ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                                            whileHover={loading ? {} : { scale: 1.05 }}
+                                            whileTap={loading ? {} : { scale: 0.95 }}
+                                        >
+                                            {loading ? (
+                                                <span className="flex items-center">
+                                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    Processing...
+                                                </span>
+                                            ) : roomData ? "Update Room" : "Create Room"}
+                                        </motion.button>
+                                    </motion.div>
                                 </div>
                             </div>
-
-                            {/* Action Buttons */}
-                            <motion.div
-                                className="flex justify-end space-x-3 pt-6 border-t border-gray-100 mt-6"
-                                variants={itemVariants}
-                            >
-                                <motion.button
-                                    type="submit"
-                                    disabled={loading}
-                                    className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300 font-medium ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                    whileHover={loading ? {} : { scale: 1.05 }}
-                                    whileTap={loading ? {} : { scale: 0.95 }}
-                                >
-                                    {loading ? (
-                                        <span className="flex items-center">
-                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                            </svg>
-                                            Processing...
-                                        </span>
-                                    ) : roomData ? "Update Room" : "Create Room"}
-                                </motion.button>
-                            </motion.div>
                         </motion.form>
                     </motion.div>
                 </motion.div>

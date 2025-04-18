@@ -9,7 +9,7 @@ const AboutUs = () => {
       opacity: 0,
       y: 50,
       rotateX: 90,
-      scale: 0.8
+      scale: 0.8,
     },
     visible: (i: number) => ({
       opacity: 1,
@@ -21,15 +21,15 @@ const AboutUs = () => {
         duration: 0.7,
         type: "spring",
         stiffness: 100,
-        damping: 8
-      }
+        damping: 8,
+      },
     }),
     hover: {
       y: -5,
       color: "#1E40AF",
       scale: 1.03,
-      transition: { duration: 0.2 }
-    }
+      transition: { duration: 0.2 },
+    },
   };
 
   const textVariants = {
@@ -41,9 +41,9 @@ const AboutUs = () => {
         delay: i * 0.1,
         type: "spring",
         stiffness: 100,
-        damping: 10
-      }
-    })
+        damping: 10,
+      },
+    }),
   };
 
   const subtitleVariants = {
@@ -53,9 +53,9 @@ const AboutUs = () => {
       x: 0,
       transition: {
         duration: 0.6,
-        ease: "easeOut"
-      }
-    }
+        ease: "easeOut",
+      },
+    },
   };
 
   const buttonVariants = {
@@ -65,21 +65,29 @@ const AboutUs = () => {
       y: 0,
       transition: {
         duration: 0.4,
-        delay: 0.8
-      }
+        delay: 0.8,
+      },
     },
     hover: {
       scale: 1.05,
       boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
-      transition: { duration: 0.2 }
-    }
+      transition: { duration: 0.2 },
+    },
   };
 
-  const aboutUsTitle = "Experience Luxury and Comfort at Azurea Hotel".split(" ");
-  const aboutUsText = "Discover a place where elegance meets comfort. Azurea Hotel offers top-notch amenities, personalized services, and a welcoming atmosphere that makes every stay unforgettable. Whether for business or leisure, Azurea is your perfect destination.".split(" ");
+  const aboutUsTitle = "Experience Luxury and Comfort at Azurea Hotel".split(
+    " "
+  );
+  const aboutUsText =
+    "Discover a place where elegance meets comfort. Azurea Hotel offers top-notch amenities, personalized services, and a welcoming atmosphere that makes every stay unforgettable. Whether for business or leisure, Azurea is your perfect destination.".split(
+      " "
+    );
 
   const philosophyTitle = "Creating Memorable Experiences".split(" ");
-  const philosophyText = "We believe in offering more than just a place to stay. Azurea Hotel is a place where memories are made — whether you're on a romantic getaway, a family vacation, or a business trip.".split(" ");
+  const philosophyText =
+    "We believe in offering more than just a place to stay. Azurea Hotel is a place where memories are made — whether you're on a romantic getaway, a family vacation, or a business trip.".split(
+      " "
+    );
 
   return (
     <section className="py-16 px-8 bg-white">
@@ -98,7 +106,7 @@ const AboutUs = () => {
         </div>
         <div className="w-full md:w-1/2 flex-col justify-center space-y-6">
           <motion.h3
-            className="text-blue-800 uppercase text-sm sm:text-base md:text-lg font-light font-montserrat tracking-widest flex items-center gap-2"
+            className="text-purple-800 uppercase text-sm sm:text-base md:text-lg font-light font-montserrat tracking-widest flex items-center gap-2"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
@@ -139,7 +147,7 @@ const AboutUs = () => {
             ))}
           </p>
           <motion.button
-            className="mt-6 inline-block font-montserrat bg-blue-800 text-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-lg rounded-full shadow-md hover:bg-blue-700 transition-all"
+            className="mt-6 inline-block font-montserrat bg-gradient-to-r from-blue-800 to-purple-600 text-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-lg rounded-full shadow-md hover:bg-blue-700 transition-all"
             initial="hidden"
             whileInView="visible"
             whileHover="hover"
@@ -166,7 +174,7 @@ const AboutUs = () => {
         </div>
         <div className="w-full md:w-1/2 flex flex-col justify-center space-y-6">
           <motion.h3
-            className="text-blue-800 uppercase text-sm sm:text-base md:text-lg font-light font-montserrat tracking-widest flex items-center gap-2"
+            className="text-purple-800 uppercase text-sm sm:text-base md:text-lg font-light font-montserrat tracking-widest flex items-center gap-2"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
@@ -208,7 +216,7 @@ const AboutUs = () => {
           </p>
           <Link to="/">
             <motion.button
-              className="mt-6 inline-block font-montserrat bg-blue-800 text-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-lg rounded-full shadow-md hover:bg-blue-700 transition-all"
+              className="mt-6 inline-block font-montserrat bg-gradient-to-r from-blue-800 to-purple-600 text-white px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-lg rounded-full shadow-md hover:bg-blue-700 transition-all"
               initial="hidden"
               whileInView="visible"
               whileHover="hover"

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { forgotPassword, verifyResetOtp, resetPassword } from '../services/Auth';
@@ -18,7 +17,6 @@ const ForgotPassword: FC = () => {
   const { setIsAuthenticated } = useUserContext();
   const navigate = useNavigate();
 
-  // Step 1: Send OTP by submitting the email address.
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
@@ -28,9 +26,12 @@ const ForgotPassword: FC = () => {
     setLoading(true);
     try {
       const response = await forgotPassword(email);
-      console.log(response.data.message);
-      setError(null);
-      setStep('otp');
+      if (response.status === 200) {
+        setError(null);
+        setStep('otp');
+      } else {
+        setError(response.data.error || 'Failed to send OTP.');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to send OTP.');
     } finally {
@@ -38,7 +39,6 @@ const ForgotPassword: FC = () => {
     }
   };
 
-  // Step 2: Verify OTP submitted by the user.
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp.trim()) {
@@ -48,9 +48,12 @@ const ForgotPassword: FC = () => {
     setLoading(true);
     try {
       const response = await verifyResetOtp(email, otp);
-      console.log(response.data.message);
-      setError(null);
-      setStep('newPassword');
+      if (response.status === 200) {
+        setError(null);
+        setStep('newPassword');
+      } else {
+        setError(response.data.error || 'Failed to verify OTP.');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'OTP verification failed.');
     } finally {
@@ -58,7 +61,6 @@ const ForgotPassword: FC = () => {
     }
   };
 
-  // Step 3: Reset password using the new password form.
   const handleNewPasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || newPassword !== confirmPassword) {
@@ -68,10 +70,13 @@ const ForgotPassword: FC = () => {
     setLoading(true);
     try {
       const response = await resetPassword(email, newPassword, confirmPassword);
-      console.log(response.data.message);
-      setError(null);
-      setIsAuthenticated(true);
-      navigate('/');
+      if (response.status === 200) {
+        setError(null);
+        setIsAuthenticated(true);
+        navigate('/');
+      } else {
+        setError(response.data.error || 'Password reset failed.');
+      }
     } catch (error: any) {
       setError(error.response?.data?.error || 'Password reset failed.');
     } finally {
@@ -79,7 +84,6 @@ const ForgotPassword: FC = () => {
     }
   };
 
-  // Resend OTP function for user convenience.
   const resendOtp = async () => {
     if (!email.trim()) {
       setError('Email is required to resend OTP.');
@@ -88,8 +92,11 @@ const ForgotPassword: FC = () => {
     setLoading(true);
     try {
       const response = await forgotPassword(email);
-      console.log("OTP resent:", response.data.message);
-      setError(null);
+      if (response.status === 200) {
+        setError(null);
+      } else {
+        setError(response.data.error || 'Failed to resend OTP.');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to resend OTP.');
     } finally {

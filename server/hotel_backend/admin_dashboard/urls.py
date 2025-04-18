@@ -8,6 +8,16 @@ urlpatterns = [
     path('area_reservations', views.area_reservations, name='area_reservations'),
     path('booking_status_counts', views.booking_status_counts, name='booking_status_counts'),
     
+    # Analytics
+    path('daily_revenue', views.daily_revenue, name='daily_revenue'),
+    path('daily_bookings', views.daily_bookings, name='daily_bookings'),
+    path('daily_occupancy', views.daily_occupancy, name='daily_occupancy'),
+    path('daily_checkins_checkouts', views.daily_checkins_checkouts, name='daily_checkins_checkouts'),
+    path('daily_cancellations', views.daily_cancellations, name='daily_cancellations'),
+    path('daily_no_shows_rejected', views.daily_no_shows_rejected, name='daily_no_shows_rejected'),
+    path('room_revenue', views.room_revenue, name='room_revenue'),
+    path('room_bookings', views.room_bookings, name='room_bookings'),
+    
     # CRUD Rooms
     path('rooms', views.fetch_rooms, name='fetch_rooms'),
     path('add_room', views.add_new_room, name='add_new_room'),

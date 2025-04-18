@@ -13,7 +13,7 @@ from .serializers import (
 )
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db.models import Q
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
@@ -45,10 +45,8 @@ def fetch_availability(request):
             'error': "Departure date should be greater than arrival date"
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    # Get available rooms
     rooms = Rooms.objects.filter(status='available')
     
-    # Exclude rooms that have bookings with reserved or checked_in status that overlap with requested dates
     booked_room_ids = Bookings.objects.filter(
         ~Q(status__in=['cancelled', 'rejected', 'checked_out', 'no_show']),
         Q(check_in_date__lt=departure) & Q(check_out_date__gt=arrival),
@@ -57,10 +55,8 @@ def fetch_availability(request):
     
     rooms = rooms.exclude(id__in=booked_room_ids)
     
-    # Get available areas/venues
     areas = Areas.objects.filter(status='available')
     
-    # Exclude areas that have bookings with reserved or checked_in status that overlap with requested dates
     booked_area_ids = Bookings.objects.filter(
         ~Q(status__in=['cancelled', 'rejected', 'checked_out', 'no_show']),
         Q(check_in_date__lt=departure) & Q(check_out_date__gt=arrival),
@@ -78,31 +74,76 @@ def fetch_availability(request):
     }, status=status.HTTP_200_OK)
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
 def bookings_list(request):
     try:
         if request.method == 'GET':
-            bookings = Bookings.objects.all().order_by('-created_at').select_related('user', 'room', 'area')
-            serializer = BookingSerializer(bookings, many=True)
+            if not request.user.is_authenticated:
+                return Response(
+                    {"error": "Authentication required to view bookings"}, 
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+
+            page = request.query_params.get('page', 1)
+            page_size = request.query_params.get('page_size', 10)
+            status_filter = request.query_params.get('status')
+            bookings = Bookings.objects.all().order_by('-created_at')
+            
+            if status_filter:
+                bookings = bookings.filter(status=status_filter)
+                
+            if request.user.role == 'guest':
+                bookings = bookings.filter(user=request.user)
+            
+            paginator = Paginator(bookings, page_size)
+            try:
+                paginated_bookings = paginator.page(page)
+            except PageNotAnInteger:
+                paginated_bookings = paginator.page(1)
+            except EmptyPage:
+                paginated_bookings = paginator.page(paginator.num_pages)
+            
+            serializer = BookingSerializer(paginated_bookings, many=True)
             
             return Response({
-                "data": serializer.data
+                "data": serializer.data,
+                "pagination": {
+                    "total_pages": paginator.num_pages,
+                    "current_page": int(page),
+                    "total_items": paginator.count,
+                    "page_size": int(page_size)
+                }
             }, status=status.HTTP_200_OK)
+            
         elif request.method == 'POST':
-            serializer = BookingRequestSerializer(data=request.data, context={'request': request})
-            if serializer.is_valid():
-                booking = serializer.save()
-                booking_data = BookingSerializer(booking).data
+            request_data = request.data.copy()
+            request_data['_request'] = request
+            
+            unauthenticated = not (request.user and request.user.is_authenticated)
+            
+            try:
+                serializer = BookingRequestSerializer(
+                    data=request_data, 
+                    context={
+                        'request': request,
+                        'unauthenticated': unauthenticated
+                    }
+                )
                 
+                if serializer.is_valid():
+                    booking = serializer.save()
+                    booking_data = BookingSerializer(booking).data
+                    
+                    return Response({
+                        "id": booking.id,
+                        "message": "Booking created successfully",
+                        "data": booking_data
+                    }, status=status.HTTP_201_CREATED)
+                    
                 return Response({
-                    "id": booking.id,
-                    "message": "Booking created successfully",
-                    "data": booking_data
-                }, status=status.HTTP_201_CREATED)
-                
-            return Response({
-                "error": serializer.errors
-            }, status=status.HTTP_400_BAD_REQUEST)
+                    "error": serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -152,20 +193,29 @@ def booking_detail(request, booking_id):
         }, status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
 def reservation_list(request):
     try:
         if request.method == 'GET':
+            if not request.user.is_authenticated:
+                return Response({"error": "Authentication required to view reservations"}, 
+                                status=status.HTTP_401_UNAUTHORIZED)
+            
             reservations = Reservations.objects.all()
             serializer = ReservationSerializer(reservations, many=True)
             return Response({
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
         elif request.method == 'POST':
-            serializer = ReservationSerializer(data=request.data)
+            serializer = BookingRequestSerializer(data=request.data, context={'request': request})
             if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                booking = serializer.save()
+                booking_data = BookingSerializer(booking).data
+                
+                return Response({
+                    "id": booking.id,
+                    "message": "Booking created successfully",
+                    "data": booking_data
+                }, status=status.HTTP_201_CREATED)
             return Response({
                 "error": serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -197,21 +247,28 @@ def reservation_detail(request, reservation_id):
         }, status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
 def area_reservations(request):
     try:
         if request.method == 'GET':
+            if not request.user.is_authenticated:
+                return Response({"error": "Authentication required to view area reservations"}, 
+                                status=status.HTTP_401_UNAUTHORIZED)
+                
             reservations = Reservations.objects.all().order_by('-created_at')
             serializer = ReservationSerializer(reservations, many=True)
             return Response({
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
         elif request.method == 'POST':
-            serializer = ReservationSerializer(data=request.data)
+            serializer = BookingRequestSerializer(data=request.data, context={'request': request})
             if serializer.is_valid():
-                serializer.save()
+                booking = serializer.save()
+                booking_data = BookingSerializer(booking).data
+                
                 return Response({
-                    "data": serializer.data
+                    "id": booking.id,
+                    "message": "Venue booking created successfully",
+                    "data": booking_data
                 }, status=status.HTTP_201_CREATED)
             return Response({
                 "error": serializer.errors
@@ -516,7 +573,7 @@ def area_reviews(request, area_id):
         
         bookings = Bookings.objects.filter(area=area, is_venue_booking=True)
         booking_ids = [booking.id for booking in bookings]
-        
+
         reviews = Reviews.objects.filter(booking_id__in=booking_ids).order_by('-created_at')
         
         serializer = ReviewSerializer(reviews, many=True)
@@ -526,3 +583,51 @@ def area_reviews(request, area_id):
         return Response({"error": "Area not found"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_max_bookings(request):
+    """
+    Check if the user has reached the maximum number of bookings per day (3)
+    """
+    user = request.user
+    today = timezone.now().date()
+    
+    # Get bookings created today by this user
+    bookings_today = Bookings.objects.filter(
+        user=user,
+        created_at__date=today
+    ).count()
+    
+    MAX_BOOKINGS_PER_DAY = 3
+    
+    return Response({
+        'max_limit': MAX_BOOKINGS_PER_DAY,
+        'current_bookings': bookings_today,
+        'can_book': bookings_today < MAX_BOOKINGS_PER_DAY
+    })
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_can_book_today(request):
+    """
+    Check if the user can make a booking today based on the last_booking_date field
+    """
+    user = request.user
+    today = timezone.now().date()
+    
+    if user.role != 'guest':
+        # Admin users can always make bookings
+        return Response({
+            'can_book': True
+        })
+    
+    # Check if the user already made a booking today
+    can_book = True
+    if user.last_booking_date and user.last_booking_date == today:
+        can_book = False
+    
+    return Response({
+        'can_book': can_book,
+        'last_booking_date': user.last_booking_date
+    })

@@ -1,7 +1,7 @@
 import AOS from "aos";
 import "aos/dist/aos.css";
-import { Suspense, lazy, useEffect } from "react";
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { Suspense, lazy, useEffect, useMemo } from "react";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
 import GuestChangePassword from "./components/guests/GuestChangePassword";
 import ScrollToTop from "./components/ScrollToTop";
@@ -46,6 +46,7 @@ const GuestLayout = lazy(() => import("./layout/guest/GuestLayout"));
 const App = () => {
   const { isAuthenticated, role } = useUserContext();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     AOS.init({
@@ -53,14 +54,27 @@ const App = () => {
       duration: 700,
       delay: 100,
     });
-  }, [])
+  }, []);
 
-  const isAdminRoute =
-    location.pathname.startsWith("/admin") ||
-    location.pathname.startsWith("/guest") ||
-    location.pathname.startsWith("/registration") ||
-    location.pathname.startsWith("/forgot-password") ||
-    location.pathname.startsWith("/booking-accepted");
+  useEffect(() => {
+    const redirectPath = sessionStorage.getItem('redirectAfterReload');
+    if (redirectPath) {
+      sessionStorage.removeItem('redirectAfterReload');
+      navigate(redirectPath);
+    }
+  }, [navigate]);
+
+  const isAdminRoute = useMemo(() => {
+    const adminPaths = ['/admin', '/guest', '/registration', '/forgot-password', '/booking-accepted'];
+    return adminPaths.some(path => location.pathname.startsWith(path));
+  }, [location.pathname]);
+
+  const homepageRoute = useMemo(() => {
+    if (isAuthenticated && role === "admin") {
+      return <Navigate to="/admin" replace />;
+    }
+    return <Homepage />;
+  }, [isAuthenticated, role]);
 
   return (
     <>
@@ -68,20 +82,7 @@ const App = () => {
         {!isAdminRoute && <Navbar />}
         <ScrollToTop />
         <Routes>
-          <Route
-            path="/"
-            element={
-              isAuthenticated ? (
-                role === "admin" ? (
-                  <Navigate to="/admin" replace />
-                ) : (
-                  <Homepage />
-                )
-              ) : (
-                <Homepage />
-              )
-            }
-          />
+          <Route path="/" element={homepageRoute} />
 
           <Route path="/confirm-booking" element={<ConfirmBooking />} />
           <Route path="/confirm-venue-booking" element={<ConfirmVenueBooking />} />

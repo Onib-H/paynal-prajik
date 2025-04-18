@@ -3,7 +3,6 @@ from property.models import Rooms, Areas
 from user_roles.models import CustomUsers
 from django.utils.timezone import now
 from cloudinary.models import CloudinaryField
-from django.utils import timezone
 from django.contrib.auth import get_user_model
 from property.models import Rooms, Areas
 
@@ -39,9 +38,11 @@ class Bookings(models.Model):
     is_venue_booking = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    time_of_arrival = models.TimeField(null=True, blank=True, default=None)
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     payment_status = models.CharField(max_length=20, default='unpaid')
+    number_of_guests = models.PositiveIntegerField(default=1)
     
     class Meta:
         db_table = 'bookings'

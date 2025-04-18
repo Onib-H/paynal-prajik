@@ -1,19 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { FC, useState, useEffect, FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-
-export interface IAmenity {
-  id: number;
-  description: string;
-}
-
-interface IEditAmenityModalProps {
-  isOpen: boolean;
-  amenityData: IAmenity | null;    // null => create
-  onSave: (amenity: IAmenity) => Promise<void>;
-  cancel: () => void;
-  loading?: boolean;
-}
+import { IAmenity, IEditAmenityModalProps } from "../../types/AmenityAdmin";
 
 const EditAmenityModal: FC<IEditAmenityModalProps> = ({
   isOpen,

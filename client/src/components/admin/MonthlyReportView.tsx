@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { format } from 'date-fns';
 import { useEffect, useRef } from 'react';
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
+import { Doughnut, Line } from 'react-chartjs-2';
 import { createPortal } from 'react-dom';
 import '../../styles/print.css';
-import { ReportData } from '../../utils/reports';
+import { ReportData } from '../../types/ReportsAdmin';
 
 interface MonthlyReportViewProps {
     reportData: ReportData;
@@ -18,7 +18,7 @@ interface MonthlyReportViewProps {
         revenueData: any;
         bookingTrendsData: any;
         bookingStatusData: any;
-        roomOccupancyData: any;
+        roomOccupancyData?: any;
         revenueContributionData?: any;
         roomBookingDistributionData?: any;
     };
@@ -71,18 +71,14 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
         document.head.appendChild(style);
 
         const printButton = document.getElementById('print-report-button');
-        if (printButton) {
-            printButton.focus();
-        }
+        if (printButton) printButton.focus();
 
         return () => {
             document.head.removeChild(style);
         };
     }, []);
 
-    const handlePrint = () => {
-        window.print();
-    };
+    const handlePrint = () => window.print();
 
     const totalBookingStatuses = Object.values(reportData.bookingStatusCounts).reduce((sum, count) => sum + count, 0);
 
@@ -100,13 +96,13 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                     <button
                         id="print-report-button"
                         onClick={handlePrint}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer"
                     >
                         Print Report
                     </button>
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                        className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 cursor-pointer"
                     >
                         Close
                     </button>
@@ -154,17 +150,17 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                             <p className="text-sm text-gray-500">Total Revenue</p>
                             <p className="text-xl font-bold">{reportData.stats.formattedRevenue}</p>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-md border-l-4 border-purple-500">
+                        {/* <div className="bg-gray-50 p-4 rounded-md border-l-4 border-purple-500">
                             <p className="text-sm text-gray-500">Occupancy Rate</p>
                             <p className="text-xl font-bold">{reportData.stats.occupancyRate}</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        </div> */}
                         <div className="bg-gray-50 p-4 rounded-md border-l-4 border-yellow-500">
                             <p className="text-sm text-gray-500">Pending Bookings</p>
                             <p className="text-xl font-bold">{reportData.stats.pendingBookings}</p>
                         </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="bg-gray-50 p-4 rounded-md border-l-4 border-indigo-500">
                             <p className="text-sm text-gray-500">Checked-in Guests</p>
                             <p className="text-xl font-bold">{reportData.stats.checkedInCount}</p>
@@ -173,10 +169,10 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                             <p className="text-sm text-gray-500">Available Rooms</p>
                             <p className="text-xl font-bold">{reportData.stats.availableRooms}</p>
                         </div>
-                        <div className="bg-gray-50 p-4 rounded-md border-l-4 border-gray-500">
+                        {/* <div className="bg-gray-50 p-4 rounded-md border-l-4 border-gray-500">
                             <p className="text-sm text-gray-500">Total Rooms</p>
                             <p className="text-xl font-bold">{reportData.stats.totalRooms}</p>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
 
@@ -276,29 +272,20 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                     </p>
                 </div>
 
-                {/* Room Occupancy */}
+                {/* Recommendations Section */}
                 <div className="mb-8 page-break-inside-avoid page-break-before">
-                    <h3 className="text-xl font-bold bg-gray-100 p-2 rounded-md">4. Room Occupancy Analysis</h3>
+                    <h3 className="text-xl font-bold bg-gray-100 p-2 rounded-md">4. Recommendations</h3>
                     <p className="mt-3 mb-4 text-gray-700 italic">
-                        This section analyzes room occupancy by type, highlighting which room categories are most popular and identifying opportunities to optimize room allocation and pricing.
+                        Based on the analysis of this month's data, here are key recommendations to improve hotel performance:
                     </p>
 
-                    <div className="bg-white p-4 border rounded-md h-64 mb-6">
-                        <Bar data={chartData.roomOccupancyData} options={chartOptions.bar} />
-                    </div>
-
-                    <p className="text-sm italic text-gray-700 mb-6">
-                        Current overall occupancy rate is {reportData.stats.occupancyRate}, with {reportData.stats.availableRooms} rooms
-                        currently available for booking out of {reportData.stats.totalRooms} total rooms.
-                        Standard rooms show the highest occupancy rate, followed by Deluxe rooms.
-                    </p>
-
-                    <h4 className="text-lg font-semibold mt-6 mb-3">Recommendations</h4>
                     <ul className="list-disc pl-5 space-y-2">
-                        <li>Consider targeted promotions for room types with lower occupancy rates</li>
+                        <li>Consider targeted promotions for room types with lower booking rates</li>
                         <li>Review pricing strategy for peak booking days identified in the booking trends chart</li>
                         <li>Follow up with pending bookings to increase conversion rate</li>
                         <li>Analyze cancellation patterns to identify and address common causes</li>
+                        <li>Optimize staff scheduling based on check-in/check-out patterns</li>
+                        <li>Focus marketing efforts on room types generating the highest revenue</li>
                     </ul>
                 </div>
 

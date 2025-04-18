@@ -2,14 +2,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
-import { Book, Calendar } from "lucide-react";
-import { useCallback, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Calendar } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import LoginModal from "../components/LoginModal";
 import RoomAvailabilityCalendar from "../components/rooms/RoomAvailabilityCalendar";
+import RoomCard from "../components/rooms/RoomCard";
 import SignupModal from "../components/SignupModal";
 import { useUserContext } from "../contexts/AuthContext";
 import { fetchAvailability } from "../services/Booking";
+
+const ARRIVAL_DATE_KEY = "hotel_arrival_date";
+const DEPARTURE_DATE_KEY = "hotel_departure_date";
 
 const AvailabilityResults = () => {
   const [searchParams] = useSearchParams();
@@ -17,12 +21,46 @@ const AvailabilityResults = () => {
   const { isAuthenticated } = useUserContext();
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
-  const arrival = searchParams.get("arrival") || "";
-  const departure = searchParams.get("departure") || "";
 
-  if (!arrival || !departure) {
-    navigate("/");
-  }
+  const [arrival, setArrival] = useState<string>(searchParams.get("arrival") || "");
+  const [departure, setDeparture] = useState<string>(searchParams.get("departure") || "");
+
+  useEffect(() => {
+    if (!arrival) {
+      const savedArrival = localStorage.getItem(ARRIVAL_DATE_KEY);
+      if (savedArrival) {
+        setArrival(savedArrival);
+        if (departure || localStorage.getItem(DEPARTURE_DATE_KEY)) {
+          const depDate = departure || localStorage.getItem(DEPARTURE_DATE_KEY) || "";
+          navigate(`/availability?arrival=${savedArrival}&departure=${depDate}`, { replace: true });
+        }
+      }
+    }
+
+    if (!departure) {
+      const savedDeparture = localStorage.getItem(DEPARTURE_DATE_KEY);
+      if (savedDeparture) {
+        setDeparture(savedDeparture);
+        if (arrival || localStorage.getItem(ARRIVAL_DATE_KEY)) {
+          const arrDate = arrival || localStorage.getItem(ARRIVAL_DATE_KEY) || "";
+          navigate(`/availability?arrival=${arrDate}&departure=${savedDeparture}`, { replace: true });
+        }
+      }
+    }
+  }, [arrival, departure, navigate]);
+
+  useEffect(() => {
+    if (!arrival || !departure) {
+      const savedArrival = localStorage.getItem(ARRIVAL_DATE_KEY);
+      const savedDeparture = localStorage.getItem(DEPARTURE_DATE_KEY);
+
+      if (savedArrival && savedDeparture) {
+        navigate(`/availability?arrival=${savedArrival}&departure=${savedDeparture}`, { replace: true });
+      } else if (!arrival || !departure) {
+        navigate("/", { replace: true });
+      }
+    }
+  }, [arrival, departure, navigate]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["availability", arrival, departure],
@@ -43,23 +81,16 @@ const AvailabilityResults = () => {
 
   const getAvailableRooms = () => {
     if (!data || !data.rooms) return [];
-    return data.rooms.filter((room: any) =>
-      room.status !== "reserved" &&
-      room.status !== "checked_in"
+    return data.rooms.filter(
+      (room: any) => room.status !== "reserved" && room.status !== "checked_in"
     );
   };
 
   const getAvailableAreas = () => {
     if (!data || !data.areas) return [];
-    return data.areas.filter((area: any) =>
-      area.status !== "reserved" &&
-      area.status !== "checked_in"
+    return data.areas.filter(
+      (area: any) => area.status !== "reserved" && area.status !== "checked_in"
     );
-  };
-
-  const handleBookVenue = (e: React.MouseEvent, id: number) => {
-    e.preventDefault();
-    navigate(`/venue-booking/${id}?arrival=${arrival}&departure=${departure}`);
   };
 
   const containerVariants = {
@@ -96,8 +127,14 @@ const AvailabilityResults = () => {
     },
   };
 
-  const toggleLoginModal = useCallback(() => setShowLoginModal((prev) => !prev), []);
-  const toggleSignupModal = useCallback(() => setShowSignupModal((prev) => !prev), []);
+  const toggleLoginModal = useCallback(
+    () => setShowLoginModal((prev) => !prev),
+    []
+  );
+  const toggleSignupModal = useCallback(
+    () => setShowSignupModal((prev) => !prev),
+    []
+  );
 
   const handleSuccessfulLogin = () => window.location.reload();
 
@@ -119,7 +156,7 @@ const AvailabilityResults = () => {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-gray-600 mt-3">
               <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full">
                 <Calendar className="text-blue-600 h-5 w-5" />
-                <span className="font-medium">
+                <span className="font-semibold">
                   {formattedArrival} <span className="mx-2">→</span>{" "}
                   {formattedDeparture}
                 </span>
@@ -195,7 +232,15 @@ const AvailabilityResults = () => {
                         variants={itemVariants}
                         whileHover={{ y: -5, transition: { duration: 0.2 } }}
                       >
-                        <Link to={`/rooms/${room.id}`} className="block">
+                        <RoomCard
+                          id={room.id}
+                          name={room.room_name}
+                          image={room.room_image}
+                          title={room.room_name}
+                          price={room.room_price}
+                          description={room.description}
+                        />
+                        {/* <Link to={`/rooms/${room.id}`} className="block">
                           <div className="relative">
                             <img
                               loading="lazy"
@@ -237,7 +282,7 @@ const AvailabilityResults = () => {
                               </div>
                             </div>
                           </div>
-                        </Link>
+                        </Link> */}
                       </motion.div>
                     ))}
                   </motion.div>
@@ -251,106 +296,16 @@ const AvailabilityResults = () => {
                       No rooms available for these dates.
                     </p>
                     <p className="text-gray-500 mt-2">
-                      Rooms may be fully booked, reserved, or currently checked in.
-                      Please try selecting different dates for your stay.
-                    </p>
-                  </motion.div>
-                )}
-              </motion.section>
-
-              {/* Areas/Venues Section */}
-              <motion.section
-                variants={sectionVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{ delay: 0.2 }}
-              >
-                <div className="flex items-center mb-6">
-                  <div className="h-10 w-2 bg-green-600 rounded-full mr-3"></div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-                    Venues
-                  </h2>
-                </div>
-
-                {getAvailableAreas().length > 0 ? (
-                  <motion.div
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {getAvailableAreas().map((area: any) => (
-                      <motion.div
-                        key={area.id}
-                        className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300"
-                        variants={itemVariants}
-                        whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                      >
-                        <Link to={`/venues/${area.id}`} className="block">
-                          <div className="relative">
-                            <img
-                              loading="lazy"
-                              src={area.area_image || "/default-venue.jpg"}
-                              alt={area.area_name}
-                              className="w-full h-56 object-cover"
-                            />
-                          </div>
-
-                          <div className="p-6">
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">
-                              {area.area_name}
-                            </h3>
-
-                            <div className="flex justify-between items-end mt-3">
-                              <div>
-                                <p className="text-2xl font-bold text-green-600">
-                                  {area.price_per_hour}
-                                </p>
-                              </div>
-
-                              <div className="flex gap-2">
-                                {isAuthenticated ? (
-                                  <button
-                                    onClick={(e) => handleBookVenue(e, area.id)}
-                                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1 text-md uppercase font-semibold"
-                                  >
-                                    <Book size={16} /> <span>Book</span>
-                                  </button>
-                                ) : (
-                                  <button
-                                    disabled
-                                    className="bg-gray-400 text-white px-3 py-2 rounded-lg flex items-center gap-1 cursor-not-allowed text-md"
-                                    title="Please login to book"
-                                  >
-                                    <Book size={16} /> <span>Book</span>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center"
-                  >
-                    <p className="text-gray-600 text-lg">
-                      No venues available for these dates.
-                    </p>
-                    <p className="text-gray-500 mt-2">
-                      Venues may be fully booked, reserved, or currently in use.
-                      Please try selecting different dates for your event.
+                      Rooms may be fully booked, reserved, or currently checked
+                      in. Please try selecting different dates for your stay.
                     </p>
                   </motion.div>
                 )}
               </motion.section>
 
               {/* Call to action footer */}
-              {(getAvailableRooms().length > 0 || getAvailableAreas().length > 0) && (
+              {(getAvailableRooms().length > 0 ||
+                getAvailableAreas().length > 0) && (
                 <motion.div
                   className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl p-6 text-center mt-12"
                   initial={{ opacity: 0, y: 20 }}

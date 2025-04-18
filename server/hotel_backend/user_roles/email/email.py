@@ -43,8 +43,7 @@ def send_otp_to_email(email, message):
         msg.send()
         
         return otp
-    except Exception as e:
-        print(str(e))
+    except Exception:
         return None
 
 def send_reset_password(email):
@@ -86,6 +85,5 @@ def send_reset_password(email):
         msg.send()
         
         return otp
-    except Exception as e:
-        print(f"Error: {str(e)}")
+    except Exception:
         return None

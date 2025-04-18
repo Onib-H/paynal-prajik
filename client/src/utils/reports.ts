@@ -1,61 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { format } from "date-fns";
 import jsPDF from "jspdf";
-
-export interface ChartData {
-  labels: string[];
-  datasets: {
-    label?: string;
-    data: number[];
-    backgroundColor?: string | string[];
-    borderColor?: string;
-    fill?: boolean;
-    tension?: number;
-  }[];
-}
-
-export interface ReportData {
-  title: string;
-  period: string;
-  stats: {
-    totalBookings: number;
-    activeBookings: number;
-    revenue: number;
-    formattedRevenue: string;
-    occupancyRate: string;
-    pendingBookings: number;
-    checkedInCount: number;
-    availableRooms: number;
-    totalRooms: number;
-  };
-  bookingStatusCounts: {
-    pending: number;
-    reserved: number;
-    checked_in: number;
-    checked_out: number;
-    cancelled: number;
-    no_show: number;
-    rejected: number;
-  };
-  charts: {
-    revenueData: {
-      type: "line";
-      data: ChartData;
-    };
-    bookingTrendsData: {
-      type: "line";
-      data: ChartData;
-    };
-    bookingStatusData: {
-      type: "pie";
-      data: ChartData;
-    };
-    roomOccupancyData: {
-      type: "bar";
-      data: ChartData;
-    };
-  };
-}
+import { ReportData } from "../types/ReportsAdmin";
 
 const drawTitle = (doc: jsPDF, text: string, y: number): number => {
   doc.setFontSize(18);
@@ -451,8 +397,14 @@ export const generateMonthlyReport = async (
 export const prepareReportData = (
   dashboardData: any,
   bookingStatusData: any,
-  currentMonth = getCurrentMonthYear()
+  month?: number,
+  year?: number
 ): ReportData => {
+  let periodText = getCurrentMonthYear();
+  if (month !== undefined && year !== undefined) {
+    periodText = format(new Date(year, month), "MMMM yyyy");
+  }
+
   const occupancyRate =
     dashboardData.total_rooms > 0
       ? Math.round(
@@ -462,7 +414,7 @@ export const prepareReportData = (
 
   return {
     title: "Monthly Performance Report",
-    period: currentMonth,
+    period: periodText,
     stats: {
       totalBookings: dashboardData.total_bookings || 0,
       activeBookings: dashboardData.active_bookings || 0,

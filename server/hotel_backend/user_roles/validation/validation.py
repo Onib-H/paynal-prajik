@@ -131,7 +131,6 @@ VALID_EMAIL_PROVIDERS = [
 ]
 
 def validate_email_domain(domain):
-    # Validator to check if the email domain is in the list of valid email providers
     if domain not in VALID_EMAIL_PROVIDERS:
         raise ValidationError(
             f"Invalid email domain. {domain} is not a valid email provider.",
@@ -139,7 +138,6 @@ def validate_email_domain(domain):
         )
 
 def validate_strict_email(email):
-    # This will validates email format, local part length, and domain against valia providers
     email = email.strip()
     if not email:
         raise ValidationError("Email is required.", code="required")
@@ -167,20 +165,11 @@ def validate_strict_email(email):
         )
 
 def validate_password_django(password, confirm):
-    # Validates password and its confirmation
-    
     if password != confirm:
         raise ValidationError(
             "Passwords do not match.",
             code="password_mismatch"
         )
-    
-    # Combined regex to check for:
-    # 1. At least one uppercase letter
-    # 2. At least one special character
-    # 3. At least one number
-    # 4. No spaces
-    # 5. Minimum length of 6 characters
     password_regex = r"^(?=.*[A-Z])(?=.*[@$!%*?&])(?=.*\d)(?!.*\s).{6,}$"
     password_validator = RegexValidator(
         regex=password_regex,

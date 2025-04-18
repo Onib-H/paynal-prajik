@@ -39,6 +39,8 @@ interface FormattedBooking {
   cancellationReason?: string;
   cancellationDate?: string;
   totalPrice?: number;
+  numberOfGuests?: number;
+  arrivalTime?: string;
 }
 
 interface RoomData {
@@ -79,6 +81,8 @@ interface BookingData {
   created_at: string;
   cancellation_reason?: string;
   cancellation_date?: string;
+  number_of_guests?: number;
+  time_of_arrival?: string;
 }
 
 const formatDate = (dateString: string): string => {
@@ -126,7 +130,9 @@ const BookingData = memo(({ bookingId }: BookingDataProps) => {
       roomType: "",
       imageUrl: "",
       guests: 0,
-      price: 0
+      price: 0,
+      numberOfGuests: bookingData?.number_of_guests || 1,
+      arrivalTime: bookingData?.time_of_arrival
     };
 
     if (bookingData?.user) {

@@ -47,12 +47,13 @@ const Navbar: FC = () => {
     setLoading(true);
     try {
       const response = await logout();
-      console.log("Logout response:", response.status);
-
-      clearAuthState();
-      setIsModalOpen(false);
-
-      navigate("/", { replace: true });
+      if (response.status === 200) {
+        clearAuthState();
+        setIsModalOpen(false);
+        navigate("/", { replace: true });
+      } else {
+        throw new Error("Logout failed");
+      }
     } catch (error) {
       console.error(`Failed to logout: ${error}`);
       setNotification({
@@ -65,9 +66,15 @@ const Navbar: FC = () => {
     }
   }, [clearAuthState, navigate]);
 
-  const toggleLoginModal = useCallback(() => setLoginModal((prev) => !prev), []);
-  const toggleRegisterModal = useCallback(() => setRegisterModal((prev) => !prev), []);
-  
+  const toggleLoginModal = useCallback(
+    () => setLoginModal((prev) => !prev),
+    []
+  );
+  const toggleRegisterModal = useCallback(
+    () => setRegisterModal((prev) => !prev),
+    []
+  );
+
   const toggleMenu = useCallback(() => setMenuOpen((prev) => !prev), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
@@ -207,7 +214,7 @@ const Navbar: FC = () => {
                 onClick={closeMenu}
               ></div>
               <ul className="fixed top-0 right-0 w-full h-screen md:w-3/5 sm:w-4/5 bg-white shadow-md text-black z-50 flex flex-col">
-                <div className="flex justify-between items-center pt-4 p-3 sm:p-5 md:p-6 bg-gray-200">
+                <div className="flex justify-between items-center pt-4 p-3 bg-gray-200">
                   <Link to="/">
                     <img
                       loading="lazy"
@@ -217,7 +224,7 @@ const Navbar: FC = () => {
                     />
                   </Link>
                   <button onClick={closeMenu}>
-                    <i className="fa fa-times text-3xl mr-3 sm:mr-0"></i>
+                    <i className="fa fa-times text-3xl mr-3 sm:mr-0 "></i>
                   </button>
                 </div>
                 <li className="p-4 text-black/70">
@@ -226,7 +233,7 @@ const Navbar: FC = () => {
                 {navLinks.map((link, index) => (
                   <li
                     key={index}
-                    className="p-4 mx-7 hover:bg-blue-200 hover:text-blue-700 rounded-md cursor-pointer"
+                    className="p-4 mx-7 hover:bg-purple-200 hover:text-purple-700 rounded-md cursor-pointer"
                     onClick={closeMenu}
                   >
                     <NavLink
@@ -244,13 +251,13 @@ const Navbar: FC = () => {
                 {!isAuthenticated ? (
                   <>
                     <li
-                      className="p-4 border-t-2 mt-3 mx-7 border-gray-200 hover:bg-blue-200 hover:text-blue-700 rounded-md cursor-pointer"
+                      className="p-4 border-t-2 mt-3 mx-7 border-gray-200 hover:bg-purple-200 hover:text-purple-700 rounded-md cursor-pointer"
                       onClick={toggleLoginModal}
                     >
                       <i className="fa-regular fa-user mr-3"></i> Login
                     </li>
                     <li
-                      className="p-4 mx-7 hover:bg-blue-200 hover:text-blue-700 rounded-md cursor-pointer"
+                      className="p-4 mx-7 hover:bg-purple-200 hover:text-purple-700 rounded-md cursor-pointer"
                       onClick={toggleRegisterModal}
                     >
                       <i className="fa fa-user-plus mr-1"></i> Sign Up
@@ -259,13 +266,13 @@ const Navbar: FC = () => {
                 ) : (
                   <>
                     <li
-                      className="p-4 mx-7 hover:bg-blue-200 hover:text-blue-700 rounded-md cursor-pointer"
+                      className="p-4 mx-7 hover:bg-purple-200 hover:text-purple-700 rounded-md cursor-pointer"
                       onClick={() => navigate(`/guest/${userDetails?.id}`)}
                     >
                       <i className="fa fa-user-circle mr-3"></i> Account
                     </li>
                     <li
-                      className="p-4 mx-7 hover:bg-blue-200 hover:text-blue-700 rounded-md cursor-pointer"
+                      className="p-4 mx-7 hover:bg-purple-200 hover:text-purple-700 rounded-md cursor-pointer"
                       onClick={() => setIsModalOpen(true)}
                     >
                       <i className="fa fa-sign-out-alt mr-3"></i> Log Out

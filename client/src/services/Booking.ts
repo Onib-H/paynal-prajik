@@ -42,13 +42,13 @@ export interface BookingResponse {
   updated_at: string;
   cancellation_reason?: string;
   valid_id?: string;
+  time_of_arrival?: string;
 }
 
 export interface BookingFormData {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  emailAddress: string;
   address?: string;
   specialRequests?: string;
   validId: File | null;
@@ -57,13 +57,15 @@ export interface BookingFormData {
   checkOut: string | null;
   status?: "pending" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
   totalPrice?: number;
+  arrivalTime?: string;
+  numberOfGuests?: number;
 }
 
 export interface ReservationFormData {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  emailAddress: string;
+  emailAddress?: string;
   address?: string;
   specialRequests?: string;
   validId: File | null;
@@ -73,6 +75,7 @@ export interface ReservationFormData {
   totalPrice: number;
   status?: "pending" | "confirmed" | "cancelled";
   isVenueBooking?: boolean;
+  numberOfGuests?: number;
 }
 
 export interface ReviewData {
@@ -138,29 +141,29 @@ export const fetchReservations = async () => {
 export const fetchAvailability = async (arrival: string, departure: string) => {
   try {
     const response = await booking.get("/availability", {
-      params: { 
-        arrival, 
+      params: {
+        arrival,
         departure,
         exclude_statuses: "reserved,checked_in"
       },
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
     });
-    
+
     if (response.data) {
       if (response.data.rooms) {
-        response.data.rooms = response.data.rooms.filter((room: any) => 
+        response.data.rooms = response.data.rooms.filter((room: any) =>
           !(room.status === "reserved" || room.status === "checked_in")
         );
       }
-      
+
       if (response.data.areas) {
-        response.data.areas = response.data.areas.filter((area: any) => 
+        response.data.areas = response.data.areas.filter((area: any) =>
           !(area.status === "reserved" || area.status === "checked_in")
         );
       }
     }
-    
+
     return response.data;
   } catch (error) {
     console.error(`Failed to fetch availability: ${error}`);
@@ -175,7 +178,6 @@ export const createBooking = async (bookingData: BookingFormData) => {
     formData.append("firstName", bookingData.firstName);
     formData.append("lastName", bookingData.lastName);
     formData.append("phoneNumber", bookingData.phoneNumber);
-    formData.append("emailAddress", bookingData.emailAddress);
     formData.append("address", bookingData.address || "");
     formData.append("specialRequests", bookingData.specialRequests || "");
 
@@ -188,8 +190,19 @@ export const createBooking = async (bookingData: BookingFormData) => {
     formData.append("checkOut", bookingData.checkOut || "");
     formData.append("status", bookingData.status || "pending");
 
+    formData.append("arrivalTime", bookingData.arrivalTime || "12:00");
+
     if (bookingData.totalPrice !== undefined) {
       formData.append("totalPrice", bookingData.totalPrice.toString());
+    }
+
+    if (bookingData.numberOfGuests !== undefined) {
+      formData.append("numberOfGuests", bookingData.numberOfGuests.toString());
+    }
+
+    const bookingLimitCheck = await checkMaxDailyBookings();
+    if (!bookingLimitCheck.can_book) {
+      throw new Error(`You have reached the maximum limit of ${bookingLimitCheck.max_limit} bookings per day.`);
     }
 
     const response = await booking.post("/bookings", formData, {
@@ -206,17 +219,17 @@ export const createBooking = async (bookingData: BookingFormData) => {
   }
 };
 
-export const createReservation = async (
-  reservationData: ReservationFormData
-) => {
+export const createReservation = async (reservationData: ReservationFormData) => {
   try {
     const formData = new FormData();
 
     formData.append("firstName", reservationData.firstName);
     formData.append("lastName", reservationData.lastName);
     formData.append("phoneNumber", reservationData.phoneNumber);
-    formData.append("emailAddress", reservationData.emailAddress);
-    formData.append("address", reservationData.address || "");
+
+    if (reservationData.emailAddress) {
+      formData.append("emailAddress", reservationData.emailAddress);
+    }
     formData.append("specialRequests", reservationData.specialRequests || "");
 
     if (reservationData.validId) {
@@ -237,11 +250,34 @@ export const createReservation = async (
       formData.append("checkOut", formattedEndDate);
     }
 
-    formData.append("status", reservationData.status || "pending");
     formData.append("isVenueBooking", "true");
+    formData.append("status", reservationData.status || "pending");
+
+    if (reservationData.startTime) {
+      const date = new Date(reservationData.startTime);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      formData.append("startTime", `${hours}:${minutes}`);
+    }
+
+    if (reservationData.endTime) {
+      const date = new Date(reservationData.endTime);
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      formData.append("endTime", `${hours}:${minutes}`);
+    }
 
     if (reservationData.totalPrice) {
       formData.append("totalPrice", reservationData.totalPrice.toString());
+    }
+
+    if (reservationData.numberOfGuests !== undefined) {
+      formData.append("numberOfGuests", reservationData.numberOfGuests.toString());
+    }
+
+    const bookingLimitCheck = await checkMaxDailyBookings();
+    if (!bookingLimitCheck.can_book) {
+      throw new Error(`You have reached the maximum limit of ${bookingLimitCheck.max_limit} bookings per day.`);
     }
 
     const response = await booking.post("/bookings", formData, {
@@ -253,7 +289,7 @@ export const createReservation = async (
 
     return response.data;
   } catch (error) {
-    console.error(`Failed to create reservation: ${error}`);
+    console.error(`Failed to create venue booking:`, error);
     throw error;
   }
 };
@@ -487,3 +523,45 @@ export const fetchAreaReviews = async (areaId: string) => {
     throw error;
   }
 };
+
+export const checkMaxDailyBookings = async () => {
+  try {
+    const response = await booking.get('/check-max-bookings/', {
+      withCredentials: true
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to check booking limits:", error);
+    throw error;
+  }
+};
+
+export const getUserBookingsForToday = async () => {
+  try {
+    const response = await booking.get('/check-max-bookings/', {
+      withCredentials: true,
+    });
+    return response;
+  } catch (error) {
+    console.error(`Failed to get user booking count: ${error}`);
+    throw error;
+  }
+};
+
+export const checkCanBookToday = async (): Promise<{ canBook: boolean; message?: string }> => {
+  try {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+      return { canBook: true };
+    }
+
+    const response = await booking.get('/check-can-book-today/', {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error checking booking eligibility: ${error}`);
+    return { canBook: true };
+  }
+}

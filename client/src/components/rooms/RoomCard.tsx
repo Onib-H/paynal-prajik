@@ -2,29 +2,21 @@ import { Book } from "lucide-react";
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
-
-interface RoomCardProps {
-  id: string | number;
-  name: string;
-  image: string;
-  title: string;
-  capacity: string;
-  price: string;
-}
+import { RoomCardProps } from "../../types/RoomClient";
 
 const RoomCard: FC<RoomCardProps> = ({
   id,
   name,
   image,
   title,
-  capacity,
   price,
+  description,
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
 
   const handleReserveClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevents triggering the card click event
+    e.stopPropagation();
     if (isAuthenticated) {
       navigate(`/booking/${id}`);
     } else {
@@ -32,9 +24,14 @@ const RoomCard: FC<RoomCardProps> = ({
     }
   };
 
+  const truncatedDescription =
+    description && description.length > 65
+      ? `${description.substring(0, 65)}...`
+      : description || "No description available.";
+
   return (
     <div
-      className="rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-transform hover:-translate-y-1 hover:shadow-lg cursor-pointer"
+      className="rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-transform hover:-translate-y-1 hover:shadow-lg cursor-pointer "
       onClick={() => navigate(`/rooms/${id}`)}
     >
       <img
@@ -49,20 +46,20 @@ const RoomCard: FC<RoomCardProps> = ({
             <h1 className="text-xl font-bold text-gray-800">{name}</h1>
           </div>
         </div>
-        <div className="flex flex-wrap pb-4 gap-4 text-sm text-gray-600">
-          <div className="flex items-center space-x-1">
-            <i className="fa fa-users text-green-500"></i>
-            <span>{capacity}</span>
-          </div>
-        </div>
-        <div className="mt-auto pt-4 border-t border-gray-200 flex items-center justify-between font-montserrat">
+
+        {/* Description with 50 character limit */}
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+          {truncatedDescription}
+        </p>
+
+        <div className="mt-auto pt-4 border-t border-purple-200 flex items-center justify-between font-montserrat">
           <span className="text-xl font-semibold text-gray-900">{price}</span>
           <button
             className={`${
               isAuthenticated
-                ? "bg-green-600 hover:bg-green-700"
+                ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
                 : "bg-gray-400 cursor-not-allowed"
-            } text-white text-sm px-3 py-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer`}
+            } text-white text-sm px-3 py-2 rounded-md transition-colors flex items-center gap-1 `}
             onClick={handleReserveClick}
             title={
               isAuthenticated ? "Book this room" : "Login required to book"

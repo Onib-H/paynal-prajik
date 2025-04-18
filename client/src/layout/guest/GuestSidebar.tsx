@@ -19,7 +19,7 @@ const GuestSidebar: FC = () => {
       <div className="px-3 py-4 border-b border-gray-200">
         <button
           onClick={() => navigate('/')}
-          className="w-full flex items-center space-x-2 p-2 rounded-md text-gray-600 hover:bg-gray-100 hover:text-blue-600 transition-colors duration-200"
+          className="w-full flex items-center space-x-2 p-2 rounded-md text-purple-600 hover:bg-purple-100 cursor-pointer hover:text-purple-600 transition-colors duration-200"
         >
           <Home size={25} className="mr-2" />
           <span className="text-md">Go To Homepage</span>
@@ -36,13 +36,13 @@ const GuestSidebar: FC = () => {
                 end={item.link.includes(':id')}
                 className={({ isActive }) => `
                   block w-full
-                  ${isActive ? 'text-blue-700 font-bold' : ''}
+                  ${isActive ? 'text-purple-700 font-bold' : ''}
                 `}
               >
                 {({ isActive }) => (
                   <div className={`flex items-center space-x-2 p-2 rounded-md cursor-pointer ${isActive
-                    ? "border-r-4 border-blue-600 bg-blue-100/80 text-blue-700 font-bold"
-                    : "hover:bg-black/5"
+                    ? "border-r-4 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
+                    : "hover:bg-purple-100/80"
                     }`}>
                     <span className="text-lg">{item.icon}</span>
                     <span className="text-md">{item.label}</span>

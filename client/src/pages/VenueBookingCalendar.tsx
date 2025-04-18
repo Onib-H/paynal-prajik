@@ -3,39 +3,7 @@ import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isSameDay, 
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchAreaBookings, fetchAreaById } from '../services/Booking';
-
-interface AreaData {
-    id: number;
-    area_name: string;
-    description: string;
-    area_image: string;
-    status: string;
-    capacity: number;
-    price_per_hour: string;
-}
-
-interface BookingData {
-    id: number;
-    check_in_date: string;
-    check_out_date: string;
-    status: string;
-    start_time: string | null;
-    end_time: string | null;
-}
-
-interface UnavailableTime {
-    start_time: string;
-    end_time: string;
-    status: string;
-}
-
-interface BookingsByDate {
-    [date: string]: {
-        status: string;
-        bookingId: number;
-        unavailableTimes: UnavailableTime[];
-    };
-}
+import { AreaData, BookingsByDate, BookingData } from '../types/BookingClient';
 
 const VenueBookingCalendar = () => {
     const { areaId } = useParams<{ areaId: string }>();
@@ -58,24 +26,14 @@ const VenueBookingCalendar = () => {
                 setSelectedDate(parsedDate);
                 setCurrentMonth(parsedDate);
             } catch (error) {
-                console.error('Error parsing arrival date from URL:', error);
+                console.error(`Error parsing arrival date from URL: ${error}`);
             }
         }
     }, [arrivalParam]);
 
     const { data: areaData, isLoading: isLoadingArea } = useQuery<AreaData>({
         queryKey: ['area', areaId],
-        queryFn: async () => {
-            console.log(`Fetching area details for ID: ${areaId}`);
-            try {
-                const data = await fetchAreaById(areaId || '');
-                console.log('Area data received:', data);
-                return data;
-            } catch (error) {
-                console.error('Error fetching area:', error);
-                throw error;
-            }
-        },
+        queryFn: () => fetchAreaById(areaId),
         enabled: !!areaId
     });
 
@@ -84,7 +42,7 @@ const VenueBookingCalendar = () => {
         queryFn: async () => {
             const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
             const endDate = format(endOfMonth(addMonths(currentMonth, 1)), 'yyyy-MM-dd');
-            return fetchAreaBookings(areaId || '', startDate, endDate);
+            return await fetchAreaBookings(areaId, startDate, endDate);
         },
         enabled: !!areaId
     });
@@ -125,7 +83,7 @@ const VenueBookingCalendar = () => {
                 const venuePrice = parseFloat(numericValue) || 0;
                 setPrice(venuePrice);
             } catch (error) {
-                console.error('Error parsing area price:', error);
+                console.error(`Error parsing area price: ${error}`);
                 setPrice(0);
             }
         }
@@ -134,7 +92,6 @@ const VenueBookingCalendar = () => {
     const months = [currentMonth, addMonths(currentMonth, 1)];
 
     const prevMonth = () => setCurrentMonth(addMonths(currentMonth, -1));
-
     const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
 
     const isDateBooked = (date: Date): boolean => {
@@ -143,7 +100,6 @@ const VenueBookingCalendar = () => {
 
         if (booking && booking.status) {
             const status = booking.status.toLowerCase();
-            // Only consider reserved and checked_in statuses as booked/unavailable
             return ['checked_in', 'reserved'].includes(status);
         }
 
@@ -156,25 +112,18 @@ const VenueBookingCalendar = () => {
     };
 
     const isDateUnavailable = (date: Date) => {
-        if (isBefore(date, startOfDay(new Date()))) {
-            return true;
-        }
-
+        if (isBefore(date, startOfDay(new Date()))) return true;
         return isDateBooked(date);
     };
 
     const handleDateClick = (date: Date) => {
-        if (isDateUnavailable(date)) {
-            return;
-        }
+        if (isDateUnavailable(date)) return;
         setSelectedDate(date);
         setErrorMessage(null);
     };
 
     const handleDateHover = (date: Date) => {
-        if (!isDateUnavailable(date)) {
-            setHoveredDate(date);
-        }
+        if (!isDateUnavailable(date)) setHoveredDate(date);
     };
 
     const getDateCellClass = (date: Date) => {
@@ -184,25 +133,12 @@ const VenueBookingCalendar = () => {
         const isToday = isSameDay(date, new Date());
         const dateStatus = getDateStatus(date);
 
-        // Base class for all date cells
         let className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
 
-        // Handle selection first (highest priority)
-        if (isSelected) {
-            return `${className} bg-blue-600 text-white font-medium`;
-        }
+        if (isSelected) return `${className} bg-blue-600 text-white font-medium`;
+        if (isHovered && !isUnavailable) return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
+        if (isToday && !isUnavailable) className += " border-blue-500 border-2";
 
-        // Handle hover effect for available dates
-        if (isHovered && !isUnavailable) {
-            return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
-        }
-
-        // Handle today indicator
-        if (isToday && !isUnavailable) {
-            className += " border-blue-500 border-2";
-        }
-
-        // Handle specific booked statuses
         if (dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
             switch (dateStatus.toLowerCase()) {
                 case 'reserved':
@@ -214,21 +150,12 @@ const VenueBookingCalendar = () => {
             }
         }
 
-        // Handle past dates
-        if (isUnavailable) {
-            return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
-        }
-
-        // Default available date styling (including checked_out, cancelled, rejected, pending)
+        if (isUnavailable) return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
         return `${className} bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer`;
     };
 
     const getDateContent = (date: Date) => {
-        return (
-            <>
-                {format(date, 'd')}
-            </>
-        );
+        return format(date, 'd');
     };
 
     const handleProceed = () => {
@@ -244,7 +171,7 @@ const VenueBookingCalendar = () => {
     if (isLoadingArea || isLoadingBookings) {
         return (
             <div className="flex justify-center items-center h-[calc(100vh-80px)]">
-                <div className="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+                <div className="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent" />
             </div>
         );
     }
@@ -252,10 +179,9 @@ const VenueBookingCalendar = () => {
     return (
         <div className="container mx-auto px-4 py-8 mt-16">
             <h2 className="text-4xl font-semibold mb-6 text-center">Book Your Venue</h2>
-
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-lg shadow-md ring-3 ring-blue-400 p-6">
+                    <div className="bg-white rounded-lg shadow-md ring-3 ring-purple-500 p-6">
                         <h3 className="text-2xl font-bold mb-4">Select Your Booking Date</h3>
 
                         {/* Selected Date */}
@@ -282,7 +208,6 @@ const VenueBookingCalendar = () => {
                         )}
 
                         {arrivalParam ? (
-                            // If we have arrival date from URL, focus on confirmation
                             <div className="mb-6 p-4 bg-blue-50 rounded-lg">
                                 <p className="font-medium text-blue-800">
                                     Date pre-selected: {selectedDate ? format(selectedDate, 'EEEE, MMMM dd, yyyy') : ''}
@@ -292,7 +217,6 @@ const VenueBookingCalendar = () => {
                                 </p>
                             </div>
                         ) : (
-                            // Show calendar for date selection if no arrival date in URL
                             <>
                                 {/* Calendar Controls */}
                                 <div className="flex justify-between items-center mb-4">
@@ -426,8 +350,8 @@ const VenueBookingCalendar = () => {
                             <button
                                 onClick={handleProceed}
                                 disabled={!selectedDate}
-                                className={`px-6 py-2 rounded-md font-semibold ${selectedDate
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700 cursor-pointer'
+                                className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${selectedDate
+                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                             >
@@ -440,7 +364,7 @@ const VenueBookingCalendar = () => {
                 {/* Right Side - Area Info (1/3 width on large screens) */}
                 <div className="lg:col-span-1">
                     {areaData && (
-                        <div className="bg-white rounded-lg ring-blue-400 ring-3 shadow-md p-6 sticky top-24">
+                        <div className="bg-white rounded-lg ring-purple-500 ring-3 shadow-md p-6 sticky top-24">
                             <div className="mb-4">
                                 <img
                                     loading='lazy'

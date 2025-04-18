@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bookmark, Check, DollarSign, Home, Info, Star, Users, X } from "lucide-react";
+import { ArrowLeft, Bookmark, Check, Home, Info, PhilippinePeso, Star, Users, X } from "lucide-react";
 import { lazy, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
@@ -72,7 +71,6 @@ const RoomDetails = () => {
 
   const reviews = reviewsData?.data || [];
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -206,14 +204,14 @@ const RoomDetails = () => {
                       <Users className="w-6 h-6 text-indigo-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">Capacity</h3>
-                      <p className="text-gray-600">{roomDetail.capacity} people</p>
+                      <h3 className="font-medium text-gray-900">Max Guests</h3>
+                      <p className="text-gray-600">{roomDetail.max_guests} people</p>
                     </div>
                   </div>
 
                   <div className="flex items-center">
                     <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
-                      <DollarSign className="w-6 h-6 text-green-600" />
+                      <PhilippinePeso className="w-6 h-6 text-green-600" />
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-900">Pricing</h3>
@@ -309,15 +307,18 @@ const RoomDetails = () => {
                     <Home className="w-5 h-5 text-blue-500 mr-3" />
                     <div>
                       <h4 className="font-medium text-gray-800">Room Type</h4>
-                      <p className="text-indigo-600 text-lg font-semibold">{roomDetail.room_type}</p>
+                      <p className="text-indigo-600 text-lg font-semibold">{roomDetail.room_type.toUpperCase()}</p>
                     </div>
                   </div>
 
+                  {/* Bed Type */}
                   <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                    <Users className="w-5 h-5 text-blue-500 mr-3" />
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-blue-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                     <div>
-                      <h4 className="font-medium text-gray-800">Capacity</h4>
-                      <p className="text-gray-900 text-lg font-semibold">{roomDetail.capacity || 2} guests</p>
+                      <h4 className="font-medium text-gray-800">Bed Type</h4>
+                      <p className="text-gray-900 text-lg font-semibold capitalize">{roomDetail.bed_type || "Standard"}</p>
                     </div>
                   </div>
                 </div>

@@ -14,9 +14,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
-import cloudinary # type: ignore
-import cloudinary.uploader # type: ignore
-import cloudinary.api # type: ignore
+import cloudinary
 
 load_dotenv()
 
@@ -197,11 +195,10 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
-        'TIMEOUT': 300,  # 5 minutes
+        'TIMEOUT': 300,
     }
 }
 
-# Cache middleware settings
 CACHE_MIDDLEWARE_ALIAS = 'default'
-CACHE_MIDDLEWARE_SECONDS = 600  # 10 minutes
+CACHE_MIDDLEWARE_SECONDS = 600
 CACHE_MIDDLEWARE_KEY_PREFIX = 'azurea'
