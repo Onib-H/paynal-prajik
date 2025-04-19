@@ -1,12 +1,8 @@
-import {
-  faChevronDown,
-  faCircleUser,
-  faRightToBracket,
-  faSpinner,
-} from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faCircleUser, faRightToBracket, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FC, useCallback, useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import DefaultImg from "../assets/Default_pfp.jpg";
 import hotelLogo from "../assets/hotel_logo.png";
 import Dropdown from "../components/Dropdown";
@@ -24,7 +20,6 @@ const Navbar: FC = () => {
   const [loginModal, setLoginModal] = useState(false);
   const [registerModal, setRegisterModal] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
   const [notification, setNotification] = useState<{
@@ -43,28 +38,9 @@ const Navbar: FC = () => {
     clearAuthState,
   } = useUserContext();
 
-  const handleLogout = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await logout();
-      if (response.status === 200) {
-        clearAuthState();
-        setIsModalOpen(false);
-        navigate("/", { replace: true });
-      } else {
-        throw new Error("Logout failed");
-      }
-    } catch (error) {
-      console.error(`Failed to logout: ${error}`);
-      setNotification({
-        message: "Error during logout, but session cleared",
-        type: "warning",
-        icon: "fas fa-exclamation-triangle",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [clearAuthState, navigate]);
+  const handleLogout = useCallback(() => {
+    logoutMutation()
+  }, []);
 
   const toggleLoginModal = useCallback(() => setLoginModal((prev) => !prev), []);
   const toggleRegisterModal = useCallback(() => setRegisterModal((prev) => !prev), []);
@@ -83,6 +59,37 @@ const Navbar: FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [loginModal, registerModal]);
 
+  const { refetch: fetchGuestDetails } = useQuery({
+    queryKey: ['guestDetails', userDetails?.id],
+    queryFn: async () => {
+      if (!isAuthenticated || userDetails?.id) return null;
+      const response = await getGuestDetails(userDetails.id);
+      return response.data;
+    },
+    enabled: isAuthenticated && !!userDetails?.id,
+  });
+
+  const { mutate: logoutMutation, isPending: logoutLoading } = useMutation({
+    mutationFn: logout,
+    onSuccess: (response) => {
+      if (response.status === 200) {
+        clearAuthState();
+        setIsModalOpen(false);
+        navigate("/", { replace: true });
+      } else {
+        throw new Error("Logout failed");
+      }
+    },
+    onError: (error) => {
+      console.error(`Failed to error: ${error}`);
+      setNotification({
+        message: "Error during logout, but session cleared",
+        type: "warning",
+        icon: "fas fa-exclamation-triangle"
+      });
+    },
+  });
+
   useEffect(() => {
     if (isAuthenticated) {
       setLoginModal(false);
@@ -91,18 +98,8 @@ const Navbar: FC = () => {
   }, [isAuthenticated, setProfileImage]);
 
   useEffect(() => {
-    const fetchProfileImage = async () => {
-      if (isAuthenticated && userDetails?.id) {
-        try {
-          const data = await getGuestDetails(userDetails.id);
-          setProfileImage(data.data.profile_image);
-        } catch (err) {
-          console.error(`Failed to fetch user profile for Navbar: ${err}`);
-        }
-      }
-    };
-    fetchProfileImage();
-  }, [isAuthenticated, userDetails?.id, setProfileImage]);
+    if (isAuthenticated && userDetails?.id) fetchGuestDetails();
+  }, [isAuthenticated, userDetails?.id, fetchGuestDetails]);
 
   return (
     <>
@@ -303,11 +300,11 @@ const Navbar: FC = () => {
         cancel={() => setIsModalOpen(!isModalOpen)}
         onConfirm={handleLogout}
         className={`bg-red-600 text-white active:bg-red-700 font-bold uppercase px-4 py-2 cursor-pointer rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 transition-all duration-150 ${
-          loading ? "opacity-50 cursor-not-allowed" : ""
+          logoutLoading ? "opacity-50 cursor-not-allowed" : ""
         }`}
-        loading={loading}
+        loading={logoutLoading}
         confirmText={
-          loading ? (
+          logoutLoading ? (
             <>
               <FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> Logging
               out...

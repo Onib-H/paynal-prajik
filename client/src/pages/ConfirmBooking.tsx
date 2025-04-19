@@ -145,7 +145,7 @@ const ConfirmBooking = () => {
           setCanBookToday(eligibility.canBook);
           setBookingLimitMessage(eligibility.message || null);
         } catch (error) {
-          console.error('Error checking booking eligibility:', error);
+          console.error(`Error checking booking eligibility: ${error}`);
         }
       };
 
@@ -256,7 +256,6 @@ const ConfirmBooking = () => {
       setSavedFormData(null);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=false`);
     } catch (err: any) {
-      console.error(`Error creating booking after login: ${err}`);
       if (err.response && err.response.data && err.response.data.error) {
         if (typeof err.response.data.error === 'object') {
           setError(err.response.data.error);

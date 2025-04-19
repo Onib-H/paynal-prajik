@@ -1,62 +1,47 @@
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { FC, Suspense, useEffect, useState } from "react";
+import { FC, Suspense, lazy, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import Modal from "../../components/Modal";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { menuItems } from "../../constants/AdminMenuSidebar";
 import { useUserContext } from "../../contexts/AuthContext";
 import { fetchAdminProfile } from "../../services/Admin";
 import { logout } from "../../services/Auth";
 import AdminProfile from "./AdminProfile";
 
-const AdminDetailSkeleton = React.lazy(() => import("../../motions/skeletons/AdminDetailSkeleton"));
-
-interface AdminData {
-  name: string;
-  role: string;
-  profile_pic: string;
-}
+const AdminDetailSkeleton = lazy(() => import("../../motions/skeletons/AdminDetailSkeleton"));
 
 const AdminSidebar: FC<{ role: string }> = ({ role }) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(false);
-  const navigate = useNavigate();
   const { setIsAuthenticated, setRole } = useUserContext();
-
-  const [admin, setAdmin] = useState<AdminData>({
-    name: "",
-    role: "",
-    profile_pic: "",
-  });
+  const navigate = useNavigate();
 
   const modalCancel = () => setIsModalOpen(!isModalOpen);
 
-  const handleLogout = async () => {
-    setLoading(true);
-    try {
-      const response = await logout();
+  const { data: adminData, isLoading: profileLoading } = useQuery({
+    queryKey: ['adminProfile'],
+    queryFn: async () => {
+      const response = await fetchAdminProfile();
+      return response.data.data;
+    },
+  });
+  
+  const { mutate: logoutMutation, isPending: logoutLoading } = useMutation({
+    mutationFn: logout,
+    onSuccess: (response) => {
       if (response.status === 200) {
         setIsAuthenticated(false);
         setRole("");
         navigate("/");
       }
-      setLoading(false);
-    } catch (error) {
-      console.error(`Failed to logout: ${error}`);
+    },
+    onError: (error) => {
+      console.error(`Failed to error: ${error}`);
     }
-  };
-
-  useEffect(() => {
-    const adminProfile = async () => {
-      try {
-        const response = await fetchAdminProfile();
-        setAdmin(response.data.data);
-      } catch (error) {
-        console.error(`Failed to fetch admin profile: ${error}`);
-      }
-    };
-    adminProfile();
-  }, []);
+  })
+  
+  const handleLogout = () => logoutMutation();
 
   const filteredMenuItems = menuItems.filter((item) => {
     if (role.toLowerCase() === "staff") {
@@ -76,7 +61,7 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
       <aside className="min-h-screen flex flex-col p-4 bg-white text-black w-2xs">
         <div className="p-2">
           <Suspense fallback={<AdminDetailSkeleton />}>
-            {admin ? <AdminProfile admin={admin} /> : <AdminDetailSkeleton />}
+            {profileLoading ? <AdminDetailSkeleton /> : adminData && <AdminProfile admin={adminData} />}
           </Suspense>
         </div>
         <div className="flex-grow overflow-y-auto p-2">
@@ -120,11 +105,11 @@ const AdminSidebar: FC<{ role: string }> = ({ role }) => {
         description="Are you sure you want to log out?"
         cancel={modalCancel}
         onConfirm={handleLogout}
-        loading={loading}
-        className={`bg-red-600 text-white hover:bg-red-700 font-bold uppercase text-sm px-6 py-3 rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-300 cursor-pointer ${loading ? "opacity-50 cursor-not-allowed" : ""
+        loading={logoutLoading}
+        className={`bg-red-600 text-white hover:bg-red-700 font-bold uppercase text-sm px-6 py-3 rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-300 cursor-pointer ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         confirmText={
-          loading ? (
+          logoutLoading ? (
             <>
               <FontAwesomeIcon icon={faSpinner} spin className="mr-2" /> Logging out...
             </>
