@@ -13,14 +13,18 @@ import {
   Filter,
   IdCard,
   Search,
-  X
+  X,
 } from "lucide-react";
 import { FC, useState } from "react";
 import { toast } from "react-toastify";
 import CancellationModal from "../../components/bookings/CancellationModal";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
-import { getAllBookings, recordPayment, updateBookingStatus } from "../../services/Admin";
+import {
+  getAllBookings,
+  recordPayment,
+  updateBookingStatus,
+} from "../../services/Admin";
 import { BookingResponse } from "../../types/BookingClient";
 import { formatDate } from "../../utils/formatters";
 
@@ -67,9 +71,10 @@ const BookingStatusBadge: FC<{ status: string }> = ({ status }) => {
 const getBookingPrice = (booking: BookingResponse): number => {
   try {
     if (booking.total_price) {
-      const totalPrice = typeof booking.total_price === 'string'
-        ? parseFloat(booking.total_price.replace(/[^\d.]/g, ''))
-        : booking.total_price;
+      const totalPrice =
+        typeof booking.total_price === "string"
+          ? parseFloat(booking.total_price.replace(/[^\d.]/g, ""))
+          : booking.total_price;
       return totalPrice || 0;
     }
 
@@ -78,7 +83,7 @@ const getBookingPrice = (booking: BookingResponse): number => {
     if (booking.is_venue_booking && booking.area_details) {
       if (booking.area_details.price_per_hour) {
         const priceString = booking.area_details.price_per_hour;
-        basePrice = parseFloat(priceString.replace(/[^\d.]/g, '')) || 0;
+        basePrice = parseFloat(priceString.replace(/[^\d.]/g, "")) || 0;
       }
       return basePrice;
     } else if (!booking.is_venue_booking && booking.room_details) {
@@ -94,7 +99,7 @@ const getBookingPrice = (booking: BookingResponse): number => {
 
       if (booking.room_details.room_price) {
         const priceString = booking.room_details.room_price;
-        basePrice = parseFloat(priceString.replace(/[^\d.]/g, '')) || 0;
+        basePrice = parseFloat(priceString.replace(/[^\d.]/g, "")) || 0;
       }
 
       return basePrice * nights;
@@ -118,7 +123,18 @@ const BookingDetailsModal: FC<{
   onCancel?: () => void;
   canManage: boolean;
   isUpdating: boolean;
-}> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, onCancel, canManage, isUpdating }) => {
+}> = ({
+  booking,
+  onClose,
+  onConfirm,
+  onReject,
+  onCheckIn,
+  onCheckOut,
+  onNoShow,
+  onCancel,
+  canManage,
+  isUpdating,
+}) => {
   const [paymentAmount, setPaymentAmount] = useState<string>("");
   const isVenueBooking = booking?.is_venue_booking;
   if (!booking) return null;
@@ -148,14 +164,17 @@ const BookingDetailsModal: FC<{
       if (currentDateOnly.getTime() < checkInDateOnly.getTime()) {
         return {
           isValid: false,
-          message: "Check-in is not available yet. Guest is arriving earlier than the scheduled date."
+          message:
+            "Check-in is not available yet. Guest is arriving earlier than the scheduled date.",
         };
       }
 
       if (currentDateOnly.getTime() > checkInDateOnly.getTime()) {
         return {
           isValid: false,
-          message: "Guest is arriving late. This was scheduled for " + formatDate(booking.check_in_date)
+          message:
+            "Guest is arriving late. This was scheduled for " +
+            formatDate(booking.check_in_date),
         };
       }
 
@@ -166,12 +185,11 @@ const BookingDetailsModal: FC<{
         if (currentHour < venueStartHour) {
           return {
             isValid: false,
-            message: "Venue booking check-in starts at 8:00 AM"
+            message: "Venue booking check-in starts at 8:00 AM",
           };
         }
-      }
-      else if (booking.time_of_arrival) {
-        const arrivalTimeParts = booking.time_of_arrival.split(':');
+      } else if (booking.time_of_arrival) {
+        const arrivalTimeParts = booking.time_of_arrival.split(":");
         if (arrivalTimeParts.length >= 2) {
           const arrivalHour = parseInt(arrivalTimeParts[0]);
           const arrivalMinute = parseInt(arrivalTimeParts[1]);
@@ -180,22 +198,32 @@ const BookingDetailsModal: FC<{
           const currentHour = currentDate.getHours();
           const currentMinute = currentDate.getMinutes();
 
-          const currentTimeInMinutes = (currentHour * 60) + currentMinute;
-          const arrivalTimeInMinutes = (arrivalHour * 60) + arrivalMinute;
+          const currentTimeInMinutes = currentHour * 60 + currentMinute;
+          const arrivalTimeInMinutes = arrivalHour * 60 + arrivalMinute;
           const minCheckInTimeInMinutes = minCheckInHour * 60;
 
-          if (currentTimeInMinutes < minCheckInTimeInMinutes && arrivalTimeInMinutes >= minCheckInTimeInMinutes) {
+          if (
+            currentTimeInMinutes < minCheckInTimeInMinutes &&
+            arrivalTimeInMinutes >= minCheckInTimeInMinutes
+          ) {
             return {
               isValid: false,
-              message: "Standard check-in time is after 2:00 PM"
+              message: "Standard check-in time is after 2:00 PM",
             };
           }
 
-          if (currentTimeInMinutes < arrivalTimeInMinutes && arrivalTimeInMinutes >= minCheckInTimeInMinutes) {
-            const formattedArrivalTime = `${arrivalHour % 12 || 12}:${arrivalMinute.toString().padStart(2, '0')} ${arrivalHour >= 12 ? 'PM' : 'AM'}`;
+          if (
+            currentTimeInMinutes < arrivalTimeInMinutes &&
+            arrivalTimeInMinutes >= minCheckInTimeInMinutes
+          ) {
+            const formattedArrivalTime = `${
+              arrivalHour % 12 || 12
+            }:${arrivalMinute.toString().padStart(2, "0")} ${
+              arrivalHour >= 12 ? "PM" : "AM"
+            }`;
             return {
               isValid: false,
-              message: `Guest is expected to arrive at ${formattedArrivalTime}`
+              message: `Guest is expected to arrive at ${formattedArrivalTime}`,
             };
           }
         }
@@ -279,7 +307,16 @@ const BookingDetailsModal: FC<{
         <div className="flex items-center justify-center w-full h-full">
           <EventLoader
             text={getLoadingText()}
-            type={getLoaderType() as "default" | "reserve" | "checkin" | "checkout" | "noshow" | "cancelled" | "rejected"}
+            type={
+              getLoaderType() as
+                | "default"
+                | "reserve"
+                | "checkin"
+                | "checkout"
+                | "noshow"
+                | "cancelled"
+                | "rejected"
+            }
           />
         </div>
       ) : (
@@ -314,11 +351,11 @@ const BookingDetailsModal: FC<{
             className="space-y-3 overflow-y-auto max-h-[70vh] pr-2 custom-scrollbar"
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 p-4 rounded-lg shadow-inner">
-              <motion.div
-                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-              >
+              <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
                 <span className="font-semibold text-gray-700">Full Name:</span>
-                <span className="sm:text-right">{booking.user?.first_name} {booking.user?.last_name}</span>
+                <span className="sm:text-right">
+                  {booking.user?.first_name} {booking.user?.last_name}
+                </span>
               </motion.div>
 
               {/* <motion.div
@@ -329,56 +366,55 @@ const BookingDetailsModal: FC<{
               </motion.div> */}
 
               {booking.user?.address && (
-                <motion.div
-                  className="flex flex-col sm:flex-row justify-between sm:col-span-2 p-2 rounded-md"
-                >
+                <motion.div className="flex flex-col sm:flex-row justify-between sm:col-span-2 p-2 rounded-md">
                   <span className="font-semibold text-gray-700">Address:</span>
                   <span className="sm:text-right">{booking.user?.address}</span>
                 </motion.div>
               )}
 
-              <motion.div
-                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-              >
-                <span className="font-semibold text-gray-700">Property Type:</span>
+              <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
+                <span className="font-semibold text-gray-700">
+                  Property Type:
+                </span>
                 <span>
                   {isVenueBooking ? (
-                    <span className="bg-blue-100 text-blue-800 px-2 uppercase py-1 rounded-full text-md font-semibold">Area</span>
+                    <span className="bg-blue-100 text-blue-800 px-2 uppercase py-1 rounded-full text-md font-semibold">
+                      Area
+                    </span>
                   ) : (
-                    <span className="bg-green-100 text-green-800 px-2 uppercase py-1 rounded-full text-md font-semibold">Room</span>
+                    <span className="bg-green-100 text-green-800 px-2 uppercase py-1 rounded-full text-md font-semibold">
+                      Room
+                    </span>
                   )}
                 </span>
               </motion.div>
 
-              <motion.div
-                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-              >
-                <span className="font-semibold text-gray-700">{isVenueBooking ? "Area:" : "Room:"}</span>
-                <span className="sm:text-right font-medium">{isVenueBooking
-                  ? (booking.area_details?.area_name || "Unknown Area")
-                  : (booking.room_details?.room_name || "Unknown Room")}
+              <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
+                <span className="font-semibold text-gray-700">
+                  {isVenueBooking ? "Area:" : "Room:"}
+                </span>
+                <span className="sm:text-right font-medium">
+                  {isVenueBooking
+                    ? booking.area_details?.area_name || "Unknown Area"
+                    : booking.room_details?.room_name || "Unknown Room"}
                 </span>
               </motion.div>
 
               {isVenueBooking && booking.area_details?.capacity && (
-                <motion.div
-                  className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-                >
+                <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
                   <span className="font-semibold text-gray-700">Capacity:</span>
                   <span>{booking.area_details.capacity} people</span>
                 </motion.div>
               )}
 
-              <motion.div
-                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-              >
-                <span className="font-semibold text-gray-700">Date of Reservation:</span>
+              <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
+                <span className="font-semibold text-gray-700">
+                  Date of Reservation:
+                </span>
                 <span>{formatDate(booking.created_at)}</span>
               </motion.div>
 
-              <motion.div
-                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-              >
+              <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
                 <span className="font-semibold text-gray-700">Check-in:</span>
                 <span>
                   {isVenueBooking
@@ -388,23 +424,23 @@ const BookingDetailsModal: FC<{
               </motion.div>
 
               {!isVenueBooking && booking.time_of_arrival && (
-                <motion.div
-                  className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-                >
-                  <span className="font-semibold text-gray-700">Expected Arrival Time:</span>
+                <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
+                  <span className="font-semibold text-gray-700">
+                    Expected Arrival Time:
+                  </span>
                   <span className="font-medium">
-                    {new Date(`2000-01-01T${booking.time_of_arrival}`).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: true
+                    {new Date(
+                      `2000-01-01T${booking.time_of_arrival}`
+                    ).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
                     })}
                   </span>
                 </motion.div>
               )}
 
-              <motion.div
-                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-              >
+              <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
                 <span className="font-semibold text-gray-700">Check-out:</span>
                 <span>
                   {isVenueBooking
@@ -413,10 +449,10 @@ const BookingDetailsModal: FC<{
                 </span>
               </motion.div>
 
-              <motion.div
-                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-              >
-                <span className="font-semibold text-gray-700">{isVenueBooking ? "Area Price:" : "Room Price:"}</span>
+              <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
+                <span className="font-semibold text-gray-700">
+                  {isVenueBooking ? "Area Price:" : "Room Price:"}
+                </span>
                 <span className="font-medium">
                   {isVenueBooking
                     ? booking.area_details?.price_per_hour
@@ -424,47 +460,57 @@ const BookingDetailsModal: FC<{
                 </span>
               </motion.div>
 
-              <motion.div
-                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-              >
+              <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
                 <span className="font-semibold text-gray-700">Duration:</span>
                 <span className="font-medium">
                   {(() => {
                     try {
                       const checkIn = new Date(booking.check_in_date);
                       const checkOut = new Date(booking.check_out_date);
-                      const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
+                      const diffTime = Math.abs(
+                        checkOut.getTime() - checkIn.getTime()
+                      );
 
                       if (isVenueBooking) {
-                        if (checkIn.toDateString() === checkOut.toDateString()) {
+                        if (
+                          checkIn.toDateString() === checkOut.toDateString()
+                        ) {
                           return "9 hours (8AM - 5PM)";
                         }
-                        const hours = Math.max(Math.ceil(diffTime / (1000 * 60 * 60)), 1);
-                        return `${hours} hour${hours !== 1 ? 's' : ''}`;
+                        const hours = Math.max(
+                          Math.ceil(diffTime / (1000 * 60 * 60)),
+                          1
+                        );
+                        return `${hours} hour${hours !== 1 ? "s" : ""}`;
                       } else {
-                        const nights = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
-                        return `${nights} night${nights !== 1 ? 's' : ''}`;
+                        const nights = Math.max(
+                          Math.ceil(diffTime / (1000 * 60 * 60 * 24)),
+                          1
+                        );
+                        return `${nights} night${nights !== 1 ? "s" : ""}`;
                       }
                     } catch (error) {
-                      console.error('Error calculating duration:', error);
-                      return isVenueBooking ? '9 hours (8AM - 5PM)' : '1 night';
+                      console.error("Error calculating duration:", error);
+                      return isVenueBooking ? "9 hours (8AM - 5PM)" : "1 night";
                     }
                   })()}
                 </span>
               </motion.div>
 
-              <motion.div
-                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-              >
-                <span className="font-semibold text-gray-700">Total Amount:</span>
+              <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
+                <span className="font-semibold text-gray-700">
+                  Total Amount:
+                </span>
                 <span className="font-bold text-indigo-600">
-                  ₱{bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  ₱
+                  {bookingPrice.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </motion.div>
 
-              <motion.div
-                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-              >
+              <motion.div className="flex flex-col sm:flex-row justify-between p-2 rounded-md">
                 <span className="font-semibold text-gray-700">Status:</span>
                 <BookingStatusBadge status={booking.status} />
               </motion.div>
@@ -487,13 +533,18 @@ const BookingDetailsModal: FC<{
                       <span className="text-gray-500">₱</span>
                     </div>
                     <motion.input
-                      whileFocus={{ boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.3)" }}
+                      whileFocus={{
+                        boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.3)",
+                      }}
                       type="number"
                       min="0"
                       step="0.01"
                       value={paymentAmount}
                       onChange={handlePaymentChange}
-                      placeholder={`Enter amount (${bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
+                      placeholder={`Enter amount (${bookingPrice.toLocaleString(
+                        undefined,
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                      )})`}
                       className="w-full pl-10 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     />
                   </div>
@@ -505,10 +556,29 @@ const BookingDetailsModal: FC<{
                   className="mt-2 text-sm"
                 >
                   {currentPayment > 0 && (
-                    <p className={isPaymentComplete ? "text-green-600 flex items-center" : "text-red-600 flex items-center"}>
-                      {isPaymentComplete
-                        ? <><CheckCircle2 className="w-4 h-4 mr-1" /> Payment amount matches the required total.</>
-                        : <><AlertCircle className="w-4 h-4 mr-1" /> Payment must be exactly ₱{bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} to check in the guest.</>}
+                    <p
+                      className={
+                        isPaymentComplete
+                          ? "text-green-600 flex items-center"
+                          : "text-red-600 flex items-center"
+                      }
+                    >
+                      {isPaymentComplete ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4 mr-1" /> Payment
+                          amount matches the required total.
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="w-4 h-4 mr-1" /> Payment must
+                          be exactly ₱
+                          {bookingPrice.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{" "}
+                          to check in the guest.
+                        </>
+                      )}
                     </p>
                   )}
                 </motion.div>
@@ -541,8 +611,10 @@ const BookingDetailsModal: FC<{
                   Area Booking Note
                 </h3>
                 <p className="text-sm text-blue-700">
-                  Standard area bookings are scheduled from 8:00 AM to 5:00 PM (9 hours) on the selected date.
-                  {booking.check_in_date !== booking.check_out_date && " This booking spans multiple days."}
+                  Standard area bookings are scheduled from 8:00 AM to 5:00 PM
+                  (9 hours) on the selected date.
+                  {booking.check_in_date !== booking.check_out_date &&
+                    " This booking spans multiple days."}
                 </p>
               </motion.div>
             )}
@@ -602,11 +674,14 @@ const BookingDetailsModal: FC<{
               <div className="relative group">
                 <motion.button
                   whileTap={canCheckIn ? { scale: 0.98 } : {}}
-                  onClick={() => onCheckIn && canCheckIn && onCheckIn(currentPayment)}
-                  className={`px-4 py-2 text-white rounded-lg cursor-pointer flex items-center justify-center gap-2 shadow-sm ${canCheckIn
-                    ? 'bg-blue-600 hover:bg-blue-700'
-                    : 'bg-gray-400 cursor-not-allowed'
-                    }`}
+                  onClick={() =>
+                    onCheckIn && canCheckIn && onCheckIn(currentPayment)
+                  }
+                  className={`px-4 py-2 text-white rounded-lg cursor-pointer flex items-center justify-center gap-2 shadow-sm ${
+                    canCheckIn
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "bg-gray-400 cursor-not-allowed"
+                  }`}
                   disabled={!canCheckIn}
                 >
                   <Check size={18} />
@@ -662,22 +737,26 @@ const ManageBookings: FC = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedBooking, setSelectedBooking] = useState<BookingResponse | null>(null);
+  const [selectedBooking, setSelectedBooking] =
+    useState<BookingResponse | null>(null);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const [showNoShowModal, setShowNoShowModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 9;
 
-  const { data: bookingsResponse, error } = useQuery<{
-    data: BookingResponse[],
-    pagination?: {
-      total_pages: number;
-      current_page: number;
-      total_items: number;
-      page_size: number;
-    }
-  }, Error>({
+  const { data: bookingsResponse, error } = useQuery<
+    {
+      data: BookingResponse[];
+      pagination?: {
+        total_pages: number;
+        current_page: number;
+        total_items: number;
+        page_size: number;
+      };
+    },
+    Error
+  >({
     queryKey: ["admin-bookings", currentPage, pageSize],
     queryFn: async () => {
       try {
@@ -696,7 +775,7 @@ const ManageBookings: FC = () => {
       status,
       reason,
       paymentAmount,
-      setRoomAvailable = false
+      setRoomAvailable = false,
     }: {
       bookingId: number;
       status: string;
@@ -706,20 +785,20 @@ const ManageBookings: FC = () => {
     }) => {
       const data: Record<string, any> = {
         status,
-        set_available: setRoomAvailable
+        set_available: setRoomAvailable,
       };
 
-      if ((status === 'cancelled' || status === 'rejected') && reason) {
+      if ((status === "cancelled" || status === "rejected") && reason) {
         data.reason = reason;
       }
 
       const result = await updateBookingStatus(bookingId, data);
 
-      if (status === 'checked_in' && paymentAmount) {
+      if (status === "checked_in" && paymentAmount) {
         try {
           await recordPayment(bookingId, paymentAmount);
         } catch (error) {
-          console.error('Failed to record payment:', error);
+          console.error("Failed to record payment:", error);
         }
       }
 
@@ -731,18 +810,26 @@ const ManageBookings: FC = () => {
 
       const { status } = data;
 
-      if (status === 'reserved') {
-        toast.success("Booking has been reserved successfully! A confirmation email has been sent to the guest.");
-      } else if (status === 'rejected') {
-        toast.success("Booking has been rejected. The guest has been notified with your reason.");
-      } else if (status === 'checked_in') {
-        toast.success("Guest has been checked in successfully and payment recorded.");
-      } else if (status === 'checked_out') {
+      if (status === "reserved") {
+        toast.success(
+          "Booking has been reserved successfully! A confirmation email has been sent to the guest."
+        );
+      } else if (status === "rejected") {
+        toast.success(
+          "Booking has been rejected. The guest has been notified with your reason."
+        );
+      } else if (status === "checked_in") {
+        toast.success(
+          "Guest has been checked in successfully and payment recorded."
+        );
+      } else if (status === "checked_out") {
         toast.success("Guest has been checked out successfully.");
-      } else if (status === 'no_show') {
-        toast.success("Booking has been marked as 'No Show' and the room/area has been made available again.");
+      } else if (status === "no_show") {
+        toast.success(
+          "Booking has been marked as 'No Show' and the room/area has been made available again."
+        );
       } else {
-        toast.success(`Booking status updated to ${status.replace('_', ' ')}`);
+        toast.success(`Booking status updated to ${status.replace("_", " ")}`);
       }
 
       setSelectedBooking(null);
@@ -776,7 +863,7 @@ const ManageBookings: FC = () => {
       updateBookingStatusMutation.mutate({
         bookingId: selectedBooking.id,
         status: "reserved",
-        setRoomAvailable: false
+        setRoomAvailable: false,
       });
     }
   };
@@ -786,7 +873,7 @@ const ManageBookings: FC = () => {
       updateBookingStatusMutation.mutate({
         bookingId: selectedBooking.id,
         status: "checked_in",
-        paymentAmount
+        paymentAmount,
       });
     }
   };
@@ -810,7 +897,7 @@ const ManageBookings: FC = () => {
         updateBookingStatusMutation.mutate({
           bookingId: selectedBooking.id,
           status: "no_show",
-          setRoomAvailable: true
+          setRoomAvailable: true,
         });
         setShowNoShowModal(false);
       } catch (error) {
@@ -830,15 +917,19 @@ const ManageBookings: FC = () => {
       updateBookingStatusMutation.mutate({
         bookingId: selectedBooking.id,
         status: "rejected",
-        reason: reason
+        reason: reason,
       });
       setShowRejectionModal(false);
 
       // Set temporary status to show the correct loader
-      setSelectedBooking(prev => prev ? {
-        ...prev,
-        status: "rejected"
-      } : null);
+      setSelectedBooking((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: "rejected",
+            }
+          : null
+      );
     }
   };
 
@@ -850,14 +941,17 @@ const ManageBookings: FC = () => {
 
   const totalPages = bookingsResponse?.pagination?.total_pages || 1;
   const filteredBookings = (bookingsResponse?.data || []).filter((booking) => {
-    const guestName = `${booking.user?.first_name || ''} ${booking.user?.last_name || ''}`.toLowerCase();
-    const email = booking.user?.email?.toLowerCase() || '';
+    const guestName = `${booking.user?.first_name || ""} ${
+      booking.user?.last_name || ""
+    }`.toLowerCase();
+    const email = booking.user?.email?.toLowerCase() || "";
 
     const propertyName = booking.is_venue_booking
-      ? booking.area_details?.area_name?.toLowerCase() || ''
-      : booking.room_details?.room_name?.toLowerCase() || '';
+      ? booking.area_details?.area_name?.toLowerCase() || ""
+      : booking.room_details?.room_name?.toLowerCase() || "";
 
-    const searchMatch = searchTerm === '' ||
+    const searchMatch =
+      searchTerm === "" ||
       guestName.includes(searchTerm.toLowerCase()) ||
       email.includes(searchTerm.toLowerCase()) ||
       propertyName.includes(searchTerm.toLowerCase());
@@ -879,7 +973,7 @@ const ManageBookings: FC = () => {
         bookingId: selectedBooking.id,
         status: "cancelled",
         reason: reason,
-        setRoomAvailable: true
+        setRoomAvailable: true,
       });
       setShowCancellationModal(false);
     }
@@ -889,9 +983,15 @@ const ManageBookings: FC = () => {
 
   return (
     <div className="min-h-[calc(100vh-25px)] p-3 md:p-3 overflow-y-auto container mx-auto">
-      <h1 className="text-2xl md:text-3xl font-semibold mb-4 md:mb-6">Manage Bookings</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">
+        Manage Bookings
+      </h1>
 
-      {error && <div className="mb-4 text-red-600 p-3 bg-red-50 rounded-lg">{error.message}</div>}
+      {error && (
+        <div className="mb-4 text-red-600 p-3 bg-red-50 rounded-lg">
+          {error.message}
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6 gap-3">
         <div className="relative w-full md:w-1/3">
@@ -977,15 +1077,22 @@ const ManageBookings: FC = () => {
                         {formatDate(booking.created_at)}
                       </td>
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
-                        {`${booking.user?.first_name || ''} ${booking.user?.last_name || ''}`}
+                        {`${booking.user?.first_name || ""} ${
+                          booking.user?.last_name || ""
+                        }`}
                       </td>
                       <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         <div className="flex flex-col items-start">
-                          <span className="max-w-[120px] md:max-w-full font-semibold">{propertyName} {" "}
+                          <span className="max-w-[120px] md:max-w-full font-semibold">
+                            {propertyName}{" "}
                             {isVenueBooking ? (
-                              <span className="px-2 py-0.5 mt-1 items-end text-sm uppercase font-semibold bg-blue-100 text-blue-800 rounded-full">Area</span>
+                              <span className="px-2 py-0.5 mt-1 items-end text-sm uppercase font-semibold bg-blue-100 text-blue-800 rounded-full">
+                                Area
+                              </span>
                             ) : (
-                              <span className="px-2 py-0.5 mt-1 items-end text-sm uppercase font-semibold bg-green-100 text-green-800 rounded-full">Room</span>
+                              <span className="px-2 py-0.5 mt-1 items-end text-sm uppercase font-semibold bg-green-100 text-green-800 rounded-full">
+                                Room
+                              </span>
                             )}
                           </span>
                         </div>
@@ -1000,7 +1107,11 @@ const ManageBookings: FC = () => {
                         <BookingStatusBadge status={booking.status} />
                       </td>
                       <td className="hidden md:table-cell py-3 px-4 text-center text-xl font-semibold text-gray-900 whitespace-nowrap">
-                        ₱ {getBookingPrice(booking).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ₱{" "}
+                        {getBookingPrice(booking).toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </td>
                       <td className="py-2 md:py-3 px-2 md:px-4 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center">
@@ -1035,18 +1146,23 @@ const ManageBookings: FC = () => {
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`px-2 md:px-3 py-1 rounded-l-md border ${currentPage === 1
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-white text-blue-600 hover:bg-blue-50'
-                }`}
+              className={`px-2 md:px-3 py-1 rounded-l-md border ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-blue-600 hover:bg-blue-50"
+              }`}
             >
               <ChevronLeft size={18} />
             </button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(page => {
+              .filter((page) => {
                 if (window.innerWidth < 768) {
-                  return Math.abs(page - currentPage) < 2 || page === 1 || page === totalPages;
+                  return (
+                    Math.abs(page - currentPage) < 2 ||
+                    page === 1 ||
+                    page === totalPages
+                  );
                 }
                 return true;
               })
@@ -1058,10 +1174,11 @@ const ManageBookings: FC = () => {
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`px-2 md:px-3 py-1 border-t border-b ${currentPage === page
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-blue-600 hover:bg-blue-50'
-                      }`}
+                    className={`px-2 md:px-3 py-1 border-t border-b ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white"
+                        : "bg-white text-blue-600 hover:bg-blue-50"
+                    }`}
                   >
                     {page}
                   </button>
@@ -1071,10 +1188,11 @@ const ManageBookings: FC = () => {
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className={`px-2 md:px-3 py-1 rounded-r-md border ${currentPage === totalPages
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-white text-blue-600 hover:bg-blue-50'
-                }`}
+              className={`px-2 md:px-3 py-1 rounded-r-md border ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-blue-600 hover:bg-blue-50"
+              }`}
             >
               <ChevronRight size={18} />
             </button>
@@ -1135,7 +1253,9 @@ const ManageBookings: FC = () => {
         isOpen={showNoShowModal}
         title="Mark as No Show"
         description={`Are you sure you want to mark this booking as 'No Show'? 
-        This will immediately make the ${selectedBooking?.is_venue_booking ? 'area' : 'room'} available for new bookings.
+        This will immediately make the ${
+          selectedBooking?.is_venue_booking ? "area" : "room"
+        } available for new bookings.
         This action cannot be undone.`}
         confirmText="Mark as No Show"
         cancelText="Cancel"

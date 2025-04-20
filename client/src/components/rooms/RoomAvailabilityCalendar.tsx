@@ -63,7 +63,8 @@ const RoomAvailabilityCalendar = () => {
   const handleCheckAvailability = () => {
     if (!arrivalDate || !departureDate) {
       setAlertInfo({
-        message: "Please provide both arrival and departure dates. Please try again",
+        message:
+          "Please provide both arrival and departure dates. Please try again",
         type: "error",
       });
       return;
@@ -86,7 +87,8 @@ const RoomAvailabilityCalendar = () => {
     }
     if (departureDate <= arrivalDate) {
       setAlertInfo({
-        message: "Departure date must be greater than arrival date. Please try again",
+        message:
+          "Departure date must be greater than arrival date. Please try again",
         type: "error",
       });
       return;
@@ -204,7 +206,8 @@ const RoomAvailabilityCalendar = () => {
                 Find Your Perfect Stay
               </motion.h1>
               <p className="text-gray-600 text-md mt-1">
-                Search only shows rooms that are available (not reserved or occupied)
+                Search only shows rooms that are available (not reserved or
+                occupied)
               </p>
             </motion.div>
 
@@ -258,7 +261,7 @@ const RoomAvailabilityCalendar = () => {
                   whileHover="hover"
                   whileTap="tap"
                   onClick={handleCheckAvailability}
-                  className="w-full sm:w-auto py-4 px-8 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 uppercase font-semibold text-lg text-white cursor-pointer shadow-lg flex items-center justify-center gap-3"
+                  className="w-full sm:w-auto py-4 px-8 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 uppercase font-semibold text-lg text-white cursor-pointer shadow-lg flex items-center justify-center gap-3"
                 >
                   <CalendarRange size={50} />
                   <span>Check Availability</span>

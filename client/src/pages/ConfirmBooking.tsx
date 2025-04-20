@@ -1,19 +1,23 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { AnimatePresence, motion } from 'framer-motion';
-import { BookCheck } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import LoginModal from '../components/LoginModal';
-import Modal from '../components/Modal';
-import SignupModal from '../components/SignupModal';
-import { useUserContext } from '../contexts/AuthContext';
-import EventLoader from '../motions/loaders/EventLoader';
-import { checkCanBookToday, createBooking, fetchRoomById } from '../services/Booking';
-import { BookingFormData } from '../types/BookingClient';
-import { RoomData } from '../types/BookingClient';
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { AnimatePresence, motion } from "framer-motion";
+import { BookCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import LoginModal from "../components/LoginModal";
+import Modal from "../components/Modal";
+import SignupModal from "../components/SignupModal";
+import { useUserContext } from "../contexts/AuthContext";
+import EventLoader from "../motions/loaders/EventLoader";
+import {
+  checkCanBookToday,
+  createBooking,
+  fetchRoomById,
+} from "../services/Booking";
+import { BookingFormData } from "../types/BookingClient";
+import { RoomData } from "../types/BookingClient";
 
 interface ConfirmBookingFormValues {
   firstName: string;
@@ -30,27 +34,34 @@ const ConfirmBooking = () => {
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useUserContext();
 
-  const roomId = searchParams.get('roomId');
-  const arrival = searchParams.get('arrival');
-  const departure = searchParams.get('departure');
-  const priceParam = searchParams.get('totalPrice');
+  const roomId = searchParams.get("roomId");
+  const arrival = searchParams.get("arrival");
+  const departure = searchParams.get("departure");
+  const priceParam = searchParams.get("totalPrice");
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
 
-  const [selectedArrival, setSelectedArrival] = useState(arrival || '');
-  const [selectedDeparture, setSelectedDeparture] = useState(departure || '');
-  const [dateSelectionCompleted, setDateSelectionCompleted] = useState(!!arrival && !!departure);
+  const [selectedArrival, setSelectedArrival] = useState(arrival || "");
+  const [selectedDeparture, setSelectedDeparture] = useState(departure || "");
+  const [dateSelectionCompleted, setDateSelectionCompleted] = useState(
+    !!arrival && !!departure
+  );
   const [dateError, setDateError] = useState<string | null>(null);
-  const [calculatedTotalPrice, setCalculatedTotalPrice] = useState<number>(priceParam ? parseInt(priceParam) : 0);
+  const [calculatedTotalPrice, setCalculatedTotalPrice] = useState<number>(
+    priceParam ? parseInt(priceParam) : 0
+  );
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [canBookToday, setCanBookToday] = useState(true);
-  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(null);
+  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingFormData, setPendingFormData] = useState<BookingFormData | null>(null);
+  const [pendingFormData, setPendingFormData] =
+    useState<BookingFormData | null>(null);
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
 
   const containerVariants = {
@@ -61,14 +72,14 @@ const ConfirmBooking = () => {
       transition: {
         duration: 0.5,
         when: "beforeChildren",
-        staggerChildren: 0.1
-      }
+        staggerChildren: 0.1,
+      },
     },
     exit: {
       opacity: 0,
       y: -20,
-      transition: { duration: 0.3 }
-    }
+      transition: { duration: 0.3 },
+    },
   };
 
   const itemVariants = {
@@ -79,36 +90,40 @@ const ConfirmBooking = () => {
       transition: {
         type: "spring",
         stiffness: 100,
-        damping: 10
-      }
-    }
+        damping: 10,
+      },
+    },
   };
 
-  const { register, handleSubmit: validateForm, formState: { errors } } = useForm<ConfirmBookingFormValues>({
-    mode: 'onBlur',
+  const {
+    register,
+    handleSubmit: validateForm,
+    formState: { errors },
+  } = useForm<ConfirmBookingFormValues>({
+    mode: "onBlur",
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      phoneNumber: '+63 ',
+      firstName: "",
+      lastName: "",
+      phoneNumber: "+63 ",
       numberOfGuests: 1,
-      arrivalTime: '',
-      specialRequests: '',
-    }
+      arrivalTime: "",
+      specialRequests: "",
+    },
   });
 
   const { data: roomData, isLoading } = useQuery<RoomData>({
-    queryKey: ['room', roomId],
+    queryKey: ["room", roomId],
     queryFn: () => fetchRoomById(roomId),
-    enabled: !!roomId
+    enabled: !!roomId,
   });
 
   useEffect(() => {
-    if (!isLoading && !roomData) setGeneralError('Failed to load room details');
+    if (!isLoading && !roomData) setGeneralError("Failed to load room details");
   }, [isLoading, roomData]);
 
   useEffect(() => {
     if (!roomId) {
-      navigate('/');
+      navigate("/");
     }
   }, [roomId, navigate]);
 
@@ -122,7 +137,7 @@ const ConfirmBooking = () => {
       const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (roomData.room_price) {
-        const priceString = roomData.room_price.replace(/[₱,]/g, '');
+        const priceString = roomData.room_price.replace(/[₱,]/g, "");
         const roomPrice = parseFloat(priceString);
 
         if (!isNaN(roomPrice)) {
@@ -170,17 +185,17 @@ const ConfirmBooking = () => {
     setDateError(null);
 
     if (!selectedArrival || !selectedDeparture) {
-      return setDateError('Please select both dates.');
+      return setDateError("Please select both dates.");
     }
 
     if (new Date(selectedDeparture) <= new Date(selectedArrival)) {
-      return setDateError('Check-out date must be after check-in date.');
+      return setDateError("Check-out date must be after check-in date.");
     }
 
     setDateSelectionCompleted(true);
   };
 
-  const onSubmit: SubmitHandler<ConfirmBookingFormValues> = data => {
+  const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
     setGeneralError(null);
     if (!roomData || isSubmitting) return;
     if (isAuthenticated && !canBookToday) {
@@ -213,12 +228,12 @@ const ConfirmBooking = () => {
 
     try {
       const arrDate = new Date(pendingFormData.checkIn);
-      const todayStart = new Date(); 
+      const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       if (isAuthenticated && arrDate.getTime() === todayStart.getTime()) {
         const res = await checkCanBookToday();
         if (!res.canBook) {
-          setGeneralError(res.message || 'Booking limit reached.');
+          setGeneralError(res.message || "Booking limit reached.");
           setCanBookToday(false);
           setIsSubmitting(false);
           return;
@@ -233,25 +248,40 @@ const ConfirmBooking = () => {
       setSuccess(true);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=false`);
     } catch (err: any) {
-      setGeneralError(err?.response?.data?.error || err.message || 'Failed to create booking.');
+      setGeneralError(
+        err?.response?.data?.error || err.message || "Failed to create booking."
+      );
     } finally {
       setIsSubmitting(false);
     }
-  }
+  };
 
-  const nights = selectedArrival && selectedDeparture
-    ? Math.ceil((new Date(selectedDeparture).getTime() - new Date(selectedArrival).getTime()) / (1000 * 60 * 60 * 24))
-    : 1;
-  const formattedArrival = selectedArrival ? format(new Date(selectedArrival), 'EEE, d MMM, yyyy') : '';
-  const formattedDeparture = selectedDeparture ? format(new Date(selectedDeparture), 'EEE, d MMM, yyyy') : '';
+  const nights =
+    selectedArrival && selectedDeparture
+      ? Math.ceil(
+          (new Date(selectedDeparture).getTime() -
+            new Date(selectedArrival).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      : 1;
+  const formattedArrival = selectedArrival
+    ? format(new Date(selectedArrival), "EEE, d MMM, yyyy")
+    : "";
+  const formattedDeparture = selectedDeparture
+    ? format(new Date(selectedDeparture), "EEE, d MMM, yyyy")
+    : "";
 
   useEffect(() => {
-    document.body.style.overflow = isSubmitting ? 'hidden' : 'auto';
+    document.body.style.overflow = isSubmitting ? "hidden" : "auto";
   }, [isSubmitting]);
 
   if (isLoading) {
     return (
-      <motion.div className="container mx-auto py-16 text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <motion.div
+        className="container mx-auto py-16 text-center"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
         <h1 className="text-3xl font-bold mb-6">Confirm Booking</h1>
         <EventLoader text="Loading room details..." type="reserve" />
       </motion.div>
@@ -260,31 +290,47 @@ const ConfirmBooking = () => {
 
   if (!dateSelectionCompleted) {
     return (
-      <motion.div className="container mx-auto px-4 py-8 max-w-2xl" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-        <h1 className="text-2xl font-bold text-center mb-8">Select Your Stay Dates</h1>
+      <motion.div
+        className="container mx-auto px-4 py-8 max-w-2xl"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <h1 className="text-2xl font-bold text-center mb-8">
+          Select Your Stay Dates
+        </h1>
         {dateError && <p className="text-red-500 mb-4">{dateError}</p>}
         <form onSubmit={handleDateSubmit} className="space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
             <input
               type="date"
               value={selectedArrival}
-              onChange={e => { setSelectedArrival(e.target.value); setDateError(null); }}
+              onChange={(e) => {
+                setSelectedArrival(e.target.value);
+                setDateError(null);
+              }}
               min={today}
               required
-              className="w-full" />
+              className="w-full"
+            />
             <input
               type="date"
               value={selectedDeparture}
-              onChange={e => { setSelectedDeparture(e.target.value); setDateError(null); }}
+              onChange={(e) => {
+                setSelectedDeparture(e.target.value);
+                setDateError(null);
+              }}
               min={selectedArrival || today}
               required
-              className="w-full" />
+              className="w-full"
+            />
           </div>
           <button
             type="submit"
             disabled={!selectedArrival || !selectedDeparture}
             className="px-4 py-2 bg-blue-600 text-white rounded"
-          >Continue to Booking</button>
+          >
+            Continue to Booking
+          </button>
         </form>
       </motion.div>
     );
@@ -294,18 +340,19 @@ const ConfirmBooking = () => {
     <>
       <AnimatePresence>
         {isSubmitting && (
-          <EventLoader
-            text="Processing your booking..."
-            type="reserve"
-          />
+          <EventLoader text="Processing your booking..." type="reserve" />
         )}
       </AnimatePresence>
 
       {/* Confirmation Modal */}
       <Modal
-        icon='fa-solid fa-book'
+        icon="fa-solid fa-book"
         title="Confirm Your Room Booking"
-        description={`You're about to book ${roomData?.room_name || 'this room'} for ${nights} night${nights !== 1 ? 's' : ''}. The total price is ₱${calculatedTotalPrice.toLocaleString()}. Would you like to proceed?`}
+        description={`You're about to book ${
+          roomData?.room_name || "this room"
+        } for ${nights} night${
+          nights !== 1 ? "s" : ""
+        }. The total price is ₱${calculatedTotalPrice.toLocaleString()}. Would you like to proceed?`}
         cancel={() => setShowConfirmModal(false)}
         onConfirm={handleConfirmBooking}
         confirmText={
@@ -344,14 +391,26 @@ const ConfirmBooking = () => {
             >
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-0.5">
-                  <svg className="h-5 w-5 text-yellow-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-yellow-600"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">Booking Limit Reached</h3>
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Booking Limit Reached
+                  </h3>
                   <p className="text-sm mt-1">
-                    {bookingLimitMessage || 'You have already made a booking today. You can make another booking tomorrow.'}
+                    {bookingLimitMessage ||
+                      "You have already made a booking today. You can make another booking tomorrow."}
                   </p>
                 </div>
               </div>
@@ -370,14 +429,27 @@ const ConfirmBooking = () => {
             >
               <div className="flex items-start">
                 <div className="flex-shrink-0 mt-0.5">
-                  <svg className="h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  <svg
+                    className="h-5 w-5 text-blue-600"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">Login Required</h3>
+                  <h3 className="text-sm font-medium text-blue-800">
+                    Login Required
+                  </h3>
                   <p className="text-sm mt-1">
-                    You'll need to log in or create an account to complete your booking. Don't worry - your booking information will be saved during the process.
+                    You'll need to log in or create an account to complete your
+                    booking. Don't worry - your booking information will be
+                    saved during the process.
                   </p>
                 </div>
               </div>
@@ -394,7 +466,10 @@ const ConfirmBooking = () => {
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              <p>Booking successfully created! You will be redirected to your booking details.</p>
+              <p>
+                Booking successfully created! You will be redirected to your
+                booking details.
+              </p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -415,15 +490,15 @@ const ConfirmBooking = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Section - Takes 2/3 width on large screens */}
-          <motion.div
-            className="lg:col-span-2"
-            variants={itemVariants}
-          >
+          <motion.div className="lg:col-span-2" variants={itemVariants}>
             <motion.form
               id="booking-form"
               onSubmit={validateForm(onSubmit)}
               className="rounded-lg shadow-xl p-6 backdrop-blur-sm bg-white/90 border border-gray-100"
-              whileHover={{ boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              whileHover={{
+                boxShadow:
+                  "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              }}
               transition={{ type: "spring", stiffness: 100, damping: 10 }}
             >
               <motion.h2
@@ -436,18 +511,23 @@ const ConfirmBooking = () => {
               {/* Name Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="firstName" className="block text-md font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="firstName"
+                    className="block text-md font-medium text-gray-700 mb-1"
+                  >
                     First name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     id="firstName"
                     {...register("firstName", {
-                      required: "First name is required"
+                      required: "First name is required",
                     })}
-                    className={`w-full px-3 py-2 border ${errors.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${
+                      errors.firstName ? "border-red-500" : "border-gray-300"
+                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
-                  {errors.firstName &&
+                  {errors.firstName && (
                     <motion.p
                       className="text-red-500 text-sm mt-1"
                       initial={{ opacity: 0, y: -10 }}
@@ -456,21 +536,26 @@ const ConfirmBooking = () => {
                     >
                       {errors.firstName.message}
                     </motion.p>
-                  }
+                  )}
                 </motion.div>
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="lastName" className="block text-md font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="lastName"
+                    className="block text-md font-medium text-gray-700 mb-1"
+                  >
                     Last name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     id="lastName"
                     {...register("lastName", {
-                      required: "Last name is required"
+                      required: "Last name is required",
                     })}
-                    className={`w-full px-3 py-2 border ${errors.lastName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${
+                      errors.lastName ? "border-red-500" : "border-gray-300"
+                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
-                  {errors.lastName &&
+                  {errors.lastName && (
                     <motion.p
                       className="text-red-500 text-sm mt-1"
                       initial={{ opacity: 0, y: -10 }}
@@ -479,14 +564,17 @@ const ConfirmBooking = () => {
                     >
                       {errors.lastName.message}
                     </motion.p>
-                  }
+                  )}
                 </motion.div>
               </div>
 
               {/* Contact Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="phoneNumber" className="block text-md font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="phoneNumber"
+                    className="block text-md font-medium text-gray-700 mb-1"
+                  >
                     Phone Number <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -494,12 +582,17 @@ const ConfirmBooking = () => {
                     id="phoneNumber"
                     {...register("phoneNumber", {
                       required: "Phone number is required",
-                      pattern: { value: /^\+63 9\d{2} \d{3} \d{4}$/, message: 'Invalid Philippine format' }
+                      pattern: {
+                        value: /^\+63 9\d{2} \d{3} \d{4}$/,
+                        message: "Invalid Philippine format",
+                      },
                     })}
                     placeholder="+63 9XX XXX XXXX"
-                    className={`w-full px-3 py-2 border ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${
+                      errors.phoneNumber ? "border-red-500" : "border-gray-300"
+                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
-                  {errors.phoneNumber &&
+                  {errors.phoneNumber && (
                     <motion.p
                       className="text-red-500 text-sm mt-1"
                       initial={{ opacity: 0, y: -10 }}
@@ -508,26 +601,40 @@ const ConfirmBooking = () => {
                     >
                       {errors.phoneNumber.message}
                     </motion.p>
-                  }
-                  <p className="mt-1 text-xs text-gray-500">Format: +63 9XX XXX XXXX (Philippine number)</p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500">
+                    Format: +63 9XX XXX XXXX (Philippine number)
+                  </p>
                 </motion.div>
                 {/* Number of Guests */}
                 <motion.div variants={itemVariants}>
-                  <label htmlFor="numberOfGuests" className="block text-md font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="numberOfGuests"
+                    className="block text-md font-medium text-gray-700 mb-1"
+                  >
                     Number of Guest(s) <span className="text-red-500">*</span>
                   </label>
                   <div className="flex flex-col">
                     <input
                       type="number"
                       id="numberOfGuests"
+                      min={1}
+                      max={roomData?.max_guests || 1}
                       {...register("numberOfGuests", {
                         required: "Please specify number of guests",
-                        min: { value: 1, message: 'At least 1 guest' },
-                        max: { value: roomData?.max_guests || 1, message: `Max ${roomData?.max_guests} guests only.` }
+                        min: { value: 1, message: "At least 1 guest" },
+                        max: {
+                          value: roomData?.max_guests || 1,
+                          message: `Max ${roomData?.max_guests} guests only.`,
+                        },
                       })}
-                      className={`w-full px-3 py-2 border ${errors.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                      className={`w-full px-3 py-2 border ${
+                        errors.numberOfGuests
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                     />
-                    {errors.numberOfGuests &&
+                    {errors.numberOfGuests && (
                       <motion.p
                         className="text-red-500 text-sm mt-1"
                         initial={{ opacity: 0, y: -10 }}
@@ -536,7 +643,7 @@ const ConfirmBooking = () => {
                       >
                         {errors.numberOfGuests.message}
                       </motion.p>
-                    }
+                    )}
                     {roomData?.max_guests && (
                       <motion.p
                         className="mt-1 text-sm text-blue-600 font-medium"
@@ -551,29 +658,41 @@ const ConfirmBooking = () => {
                 </motion.div>
               </div>
 
-
               {/* Address and Valid ID */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label htmlFor="validId" className="block text-md font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="validId"
+                    className="block text-md font-medium text-gray-700 mb-1"
+                  >
                     Valid ID <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="file"
                     id="validId"
                     accept="image/*"
-                    {...register('validId', {
+                    {...register("validId", {
                       required: "Please upload a valid ID",
-                      onChange: onFileChange
+                      onChange: onFileChange,
                     })}
-                    className={`w-full py-2 ${errors.validId ? 'border-red-500' : ''}`}
+                    className={`w-full py-2 border pl-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300 ${
+                      errors.validId ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
-                  {errors.validId && <p className="text-red-500 text-sm mt-1">{errors.validId.message}</p>}
+
+                  {errors.validId && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.validId.message}
+                    </p>
+                  )}
 
                   {/* Valid ID Preview Container */}
                   {validIdPreview && (
                     <div className="mt-2 relative">
-                      <div className="relative border rounded-md overflow-hidden" style={{ height: '120px' }}>
+                      <div
+                        className="relative border rounded-md overflow-hidden"
+                        style={{ height: "120px" }}
+                      >
                         <img
                           loading="lazy"
                           src={validIdPreview}
@@ -589,8 +708,18 @@ const ConfirmBooking = () => {
                         className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
                         aria-label="Remove image"
                       >
-                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                          className="w-4 h-4 text-red-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -601,7 +730,10 @@ const ConfirmBooking = () => {
               {/* Check-in/out Dates */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label htmlFor="checkIn" className="block text-md font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="checkIn"
+                    className="block text-md font-medium text-gray-700 mb-1"
+                  >
                     Check In <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -614,7 +746,10 @@ const ConfirmBooking = () => {
                   />
                 </div>
                 <div>
-                  <label htmlFor="checkOut" className="block text-md font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="checkOut"
+                    className="block text-md font-medium text-gray-700 mb-1"
+                  >
                     Check Out <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -630,32 +765,58 @@ const ConfirmBooking = () => {
 
               {/* Time of Arrival */}
               <div className="mb-6">
-                <label htmlFor="arrivalTime" className="block text-md font-medium text-gray-700 mb-1">
-                  Expected Time of Arrival <span className="text-red-500">*</span>
+                <label
+                  htmlFor="arrivalTime"
+                  className="block text-md font-medium text-gray-700 mb-1"
+                >
+                  Expected Time of Arrival
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="time"
                   id="arrivalTime"
+                  min="7:00"
+                  max="11:00"
                   {...register("arrivalTime", {
                     required: "Please specify your expected time of arrival",
-                    validate: val => {
-                      const [hourStr] = val.split(":");
+                    validate: (val) => {
+                      const [hourStr, minuteStr] = val.split(":");
                       const hour = parseInt(hourStr, 10);
-                      if (hour < 14) return 'Arrival cannot be before 2:00 PM';
-                      if (hour > 22) return 'Arrival cannot be after 10:00 PM';
+                      const minute = parseInt(minuteStr, 10);
+
+                      const totalMinutes = hour * 60 + minute;
+                      const minAllowed = 7 * 60; // 7:00 AM
+                      const maxAllowed = 23 * 60; // 11:00 PM (exact)
+
+                      if (totalMinutes < minAllowed)
+                        return "Arrival cannot be before 7:00 AM";
+                      if (totalMinutes > maxAllowed)
+                        return "Arrival cannot be after 11:00 PM";
+
                       return true;
-                    }
+                    },
                   })}
                   placeholder="Select arrival time"
-                  className={`w-full px-3 py-2 border ${errors.arrivalTime ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50`}
+                  className={`w-full px-3 py-2 border ${
+                    errors.arrivalTime ? "border-red-500" : "border-gray-300"
+                  } rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50`}
                 />
-                {errors.arrivalTime && <p className="text-red-500 text-sm mt-1">{errors.arrivalTime.message}</p>}
-                <p className="mt-1 text-sm text-gray-500">Please indicate your expected time of arrival</p>
+                {errors.arrivalTime && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.arrivalTime.message}
+                  </p>
+                )}
+                <small className="mt-1 text-xs text-gray-500">
+                  Available between 7:00 AM and 11:00 PM
+                </small>
               </div>
 
               {/* Special Requests */}
               <div className="mb-6">
-                <label htmlFor="specialRequests" className="block text-md font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="specialRequests"
+                  className="block text-md font-medium text-gray-700 mb-1"
+                >
                   Special requests to hotel
                 </label>
                 <textarea
@@ -672,35 +833,41 @@ const ConfirmBooking = () => {
                   type="submit"
                   disabled={isSubmitting}
                   onClick={handleConfirmBooking}
-                  className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${isSubmitting
-                    ? 'bg-blue-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg'
-                    }`}
+                  className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${
+                    isSubmitting
+                      ? "bg-blue-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
+                  }`}
                   whileTap={{ scale: 0.98 }}
                   whileHover={{
-                    boxShadow: "0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)",
+                    boxShadow:
+                      "0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)",
                   }}
                 >
-                  {isSubmitting ? '' : isAuthenticated ? (
+                  {isSubmitting ? (
+                    ""
+                  ) : isAuthenticated ? (
                     <div className="flex items-center justify-center">
                       <BookCheck className="w-5 h-5 mr-2" />
                       Complete Booking
                     </div>
-                  ) : 'Continue to Login'}
+                  ) : (
+                    "Continue to Login"
+                  )}
                 </motion.button>
               </div>
             </motion.form>
           </motion.div>
 
           {/* Sidebar - Takes 1/3 width on large screens */}
-          <motion.div
-            className="lg:col-span-1"
-            variants={itemVariants}
-          >
+          <motion.div className="lg:col-span-1" variants={itemVariants}>
             {/* Room Information */}
             <motion.div
               className="rounded-lg shadow-md p-6 mb-6 backdrop-blur-sm bg-white/90 border border-gray-100"
-              whileHover={{ boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              whileHover={{
+                boxShadow:
+                  "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              }}
               transition={{ type: "spring", stiffness: 100, damping: 10 }}
             >
               <div className="relative mb-4 overflow-hidden rounded-md">
@@ -729,7 +896,9 @@ const ConfirmBooking = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <h4 className="text-md font-semibold text-gray-700 mb-2">Room Amenities</h4>
+                <h4 className="text-md font-semibold text-gray-700 mb-2">
+                  Room Amenities
+                </h4>
                 {roomData?.amenities && roomData.amenities.length > 0 ? (
                   roomData.amenities.map((amenity, index) => (
                     <motion.div
@@ -739,10 +908,22 @@ const ConfirmBooking = () => {
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.3 + index * 0.1 }}
                     >
-                      <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-4 h-4 mr-2 text-blue-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
-                      <span className="text-md text-gray-600">{amenity.description}</span>
+                      <span className="text-md text-gray-600">
+                        {amenity.description}
+                      </span>
                     </motion.div>
                   ))
                 ) : (
@@ -755,7 +936,10 @@ const ConfirmBooking = () => {
             <motion.div
               className="rounded-lg shadow-md p-6 mb-6 backdrop-blur-sm bg-white/90 border border-gray-100"
               variants={itemVariants}
-              whileHover={{ boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              whileHover={{
+                boxShadow:
+                  "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              }}
               transition={{ type: "spring", stiffness: 100, damping: 10 }}
             >
               <motion.h3
@@ -773,7 +957,9 @@ const ConfirmBooking = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <p className="text-lg text-gray-800 font-semibold">Check-in :</p>
+                  <p className="text-lg text-gray-800 font-semibold">
+                    Check-in :
+                  </p>
                   <p className="font-semibold">{formattedArrival}</p>
                 </motion.div>
                 <motion.div
@@ -781,7 +967,9 @@ const ConfirmBooking = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  <p className="text-lg text-gray-800 font-semibold">Check-out :</p>
+                  <p className="text-lg text-gray-800 font-semibold">
+                    Check-out :
+                  </p>
                   <p className="font-semibold">{formattedDeparture}</p>
                 </motion.div>
               </div>
@@ -792,11 +980,18 @@ const ConfirmBooking = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
               >
-                <p className="text-lg text-gray-800 font-semibold">Arrival Time :</p>
+                <p className="text-lg text-gray-800 font-semibold">
+                  Arrival Time :
+                </p>
                 <p className="font-semibold">
                   {errors.arrivalTime
-                    ? new Date(`2000-01-01T${errors.arrivalTime}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    : 'Not specified'}
+                    ? new Date(
+                        `2000-01-01T${errors.arrivalTime}`
+                      ).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "Not specified"}
                 </p>
               </motion.div>
 
@@ -806,8 +1001,12 @@ const ConfirmBooking = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
               >
-                <p className="text-md font-medium">{roomData?.room_name || "Deluxe Room"}</p>
-                <p className="text-md text-gray-600">{nights} night{nights > 1 ? 's' : ''}</p>
+                <p className="text-md font-medium">
+                  {roomData?.room_name || "Deluxe Room"}
+                </p>
+                <p className="text-md text-gray-600">
+                  {nights} night{nights > 1 ? "s" : ""}
+                </p>
               </motion.div>
             </motion.div>
 
@@ -815,7 +1014,10 @@ const ConfirmBooking = () => {
             <motion.div
               className="rounded-lg shadow-md p-6 mb-6 backdrop-blur-sm bg-white/90 border border-gray-100"
               variants={itemVariants}
-              whileHover={{ boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
+              whileHover={{
+                boxShadow:
+                  "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+              }}
               transition={{ type: "spring", stiffness: 100, damping: 10 }}
             >
               <motion.h3
@@ -832,7 +1034,9 @@ const ConfirmBooking = () => {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <p className="text-gray-600">1 room x {nights} night{nights > 1 ? 's' : ''}</p>
+                <p className="text-gray-600">
+                  1 room x {nights} night{nights > 1 ? "s" : ""}
+                </p>
               </motion.div>
               <motion.div
                 className="text-md mb-4"
@@ -868,22 +1072,28 @@ const ConfirmBooking = () => {
                 type="button"
                 onClick={() => validateForm(onSubmit)()}
                 disabled={isSubmitting}
-                className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex justify-center items-center ${isSubmitting
-                  ? 'bg-blue-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg'
-                  }`}
+                className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex justify-center items-center ${
+                  isSubmitting
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
+                }`}
                 variants={itemVariants}
                 whileTap={{ scale: 0.98 }}
                 whileHover={{
-                  boxShadow: "0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)",
+                  boxShadow:
+                    "0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)",
                 }}
               >
-                {isSubmitting ? '' : isAuthenticated ? (
+                {isSubmitting ? (
+                  ""
+                ) : isAuthenticated ? (
                   <>
                     <BookCheck className="w-8 h-8 mr-2" />
                     Complete Booking
                   </>
-                ) : 'Continue to Login'}
+                ) : (
+                  "Continue to Login"
+                )}
               </motion.button>
             </div>
           </motion.div>
