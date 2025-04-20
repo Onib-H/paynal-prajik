@@ -112,7 +112,8 @@ const VenueBookingCalendar = () => {
     };
 
     const isDateUnavailable = (date: Date) => {
-        if (isBefore(date, startOfDay(new Date()))) return true;
+        const todayStart = startOfDay(new Date());
+        if (isBefore(date, todayStart) || isSameDay(date, new Date())) return true;
         return isDateBooked(date);
     };
 
@@ -133,12 +134,15 @@ const VenueBookingCalendar = () => {
         const isToday = isSameDay(date, new Date());
         const dateStatus = getDateStatus(date);
 
-        let className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
+        const className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
+
+        if (isToday) {
+            return `${className} bg-amber-600 text-white font-medium cursor-not-allowed`;
+        }
 
         if (isSelected) return `${className} bg-blue-600 text-white font-medium`;
         if (isHovered && !isUnavailable) return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
-        if (isToday && !isUnavailable) className += " border-blue-500 border-2";
-
+        
         if (dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
             switch (dateStatus.toLowerCase()) {
                 case 'reserved':
@@ -161,10 +165,10 @@ const VenueBookingCalendar = () => {
     const handleProceed = () => {
         if (selectedDate) {
             const dateStr = format(selectedDate, 'yyyy-MM-dd');
-            const startTime = `${dateStr}T08:00:00`;
+            const startTime = `${dateStr}`;
             const endTime = `${dateStr}T17:00:00`;
 
-            navigate(`/confirm-venue-booking?areaId=${areaId}&startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}&totalPrice=${price}`);
+            navigate(`/confirm-area-booking?areaId=${areaId}&startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}&totalPrice=${price}`);
         }
     };
 
@@ -178,7 +182,7 @@ const VenueBookingCalendar = () => {
 
     return (
         <div className="container mx-auto px-4 py-8 mt-16">
-            <h2 className="text-4xl font-semibold mb-6 text-center">Book Your Venue</h2>
+            <h2 className="text-4xl font-semibold mb-6 text-center">Book Your Area</h2>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-lg shadow-md ring-3 ring-purple-500 p-6">
@@ -322,7 +326,11 @@ const VenueBookingCalendar = () => {
                                 <h4 className="text-sm font-medium mb-3">CALENDAR LEGEND</h4>
                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-y-2 gap-x-4">
                                     <div className="flex items-center">
-                                        <div className="h-6 w-6 bg-white border border-gray-300 mr-2 rounded-full"></div>
+                                        <div className="h-6 w-6 bg-amber-600 mr-2 rounded-full"></div>
+                                        <span className="text-sm">Today</span>
+                                    </div>
+                                    <div className="flex items-center">
+                                        <div className="h-6 w-6 bg-white border-1 border-gray-800 mr-2 rounded-full"></div>
                                         <span className="text-sm">Available</span>
                                     </div>
                                     <div className="flex items-center">
@@ -350,8 +358,8 @@ const VenueBookingCalendar = () => {
                             <button
                                 onClick={handleProceed}
                                 disabled={!selectedDate}
-                                className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${selectedDate
-                                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                className={`px-6 py-2 rounded-md font-semibold ${selectedDate
+                                    ? 'text-white bg-blue-600 hover:bg-blue-700 cursor-pointer'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}
                             >

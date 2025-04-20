@@ -1,17 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  faEye,
-  faEyeSlash,
-  faSpinner,
-} from "@fortawesome/free-solid-svg-icons";
+import { faEye, faEyeSlash, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "framer-motion";
-import { FC, useState } from "react";
+import { FC, FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserContext } from "../contexts/AuthContext";
 import { login } from "../services/Auth";
 import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
+import { useMutation } from "@tanstack/react-query";
 
 interface LoginProps {
   toggleLoginModal: () => void;
@@ -24,7 +21,6 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;
@@ -95,13 +91,11 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
     })
   };
 
-  const loginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    setLoading(true);
-
-    try {
-      const response = await login(email, password);
+  const { mutate: loginMutation, isPending: loading } = useMutation({
+    mutationFn: async () => {
+      return await login(email, password);
+    },
+    onSuccess: (response) => {
       if (response.status === 200) {
         const { user } = response.data;
         setUserDetails(user);
@@ -112,7 +106,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
         setNotification({
           message: bookingInProgress ? "Logged in successfully, completing your booking..." : "Logged in successfully",
           type: "success",
-          icon: "fas fa-check-circle",
+          icon: "fas fa-chcek-circle"
         });
 
         if (onSuccessfulLogin) {
@@ -121,13 +115,11 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
           return;
         }
 
-        if (user.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate(`/guest/bookings`);
-        }
+        if (user.role === "admin") navigate("/admin");
+        else navigate("/guest/bookings");
       }
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       console.error(`Failed to login: ${error}`);
       const errData = error.response?.data;
       if (errData && errData.error) {
@@ -140,12 +132,16 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
           setErrors({ general: message });
         }
       } else {
-        setErrors({ general: "An error occurred" });
+        setErrors({ general: "An error occured" });
       }
-    } finally {
-      setLoading(false);
     }
-  };
+  });
+
+  const loginSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    loginMutation();
+  }
 
   return (
     <>
@@ -162,9 +158,9 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
             variants={modalVariants}
           >
             <motion.button
-              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="absolute top-3 right-3 z-40 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="absolute top-3 right-3 z-40 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-gray-200 transition-colors"
               onClick={toggleLoginModal}
             >
               <i className="fa fa-x"></i>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Edit, Eye, Trash2 } from "lucide-react";
@@ -190,8 +191,6 @@ const RoomDetailsModal: FC<{
   roomData: Room | null;
   allAmenities: Amenity[];
 }> = ({ isOpen, onClose, roomData, allAmenities }) => {
-  if (!roomData) return null;
-
   const getAmenityDescription = (id: number) => {
     const found = allAmenities.find((a) => a.id === id);
     return found ? found.description : `ID: ${id}`;
@@ -200,10 +199,12 @@ const RoomDetailsModal: FC<{
   const roomImage = useMemo(
     () => ({
       src: roomData.room_image,
-      alt: roomData.room_name,
+      alt: roomData.room_name || roomData.room_image,
     }),
     [roomData.room_image, roomData.room_name]
   );
+
+  if (!roomData) return null;
 
   return (
     <AnimatePresence>
@@ -366,7 +367,7 @@ const RoomDetailsModal: FC<{
                     transition={{ delay: 0.4 }}
                   >
                     <div className="bg-blue-50 p-3 rounded-lg">
-                      <span className="block text-gray-500 text-sm">
+                      <span className="block text-amber-600 text-sm uppercase">
                         Room Type
                       </span>
                       <div className="flex items-center mt-1">
@@ -393,8 +394,8 @@ const RoomDetailsModal: FC<{
                     </div>
 
                     <div className="bg-green-50 p-3 rounded-lg">
-                      <span className="block text-gray-500 text-sm">
-                        Capacity
+                      <span className="block text-amber-600 text-sm uppercase">
+                        Max Guests
                       </span>
                       <div className="flex items-center mt-1">
                         <svg
@@ -412,40 +413,9 @@ const RoomDetailsModal: FC<{
                           />
                         </svg>
                         <span className="text-lg font-bold text-gray-800">
-                          {roomData.capacity}
+                          {roomData.max_guests} guests
                         </span>
                       </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Max Guests */}
-                  <motion.div
-                    className="bg-green-50 p-4 rounded-lg mb-5"
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.42 }}
-                  >
-                    <h3 className="text-sm uppercase tracking-wider text-green-600 font-medium mb-2">
-                      Maximum Guests
-                    </h3>
-                    <div className="flex items-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-green-600 mr-2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                      <span className="text-lg font-bold text-gray-800">
-                        {roomData.max_guests || 1} Guests
-                      </span>
                     </div>
                   </motion.div>
 
@@ -763,12 +733,9 @@ const ManageRooms: FC = () => {
       setCurrentPage((prev) => prev + 1);
   }, [currentPage, roomsResponse]);
 
-  const goToPage = useCallback(
-    (page: number) => {
-      setCurrentPage(page);
-    },
-    [currentPage]
-  );
+  const goToPage = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
 
   if (isLoading) return <ManageSkeleton type="room" />;
   if (isError) return <Error />;
@@ -789,7 +756,7 @@ const ManageRooms: FC = () => {
         {/* Header */}
         <div className="flex flex-row items-center mb-5 justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Manage Rooms</h1>
+            <h1 className="text-3xl font-semibold">Manage Rooms</h1>
             {pagination && (
               <p className="text-gray-500 mt-1">
                 Total: {pagination.total_items} room

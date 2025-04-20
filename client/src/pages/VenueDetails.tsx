@@ -50,9 +50,7 @@ const VenueDetails = () => {
     if (venueError) return <Error />;
 
     const venueDetail = venueData?.data;
-    if (!venueDetail) {
-        return <div className="text-center mt-4">No venue details available</div>;
-    }
+    if (!venueDetail) return <div className="text-center mt-4">No venue details available</div>;
 
     const allVenues = allVenuesData?.data || [];
     const currentIndex = allVenues.findIndex((venue) => venue.id === Number(id));
@@ -134,6 +132,7 @@ const VenueDetails = () => {
                     initial={{ scale: 1.1 }}
                     animate={{ scale: 1 }}
                     transition={{ duration: 10, ease: "easeOut" }}
+                    loading="lazy"
                     src={venueDetail.area_image}
                     alt={venueDetail.area_name}
                     onLoad={() => setIsImageLoaded(true)}
@@ -307,6 +306,7 @@ const VenueDetails = () => {
                             className="bg-white p-4 rounded-xl shadow-lg overflow-hidden"
                         >
                             <img
+                                loading="lazy"
                                 src={venueDetail.area_image}
                                 alt={venueDetail.area_name}
                                 className="w-full h-64 object-cover rounded-lg transition-all duration-500 hover:scale-105"
@@ -343,7 +343,7 @@ const VenueDetails = () => {
                                 </div>
 
                                 {/* Reserve Now Button */}
-                                <Link to={`/venue-booking/${venueDetail.id}`} className="block">
+                                <Link to={`/area-booking/${venueDetail.id}`} className="block">
                                     <motion.button
                                         whileHover={{ scale: 1.03 }}
                                         whileTap={{ scale: 0.97 }}

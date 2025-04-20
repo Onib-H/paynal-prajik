@@ -28,12 +28,12 @@ const VenueCard: FC<AreaCardProps> = ({
   const handleBookNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
-      navigate(`/venues/${id}?showLogin=true`);
+      navigate(`/areas/${id}?showLogin=true`);
       return;
     }
 
     if (!canBook) return;
-    navigate(`/venue-booking/${id}`);
+    navigate(`/area-booking/${id}`);
   };
 
   // Truncate description to 50 characters
@@ -57,7 +57,7 @@ const VenueCard: FC<AreaCardProps> = ({
   return (
     <div
       className="rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg cursor-pointer"
-      onClick={() => navigate(`/venues/${id}`)}
+      onClick={() => navigate(`/areas/${id}`)}
     >
       <motion.img
         loading="lazy"

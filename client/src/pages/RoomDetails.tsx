@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowLeft, Bookmark, Check, Home, Info, PhilippinePeso, Star, Users, X } from "lucide-react";
@@ -132,6 +133,7 @@ const RoomDetails = () => {
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 10, ease: "easeOut" }}
+          loading="lazy"
           src={roomDetail.room_image}
           alt={roomDetail.room_name}
           onLoad={() => setIsImageLoaded(true)}
