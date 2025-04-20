@@ -4,18 +4,18 @@ import AdminSidebar from "./AdminSidebar";
 import { useUserContext } from "../../contexts/AuthContext";
 
 const AdminLayout: FC = () => {
-    const { role } = useUserContext();
+  const { role } = useUserContext();
 
-    return (
-        <div className="flex flex-col min-h-screen">
-            <div className="flex flex-1">
-                <AdminSidebar role={role} />
-                <main className="flex-grow p-2 bg-gray-50">
-                    <Outlet />
-                </main>
-            </div>
-        </div>
-    );
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-50   ">
+      <div className="flex flex-1">
+        <AdminSidebar role={role} />
+        <main className="flex-grow ml-[330px] overflow-y-auto px-5 py-5 ">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
 };
 
 export default AdminLayout;

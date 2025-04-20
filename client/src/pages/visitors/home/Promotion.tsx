@@ -7,7 +7,7 @@ const Promotion = () => {
       opacity: 0,
       y: 50,
       rotateX: 90,
-      scale: 0.8
+      scale: 0.8,
     },
     visible: (i: number) => ({
       opacity: 1,
@@ -19,15 +19,15 @@ const Promotion = () => {
         duration: 0.7,
         type: "spring",
         stiffness: 100,
-        damping: 8
-      }
+        damping: 8,
+      },
     }),
     hover: {
       y: -5,
       color: "#4F46E5",
       scale: 1.1,
-      transition: { duration: 0.2 }
-    }
+      transition: { duration: 0.2 },
+    },
   };
 
   const textVariants = {
@@ -39,9 +39,9 @@ const Promotion = () => {
         delay: i * 0.1,
         type: "spring",
         stiffness: 100,
-        damping: 10
-      }
-    })
+        damping: 10,
+      },
+    }),
   };
 
   // Split heading into words, not characters, to maintain better readability
@@ -49,7 +49,8 @@ const Promotion = () => {
   const headingWords = headingText.split(" ");
 
   // Split paragraph text into words
-  const paragraphText = "Elevate the guest experience with a seamless and sophisticated hotel management solution. Designed for premium resorts and luxury accommodations, it streamlines operations while delivering unparalleled comfort, efficiency, and elegance.";
+  const paragraphText =
+    "Elevate the guest experience with a seamless and sophisticated hotel management solution. Designed for premium resorts and luxury accommodations, it streamlines operations while delivering unparalleled comfort, efficiency, and elegance.";
   const paragraphWords = paragraphText.split(" ");
 
   return (
@@ -85,7 +86,7 @@ const Promotion = () => {
                   variants={headingVariants}
                   className="inline-block origin-top transform-gpu mr-[0.25em]"
                   style={{
-                    transformStyle: "preserve-3d"
+                    transformStyle: "preserve-3d",
                   }}
                 >
                   {word}

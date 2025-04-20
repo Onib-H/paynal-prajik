@@ -26,7 +26,7 @@ const VenueCard: FC<AreaCardProps> = ({
   const { canBook, maxLimit } = useBookingLimit();
 
   const handleBookNow = (e: React.MouseEvent) => {
-    e.stopPropagation(); 
+    e.stopPropagation();
     if (!isAuthenticated) {
       navigate(`/areas/${id}?showLogin=true`);
       return;
@@ -36,9 +36,11 @@ const VenueCard: FC<AreaCardProps> = ({
     navigate(`/area-booking/${id}`);
   };
 
-  const truncatedDescription = description && description.length > 50
-    ? `${description.substring(0, 50)}...`
-    : description || "No description available.";
+  // Truncate description to 50 characters
+  const truncatedDescription =
+    description && description.length > 50
+      ? `${description.substring(0, 50)}...`
+      : description || "No description available.";
 
   const buttonClass = isAuthenticated
     ? canBook
@@ -79,17 +81,26 @@ const VenueCard: FC<AreaCardProps> = ({
           </p>
         </div>
 
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-          <span className="font-semibold text-2xl font-montserrat">
+        <div className="flex justify-between items-center mt-4 pt-4 border-t border-purple-200">
+          <span className="font-semibold text-lg font-montserrat">
             {priceRange}
           </span>
           <button
-            className={`${buttonClass} text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 cursor-pointer`}
+            className={`${
+              isAuthenticated
+                ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
+                : "bg-gray-400 cursor-not-allowed"
+            } text-sm text-white px-3 py-2 rounded-lg font-montserrat transition flex items-center gap-1 `}
             onClick={handleBookNow}
             title={buttonTitle}
             disabled={!isAuthenticated || !canBook}
           >
-            {isAuthenticated && !canBook ? <AlertCircle size={16} /> : <Book size={16} />} <span>Book</span>
+            {isAuthenticated && !canBook ? (
+              <AlertCircle size={16} />
+            ) : (
+              <Book size={16} />
+            )}{" "}
+            <span>Book</span>
           </button>
         </div>
       </div>

@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Edit, Eye, MapPin, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Eye,
+  MapPin,
+  Trash2,
+} from "lucide-react";
 import { FC, memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import EditAreaModal from "../../components/admin/EditAreaModal";
@@ -18,123 +25,151 @@ import { IArea as IEditArea } from "../../types/AreaAdmin";
 import { AddAreaResponse, Area, PaginationData } from "../../types/AreaClient";
 import Error from "../_ErrorBoundary";
 
-const MemoizedImage = memo(({ src, alt, className }: { src: string, alt: string, className: string }) => {
-  return (
-    <img
-      loading="lazy"
-      src={src}
-      alt={alt}
-      className={className}
-    />
-  );
-});
+const MemoizedImage = memo(
+  ({
+    src,
+    alt,
+    className,
+  }: {
+    src: string;
+    alt: string;
+    className: string;
+  }) => {
+    return <img loading="lazy" src={src} alt={alt} className={className} />;
+  }
+);
 
-MemoizedImage.displayName = 'MemoizedImage';
+MemoizedImage.displayName = "MemoizedImage";
 
-const AreaCard = memo(({
-  area,
-  index,
-  onView,
-  onEdit,
-  onDelete
-}: {
-  area: Area;
-  index: number;
-  onView: (area: Area) => void;
-  onEdit: (area: Area) => void;
-  onDelete: (id: number) => void;
-}) => {
-  const areaImageProps = useMemo(() => ({
-    src: area.area_image,
-    alt: area.area_name
-  }), [area.area_image, area.area_name]);
+const AreaCard = memo(
+  ({
+    area,
+    index,
+    onView,
+    onEdit,
+    onDelete,
+  }: {
+    area: Area;
+    index: number;
+    onView: (area: Area) => void;
+    onEdit: (area: Area) => void;
+    onDelete: (id: number) => void;
+  }) => {
+    const areaImageProps = useMemo(
+      () => ({
+        src: area.area_image,
+        alt: area.area_name,
+      }),
+      [area.area_image, area.area_name]
+    );
 
-  const handleView = useCallback(() => onView(area), [area, onView]);
-  const handleEdit = useCallback(() => onEdit(area), [area, onEdit]);
-  const handleDelete = useCallback(() => onDelete(area.id), [area.id, onDelete]);
+    const handleView = useCallback(() => onView(area), [area, onView]);
+    const handleEdit = useCallback(() => onEdit(area), [area, onEdit]);
+    const handleDelete = useCallback(
+      () => onDelete(area.id),
+      [area.id, onDelete]
+    );
 
-  if (!area) return null;
+    if (!area) return null;
 
-  return (
-    <motion.div
-      className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.4,
-        delay: index * 0.05,
-        type: "spring",
-        damping: 12
-      }}
-      whileHover={{
-        y: -5,
-        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-      }}
-    >
-      <MemoizedImage
-        src={areaImageProps.src}
-        alt={areaImageProps.alt}
-        className="w-full h-48 object-cover"
-      />
-      <div className="p-4 flex flex-col h-full">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-bold text-gray-900">
-            {area.area_name}
-          </h2>
-          <span className={`text-sm font-semibold ${area.status === 'available' ? 'text-green-600' : 'text-amber-600'
-            } uppercase`}>
-            {area.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
+    return (
+      <motion.div
+        className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.4,
+          delay: index * 0.05,
+          type: "spring",
+          damping: 12,
+        }}
+        whileHover={{
+          y: -5,
+          boxShadow:
+            "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        }}
+      >
+        <MemoizedImage
+          src={areaImageProps.src}
+          alt={areaImageProps.alt}
+          className="w-full h-48 object-cover"
+        />
+        <div className="p-4 flex flex-col h-full">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-bold text-gray-900">
+              {area.area_name}
+            </h2>
+            <span
+              className={`text-sm font-semibold ${
+                area.status === "available"
+                  ? "text-green-600"
+                  : "text-amber-600"
+              } uppercase`}
+            >
+              {area.status === "available" ? "AVAILABLE" : "MAINTENANCE"}
+            </span>
+          </div>
+          <span className="flex items-center mb-2">
+            <span className="inline-flex items-center rounded-md px-2 py-1 text-sm font-semibold mr-2 bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3.5 w-3.5 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              Max Guests: {area.capacity}
+            </span>
           </span>
-        </div>
-        <span className="flex items-center mb-2">
-          <span className="inline-flex items-center rounded-md px-2 py-1 text-sm font-semibold mr-2 bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            Max Guests: {area.capacity}
-          </span>
-        </span>
-        <p className="text-gray-700 text-sm mb-2 line-clamp-2">
-          {area.description || "No description provided."}
-        </p>
-
-        <div className="mt-auto flex justify-between items-center">
-          <p className="text-lg font-bold text-gray-900">
-            {area.price_per_hour.toLocaleString()}
+          <p className="text-gray-700 text-sm mb-2 line-clamp-2">
+            {area.description || "No description provided."}
           </p>
-          <div className="flex gap-2">
-            <motion.button
-              onClick={handleView}
-              className="px-3 py-2 uppercase font-semibold bg-gray-600 text-white rounded cursor-pointer hover:bg-gray-700 transition-colors duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Eye />
-            </motion.button>
-            <motion.button
-              onClick={handleEdit}
-              className="px-3 py-2 uppercase font-semibold bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition-colors duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Edit />
-            </motion.button>
-            <motion.button
-              onClick={handleDelete}
-              className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Trash2 />
-            </motion.button>
+
+          <div className="mt-auto flex justify-between items-center">
+            <p className="text-lg font-bold text-gray-900">
+              {area.price_per_hour.toLocaleString()}
+            </p>
+            <div className="flex gap-2">
+              <motion.button
+                onClick={handleView}
+                className="px-3 py-2 uppercase font-semibold bg-gray-600 text-white rounded cursor-pointer hover:bg-gray-700 transition-colors duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Eye />
+              </motion.button>
+              <motion.button
+                onClick={handleEdit}
+                className="px-3 py-2 uppercase font-semibold bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition-colors duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Edit />
+              </motion.button>
+              <motion.button
+                onClick={handleDelete}
+                className="px-3 py-2 uppercase font-semibold bg-red-600 text-white rounded cursor-pointer hover:bg-red-700 transition-colors duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Trash2 />
+              </motion.button>
+            </div>
           </div>
         </div>
-      </div>
-    </motion.div>
-  );
-});
+      </motion.div>
+    );
+  }
+);
 
-AreaCard.displayName = 'AreaCard';
+AreaCard.displayName = "AreaCard";
 
 const ViewAreaModal: FC<{
   isOpen: boolean;
@@ -145,7 +180,7 @@ const ViewAreaModal: FC<{
     if (!areaData) return { src: "", alt: "" };
     return {
       src: areaData.area_image,
-      alt: areaData.area_name
+      alt: areaData.area_name,
     };
   }, [areaData]);
 
@@ -170,7 +205,7 @@ const ViewAreaModal: FC<{
               type: "spring",
               damping: 30,
               stiffness: 300,
-              mass: 0.8
+              mass: 0.8,
             }}
           >
             {/* Close button - positioned on top right */}
@@ -179,8 +214,19 @@ const ViewAreaModal: FC<{
               className="absolute top-4 right-4 z-50 bg-white/80 hover:bg-white text-gray-700 hover:text-red-600 rounded-full p-2 transition-all duration-200 shadow-md cursor-pointer"
               whileTap={{ scale: 0.8 }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </motion.button>
 
@@ -216,9 +262,16 @@ const ViewAreaModal: FC<{
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
                     >
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${areaData.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                        }`}>
-                        {areaData.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          areaData.status === "available"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-amber-100 text-amber-800"
+                        }`}
+                      >
+                        {areaData.status === "available"
+                          ? "AVAILABLE"
+                          : "MAINTENANCE"}
                       </span>
                     </motion.div>
                   </div>
@@ -233,10 +286,20 @@ const ViewAreaModal: FC<{
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <h1 className="text-3xl font-bold text-gray-900">{areaData.area_name}</h1>
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    {areaData.area_name}
+                  </h1>
                   <div className="flex items-center mt-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${areaData.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
-                      {areaData.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        areaData.status === "available"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {areaData.status === "available"
+                        ? "AVAILABLE"
+                        : "MAINTENANCE"}
                     </span>
                   </div>
                 </motion.div>
@@ -248,7 +311,9 @@ const ViewAreaModal: FC<{
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <h3 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-2">Description</h3>
+                  <h3 className="text-sm uppercase tracking-wider text-gray-500 font-medium mb-2">
+                    Description
+                  </h3>
                   <p className="text-gray-700">
                     {areaData.description || "No description available."}
                   </p>
@@ -262,22 +327,53 @@ const ViewAreaModal: FC<{
                   transition={{ delay: 0.4 }}
                 >
                   <div className="bg-blue-50 p-3 rounded-lg">
-                    <span className="block text-gray-500 text-sm">Maximum No. of Guests</span>
+                    <span className="block text-gray-500 text-sm">
+                      Maximum No. of Guests
+                    </span>
                     <div className="flex items-center mt-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-blue-600 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                        />
                       </svg>
-                      <span className="text-xl font-bold text-gray-800">{areaData.capacity} <span className="text-sm font-normal text-gray-600">people</span></span>
+                      <span className="text-xl font-bold text-gray-800">
+                        {areaData.capacity}{" "}
+                        <span className="text-sm font-normal text-gray-600">
+                          people
+                        </span>
+                      </span>
                     </div>
                   </div>
 
                   <div className="bg-green-50 p-3 rounded-lg">
                     <span className="block text-gray-500 text-sm">Price</span>
                     <div className="flex items-center mt-1">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5 text-green-600 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
                       </svg>
-                      <span className="text-xl font-bold text-gray-800">{areaData.price_per_hour.toLocaleString()}</span>
+                      <span className="text-xl font-bold text-gray-800">
+                        {areaData.price_per_hour.toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 </motion.div>
@@ -289,10 +385,17 @@ const ViewAreaModal: FC<{
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <h3 className="text-sm uppercase tracking-wider text-indigo-500 font-medium mb-2">Booking Information</h3>
+                  <h3 className="text-sm uppercase tracking-wider text-indigo-500 font-medium mb-2">
+                    Booking Information
+                  </h3>
                   <p className="text-gray-700 text-sm">
-                    This venue is available for fixed hours (8:00 AM - 5:00 PM) and can be booked for
-                    <span className="font-medium"> {areaData.price_per_hour.toLocaleString()}</span> per booking.
+                    This venue is available for fixed hours (8:00 AM - 5:00 PM)
+                    and can be booked for
+                    <span className="font-medium">
+                      {" "}
+                      {areaData.price_per_hour.toLocaleString()}
+                    </span>{" "}
+                    per booking.
                   </p>
                 </motion.div>
               </div>
@@ -336,13 +439,13 @@ const ManageAreas = () => {
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
+      setCurrentPage((prev) => prev - 1);
     }
   };
 
   const handleNextPage = () => {
     if (pagination && currentPage < pagination.total_pages) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage((prev) => prev + 1);
     }
   };
 
@@ -358,7 +461,7 @@ const ManageAreas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === "areas"
+        predicate: (query) => query.queryKey[0] === "areas",
       });
       setShowFormModal(false);
       toast.success("Area added successfully!");
@@ -387,13 +490,13 @@ const ManageAreas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === "areas"
+        predicate: (query) => query.queryKey[0] === "areas",
       });
       setShowFormModal(false);
       toast.success("Area updated successfully!");
     },
     onError: (error: any) => {
-      toast.error(`Failed to update area: ${error.message || 'Unknown error'}`);
+      toast.error(`Failed to update area: ${error.message || "Unknown error"}`);
       console.error("Error updating area:", error);
     },
     onSettled: () => {
@@ -410,12 +513,12 @@ const ManageAreas = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-        predicate: (query) => query.queryKey[0] === "areas"
+        predicate: (query) => query.queryKey[0] === "areas",
       });
       setShowModal(false);
 
       if (areas.length === 1 && currentPage > 1) {
-        setCurrentPage(prev => prev - 1);
+        setCurrentPage((prev) => prev - 1);
       }
     },
     onSettled: () => {
@@ -503,10 +606,11 @@ const ManageAreas = () => {
         {/* Add New Area Button */}
         <div className="flex flex-row items-center mb-5 justify-between">
           <div>
-            <h1 className="text-3xl font-semibold">Manage Areas</h1>
+            <h1 className="text-3xl font-bold">Manage Areas</h1>
             {pagination && (
               <p className="text-gray-500 mt-1">
-                Total: {pagination.total_items} area{pagination.total_items !== 1 ? 's' : ''}
+                Total: {pagination.total_items} area
+                {pagination.total_items !== 1 ? "s" : ""}
               </p>
             )}
           </div>
@@ -577,51 +681,66 @@ const ManageAreas = () => {
             <button
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
-              className={`p-2 rounded-full ${currentPage === 1
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                }`}
+              className={`p-2 rounded-full ${
+                currentPage === 1
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+              }`}
             >
               <ChevronLeft size={20} />
             </button>
 
             <div className="flex gap-1">
-              {Array.from({ length: pagination.total_pages }).map((_, index) => {
-                const pageNumber = index + 1;
-                const isVisible =
-                  pageNumber === 1 ||
-                  pageNumber === pagination.total_pages ||
-                  Math.abs(pageNumber - currentPage) <= 1;
+              {Array.from({ length: pagination.total_pages }).map(
+                (_, index) => {
+                  const pageNumber = index + 1;
+                  const isVisible =
+                    pageNumber === 1 ||
+                    pageNumber === pagination.total_pages ||
+                    Math.abs(pageNumber - currentPage) <= 1;
 
-                if (!isVisible) {
-                  if (pageNumber === 2 || pageNumber === pagination.total_pages - 1) {
-                    return <span key={`ellipsis-${pageNumber}`} className="px-3 py-1">...</span>;
+                  if (!isVisible) {
+                    if (
+                      pageNumber === 2 ||
+                      pageNumber === pagination.total_pages - 1
+                    ) {
+                      return (
+                        <span
+                          key={`ellipsis-${pageNumber}`}
+                          className="px-3 py-1"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
                   }
-                  return null;
-                }
 
-                return (
-                  <button
-                    key={pageNumber}
-                    onClick={() => goToPage(pageNumber)}
-                    className={`w-8 h-8 rounded-full ${currentPage === pageNumber
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 hover:bg-blue-100"
+                  return (
+                    <button
+                      key={pageNumber}
+                      onClick={() => goToPage(pageNumber)}
+                      className={`w-8 h-8 rounded-full ${
+                        currentPage === pageNumber
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 hover:bg-blue-100"
                       }`}
-                  >
-                    {pageNumber}
-                  </button>
-                );
-              })}
+                    >
+                      {pageNumber}
+                    </button>
+                  );
+                }
+              )}
             </div>
 
             <button
               onClick={handleNextPage}
               disabled={pagination && currentPage === pagination.total_pages}
-              className={`p-2 rounded-full ${pagination && currentPage === pagination.total_pages
-                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                }`}
+              className={`p-2 rounded-full ${
+                pagination && currentPage === pagination.total_pages
+                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+              }`}
             >
               <ChevronRight size={20} />
             </button>

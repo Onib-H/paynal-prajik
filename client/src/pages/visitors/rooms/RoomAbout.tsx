@@ -2,11 +2,11 @@ import { motion } from "framer-motion";
 
 const RoomAbout = () => {
   const handleViewRoomsClick = () => {
-    const roomListElement = document.getElementById('room-list');
+    const roomListElement = document.getElementById("room-list");
     if (roomListElement) {
       roomListElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
+        behavior: "smooth",
+        block: "start",
       });
     }
   };
@@ -17,16 +17,16 @@ const RoomAbout = () => {
       opacity: 1,
       transition: {
         staggerChildren: 0.3,
-        delayChildren: 0.2
-      }
-    }
+        delayChildren: 0.2,
+      },
+    },
   };
 
   const iconTitleVariants = {
     hidden: {
       opacity: 0,
       y: 20,
-      scale: 0.9
+      scale: 0.9,
     },
     visible: {
       opacity: 1,
@@ -34,16 +34,16 @@ const RoomAbout = () => {
       scale: 1,
       transition: {
         duration: 0.7,
-        ease: [0.22, 1, 0.36, 1]
-      }
-    }
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
   };
 
   const headingVariants = {
     hidden: {
       opacity: 0,
       y: 30,
-      filter: "blur(8px)"
+      filter: "blur(8px)",
     },
     visible: {
       opacity: 1,
@@ -51,31 +51,31 @@ const RoomAbout = () => {
       filter: "blur(0px)",
       transition: {
         duration: 0.8,
-        ease: [0.16, 1, 0.3, 1]
-      }
-    }
+        ease: [0.16, 1, 0.3, 1],
+      },
+    },
   };
 
   const paragraphVariants = {
     hidden: {
       opacity: 0,
-      y: 20
+      y: 20,
     },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
         duration: 0.7,
-        ease: "easeOut"
-      }
-    }
+        ease: "easeOut",
+      },
+    },
   };
 
   const buttonVariants = {
     hidden: {
       opacity: 0,
       y: 15,
-      scale: 0.95
+      scale: 0.95,
     },
     visible: {
       opacity: 1,
@@ -83,37 +83,37 @@ const RoomAbout = () => {
       scale: 1,
       transition: {
         duration: 0.5,
-        ease: "easeOut"
-      }
+        ease: "easeOut",
+      },
     },
     hover: {
       scale: 1.05,
       transition: {
         duration: 0.2,
-        ease: "easeInOut"
-      }
-    }
+        ease: "easeInOut",
+      },
+    },
   };
 
   const lineVariants = {
     hidden: {
       scaleX: 0,
-      originX: 0
+      originX: 0,
     },
     visible: {
       scaleX: 1,
       transition: {
         delay: 0.2,
         duration: 0.6,
-        ease: [0.22, 1, 0.36, 1]
-      }
+        ease: [0.22, 1, 0.36, 1],
+      },
     },
     hover: {
       scaleX: 1.1,
       transition: {
-        duration: 0.2
-      }
-    }
+        duration: 0.2,
+      },
+    },
   };
 
   return (
@@ -129,7 +129,7 @@ const RoomAbout = () => {
         className="flex flex-col justify-center items-center mb-6"
         variants={iconTitleVariants}
       >
-        <i className="fa fa-moon text-2xl sm:text-3xl text-blue-800 mb-3"></i>
+        <i className="fa fa-moon text-2xl sm:text-3xl text-purple-800 mb-3"></i>
         <h3 className="text-gray-500 uppercase tracking-widest text-sm sm:text-base md:text-lg">
           Hotel Rooms
         </h3>
@@ -164,7 +164,7 @@ const RoomAbout = () => {
 
       {/* Button */}
       <motion.button
-        className="relative inline-flex uppercase cursor-pointer items-center text-blue-800 hover:text-blue-900 font-semibold text-lg tracking-wide group"
+        className="relative inline-flex items-center text-purple-800 hover:text-purple-900 font-semibold text-lg tracking-wide group"
         variants={buttonVariants}
         whileHover="hover"
         onClick={handleViewRoomsClick}
@@ -177,13 +177,13 @@ const RoomAbout = () => {
             duration: 1.5,
             ease: "easeInOut",
             repeat: Infinity,
-            repeatType: "reverse"
+            repeatType: "reverse",
           }}
         >
           &rarr;
         </motion.span>
         <motion.span
-          className="absolute left-0 bottom-[-4px] w-full h-[1px] bg-blue-800"
+          className="absolute left-0 bottom-[-4px] w-full h-[1px] bg-purple-800"
           variants={lineVariants}
         ></motion.span>
       </motion.button>
