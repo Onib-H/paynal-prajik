@@ -36,6 +36,7 @@ const ConfirmBooking = () => {
   const priceParam = searchParams.get('totalPrice');
 
   const today = new Date().toISOString().split('T')[0];
+
   const [selectedArrival, setSelectedArrival] = useState(arrival || '');
   const [selectedDeparture, setSelectedDeparture] = useState(departure || '');
   const [dateSelectionCompleted, setDateSelectionCompleted] = useState(!!arrival && !!departure);
@@ -160,9 +161,7 @@ const ConfirmBooking = () => {
 
   useEffect(() => {
     return () => {
-      if (validIdPreview) {
-        URL.revokeObjectURL(validIdPreview);
-      }
+      if (validIdPreview) URL.revokeObjectURL(validIdPreview);
     };
   }, [validIdPreview]);
 
@@ -214,7 +213,8 @@ const ConfirmBooking = () => {
 
     try {
       const arrDate = new Date(pendingFormData.checkIn);
-      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const todayStart = new Date(); 
+      todayStart.setHours(0, 0, 0, 0);
       if (isAuthenticated && arrDate.getTime() === todayStart.getTime()) {
         const res = await checkCanBookToday();
         if (!res.canBook) {

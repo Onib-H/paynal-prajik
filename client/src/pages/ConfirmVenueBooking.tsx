@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BookCheck } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LoginModal from '../components/LoginModal';
 import Modal from '../components/Modal';
@@ -16,18 +17,25 @@ const ConfirmVenueBooking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isAuthenticated } = useUserContext();
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignupModal, setShowSignupModal] = useState(false);
-  const [savedFormData, setSavedFormData] = useState<any>(null);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingFormData, setPendingFormData] = useState<ReservationFormData | null>(null);
 
   const areaId = searchParams.get('areaId');
   const startTime = searchParams.get('startTime');
   const endTime = searchParams.get('endTime');
   const totalPrice = searchParams.get('totalPrice');
 
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm<FormData>({
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<ReservationFormData | null>(null);
+  const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | any>(null);
+  const [success, setSuccess] = useState(false);
+  const [canBookToday, setCanBookToday] = useState<boolean>(true);
+  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(null);
+
+  const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
+    mode: "onBlur",
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -38,200 +46,90 @@ const ConfirmVenueBooking = () => {
     }
   });
 
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    phoneNumber: '+63 ',
-    emailAddress: '',
-    validId: null as File | null,
-    specialRequests: '',
-    numberOfGuests: '1'
-  });
-
-  const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
-
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<{
-    firstName?: string;
-    lastName?: string;
-    phoneNumber?: string;
-    emailAddress?: string;
-    validId?: string;
-    numberOfGuests?: string;
-    general?: string;
-  }>({});
-  const [success, setSuccess] = useState(false);
-
-  const [canBookToday, setCanBookToday] = useState<boolean>(true);
-  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(null);
-
   const { data: areaData, isLoading } = useQuery<AreaData>({
     queryKey: ['area', areaId],
     queryFn: () => fetchAreaById(areaId as string),
     enabled: !!areaId
   });
 
-  useEffect(() => {
-    if (!isLoading && !areaData) {
-      setError({ general: 'Failed to load venue details. Please try again.' });
+  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setValidIdPreview(reader.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setValidIdPreview(null);
     }
-  }, [isLoading, areaData]);
-
-  useEffect(() => {
-    if (!areaId || !startTime || !endTime) {
-      navigate('/venues');
-    }
-  }, [areaId, navigate, startTime, endTime]);
+  };
 
   useEffect(() => {
     if (isAuthenticated) {
-      const checkBookingEligibility = async () => {
+      const checkBookingLimit = async () => {
         try {
-          const eligibility = await checkCanBookToday();
-          setCanBookToday(eligibility.canBook);
-          setBookingLimitMessage(eligibility.message || null);
+          const response = await checkCanBookToday();
+          setCanBookToday(response.canBook);
+          setBookingLimitMessage(response.message || null);
         } catch (error) {
-          console.error(`Error checking booking eligibility: ${error}`);
+          console.error(`Failed to check booking limit: ${error}`);
         }
-      };
-
-      checkBookingEligibility();
+      }
+      checkBookingLimit();
     }
   }, [isAuthenticated]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-
-    if (name === 'phoneNumber') {
-      const cleaned = value.replace(/[^\d+]/g, '');
-      if (!cleaned.startsWith('+63')) return;
-
-      let formatted = '+63 ';
-      const localNumber = cleaned.substring(3);
-
-      if (localNumber.length > 0) {
-        formatted += localNumber.substring(0, Math.min(localNumber.length, 1));
-
-        if (localNumber.length > 1) {
-          formatted += localNumber.substring(1, Math.min(localNumber.length, 4));
-
-          if (localNumber.length > 4) {
-            formatted += ' ' + localNumber.substring(4, Math.min(localNumber.length, 7));
-
-            if (localNumber.length > 7) {
-              formatted += ' ' + localNumber.substring(7, Math.min(localNumber.length, 11));
-            }
-          }
-        }
-      }
-
-      setFormData({
-        ...formData,
-        [name]: formatted
-      });
-
-      setValue(name as keyof FormData, formatted);
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
-
-      setValue(name as keyof FormData, value);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setFormData({
-        ...formData,
-        validId: file
-      });
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setValidIdPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  useEffect(() => {
+    if (!areaId || !startTime || !endTime) navigate("/areas");
+  }, [areaId, startTime, endTime, navigate]);
 
   useEffect(() => {
-    return () => {
-      if (validIdPreview) URL.revokeObjectURL(validIdPreview);
-    };
-  }, [validIdPreview]);
-
-  const handleSuccessfulLogin = useCallback(async () => {
-    if (!savedFormData || isSubmitting) return;
-
-    setIsSubmitting(true);
-    setError({});
-
-    try {
-      const response = await createReservation(savedFormData);
-      setSuccess(true);
-      setSavedFormData(null);
-      navigate(`/booking-accepted?bookingId=${response.id}&isVenue=true`);
-    } catch (err: any) {
-      console.error(`Error creating venue booking: ${err}`);
-      const errorMessage = 'Failed to create venue booking. Please try again.';
-
-      if (err.response && err.response.data && err.response.data.error) {
-        if (typeof err.response.data.error === 'string') {
-          setError({ general: err.response.data.error });
-        } else if (typeof err.response.data.error === 'object') {
-          setError(err.response.data.error);
-        }
-      } else {
-        setError({ general: errorMessage });
-      }
-    } finally {
-      setIsSubmitting(false);
+    if (!isLoading && !areaData) {
+      setError("Area not found");
     }
-  }, [navigate, savedFormData, isSubmitting]);
+  }, [isLoading, areaData]);
 
-  useEffect(() => {
-    if (isAuthenticated && savedFormData && !isSubmitting && !success) {
-      handleSuccessfulLogin();
-    }
-  }, [isAuthenticated, savedFormData, handleSuccessfulLogin, isSubmitting, success]);
+  const formatDateTime = (dateTimeString: string | null) => {
+    if (!dateTimeString) return '';
+    const date = new Date(dateTimeString);
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const day = days[date.getDay()];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const formatted = `${day}, ${date.getDate()} ${monthNames[date.getMonth()]}, ${date.getFullYear()} at ${date.getHours() % 12 || 12}:${date.getMinutes().toString().padStart(2,'0')} ${date.getHours() >=12?'PM':'AM'}`;
+    return formatted;
+  };
 
-  const onSubmit = async (data: FormData) => {
+  const formattedStartTime = formatDateTime(startTime);
+  const formattedEndTime = formatDateTime(endTime);
+
+  const onSubmit: SubmitHandler<FormData> = data => {
+    setError(null);
     if (isSubmitting) return;
-
     if (isAuthenticated && !canBookToday) {
-      setError({ general: bookingLimitMessage || 'You have already made a booking today. You can make another booking tomorrow.' });
+      setError("You have reached your booking limit for today.");
       return;
     }
-
     if (!areaId || !startTime || !endTime || !totalPrice) {
-      setError({ general: "Missing required booking information" });
+      setError("Missing required booking information.");
       return;
     }
 
-    const parsedStartTime = startTime ? new Date(startTime).toISOString() : null;
-    const parsedEndTime = endTime ? new Date(endTime).toISOString() : null;
-
-    const validIdFile = formData.validId;
+    const validIdFile = (data.validId as FileList)[0];
     if (!validIdFile) {
-      setError({ validId: "Please upload a valid ID" });
+      setError("Please upload a valid ID");
       return;
     }
-
-    const cleanedPhoneNumber = data.phoneNumber.replace(/\s+/g, '');
 
     const reservationData: ReservationFormData = {
       firstName: data.firstName,
       lastName: data.lastName,
-      phoneNumber: cleanedPhoneNumber,
+      phoneNumber: data.phoneNumber.replace(/\s+/g, ''),
       emailAddress: data.emailAddress,
       specialRequests: data.specialRequests,
       validId: validIdFile,
-      areaId: areaId,
-      startTime: parsedStartTime,
-      endTime: parsedEndTime,
-      totalPrice: parseFloat(totalPrice || '0'),
+      areaId: areaId!,
+      startTime: new Date(startTime).toISOString(),
+      endTime: new Date(endTime).toISOString(),
+      totalPrice: parseFloat(totalPrice),
       status: 'pending',
       isVenueBooking: true,
       numberOfGuests: parseInt(data.numberOfGuests)
@@ -243,107 +141,41 @@ const ConfirmVenueBooking = () => {
 
   const handleConfirmBooking = async () => {
     if (!pendingFormData) return;
-
     setShowConfirmModal(false);
     setIsSubmitting(true);
-    setError({});
+    setError(null);
 
     try {
-      const bookingDate = pendingFormData.startTime ? new Date(pendingFormData.startTime) : null;
+      const bookDate = new Date(pendingFormData.startTime);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const isBookingForToday = bookingDate ?
-        bookingDate.getFullYear() === today.getFullYear() &&
-        bookingDate.getMonth() === today.getMonth() &&
-        bookingDate.getDate() === today.getDate() : false;
-
-      if (isAuthenticated && isBookingForToday) {
-        try {
-          const eligibility = await checkCanBookToday();
-          if (!eligibility.canBook) {
-            setCanBookToday(false);
-            setBookingLimitMessage(eligibility.message || 'You have already made a booking today');
-            setError({ general: eligibility.message || 'You have already made a booking today. You can make another booking tomorrow.' });
-            setIsSubmitting(false);
-            return;
-          }
-        } catch (error) {
-          console.error(`Error checking booking eligibility: ${error}`);
+      if (isAuthenticated && bookDate.getTime() === today.getTime()) {
+        const response = await checkCanBookToday();
+        if (!response.canBook) {
+          setError(response.message);
+          setCanBookToday(false);
+          setIsSubmitting(false);
+          return;
         }
       }
-
       if (!isAuthenticated) {
-        setSavedFormData(pendingFormData);
         setShowLoginModal(true);
         setIsSubmitting(false);
         return;
       }
-
       const response = await createReservation(pendingFormData);
       setSuccess(true);
-      setSavedFormData(null);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=true`);
-    } catch (err: any) {
-      console.error(`Error creating venue booking: ${err}`);
-      const errorMessage = 'Failed to create venue booking. Please try again.';
-
-      if (err.response && err.response.data && err.response.data.error) {
-        if (typeof err.response.data.error === 'string') {
-          setError({ general: err.response.data.error });
-        } else if (typeof err.response.data.error === 'object') {
-          setError(err.response.data.error);
-        }
-      } else if (err.message) {
-        setError({ general: err.message });
-      } else {
-        setError({ general: errorMessage });
-      }
+    } catch (error: any) {
+      console.error(`Error creating reservation: ${error}`);
+      setError(error.response?.data?.message || "An error occurred while creating the reservation.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const formatDateTime = (dateTimeString: string | null) => {
-    if (!dateTimeString) return '';
-
-    const date = new Date(dateTimeString);
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const day = days[date.getDay()];
-    const dayOfMonth = date.getDate();
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    const month = months[date.getMonth()];
-    const year = date.getFullYear();
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const formattedHours = hours % 12 || 12;
-    const formattedMinutes = minutes.toString().padStart(2, '0');
-
-    return `${day}, ${dayOfMonth} ${month}, ${year} at ${formattedHours}:${formattedMinutes} ${ampm}`;
-  };
-
-  const formattedStartTime = formatDateTime(startTime);
-  const formattedEndTime = formatDateTime(endTime);
-
-  const openSignupModal = () => {
-    setShowLoginModal(false);
-    setShowSignupModal(true);
-  };
-
-  const openLoginModal = () => {
-    setShowSignupModal(false);
-    setShowLoginModal(true);
-  };
-
   useEffect(() => {
-    if (isSubmitting) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
+    document.body.style.overflow = isSubmitting ? 'hidden' : 'auto';
   }, [isSubmitting]);
 
   const containerVariants = {
@@ -501,7 +333,7 @@ const ConfirmVenueBooking = () => {
         </AnimatePresence>
 
         <AnimatePresence>
-          {error.general && (
+          {error && (
             <motion.div
               className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg shadow-md"
               initial={{ opacity: 0, scale: 0.9 }}
@@ -509,7 +341,7 @@ const ConfirmVenueBooking = () => {
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              <p>{error.general}</p>
+              <p>{error}</p>
             </motion.div>
           )}
         </AnimatePresence>
@@ -522,7 +354,10 @@ const ConfirmVenueBooking = () => {
           >
             <motion.form
               id="booking-form"
-              onSubmit={handleSubmit(onSubmit)}
+              onSubmit={(e: FormEvent<HTMLFormElement>) => {
+                e.preventDefault();
+                handleSubmit(onSubmit)();
+              }}
               className="rounded-lg shadow-xl p-6 backdrop-blur-sm bg-white/90 border border-gray-100"
               whileHover={{ boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)" }}
               transition={{ type: "spring", stiffness: 100, damping: 10 }}
@@ -554,10 +389,7 @@ const ConfirmVenueBooking = () => {
                         message: "Name must be at least 2 characters long"
                       }
                     })}
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${errors.firstName || error.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.firstName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.firstName &&
                     <motion.p
@@ -567,16 +399,6 @@ const ConfirmVenueBooking = () => {
                       exit={{ opacity: 0, y: -10 }}
                     >
                       {errors.firstName.message}
-                    </motion.p>
-                  }
-                  {!errors.firstName && error.firstName &&
-                    <motion.p
-                      className="text-red-500 text-sm mt-1"
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      {error.firstName}
                     </motion.p>
                   }
                 </motion.div>
@@ -598,10 +420,7 @@ const ConfirmVenueBooking = () => {
                         message: "Name must be at least 2 characters long"
                       }
                     })}
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border ${errors.lastName || error.lastName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.lastName ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.lastName &&
                     <motion.p
@@ -611,16 +430,6 @@ const ConfirmVenueBooking = () => {
                       exit={{ opacity: 0, y: -10 }}
                     >
                       {errors.lastName.message}
-                    </motion.p>
-                  }
-                  {!errors.lastName && error.lastName &&
-                    <motion.p
-                      className="text-red-500 text-sm mt-1"
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                    >
-                      {error.lastName}
                     </motion.p>
                   }
                 </motion.div>
@@ -646,14 +455,10 @@ const ConfirmVenueBooking = () => {
                         return true;
                       }
                     })}
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
                     placeholder="+63 9XX XXX XXXX"
-                    className={`w-full px-3 py-2 border ${errors.phoneNumber || error.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.phoneNumber ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber.message}</p>}
-                  {!errors.phoneNumber && error.phoneNumber && <p className="text-red-500 text-sm mt-1">{error.phoneNumber}</p>}
                   <p className="mt-1 text-xs text-gray-500">Format: +63 9XXX XXX XXX</p>
                 </div>
 
@@ -676,15 +481,11 @@ const ConfirmVenueBooking = () => {
                         message: `Maximum capacity is ${areaData?.capacity} guests`
                       }
                     })}
-                    name="numberOfGuests"
-                    value={formData.numberOfGuests}
-                    onChange={handleInputChange}
                     min="1"
                     max={areaData?.capacity}
-                    className={`w-full px-3 py-2 border ${errors.numberOfGuests || error.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.numberOfGuests ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.numberOfGuests && <p className="text-red-500 text-sm mt-1">{errors.numberOfGuests.message}</p>}
-                  {!errors.numberOfGuests && error.numberOfGuests && <p className="text-red-500 text-sm mt-1">{error.numberOfGuests}</p>}
                   {areaData?.capacity && (
                     <p className="mt-1 text-sm text-gray-500">Max guests: {areaData.capacity} guests</p>
                   )}
@@ -701,14 +502,12 @@ const ConfirmVenueBooking = () => {
                     type="file"
                     id="validId"
                     {...register("validId", { required: "Valid ID is required" })}
+                    onChange={onFileChange}
                     name="validId"
-                    onChange={handleFileChange}
                     accept="image/*"
-                    className={`w-full py-2 ${errors.validId || error.validId ? 'border-red-500' : ''}`}
+                    className={`w-full py-2 ${errors.validId ? 'border-red-500' : ''}`}
                   />
                   {errors.validId && <p className="text-red-500 text-sm mt-1">{errors.validId.message}</p>}
-                  {!errors.validId && error.validId && <p className="text-red-500 text-sm mt-1">{error.validId}</p>}
-
                   {/* Valid ID Preview Container */}
                   {validIdPreview && (
                     <div className="mt-2 relative">
@@ -722,10 +521,7 @@ const ConfirmVenueBooking = () => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => {
-                          setValidIdPreview(null);
-                          setFormData({ ...formData, validId: null });
-                        }}
+                        onClick={() => setValidIdPreview(null)}
                         className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
                         aria-label="Remove image"
                       >
@@ -776,9 +572,6 @@ const ConfirmVenueBooking = () => {
                 <textarea
                   id="specialRequests"
                   {...register("specialRequests")}
-                  name="specialRequests"
-                  value={formData.specialRequests}
-                  onChange={handleInputChange}
                   rows={10}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 resize-none"
                 ></textarea>
@@ -787,7 +580,8 @@ const ConfirmVenueBooking = () => {
               {/* Submit Button for Mobile View */}
               <div className="lg:hidden mt-6">
                 <motion.button
-                  type="submit"
+                  type="button"
+                  onClick={() => handleSubmit(onSubmit)()}
                   disabled={isSubmitting}
                   className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${isSubmitting
                     ? 'bg-blue-400 cursor-not-allowed'
@@ -928,8 +722,8 @@ const ConfirmVenueBooking = () => {
 
             <div className="hidden lg:block">
               <motion.button
-                type="submit"
-                form="booking-form"
+                type="button"
+                onClick={() => handleSubmit(onSubmit)()}
                 disabled={isSubmitting}
                 className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex items-center justify-center ${isSubmitting
                   ? 'bg-blue-400 cursor-not-allowed'
@@ -963,8 +757,8 @@ const ConfirmVenueBooking = () => {
             >
               <LoginModal
                 toggleLoginModal={() => setShowLoginModal(false)}
-                openSignupModal={openSignupModal}
-                onSuccessfulLogin={handleSuccessfulLogin}
+                openSignupModal={() => setShowSignupModal(true)}
+                onSuccessfulLogin={handleConfirmBooking}
                 bookingInProgress={true}
               />
             </motion.div>
@@ -981,9 +775,9 @@ const ConfirmVenueBooking = () => {
               exit={{ opacity: 0 }}
             >
               <SignupModal
+                openLoginModal={() => setShowLoginModal(true)}
                 toggleRegisterModal={() => setShowSignupModal(false)}
-                openLoginModal={openLoginModal}
-                onSuccessfulSignup={handleSuccessfulLogin}
+                onSuccessfulSignup={handleConfirmBooking}
               />
             </motion.div>
           )}
