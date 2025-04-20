@@ -157,7 +157,7 @@ def validate_strict_email(email):
         )
     
     domain = email.split('@')[1]
-    is_valid_domain = any(domain == provider for provider in VALID_EMAIL_PROVIDERS) # Exact match domain check, mimics "strictGovPh" logic
+    is_valid_domain = any(domain == provider for provider in VALID_EMAIL_PROVIDERS)
     if not is_valid_domain:
         raise ValidationError(
             f"Invalid email domain. {domain} is not a valid email provider.",

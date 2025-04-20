@@ -87,9 +87,9 @@ def validate_valid_id(valid_id):
     if valid_id.size > 2 * 1024 * 1024:
         raise serializers.ValidationError("ID file size exceeds the limit (2MB max)")
     
-    allowed_formats = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif']
+    allowed_formats = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/webp']
     if valid_id.content_type not in allowed_formats:
-        raise serializers.ValidationError("ID must be an image file (JPEG, PNG, or GIF)")
+        raise serializers.ValidationError("ID must be an image file (JPEG, PNG, GIF, or WebP)")
     
     return valid_id
 

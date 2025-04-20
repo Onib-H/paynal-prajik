@@ -343,7 +343,7 @@ const VenueDetails = () => {
                                 </div>
 
                                 {/* Reserve Now Button */}
-                                <Link to={`/venue-booking/${venueDetail.id}`} className="block">
+                                <Link to={`/area-booking/${venueDetail.id}`} className="block">
                                     <motion.button
                                         whileHover={{ scale: 1.03 }}
                                         whileTap={{ scale: 0.97 }}

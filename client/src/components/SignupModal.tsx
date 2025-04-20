@@ -1,12 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  faEye,
-  faEyeSlash,
-  faSpinner,
-} from "@fortawesome/free-solid-svg-icons";
+import { faEye, faEyeSlash, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useMutation } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { FC, useState } from "react";
+import { FC, FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendRegisterOtp } from "../services/Auth";
 import GoogleButton from "./GoogleButton";
@@ -18,18 +15,12 @@ interface SignupModalProps {
   onSuccessfulSignup?: () => void;
 }
 
-const SignupModal: FC<SignupModalProps> = ({
-  toggleRegisterModal,
-  openLoginModal,
-  onSuccessfulSignup,
-}) => {
+const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal, onSuccessfulSignup }) => {
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
-  const [confirmPasswordVisible, setConfirmPasswordVisible] =
-    useState<boolean>(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;
@@ -50,10 +41,7 @@ const SignupModal: FC<SignupModalProps> = ({
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value);
-
-  const handleConfirmPasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => setConfirmPassword(e.target.value);
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value);
 
   const overlayVariants = {
     hidden: { opacity: 0 },
@@ -106,28 +94,11 @@ const SignupModal: FC<SignupModalProps> = ({
     })
   };
 
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    setLoading(true);
-
-    if (!email || !password || !confirmPassword) {
-      setErrors({
-        email: !email ? "Email is required" : "",
-        password: !password ? "Password is required" : "",
-        confirmPassword: !confirmPassword ? "Confirm password is required" : "",
-      });
-      setLoading(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setErrors({ confirmPassword: "Passwords do not match" });
-      setLoading(false);
-      return;
-    }
-    try {
-      const response = await sendRegisterOtp(email, password, confirmPassword);
+  const { mutate: registerMutation, isPending: loading } = useMutation({
+    mutationFn: async () => {
+      return await sendRegisterOtp(email, password, confirmPassword)
+    },
+    onSuccess: (response) => {
       if (response.status === 200) {
         setNotification({
           message: "OTP sent successfully! Please check your email.",
@@ -142,16 +113,15 @@ const SignupModal: FC<SignupModalProps> = ({
 
         navigate("/registration", { state: { email, password } });
       }
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       console.error(`Failed to register: ${error}`);
       if (!error.response) {
         setErrors({ general: "Something went wrong. Please try again later." });
       } else {
         const { data, status } = error.response;
         if (status === 500) {
-          setErrors({
-            general: "Something went wrong. Please try again later.",
-          });
+          setErrors({ general: "Something went wrong. Please try again later." });
         } else {
           setErrors((prevErrors) => ({
             ...prevErrors,
@@ -161,9 +131,13 @@ const SignupModal: FC<SignupModalProps> = ({
           }));
         }
       }
-    } finally {
-      setLoading(false);
     }
+  });
+
+  const handleRegisterSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    registerMutation();
   };
 
   return (
@@ -211,10 +185,7 @@ const SignupModal: FC<SignupModalProps> = ({
                 custom={2}
               ></motion.div>
 
-              <form
-                onSubmit={handleRegisterSubmit}
-                className="space-y-4 md:space-y-6"
-              >
+              <form onSubmit={handleRegisterSubmit} className="space-y-4 md:space-y-6">
                 <motion.div
                   className="mb-3"
                   variants={formItemVariants}
@@ -231,7 +202,6 @@ const SignupModal: FC<SignupModalProps> = ({
                     <motion.input
                       type="email"
                       id="email"
-                      value={email}
                       placeholder="email@gmail.com"
                       onChange={handleEmailChange}
                       className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-sm mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
@@ -271,10 +241,9 @@ const SignupModal: FC<SignupModalProps> = ({
                       placeholder="Enter your password"
                       type={passwordVisible ? "text" : "password"}
                       id="password"
-                      value={password}
                       onChange={handlePasswordChange}
-                      className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-sm mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
                       required
+                      className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-sm mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
                       whileFocus={{
                         boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.3)",
                         borderColor: "#3b82f6"
@@ -318,12 +287,11 @@ const SignupModal: FC<SignupModalProps> = ({
                     <i className="fa-solid fa-lock absolute left-3 top-4 z-20 text-gray-600"></i>
                     <motion.input
                       placeholder="Confirm your password"
-                      type={confirmPasswordVisible ? "text" : "password"}
                       id="confirmPassword"
-                      value={confirmPassword}
                       onChange={handleConfirmPasswordChange}
-                      className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-md mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
                       required
+                      type={confirmPasswordVisible ? "text" : "password"}
+                      className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-md mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
                       whileFocus={{
                         boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.3)",
                         borderColor: "#3b82f6"
