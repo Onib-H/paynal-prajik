@@ -2,11 +2,11 @@ import { motion } from "framer-motion";
 
 const RoomAbout = () => {
   const handleViewRoomsClick = () => {
-    const roomListElement = document.getElementById('room-list');
+    const roomListElement = document.getElementById("room-list");
     if (roomListElement) {
       roomListElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
+        behavior: "smooth",
+        block: "start",
       });
     }
   };
@@ -164,11 +164,7 @@ const RoomAbout = () => {
 
       {/* Button */}
       <motion.button
-<<<<<<< HEAD
         className="relative inline-flex items-center text-purple-800 hover:text-purple-900 font-semibold text-lg tracking-wide group"
-=======
-        className="relative inline-flex uppercase cursor-pointer items-center text-blue-800 hover:text-blue-900 font-semibold text-lg tracking-wide group"
->>>>>>> 62d490912c96215e7a7ad41a9f069e3641b5cb10
         variants={buttonVariants}
         whileHover="hover"
         onClick={handleViewRoomsClick}

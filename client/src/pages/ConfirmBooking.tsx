@@ -11,7 +11,8 @@ import Modal from '../components/Modal';
 import SignupModal from '../components/SignupModal';
 import { useUserContext } from '../contexts/AuthContext';
 import EventLoader from '../motions/loaders/EventLoader';
-import { BookingFormData, checkCanBookToday, createBooking, fetchRoomById } from '../services/Booking';
+import { checkCanBookToday, createBooking, fetchRoomById } from '../services/Booking';
+import { BookingFormData } from '../types/BookingClient';
 import { RoomData } from '../types/BookingClient';
 
 const ConfirmBooking = () => {

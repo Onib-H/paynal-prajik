@@ -10,7 +10,7 @@ import CancellationModal from "../../components/bookings/CancellationModal";
 import GuestBookingComment from "../../components/guests/GuestBookingComment";
 import { useUserContext } from "../../contexts/AuthContext";
 import { BookingDetailsSkeleton, BookingsTableSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
-import { cancelBooking, fetchBookingDetail } from "../../services/Booking";
+import { cancelBooking, fetchBookingDetail, fetchUserReviews } from "../../services/Booking";
 import { BookingResponse } from "../../types/BookingClient";
 import { fetchGuestBookings } from "../../services/Guest";
 
@@ -35,7 +35,6 @@ const formatDate = (dateString: string): string => {
 
 const getStatusColor = (status: string): string => {
   const normalizedStatus = status.toLowerCase().replace(/_/g, ' ');
-
   switch (normalizedStatus) {
     case 'confirmed':
       return 'bg-green-100 text-green-800';
@@ -83,15 +82,13 @@ const GuestBookings: FC = () => {
     }
   }, Error>({
     queryKey: ["guest-bookings", userDetails?.id, currentPage, pageSize],
-    queryFn: async () => {
-      try {
-        const response = await fetchGuestBookings({ page: currentPage, pageSize });
-        return response;
-      } catch (err) {
-        console.error('Error fetching guest bookings:', err);
-        throw err;
-      }
-    },
+    queryFn: () => fetchGuestBookings({ page: currentPage, pageSize }),
+    enabled: !!userDetails?.id,
+  });
+
+  const userReviewsQuery = useQuery({
+    queryKey: ['userReviews', userDetails?.id],
+    queryFn: () => fetchUserReviews(),
     enabled: !!userDetails?.id,
   });
 
@@ -164,6 +161,11 @@ const GuestBookings: FC = () => {
     });
   }, [bookings, searchTerm, filterStatus]);
 
+  const reviewedBookingIds = useMemo(() => {
+    const ids: string[] = userReviewsQuery.data?.data?.map((review: any) => review.booking.toString()) || [];
+    return new Set(ids);
+  }, [userReviewsQuery.data]);
+
   const handleCancelBooking = useCallback((reason: string) => {
     if (!cancellationBookingId || !reason.trim()) return;
 
@@ -231,14 +233,6 @@ const GuestBookings: FC = () => {
     setShowReviewModal(false);
     setReviewBookingId(null);
     setReviewBookingDetails(null);
-  }, []);
-
-
-  const shouldShowReviewButton = useCallback((booking: any) => {
-    return (
-      booking.status.toLowerCase() === 'checked_out' &&
-      !(booking.has_user_review || booking.has_review)
-    );
   }, []);
 
   if (isLoading) {
@@ -326,6 +320,7 @@ const GuestBookings: FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredBookings.map((booking: any) => {
+                    const alreadyReviewed = reviewedBookingIds.has(booking.id.toString());
                     const isVenueBooking = booking.is_venue_booking;
                     let itemName, itemImage, totalAmount;
 
@@ -342,7 +337,7 @@ const GuestBookings: FC = () => {
                           const start = new Date(startTime);
                           const end = new Date(endTime);
                           const diffTime = Math.abs(end.getTime() - start.getTime());
-                          duration = Math.ceil(diffTime / (1000 * 60 * 60)) || 1; // Hours
+                          duration = Math.ceil(diffTime / (1000 * 60 * 60)) || 1;
                         } catch (e) {
                           console.error("Error calculating venue duration:", e);
                         }
@@ -442,12 +437,13 @@ const GuestBookings: FC = () => {
                                 <XCircle size={24} className="mr-1" /> Cancel
                               </button>
                             )}
-                            {shouldShowReviewButton(booking) && (
+                            {booking.status.toLowerCase() === 'checked_out' && (
                               <button
-                                className="bg-blue-600 hover:bg-blue-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
-                                onClick={() => openReviewModal(booking)}
-                              >
-                                <MessageSquare size={24} className="mr-1" /> Review
+                                disabled={alreadyReviewed}
+                                onClick={() => !alreadyReviewed && openReviewModal(booking)}
+                                className={`bg-blue-600 text-white p-2 rounded-full flex items-center transition-all duration-300 uppercase ${alreadyReviewed ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700 cursor-pointer'}`}>
+                                <MessageSquare size={24} className="mr-1" />
+                                {alreadyReviewed ? 'Reviewed' : 'Review'}
                               </button>
                             )}
                           </div>

@@ -41,12 +41,12 @@ const LoadingHydrate: FC = () => {
             transition={{ duration: 2, repeat: Infinity, repeatType: "mirror" }}
           >
             {/* Hotel tower icon */}
-            <motion.div
+                <motion.div
               className="relative"
               animate={{ y: [0, -5, 0] }}
               transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
-            >
-              <motion.div
+                >
+                  <motion.div
                 className="absolute top-2 left-1/2 w-1.5 h-1.5 rounded-full bg-indigo-600 -translate-x-1/2"
                 animate={{ opacity: [0, 1, 0] }}
                 transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse", delay: 0.5 }}
@@ -116,11 +116,11 @@ const LoadingHydrate: FC = () => {
             <motion.div
               className="absolute w-5 h-5 rounded-full bg-purple-600/10 flex items-center justify-center"
               style={{ bottom: "-5%", left: "50%" }}
-              animate={{
+                    animate={{
                 rotate: [360, 0],
                 scale: [1, 1.2, 1],
-              }}
-              transition={{
+                    }}
+                    transition={{
                 rotate: { duration: 10, repeat: Infinity, ease: "linear" },
                 scale: { duration: 3, repeat: Infinity, repeatType: "reverse" }
               }}
@@ -128,29 +128,29 @@ const LoadingHydrate: FC = () => {
               <div className="w-2 h-2 rounded-full bg-purple-600"></div>
             </motion.div>
 
-            <motion.div
+                  <motion.div
               className="absolute w-4 h-4 rounded-full bg-blue-600/10 flex items-center justify-center"
               style={{ left: "-5%", top: "50%" }}
-              animate={{
+                    animate={{
                 rotate: [0, 360],
                 scale: [1, 1.1, 1],
-              }}
-              transition={{
+                    }}
+                    transition={{
                 rotate: { duration: 9, repeat: Infinity, ease: "linear" },
                 scale: { duration: 2.5, repeat: Infinity, repeatType: "reverse" }
               }}
             >
               <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-            </motion.div>
+                </motion.div>
 
-            <motion.div
+              <motion.div
               className="absolute w-5 h-5 rounded-full bg-indigo-600/10 flex items-center justify-center"
               style={{ right: "-5%", top: "50%" }}
-              animate={{
+                animate={{
                 rotate: [360, 0],
                 scale: [1, 1.2, 1],
-              }}
-              transition={{
+                }}
+                transition={{
                 rotate: { duration: 11, repeat: Infinity, ease: "linear" },
                 scale: { duration: 3.5, repeat: Infinity, repeatType: "reverse" }
               }}
@@ -163,19 +163,19 @@ const LoadingHydrate: FC = () => {
         <div className="w-full mb-8">
           <div className="flex justify-center text-lg text-gray-500 mb-1.5">
             <span>Loading system resources...</span>
-          </div>
+            </div>
         </div>
 
         {/* Hotel Services icons */}
         <motion.div
           className="flex justify-center space-x-10"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
           {/* Rooms */}
-          <motion.div
-            className="flex flex-col items-center"
+        <motion.div
+          className="flex flex-col items-center"
             animate={{ y: [0, -12, 0] }}
             transition={{
               duration: 2,
@@ -190,14 +190,14 @@ const LoadingHydrate: FC = () => {
                 <path d="M5 12H3V18H21V12H19M7 12V2H17V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M5 18V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 <path d="M19 18V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </div>
+            </svg>
+          </div>
             <span className="text-sm text-gray-600 font-medium">Rooms</span>
-          </motion.div>
+        </motion.div>
 
           {/* Reservations */}
-          <motion.div
-            className="flex flex-col items-center"
+        <motion.div
+          className="flex flex-col items-center"
             animate={{ y: [0, -12, 0] }}
             transition={{
               duration: 2,
@@ -215,10 +215,10 @@ const LoadingHydrate: FC = () => {
                 <path d="M3 10H21" stroke="currentColor" strokeWidth="2" />
                 <path d="M9 14H7V16H9V14Z" fill="currentColor" />
                 <path d="M9 14V16H7V14H9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
+            </svg>
+          </div>
             <span className="text-sm text-gray-600 font-medium">Bookings</span>
-          </motion.div>
+        </motion.div>
 
           {/* Services */}
           <motion.div
@@ -239,7 +239,7 @@ const LoadingHydrate: FC = () => {
                 <path d="M20 5C20 6.10457 18 8.10457 18 8.10457C18 8.10457 16 6.10457 16 5C16 3.89543 16.8954 3 18 3C19.1046 3 20 3.89543 20 5Z" stroke="currentColor" strokeWidth="2" />
                 <path d="M4 15C4 13.8954 4.89543 13 6 13C7.10457 13 8 13.8954 8 15C8 16.1046 6 18.1046 6 18.1046C6 18.1046 4 16.1046 4 15Z" stroke="currentColor" strokeWidth="2" />
                 <path d="M15 19L9 19C7.89543 19 7 19.8954 7 21L17 21C17 19.8954 16.1046 19 15 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+            </svg>
             </div>
             <span className="text-sm text-gray-600 font-medium">Services</span>
           </motion.div>
@@ -268,7 +268,7 @@ const LoadingHydrate: FC = () => {
             />
           ))}
         </div>
-      </motion.div>
+            </motion.div>
     </motion.div>
   );
 };

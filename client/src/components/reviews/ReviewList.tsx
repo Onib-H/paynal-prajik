@@ -75,9 +75,10 @@ const ReviewList = ({ reviews, isLoading, error }: ReviewListProps) => {
                             <div className="flex items-center space-x-3">
                                 {review.user_profile_image ? (
                                     <img
+                                        loading="lazy"
                                         src={review.user_profile_image}
                                         alt={review.user_name || "Guest"}
-                                        className="w-10 h-10 rounded-full object-cover"
+                                        className="w-14 h-14 rounded-full object-cover"
                                     />
                                 ) : (
                                     <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
@@ -85,8 +86,8 @@ const ReviewList = ({ reviews, isLoading, error }: ReviewListProps) => {
                                     </div>
                                 )}
                                 <div>
-                                    <p className="font-medium text-gray-900">{review.user_name || "Anonymous"}</p>
-                                    <p className="text-sm text-gray-500">{review.formatted_date || "Unknown date"}</p>
+                                    <p className="font-semibold text-lg text-gray-900">{review.user_name || "Anonymous"}</p>
+                                    <p className="text-md text-gray-500">{review.formatted_date}</p>
                                 </div>
                             </div>
                             <div className="flex items-center">
@@ -102,18 +103,18 @@ const ReviewList = ({ reviews, isLoading, error }: ReviewListProps) => {
                                 ))}
                             </div>
                         </div>
-                        <div className="mt-4">
-                            <p className="text-gray-700">{review.review_text}</p>
+                        <div className="mt-4 border-t border-gray-200 pt-4">
+                            <p className="text-gray-700 text-lg">{review.review_text}</p>
                         </div>
                         {review.booking_details && (
-                            <div className="mt-3 pt-3 border-t border-gray-100">
-                                <p className="text-sm text-gray-500">
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                                <p className="text-md text-gray-700">
                                     <span className="font-medium">
                                         {review.booking_details.type === "room" ? "Room" : "Venue"}:
                                     </span>{" "}
                                     {review.booking_details.name}
                                 </p>
-                                <p className="text-sm text-gray-500">
+                                <p className="text-md text-gray-500">
                                     <span className="font-medium">Stay:</span>{" "}
                                     {new Date(review.booking_details.check_in_date).toLocaleDateString()} -{" "}
                                     {new Date(review.booking_details.check_out_date).toLocaleDateString()}

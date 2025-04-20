@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Edit, Eye, Trash2 } from "lucide-react";
@@ -190,20 +191,17 @@ const RoomDetailsModal: FC<{
   roomData: Room | null;
   allAmenities: Amenity[];
 }> = ({ isOpen, onClose, roomData, allAmenities }) => {
-  if (!roomData) return null;
-
   const getAmenityDescription = (id: number) => {
     const found = allAmenities.find((a) => a.id === id);
     return found ? found.description : `ID: ${id}`;
   };
 
-  const roomImage = useMemo(
-    () => ({
-      src: roomData.room_image,
-      alt: roomData.room_name,
-    }),
-    [roomData.room_image, roomData.room_name]
-  );
+  const roomImage = useMemo(() => ({
+    src: roomData.room_image,
+    alt: roomData.room_name || roomData.room_image
+  }), [roomData.room_image, roomData.room_name]);
+  
+  if (!roomData) return null;
 
   return (
     <AnimatePresence>
@@ -366,9 +364,7 @@ const RoomDetailsModal: FC<{
                     transition={{ delay: 0.4 }}
                   >
                     <div className="bg-blue-50 p-3 rounded-lg">
-                      <span className="block text-gray-500 text-sm">
-                        Room Type
-                      </span>
+                      <span className="block text-amber-600 text-sm uppercase">Room Type</span>
                       <div className="flex items-center mt-1">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -393,9 +389,7 @@ const RoomDetailsModal: FC<{
                     </div>
 
                     <div className="bg-green-50 p-3 rounded-lg">
-                      <span className="block text-gray-500 text-sm">
-                        Capacity
-                      </span>
+                      <span className="block text-amber-600 text-sm uppercase">Max Guests</span>
                       <div className="flex items-center mt-1">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -411,41 +405,8 @@ const RoomDetailsModal: FC<{
                             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                           />
                         </svg>
-                        <span className="text-lg font-bold text-gray-800">
-                          {roomData.capacity}
-                        </span>
+                        <span className="text-lg font-bold text-gray-800">{roomData.max_guests} guests</span>
                       </div>
-                    </div>
-                  </motion.div>
-
-                  {/* Max Guests */}
-                  <motion.div
-                    className="bg-green-50 p-4 rounded-lg mb-5"
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: 0.42 }}
-                  >
-                    <h3 className="text-sm uppercase tracking-wider text-green-600 font-medium mb-2">
-                      Maximum Guests
-                    </h3>
-                    <div className="flex items-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-green-600 mr-2"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                        />
-                      </svg>
-                      <span className="text-lg font-bold text-gray-800">
-                        {roomData.max_guests || 1} Guests
-                      </span>
                     </div>
                   </motion.div>
 
@@ -763,12 +724,18 @@ const ManageRooms: FC = () => {
       setCurrentPage((prev) => prev + 1);
   }, [currentPage, roomsResponse]);
 
+<<<<<<< HEAD
   const goToPage = useCallback(
     (page: number) => {
       setCurrentPage(page);
     },
     [currentPage]
   );
+=======
+  const goToPage = useCallback((page: number) => {
+    setCurrentPage(page);
+  }, []);
+>>>>>>> 2c6a5ec6a905998263d3a990cda5405adccdfda5
 
   if (isLoading) return <ManageSkeleton type="room" />;
   if (isError) return <Error />;

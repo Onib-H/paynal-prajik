@@ -9,8 +9,8 @@ import Modal from '../components/Modal';
 import SignupModal from '../components/SignupModal';
 import { useUserContext } from '../contexts/AuthContext';
 import EventLoader from '../motions/loaders/EventLoader';
-import { ReservationFormData, checkCanBookToday, createReservation, fetchAreaById } from '../services/Booking';
-import { AreaData, FormData } from '../types/BookingClient';
+import { checkCanBookToday, createReservation, fetchAreaById } from '../services/Booking';
+import { AreaData, FormData, ReservationFormData } from '../types/BookingClient';
 
 const ConfirmVenueBooking = () => {
   const navigate = useNavigate();
@@ -933,7 +933,7 @@ const ConfirmVenueBooking = () => {
                 disabled={isSubmitting}
                 className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex items-center justify-center ${isSubmitting
                   ? 'bg-blue-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg'
                   }`}
                 variants={itemVariants}
                 whileTap={{ scale: 0.98 }}
