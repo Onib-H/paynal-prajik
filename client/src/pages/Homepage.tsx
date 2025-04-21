@@ -1,15 +1,15 @@
 import Hero from "../layout/Hero";
 import AboutUs from "./visitors/home/AboutUs";
+import ImageSlider from "./visitors/home/ImageSlider";
 import Promotion from "./visitors/home/Promotion";
-import Values from "./visitors/home/Values";
+import Services from "./visitors/home/Services";
 
 const Homepage = () => {
   return (
     <>
       <Hero />
-      <Promotion />
-      <AboutUs />
-      <Values />
+      <Services />
+      <ImageSlider />
     </>
   );
 };
