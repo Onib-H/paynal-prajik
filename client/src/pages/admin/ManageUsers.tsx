@@ -10,6 +10,7 @@ import EventLoader from "../../motions/loaders/EventLoader";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
 import { archiveUser, fetchAllUsers, manageUser } from "../../services/Admin";
 import { CreateUserFormData } from "../../types/UsersAdmin";
+import Error from "../_ErrorBoundary";
 
 const VALID_EMAIL_PROVIDERS = [
   "gmail.com", "yahoo.com", "yahoo.com.ph", "outlook.com", "hotmail.com",
@@ -35,7 +36,7 @@ const ManageUsers: FC = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: users, isLoading } = useQuery<IUser[]>({
+  const { data: users, isLoading, isError } = useQuery<IUser[]>({
     queryKey: ["users"],
     queryFn: fetchAllUsers,
   });
@@ -227,11 +228,12 @@ const ManageUsers: FC = () => {
   }, [formErrors]);
 
   if (isLoading) return <DashboardSkeleton />;
+  if (isError) return <Error />;
 
   return (
     <div className="min-h-[calc(100vh-25px)] p-3 md:p-3 overflow-y-auto container mx-auto">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl md:text-3xl font-semibold">Manage Users</h1>
+        <h1 className="text-2xl md:text-3xl font-semibold">Manage Admin</h1>
       </div>
 
       {users && users.length === 0 ? (

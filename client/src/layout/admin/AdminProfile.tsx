@@ -17,13 +17,16 @@ const AdminProfile: FC<AdminProfileProps> = ({ admin }) => {
         loading="lazy"
         src={admin.profile_pic}
         alt={admin.profile_pic}
-        className="w-15 h-15 rounded-full object-cover"
+        className="w-20 h-20 rounded-full object-cover"
       />
-      <ul className="flex flex-col justify-center">
-        <li className="text-gray-700 font-black tracking-wide text-xl">
+      <div className="flex flex-col justify-center">
+        <h1 className="text-gray-700 font-black tracking-wide text-2xl">
           {admin.name}
-        </li>
-      </ul>
+        </h1>
+        <h2 className="text-gray-500 font-semibold tracking-wide text-md uppercase">
+          Role: {admin.role}
+        </h2>
+      </div>
     </div>
   );
 };

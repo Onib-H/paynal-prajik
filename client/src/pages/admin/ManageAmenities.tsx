@@ -163,18 +163,14 @@ const ManageAmenities = () => {
   const handlePrevPage = () => {
     if (page > 1) {
       setPageTransition("prev");
-      setTimeout(() => {
-        setPage((prev) => Math.max(prev - 1, 1));
-      }, 200);
+      setPage((prev) => Math.max(prev - 1, 1));
     }
   };
 
   const handleNextPage = () => {
     if (amenitiesResponse && page < amenitiesResponse.pages) {
       setPageTransition("next");
-      setTimeout(() => {
-        setPage((prev) => (prev < amenitiesResponse.pages ? prev + 1 : prev));
-      }, 200);
+      setPage((prev) => (prev < amenitiesResponse.pages ? prev + 1 : prev));
     }
   };
 
@@ -287,7 +283,7 @@ const ManageAmenities = () => {
             className="bg-purple-600 hover:bg-purple-700 text-white cursor-pointer font-semibold py-2.5 px-5 rounded-lg shadow-md transition-colors duration-300 flex items-center gap-2"
           >
             <Plus size={18} />
-            <span>Add New Amenity</span>
+            <span>Add Amenity</span>
           </motion.button>
         </motion.div>
 
@@ -316,7 +312,6 @@ const ManageAmenities = () => {
             animate="center"
             exit="exit"
             variants={pageVariants}
-            className="min-h-[500px]"
           >
             <motion.div
               variants={containerVariants}
@@ -330,12 +325,12 @@ const ManageAmenities = () => {
                   key={amenity.id}
                   variants={itemVariants}
                   layout
-                  className="bg-white shadow-md hover:shadow-lg rounded-xl overflow-hidden border border-gray-100 transition-all duration-300"
+                  className="bg-white shadow-md hover:shadow-lg rounded-xl border border-gray-100 transition-all duration-300"
                 >
                   <div className="p-5 flex flex-col space-y-3">
                     {/* Display description as main text */}
-                    <p className="text-gray-700 text-lg mb-2 line-clamp-4 min-h-[5rem]">
-                      {amenity.description || "No description provided."}
+                    <p className="text-gray-700 text-lg font-semibold">
+                      {amenity.description}
                     </p>
                     {/* Action Buttons */}
                     <div className="flex items-center justify-end mt-3 gap-3">

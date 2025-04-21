@@ -33,22 +33,20 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
         const currentDate = new Date();
         const checkInDate = new Date(booking.check_in_date);
 
-        if (isVenueBooking) {
-            const venueCheckInTime = new Date(checkInDate);
-            venueCheckInTime.setHours(8, 0, 0, 0);
-            return currentDate > venueCheckInTime;
+        const todayOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+        const checkInOnly = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate());
+
+        const cutOff = new Date(checkInDate);
+        if (booking.is_venue_booking) {
+            cutOff.setHours(8, 0, 0, 0);
         } else {
             if (!booking.time_of_arrival) return false;
-
-            const arrivalTimeParts = booking.time_of_arrival.split(':');
-            const arrivalHour = parseInt(arrivalTimeParts[0]);
-            const arrivalMinute = parseInt(arrivalTimeParts[1] || '0');
-
-            const expectedCheckInTime = new Date(checkInDate);
-            expectedCheckInTime.setHours(arrivalHour, arrivalMinute, 0, 0);
-
-            return currentDate > expectedCheckInTime;
+            const [h, m] = booking.time_of_arrival.split(':').map(Number);
+            cutOff.setHours(h, m, 0, 0);
         }
+        const eligible = todayOnly.getTime() === checkInOnly.getTime() && currentDate.getTime() < cutOff.getTime();
+
+        return eligible;
     };
 
     const isCheckInDateValid = (): { isValid: boolean; message: string } => {

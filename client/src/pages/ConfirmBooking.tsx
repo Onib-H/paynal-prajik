@@ -104,7 +104,7 @@ const ConfirmBooking = () => {
     defaultValues: {
       firstName: "",
       lastName: "",
-      phoneNumber: "+63 ",
+      phoneNumber: "",
       numberOfGuests: 1,
       arrivalTime: "",
       specialRequests: "",
@@ -582,12 +582,13 @@ const ConfirmBooking = () => {
                     id="phoneNumber"
                     {...register("phoneNumber", {
                       required: "Phone number is required",
-                      pattern: {
-                        value: /^\+63 9\d{2} \d{3} \d{4}$/,
-                        message: "Invalid Philippine format",
-                      },
+                      validate: (value) => {
+                        const cleanedValue = value.replace(/[^\d+]/g, "");
+                        const phPattern = /^(\+639\d{9}|09\d{9})$/;
+                        if (!phPattern.test(cleanedValue)) return "Phone number must be a Philippine number.";
+                        return true;
+                      }
                     })}
-                    placeholder="+63 9XX XXX XXXX"
                     className={`w-full px-3 py-2 border ${
                       errors.phoneNumber ? "border-red-500" : "border-gray-300"
                     } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
@@ -603,7 +604,7 @@ const ConfirmBooking = () => {
                     </motion.p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
-                    Format: +63 9XX XXX XXXX (Philippine number)
+                    Must be a PH phone number (e.g., +639XXXXXXXXX or 09XXXXXXXXX)
                   </p>
                 </motion.div>
                 {/* Number of Guests */}
@@ -619,12 +620,11 @@ const ConfirmBooking = () => {
                       type="number"
                       id="numberOfGuests"
                       min={1}
-                      max={roomData?.max_guests || 1}
                       {...register("numberOfGuests", {
                         required: "Please specify number of guests",
                         min: { value: 1, message: "At least 1 guest" },
                         max: {
-                          value: roomData?.max_guests || 1,
+                          value: roomData?.max_guests,
                           message: `Max ${roomData?.max_guests} guests only.`,
                         },
                       })}
@@ -785,8 +785,8 @@ const ConfirmBooking = () => {
                       const minute = parseInt(minuteStr, 10);
 
                       const totalMinutes = hour * 60 + minute;
-                      const minAllowed = 7 * 60; // 7:00 AM
-                      const maxAllowed = 23 * 60; // 11:00 PM (exact)
+                      const minAllowed = 7 * 60;
+                      const maxAllowed = 23 * 60;
 
                       if (totalMinutes < minAllowed)
                         return "Arrival cannot be before 7:00 AM";

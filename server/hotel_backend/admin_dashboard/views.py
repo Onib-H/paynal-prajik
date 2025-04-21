@@ -803,7 +803,7 @@ def booking_status_counts(request):
 @permission_classes([IsAuthenticated])
 def fetch_all_users(request):
     try:
-        users = CustomUsers.objects.filter(role="guest")
+        users = CustomUsers.objects.filter(role="admin")
         serializer = CustomUserSerializer(users, many=True)
         return Response({
             "data": serializer.data
