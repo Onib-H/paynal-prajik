@@ -34,16 +34,12 @@ const ConfirmVenueBooking = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingFormData, setPendingFormData] =
-    useState<ReservationFormData | null>(null);
+  const [pendingFormData, setPendingFormData] = useState<ReservationFormData | null>(null);
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | any>(null);
-  const [success, setSuccess] = useState(false);
   const [canBookToday, setCanBookToday] = useState<boolean>(true);
-  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(
-    null
-  );
+  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(null);
 
   const {
     register,
@@ -54,7 +50,7 @@ const ConfirmVenueBooking = () => {
     defaultValues: {
       firstName: "",
       lastName: "",
-      phoneNumber: "+63 ",
+      phoneNumber: "",
       emailAddress: "",
       specialRequests: "",
       numberOfGuests: "1",
@@ -122,12 +118,11 @@ const ConfirmVenueBooking = () => {
       "November",
       "December",
     ];
-    const formatted = `${day}, ${date.getDate()} ${
-      monthNames[date.getMonth()]
-    }, ${date.getFullYear()} at ${date.getHours() % 12 || 12}:${date
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")} ${date.getHours() >= 12 ? "PM" : "AM"}`;
+    const formatted = `${day}, ${date.getDate()} ${monthNames[date.getMonth()]
+      }, ${date.getFullYear()} at ${date.getHours() % 12 || 12}:${date
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")} ${date.getHours() >= 12 ? "PM" : "AM"}`;
     return formatted;
   };
 
@@ -197,13 +192,12 @@ const ConfirmVenueBooking = () => {
         return;
       }
       const response = await createReservation(pendingFormData);
-      setSuccess(true);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=true`);
     } catch (error: any) {
       console.error(`Error creating reservation: ${error}`);
       setError(
         error.response?.data?.message ||
-          "An error occurred while creating the reservation."
+        "An error occurred while creating the reservation."
       );
     } finally {
       setIsSubmitting(false);
@@ -278,11 +272,10 @@ const ConfirmVenueBooking = () => {
       <Modal
         icon="fa-solid fa-book"
         title="Confirm Your Area Booking"
-        description={`You're about to book ${
-          areaData?.area_name
-        } for ${formattedStartTime} to ${formattedEndTime}. The total price is ₱${parseFloat(
-          totalPrice || "0"
-        ).toLocaleString()}. Would you like to proceed?`}
+        description={`You're about to book ${areaData?.area_name
+          } for ${formattedStartTime} to ${formattedEndTime}. The total price is ₱${parseFloat(
+            totalPrice || "0"
+          ).toLocaleString()}. Would you like to proceed?`}
         cancel={() => setShowConfirmModal(false)}
         onConfirm={handleConfirmBooking}
         confirmText={
@@ -388,23 +381,6 @@ const ConfirmVenueBooking = () => {
         </AnimatePresence>
 
         <AnimatePresence>
-          {success && (
-            <motion.div
-              className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg shadow-md"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              <p>
-                Booking successfully created! You will be redirected to your
-                booking details.
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
           {error && (
             <motion.div
               className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg shadow-md"
@@ -464,9 +440,8 @@ const ConfirmVenueBooking = () => {
                         message: "Name must be at least 2 characters long",
                       },
                     })}
-                    className={`w-full px-3 py-2 border ${
-                      errors.firstName ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.firstName ? "border-red-500" : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.firstName && (
                     <motion.p
@@ -500,9 +475,8 @@ const ConfirmVenueBooking = () => {
                         message: "Name must be at least 2 characters long",
                       },
                     })}
-                    className={`w-full px-3 py-2 border ${
-                      errors.lastName ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.lastName ? "border-red-500" : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.lastName && (
                     <motion.p
@@ -532,22 +506,14 @@ const ConfirmVenueBooking = () => {
                     {...register("phoneNumber", {
                       required: "Phone number is required",
                       validate: (value) => {
-                        const cleaned = value.replace(/[^\d+]/g, "");
-                        const localNumber = cleaned.substring(3);
-                        if (
-                          !cleaned.startsWith("+63") ||
-                          localNumber.length !== 10 ||
-                          !localNumber.startsWith("9")
-                        ) {
-                          return "Phone number must be in Philippine format: (+63) 9XX XXX XXXX";
-                        }
+                        const cleanedValue = value.replace(/[^\d+]/g, "");
+                        const phPattern = /^(\+639\d{9}|09\d{9})$/;
+                        if (!phPattern.test(cleanedValue)) return "Phone number must be a Philippine number.";
                         return true;
                       },
                     })}
-                    placeholder="+63 9XX XXX XXXX"
-                    className={`w-full px-3 py-2 border ${
-                      errors.phoneNumber ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.phoneNumber ? "border-red-500" : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.phoneNumber && (
                     <p className="text-red-500 text-sm mt-1">
@@ -555,7 +521,7 @@ const ConfirmVenueBooking = () => {
                     </p>
                   )}
                   <p className="mt-1 text-xs text-gray-500">
-                    Format: +63 9XXX XXX XXX
+                    Must be a PH phone number (e.g., +639XXXXXXXXX or 09XXXXXXXXX)
                   </p>
                 </div>
 
@@ -577,17 +543,15 @@ const ConfirmVenueBooking = () => {
                         message: "At least 1 guest is required",
                       },
                       max: {
-                        value: areaData?.capacity || 100,
+                        value: areaData?.capacity,
                         message: `Maximum capacity is ${areaData?.capacity} guests`,
                       },
                     })}
                     min="1"
-                    max={areaData?.capacity}
-                    className={`w-full px-3 py-2 border ${
-                      errors.numberOfGuests
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.numberOfGuests
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.numberOfGuests && (
                     <p className="text-red-500 text-sm mt-1">
@@ -616,13 +580,10 @@ const ConfirmVenueBooking = () => {
                     id="validId"
                     {...register("validId", {
                       required: "Valid ID is required",
+                      onChange: onFileChange
                     })}
-                    onChange={onFileChange}
-                    name="validId"
                     accept="image/*"
-                    className={`w-full py-2 ${
-                      errors.validId ? "border-red-500" : ""
-                    }`}
+                    className={`w-full py-2 ${errors.validId ? "border-red-500" : ""}`}
                   />
                   {errors.validId && (
                     <p className="text-red-500 text-sm mt-1">
@@ -726,11 +687,10 @@ const ConfirmVenueBooking = () => {
                   type="button"
                   onClick={() => handleSubmit(onSubmit)()}
                   disabled={isSubmitting}
-                  className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${
-                    isSubmitting
-                      ? "bg-blue-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
-                  }`}
+                  className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${isSubmitting
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
+                    }`}
                   whileTap={{ scale: 0.98 }}
                   whileHover={{
                     boxShadow:
@@ -884,11 +844,10 @@ const ConfirmVenueBooking = () => {
                 type="button"
                 onClick={() => handleSubmit(onSubmit)()}
                 disabled={isSubmitting}
-                className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex items-center justify-center ${
-                  isSubmitting
-                    ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
-                }`}
+                className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex items-center justify-center ${isSubmitting
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
+                  }`}
                 variants={itemVariants}
                 whileTap={{ scale: 0.98 }}
                 whileHover={{

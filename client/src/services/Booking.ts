@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { booking } from "./_axios";
 import { BookingResponse, BookingFormData, ReservationFormData } from "../types/BookingClient";
 

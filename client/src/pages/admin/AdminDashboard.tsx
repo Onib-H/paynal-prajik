@@ -1,65 +1,27 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
-import {
-  ArcElement,
-  BarElement,
-  CategoryScale,
-  Chart as ChartJS,
-  Filler,
-  Legend,
-  LineElement,
-  LinearScale,
-  PointElement,
-  Title,
-  Tooltip,
-} from "chart.js";
+import { ArcElement, BarElement, CategoryScale, Chart as ChartJS, Filler, Legend, LineElement, LinearScale, PointElement, Title, Tooltip } from "chart.js";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Bar, Doughnut, Line } from "react-chartjs-2";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
 import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
-import {
-  fetchBookingStatusCounts,
-  fetchDailyBookings,
-  fetchDailyCancellations,
-  fetchDailyCheckInsCheckOuts,
-  fetchDailyNoShowsRejected,
-  fetchDailyOccupancy,
-  fetchMonthlyRevenue,
-  fetchRoomBookings,
-  fetchRoomRevenue,
-  fetchStats,
-} from "../../services/Admin";
+import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyCheckInsCheckOuts, fetchDailyNoShowsRejected, fetchDailyOccupancy, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import "../../styles/print.css";
 import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  LineElement,
-  ArcElement,
-  PointElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
+ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, ArcElement, PointElement, Title, Tooltip, Legend, Filler);
 
-const getDaysInMonth = (
-  month: number,
-  year: number,
-  limitToCurrentDay = false
-) => {
+const getDaysInMonth = (month: number, year: number, limitToCurrentDay = false) => {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const currentDate = new Date();
 
   const maxDay =
     limitToCurrentDay &&
-    month === currentDate.getMonth() &&
-    year === currentDate.getFullYear()
+      month === currentDate.getMonth() &&
+      year === currentDate.getFullYear()
       ? currentDate.getDate()
       : daysInMonth;
 
@@ -77,13 +39,10 @@ const formatMonthYear = (month: number, year: number) => {
 };
 
 const AdminDashboard = () => {
-  const [selectedMonth, setSelectedMonth] = useState<number>(
-    new Date().getMonth()
-  );
-  const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear()
-  );
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [showReportView, setShowReportView] = useState(false);
+  const [reportData, setReportData] = useState<any>(null);
 
   const isCurrentMonth =
     selectedMonth === new Date().getMonth() &&
@@ -139,40 +98,34 @@ const AdminDashboard = () => {
     }
   );
 
-  const { data: dailyBookingsResponse, isLoading: bookingsDataLoading } =
-    useQuery({
-      queryKey: ["dailyBookings", selectedMonth, selectedYear],
-      queryFn: () =>
-        fetchDailyBookings({
-          month: selectedMonth + 1,
-          year: selectedYear,
-        }),
-    });
+  const { data: dailyBookingsResponse, isLoading: bookingsDataLoading } = useQuery({
+    queryKey: ["dailyBookings", selectedMonth, selectedYear],
+    queryFn: () =>
+      fetchDailyBookings({
+        month: selectedMonth + 1,
+        year: selectedYear,
+      }),
+  });
 
-  const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } =
-    useQuery({
-      queryKey: ["dailyOccupancy", selectedMonth, selectedYear],
-      queryFn: () =>
-        fetchDailyOccupancy({
-          month: selectedMonth + 1,
-          year: selectedYear,
-        }),
-    });
+  const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } = useQuery({
+    queryKey: ["dailyOccupancy", selectedMonth, selectedYear],
+    queryFn: () =>
+      fetchDailyOccupancy({
+        month: selectedMonth + 1,
+        year: selectedYear,
+      }),
+  });
 
-  const { data: checkinCheckoutData, isLoading: checkinsDataLoading } =
-    useQuery({
-      queryKey: ["dailyCheckInsCheckOuts", selectedMonth, selectedYear],
-      queryFn: () =>
-        fetchDailyCheckInsCheckOuts({
-          month: selectedMonth + 1,
-          year: selectedYear,
-        }),
-    });
+  const { data: checkinCheckoutData, isLoading: checkinsDataLoading } = useQuery({
+    queryKey: ["dailyCheckInsCheckOuts", selectedMonth, selectedYear],
+    queryFn: () =>
+      fetchDailyCheckInsCheckOuts({
+        month: selectedMonth + 1,
+        year: selectedYear,
+      }),
+  });
 
-  const {
-    data: dailyCancellationsResponse,
-    isLoading: cancellationsDataLoading,
-  } = useQuery({
+  const { data: dailyCancellationsResponse, isLoading: cancellationsDataLoading } = useQuery({
     queryKey: ["dailyCancellations", selectedMonth, selectedYear],
     queryFn: () =>
       fetchDailyCancellations({
@@ -181,10 +134,7 @@ const AdminDashboard = () => {
       }),
   });
 
-  const {
-    data: dailyNoShowsRejectedResponse,
-    isLoading: noShowsRejectedDataLoading,
-  } = useQuery({
+  const { data: dailyNoShowsRejectedResponse, isLoading: noShowsRejectedDataLoading } = useQuery({
     queryKey: ["dailyNoShowsRejected", selectedMonth, selectedYear],
     queryFn: () =>
       fetchDailyNoShowsRejected({
@@ -193,38 +143,32 @@ const AdminDashboard = () => {
       }),
   });
 
-  const { data: roomRevenueResponse, isLoading: roomRevenueLoading } = useQuery(
-    {
-      queryKey: ["roomRevenue", selectedMonth, selectedYear],
-      queryFn: () =>
-        fetchRoomRevenue({
-          month: selectedMonth + 1,
-          year: selectedYear,
-        }),
-    }
-  );
+  const { data: roomRevenueResponse, isLoading: roomRevenueLoading } = useQuery({
+    queryKey: ["roomRevenue", selectedMonth, selectedYear],
+    queryFn: () =>
+      fetchRoomRevenue({
+        month: selectedMonth + 1,
+        year: selectedYear,
+      }),
+  });
 
-  const { data: roomBookingsResponse, isLoading: roomBookingsLoading } =
-    useQuery({
-      queryKey: ["roomBookings", selectedMonth, selectedYear],
-      queryFn: () =>
-        fetchRoomBookings({
-          month: selectedMonth + 1,
-          year: selectedYear,
-        }),
-    });
+  const { data: roomBookingsResponse, isLoading: roomBookingsLoading } = useQuery({
+    queryKey: ["roomBookings", selectedMonth, selectedYear],
+    queryFn: () =>
+      fetchRoomBookings({
+        month: selectedMonth + 1,
+        year: selectedYear,
+      }),
+  });
 
-  const { data: monthlyRevenueData, isLoading: monthlyRevenueLoading } =
-    useQuery({
-      queryKey: ["monthlyRevenue", selectedMonth, selectedYear],
-      queryFn: () =>
-        fetchMonthlyRevenue({
-          month: selectedMonth + 1,
-          year: selectedYear,
-        }),
-    });
-
-  const [reportData, setReportData] = useState<any>(null);
+  const { data: monthlyRevenueData, isLoading: monthlyRevenueLoading } = useQuery({
+    queryKey: ["monthlyRevenue", selectedMonth, selectedYear],
+    queryFn: () =>
+      fetchMonthlyRevenue({
+        month: selectedMonth + 1,
+        year: selectedYear,
+      }),
+  });
 
   useEffect(() => {
     if (
@@ -234,7 +178,6 @@ const AdminDashboard = () => {
       bookingStatusData &&
       monthlyRevenueData
     ) {
-      // Create a modified data object with the correct revenue for the selected month
       const modifiedData = {
         ...data,
         revenue: monthlyRevenueData.revenue,
@@ -309,10 +252,8 @@ const AdminDashboard = () => {
     rejected: bookingStatusData?.rejected || 0,
   };
 
-  // Limit charts to current day for current month
   const daysInMonth = getDaysInMonth(selectedMonth, selectedYear, true);
 
-  // Limit daily data arrays to match the days we're showing
   const limitArrayToCurrentDay = (dataArray: any[] | undefined) => {
     if (!dataArray) return daysInMonth.map(() => 0);
     return dataArray.slice(0, daysInMonth.length);
@@ -320,20 +261,12 @@ const AdminDashboard = () => {
 
   const dailyRevenueData = limitArrayToCurrentDay(data?.daily_revenue);
   const dailyBookingsData = limitArrayToCurrentDay(dailyBookingsResponse?.data);
-  const dailyOccupancyRates = limitArrayToCurrentDay(
-    dailyOccupancyResponse?.data
-  );
+  const dailyOccupancyRates = limitArrayToCurrentDay(dailyOccupancyResponse?.data);
   const dailyCheckIns = limitArrayToCurrentDay(checkinCheckoutData?.checkins);
   const dailyCheckOuts = limitArrayToCurrentDay(checkinCheckoutData?.checkouts);
-  const dailyCancellations = limitArrayToCurrentDay(
-    dailyCancellationsResponse?.data
-  );
-  const dailyNoShows = limitArrayToCurrentDay(
-    dailyNoShowsRejectedResponse?.no_shows
-  );
-  const dailyRejected = limitArrayToCurrentDay(
-    dailyNoShowsRejectedResponse?.rejected
-  );
+  const dailyCancellations = limitArrayToCurrentDay(dailyCancellationsResponse?.data);
+  const dailyNoShows = limitArrayToCurrentDay(dailyNoShowsRejectedResponse?.no_shows);
+  const dailyRejected = limitArrayToCurrentDay(dailyNoShowsRejectedResponse?.rejected);
 
   const roomNames = roomRevenueResponse?.room_names || [];
   const roomRevenueValues = roomRevenueResponse?.revenue_data || [];
@@ -434,19 +367,19 @@ const AdminDashboard = () => {
     ],
   };
 
-  // const occupancyRateData = {
-  //   labels: daysInMonth,
-  //   datasets: [
-  //     {
-  //       label: 'Occupancy Rate (%)',
-  //       data: dailyOccupancyRates,
-  //       borderColor: '#FFC107',
-  //       backgroundColor: 'rgba(255, 193, 7, 0.1)',
-  //       fill: true,
-  //       tension: 0.3
-  //     }
-  //   ]
-  // };
+  const occupancyRateData = {
+    labels: daysInMonth,
+    datasets: [
+      {
+        label: 'Occupancy Rate (%)',
+        data: dailyOccupancyRates,
+        borderColor: '#FFC107',
+        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+        fill: true,
+        tension: 0.3
+      }
+    ]
+  };
 
   const checkInOutData = {
     labels: daysInMonth,
@@ -476,27 +409,27 @@ const AdminDashboard = () => {
       {
         label: "Cancellations",
         data: dailyCancellations,
-        borderColor: "#FF9800", // Changed to more obvious orange
+        borderColor: "#FF9800",
         backgroundColor: "rgba(255, 152, 0, 0.2)",
-        fill: true, // Changed to true for better visibility
+        fill: true,
         tension: 0.3,
         borderWidth: 3,
       },
       {
         label: "No Show",
         data: dailyNoShows,
-        borderColor: "#673AB7", // Changed to deeper purple
+        borderColor: "#673AB7",
         backgroundColor: "rgba(103, 58, 183, 0.2)",
-        fill: true, // Changed to true for better visibility
+        fill: true,
         tension: 0.3,
         borderWidth: 3,
       },
       {
         label: "Rejected",
         data: dailyRejected,
-        borderColor: "#E91E63", // Changed to pink for better contrast
+        borderColor: "#E91E63",
         backgroundColor: "rgba(233, 30, 99, 0.2)",
-        fill: true, // Changed to true for better visibility
+        fill: true,
         tension: 0.3,
         borderWidth: 3,
       },
@@ -598,9 +531,7 @@ const AdminDashboard = () => {
   };
 
   const handleGenerateReport = () => {
-    if (reportData) {
-      setShowReportView(true);
-    }
+    if (reportData) setShowReportView(true);
   };
 
   const handleCloseReport = () => setShowReportView(false);
@@ -629,9 +560,8 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="py-2 px-4">
+    <>
       {renderReport()}
-
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-2">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
 
@@ -712,16 +642,6 @@ const AdminDashboard = () => {
           title="Total Bookings"
           value={stats.totalBookings}
           borderColor="border-blue-500"
-        />
-        <StatCard
-          title="Available Rooms"
-          value={stats.availableRooms}
-          borderColor="border-teal-500"
-        />
-        <StatCard
-          title="Total Rooms"
-          value={stats.totalRooms}
-          borderColor="border-gray-500"
         />
         <StatCard
           title="Occupancy Rate"
@@ -822,7 +742,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* <div className="bg-white shadow-lg rounded-lg p-4">
+          <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">Occupancy Rate</h3>
             <div className="h-64">
               <Line
@@ -857,7 +777,7 @@ const AdminDashboard = () => {
                 }}
               />
             </div>
-          </div> */}
+          </div>
 
           <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">
@@ -959,7 +879,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
