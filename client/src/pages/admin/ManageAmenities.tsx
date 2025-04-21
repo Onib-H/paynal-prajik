@@ -36,12 +36,10 @@ const ManageAmenities = () => {
   const [deleteAmenityId, setDeleteAmenityId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loaderText, setLoaderText] = useState("");
-  const [pageTransition, setPageTransition] = useState<"next" | "prev" | null>(
-    null
-  );
+  const [pageTransition, setPageTransition] = useState<"next" | "prev" | null>(null);
 
   const [page, setPage] = useState<number>(1);
-  const pageSize = 15;
+  const pageSize = 12;
 
   const queryClient = useQueryClient();
 

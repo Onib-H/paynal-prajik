@@ -481,7 +481,7 @@ def fetch_amenities(request):
     try:
         amenities = Amenities.objects.all().order_by('id')
         page = request.query_params.get('page', 1)
-        page_size = request.query_params.get('page_size', 15)
+        page_size = request.query_params.get('page_size', 12)
         
         paginator = Paginator(amenities, page_size)
         try:

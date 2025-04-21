@@ -560,7 +560,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <>
+    <div className="p-3 container mx-auto">
       {renderReport()}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-2">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -879,7 +879,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
