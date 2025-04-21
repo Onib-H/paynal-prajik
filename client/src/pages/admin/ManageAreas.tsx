@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Edit, Eye, MapPin, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Eye,
+  MapPin,
+  Trash2,
+} from "lucide-react";
 import { FC, memo, useCallback, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import EditAreaModal from "../../components/admin/EditAreaModal";
@@ -63,37 +70,63 @@ const AreaCard = memo(
       [area.id, onDelete]
     );
 
-  if (!area) return null;
+    if (!area) return null;
 
-  return (
-    <motion.div
-      className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        duration: 0.4,
-        delay: index * 0.05,
-        type: "spring",
-        damping: 12
-      }}
-      whileHover={{
-        y: -5,
-        boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
-      }}
-    >
-      <MemoizedImage
-        src={areaImageProps.src}
-        alt={areaImageProps.alt}
-        className="w-full h-48 object-cover"
-      />
-      <div className="p-4 flex flex-col h-full">
-        <div className="flex justify-between items-center mb-2">
-          <h2 className="text-xl font-bold text-gray-900">
-            {area.area_name}
-          </h2>
-          <span className={`text-sm font-semibold ${area.status === 'available' ? 'text-green-600' : 'text-amber-600'
-            } uppercase`}>
-            {area.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
+    return (
+      <motion.div
+        className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          duration: 0.4,
+          delay: index * 0.05,
+          type: "spring",
+          damping: 12,
+        }}
+        whileHover={{
+          y: -5,
+          boxShadow:
+            "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        }}
+      >
+        <MemoizedImage
+          src={areaImageProps.src}
+          alt={areaImageProps.alt}
+          className="w-full h-48 object-cover"
+        />
+        <div className="p-4 flex flex-col h-full">
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="text-xl font-bold text-gray-900">
+              {area.area_name}
+            </h2>
+            <span
+              className={`text-sm font-semibold ${
+                area.status === "available"
+                  ? "text-green-600"
+                  : "text-amber-600"
+              } uppercase`}
+            >
+              {area.status === "available" ? "AVAILABLE" : "MAINTENANCE"}
+            </span>
+          </div>
+          <span className="flex items-center mb-2">
+            <span className="inline-flex items-center rounded-md px-2 py-1 text-sm font-semibold mr-2 bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-3.5 w-3.5 mr-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              Max Guests: {area.capacity}
+            </span>
           </span>
           <p className="text-gray-700 text-sm mb-2 line-clamp-2">
             {area.description || "No description provided."}
@@ -147,7 +180,7 @@ const ViewAreaModal: FC<{
     if (!areaData) return { src: "", alt: "" };
     return {
       src: areaData.area_image,
-      alt: areaData.area_name
+      alt: areaData.area_name,
     };
   }, [areaData]);
 
@@ -229,9 +262,16 @@ const ViewAreaModal: FC<{
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ delay: 0.4 }}
                     >
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${areaData.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-                        }`}>
-                        {areaData.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${
+                          areaData.status === "available"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-amber-100 text-amber-800"
+                        }`}
+                      >
+                        {areaData.status === "available"
+                          ? "AVAILABLE"
+                          : "MAINTENANCE"}
                       </span>
                     </motion.div>
                   </div>
@@ -250,8 +290,16 @@ const ViewAreaModal: FC<{
                     {areaData.area_name}
                   </h1>
                   <div className="flex items-center mt-2">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${areaData.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
-                      {areaData.status === 'available' ? 'AVAILABLE' : 'MAINTENANCE'}
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        areaData.status === "available"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {areaData.status === "available"
+                        ? "AVAILABLE"
+                        : "MAINTENANCE"}
                     </span>
                   </div>
                 </motion.div>

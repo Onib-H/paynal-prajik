@@ -196,11 +196,14 @@ const RoomDetailsModal: FC<{
     return found ? found.description : `ID: ${id}`;
   };
 
-  const roomImage = useMemo(() => ({
-    src: roomData.room_image,
-    alt: roomData.room_name || roomData.room_image
-  }), [roomData.room_image, roomData.room_name]);
-  
+  const roomImage = useMemo(
+    () => ({
+      src: roomData.room_image,
+      alt: roomData.room_name || roomData.room_image,
+    }),
+    [roomData.room_image, roomData.room_name]
+  );
+
   if (!roomData) return null;
 
   return (
@@ -364,7 +367,9 @@ const RoomDetailsModal: FC<{
                     transition={{ delay: 0.4 }}
                   >
                     <div className="bg-blue-50 p-3 rounded-lg">
-                      <span className="block text-amber-600 text-sm uppercase">Room Type</span>
+                      <span className="block text-amber-600 text-sm uppercase">
+                        Room Type
+                      </span>
                       <div className="flex items-center mt-1">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -389,7 +394,9 @@ const RoomDetailsModal: FC<{
                     </div>
 
                     <div className="bg-green-50 p-3 rounded-lg">
-                      <span className="block text-amber-600 text-sm uppercase">Max Guests</span>
+                      <span className="block text-amber-600 text-sm uppercase">
+                        Max Guests
+                      </span>
                       <div className="flex items-center mt-1">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -405,7 +412,9 @@ const RoomDetailsModal: FC<{
                             d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                           />
                         </svg>
-                        <span className="text-lg font-bold text-gray-800">{roomData.max_guests} guests</span>
+                        <span className="text-lg font-bold text-gray-800">
+                          {roomData.max_guests} guests
+                        </span>
                       </div>
                     </div>
                   </motion.div>
@@ -724,18 +733,9 @@ const ManageRooms: FC = () => {
       setCurrentPage((prev) => prev + 1);
   }, [currentPage, roomsResponse]);
 
-<<<<<<< HEAD
-  const goToPage = useCallback(
-    (page: number) => {
-      setCurrentPage(page);
-    },
-    [currentPage]
-  );
-=======
   const goToPage = useCallback((page: number) => {
     setCurrentPage(page);
   }, []);
->>>>>>> 2c6a5ec6a905998263d3a990cda5405adccdfda5
 
   if (isLoading) return <ManageSkeleton type="room" />;
   if (isError) return <Error />;
@@ -756,7 +756,7 @@ const ManageRooms: FC = () => {
         {/* Header */}
         <div className="flex flex-row items-center mb-5 justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Manage Rooms</h1>
+            <h1 className="text-3xl font-semibold">Manage Rooms</h1>
             {pagination && (
               <p className="text-gray-500 mt-1">
                 Total: {pagination.total_items} room
