@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ADMIN } from "./_axios";
 
 export const fetchAdminProfile = async () => {

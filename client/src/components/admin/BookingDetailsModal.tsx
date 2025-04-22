@@ -21,9 +21,8 @@ interface BookingDetailProps {
 
 const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, onCancel, canManage, isUpdating }) => {
     const [paymentAmount, setPaymentAmount] = useState<string>("");
+    
     const isVenueBooking = booking?.is_venue_booking;
-    if (!booking) return null;
-
     const bookingPrice = getBookingPrice(booking);
     const currentPayment = parseFloat(paymentAmount) || 0;
     const isPaymentComplete = currentPayment === bookingPrice;
@@ -134,27 +133,20 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             const currentDate = new Date();
             const checkOutDate = new Date(booking.check_out_date);
 
-            if (isVenueBooking) {
-                const venueCheckOutTime = new Date(checkOutDate);
-                venueCheckOutTime.setHours(17, 0, 0, 0);
-
-                if (currentDate < venueCheckOutTime) {
-                    return {
-                        isValid: false,
-                        message: "Venue checkout is only available after 5:00 PM on the scheduled check-out date."
-                    };
-                } else {
-                    const roomCheckOutTime = new Date(checkOutDate);
-                    roomCheckOutTime.setHours(12, 0, 0, 0);
-
-                    if (currentDate < roomCheckOutTime) {
-                        return {
-                            isValid: false,
-                            message: `Room check-out is available after 12:00 PM on ${formatDate(booking.check_out_date)}`
-                        };
-                    }
-                }
+            if (currentDate >= checkOutDate) {
                 return { isValid: true, message: "" };
+            }
+
+            if (isVenueBooking) {
+                return {
+                    isValid: false,
+                    message: "Venue checkout is only allowed on or after the scheduled check-out date."
+                };
+            } else {
+                return {
+                    isValid: false,
+                    message: "Room checkout is only allowed on or after the scheduled check-out date."
+                }
             }
         } catch (error) {
             console.error(`Error validating check-out date: ${error}`);
@@ -166,7 +158,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     const canCheckIn = isPaymentComplete && checkInValidation.isValid;
 
     const checkOutValidation = isCheckOutDateValid();
-    const canCheckOut = isPaymentComplete && checkInValidation.isValid;
+    const canCheckOut = checkOutValidation.isValid;
 
     const canMarkNoShow = isNoShowEligible();
 
@@ -180,7 +172,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
         }
 
         return (
-            <div className="border rounded-md overflow-hidden">
+            <div className="overflow-hidden">
                 <img
                     src={booking.valid_id}
                     alt="Valid ID"
@@ -191,9 +183,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
         );
     };
 
-    const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setPaymentAmount(e.target.value);
-    };
+    const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => setPaymentAmount(e.target.value);
 
     const getLoadingText = () => {
         switch (booking.status) {
@@ -231,6 +221,8 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                 return "default";
         }
     };
+
+    if (!booking) return null;
 
     return (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -622,7 +614,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                     disabled={!canCheckOut}
                                 >
                                     <Check size={18} />
-                                    Check Out
+                                    Check Out Guest
                                 </motion.button>
                                 {!canCheckOut && (
                                     <div className="absolute bottom-full left-0 mb-2 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">

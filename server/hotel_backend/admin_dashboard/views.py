@@ -714,7 +714,7 @@ def update_booking_status(request, booking_id):
             user_email = booking.user.email
             send_booking_rejection_email(user_email, serializer.data)
         except Exception as e:
-           return Response({
+            return Response({
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -803,7 +803,7 @@ def booking_status_counts(request):
 @permission_classes([IsAuthenticated])
 def fetch_all_users(request):
     try:
-        users = CustomUsers.objects.filter(role="admin")
+        users = CustomUsers.objects.filter(role="guest")
         serializer = CustomUserSerializer(users, many=True)
         return Response({
             "data": serializer.data

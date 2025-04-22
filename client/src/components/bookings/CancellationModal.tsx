@@ -18,7 +18,6 @@ const CancellationModal = ({
     isOpen,
     onClose,
     onConfirm,
-    bookingId,
     title = "Cancel Reservation",
     description = "Are you sure you want to cancel your reservation? Please provide a reason for cancellation:",
     reasonLabel = "Reason for Cancellation",
@@ -60,12 +59,6 @@ const CancellationModal = ({
                         className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl"
                     >
                         <h2 className="text-xl font-bold mb-4">{title}</h2>
-
-                        {bookingId && (
-                            <p className="text-sm text-gray-500 mb-3">
-                                Booking ID: {bookingId}
-                            </p>
-                        )}
 
                         <p className="text-gray-600 mb-4">
                             {description}
