@@ -1,7 +1,5 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, FreeMode, Mousewheel } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/free-mode";
 
 // Import your images (adjust paths as needed)
 import deluxe_single from "../../../assets/deluxe_single.webp";

@@ -30,6 +30,7 @@ const Services = () => {
               </button>
             </Link>
           </div>
+
           {/* Venue Reservation */}
           <div className="flex flex-col items-center text-center p-9 hover:bg-white hover:shadow-lg rounded-xl transition-all duration-300 h-full">
             <div className="w-24 h-24 bg-purple-600 text-white flex justify-center items-center rounded-full mb-6">
@@ -48,20 +49,6 @@ const Services = () => {
                 View Areas
               </button>
             </Link>
-          </div>
-          Concierge Service
-          <div className="flex flex-col items-center text-center p-9 hover:bg-white hover:shadow-lg rounded-xl transition-all duration-300 h-full">
-            <div className="w-24 h-24 bg-purple-600 text-white flex justify-center items-center rounded-full mb-6">
-              <i className="fas fa-headset text-4xl"></i>
-            </div>
-            <h3 className="font-playfair text-3xl font-semibold mb-6">
-              Guest Services
-            </h3>
-            <p className="text-gray-700 font-medium font-montserrat leading-relaxed flex-grow">
-              Enjoy 24/7 personalized service with restaurant bookings, local
-              experiences, VIP treatment, and exclusive access to top
-              attractions during your stay.
-            </p>
           </div>
         </div>
       </div>
