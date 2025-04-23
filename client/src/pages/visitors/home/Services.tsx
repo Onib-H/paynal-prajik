@@ -36,7 +36,7 @@ const Services = () => {
               <i className="fas fa-map-marked-alt text-4xl"></i>
             </div>
             <h3 className="font-playfair text-3xl font-semibold mb-6">
-              Venue Reservation
+              Area Reservation
             </h3>
             <p className="text-gray-700 font-medium font-montserrat leading-relaxed flex-grow">
               Celebrate memorable occasions in our exquisite venues, featuring
@@ -45,7 +45,7 @@ const Services = () => {
             </p>
             <Link to={"/areas"}>
               <button className="mt-6 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                View Venues
+                View Areas
               </button>
             </Link>
           </div>
@@ -64,7 +64,7 @@ const Services = () => {
               attractions during your stay.
             </p>
             <button className="mt-6 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-              Contact Concierge
+              Contact Support
             </button>
           </div>
         </div>

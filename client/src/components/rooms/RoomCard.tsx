@@ -31,15 +31,18 @@ const RoomCard: FC<RoomCardProps> = ({
 
   return (
     <div
-      className="rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-transform hover:-translate-y-1 hover:shadow-lg cursor-pointer "
+      className="rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-transform  hover:shadow-lg cursor-pointer group"
       onClick={() => navigate(`/rooms/${id}`)}
     >
-      <img
-        loading="lazy"
-        src={image}
-        alt={title}
-        className="w-full h-48 object-cover"
-      />
+      <div className="relative w-full h-48 overflow-hidden">
+        <img
+          loading="lazy"
+          src={image}
+          alt={title}
+          className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+        />
+      </div>
+
       <div className="flex flex-col flex-1 p-4">
         <div className="mb-3">
           <div className="flex justify-between items-center">
@@ -47,7 +50,6 @@ const RoomCard: FC<RoomCardProps> = ({
           </div>
         </div>
 
-        {/* Description with 50 character limit */}
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
           {truncatedDescription}
         </p>
@@ -59,7 +61,7 @@ const RoomCard: FC<RoomCardProps> = ({
               isAuthenticated
                 ? "bg-purple-600 hover:bg-purple-700 cursor-pointer"
                 : "bg-gray-400 cursor-not-allowed"
-            } text-white text-sm px-3 py-2 rounded-md transition-colors flex items-center gap-1 `}
+            } text-white text-sm px-3 py-2 rounded-md transition-colors flex items-center gap-1`}
             onClick={handleReserveClick}
             title={
               isAuthenticated ? "Book this room" : "Login required to book"
