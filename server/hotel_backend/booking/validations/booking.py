@@ -139,15 +139,15 @@ def validate_dates(check_in_date, check_out_date, is_venue_booking=False):
     return check_in_date, check_out_date
 
 def validate_arrival_time(arrival_time):
-    """Validate arrival time (must be between 2:00 PM and 10:00 PM)"""
+    """Validate arrival time (must be between 7:00 AM and 11:00 PM)"""
     if not arrival_time:
         raise serializers.ValidationError("Expected time of arrival is required")
     
     try:
         arrival_time_obj = datetime.strptime(arrival_time, "%H:%M").time()
         
-        min_time = datetime.strptime("14:00", "%H:%M").time()  # 2:00 PM
-        max_time = datetime.strptime("22:00", "%H:%M").time()  # 10:00 PM
+        min_time = datetime.strptime("07:00", "%H:%M").time()  # 2:00 PM
+        max_time = datetime.strptime("23:00", "%H:%M").time()  # 10:00 PM
         
         if arrival_time_obj < min_time:
             raise serializers.ValidationError("Early check-in is not allowed. Arrival time must be after 2:00 PM.")

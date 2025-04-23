@@ -51,6 +51,7 @@ const ConfirmBooking = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<BookingFormData | null>(null);
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
+  const [selectedArrivalTime, setSelectedArrivalTime] = useState<string>("");
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -184,10 +185,9 @@ const ConfirmBooking = () => {
   };
 
   const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
-    console.log(`Submitting booking data:`, data);
     setGeneralError(null);
     if (!roomData || isSubmitting) return;
-    
+
     if (isAuthenticated && !canBookToday) {
       setGeneralError(bookingLimitMessage || "Booking limit reached");
       return;
@@ -616,8 +616,8 @@ const ConfirmBooking = () => {
                         },
                       })}
                       className={`w-full px-3 py-2 border ${errors.numberOfGuests
-                          ? "border-red-500"
-                          : "border-gray-300"
+                        ? "border-red-500"
+                        : "border-gray-300"
                         } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                     />
                     {errors.numberOfGuests && (
@@ -780,6 +780,7 @@ const ConfirmBooking = () => {
 
                       return true;
                     },
+                    onChange: (e) => setSelectedArrivalTime(e.target.value),
                   })}
                   className={`w-full px-3 py-2 border ${errors.arrivalTime ? "border-red-500" : "border-gray-300"
                     } rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50`}
@@ -817,8 +818,8 @@ const ConfirmBooking = () => {
                   disabled={isSubmitting}
                   onClick={handleConfirmBooking}
                   className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${isSubmitting
-                      ? "bg-blue-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
                     }`}
                   whileTap={{ scale: 0.98 }}
                   whileHover={{
@@ -966,10 +967,8 @@ const ConfirmBooking = () => {
                   Arrival Time :
                 </p>
                 <p className="font-semibold">
-                  {errors.arrivalTime
-                    ? new Date(
-                      `2000-01-01T${errors.arrivalTime}`
-                    ).toLocaleTimeString([], {
+                  {selectedArrivalTime
+                    ? new Date(`2000-01-01T${selectedArrivalTime}`).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })
@@ -1055,8 +1054,8 @@ const ConfirmBooking = () => {
                 onClick={() => validateForm(onSubmit)()}
                 disabled={isSubmitting}
                 className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex justify-center items-center ${isSubmitting
-                    ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
                   }`}
                 variants={itemVariants}
                 whileTap={{ scale: 0.98 }}
