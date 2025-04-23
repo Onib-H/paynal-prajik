@@ -51,7 +51,6 @@ const ConfirmBooking = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<BookingFormData | null>(null);
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
-  const [selectedArrivalTime, setSelectedArrivalTime] = useState<string>("");
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -185,6 +184,7 @@ const ConfirmBooking = () => {
   };
 
   const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
+    console.log(`Submitting booking data: ${data}`);
     setGeneralError(null);
     if (!roomData || isSubmitting) return;
 
@@ -780,7 +780,6 @@ const ConfirmBooking = () => {
 
                       return true;
                     },
-                    onChange: (e) => setSelectedArrivalTime(e.target.value),
                   })}
                   className={`w-full px-3 py-2 border ${errors.arrivalTime ? "border-red-500" : "border-gray-300"
                     } rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50`}
@@ -967,8 +966,10 @@ const ConfirmBooking = () => {
                   Arrival Time :
                 </p>
                 <p className="font-semibold">
-                  {selectedArrivalTime
-                    ? new Date(`2000-01-01T${selectedArrivalTime}`).toLocaleTimeString([], {
+                  {errors.arrivalTime
+                    ? new Date(
+                      `2000-01-01T${errors.arrivalTime}`
+                    ).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })
