@@ -8,20 +8,9 @@ import EditRoomModal from "../../components/admin/EditRoomModal";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
 import ManageSkeleton from "../../motions/skeletons/ManageSkeleton";
-import {
-  addNewRoom,
-  deleteRoom,
-  editRoom,
-  fetchAmenities,
-  fetchRooms,
-} from "../../services/Admin";
+import { addNewRoom, deleteRoom, editRoom, fetchAmenities, fetchRooms } from "../../services/Admin";
 import { IRoom } from "../../types/RoomAdmin";
-import {
-  AddRoomResponse,
-  Amenity,
-  PaginationData,
-  Room,
-} from "../../types/RoomClient";
+import { AddRoomResponse, Amenity, PaginationData, Room } from "../../types/RoomClient";
 import Error from "../_ErrorBoundary";
 import { RoomCard } from "../../memo/RoomCard";
 import RoomDetailsModal from "../../components/admin/RoomDetailsModal";
@@ -287,8 +276,8 @@ const ManageRooms: FC = () => {
               onClick={handlePreviousPage}
               disabled={currentPage === 1}
               className={`p-2 rounded-full ${currentPage === 1
-                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                 }`}
               whileHover={currentPage !== 1 ? { scale: 1.1 } : {}}
               whileTap={currentPage !== 1 ? { scale: 0.9 } : {}}
@@ -327,8 +316,8 @@ const ManageRooms: FC = () => {
                       key={pageNumber}
                       onClick={() => goToPage(pageNumber)}
                       className={`w-8 h-8 rounded-full ${currentPage === pageNumber
-                          ? "bg-blue-600 text-white"
-                          : "bg-gray-200 hover:bg-blue-100"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 hover:bg-blue-100"
                         }`}
                     >
                       {pageNumber}
@@ -342,8 +331,8 @@ const ManageRooms: FC = () => {
               onClick={handleNextPage}
               disabled={pagination && currentPage === pagination.total_pages}
               className={`p-2 rounded-full ${pagination && currentPage === pagination.total_pages
-                  ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                  : "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : "bg-blue-100 text-blue-700 hover:bg-blue-200"
                 }`}
             >
               <ChevronRight size={20} />

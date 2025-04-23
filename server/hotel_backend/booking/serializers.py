@@ -1,12 +1,14 @@
 from rest_framework import serializers
 from .models import Bookings, Reservations, Transactions, Reviews
 from user_roles.models import CustomUsers
+from user_roles.serializers import CustomUserSerializer
 from property.models import Rooms, Amenities, Areas
 import cloudinary
 from property.serializers import AreaSerializer
 from .validations.booking import validate_booking_request
 from django.utils import timezone
 from datetime import datetime
+import uuid
 
 class AmenitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,9 +49,9 @@ class RoomSerializer(serializers.ModelSerializer):
         return representation
 
 class BookingSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer()
     room_details = RoomSerializer(source='room', read_only=True)
     area_details = AreaSerializer(source='area', read_only=True)
-    user = serializers.SerializerMethodField()
     valid_id = serializers.SerializerMethodField()
     
     class Meta:
@@ -141,9 +143,7 @@ class BookingRequestSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         request = self.context.get('request')
-        unauthenticated = self.context.get('unauthenticated', False)
         
-        # Handle user creation/retrieval
         if request and hasattr(request, 'user') and request.user.is_authenticated:
             user = request.user
             if user.first_name != validated_data['firstName'] or user.last_name != validated_data['lastName']:
@@ -152,14 +152,10 @@ class BookingRequestSerializer(serializers.Serializer):
                 user.phone_number = validated_data['phoneNumber']
                 user.save()
         else:
-            # For unauthenticated users, use the user passed in context or create a guest user
             if not 'emailAddress' in validated_data:
-                # No email address provided, use a default guest account or get from request user
                 if hasattr(request, 'user') and request.user.is_authenticated:
                     user = request.user
                 else:
-                    # Create a guest user with a unique identifier
-                    import uuid
                     unique_id = str(uuid.uuid4())[:8]
                     username = f"guest_{unique_id}"
                     email = f"{username}@example.com"
@@ -172,19 +168,16 @@ class BookingRequestSerializer(serializers.Serializer):
                         role='guest'
                     )
             else:
-                # Email address provided, use it to find or create a user
                 try:
                     user = CustomUsers.objects.get(email=validated_data['emailAddress'])
-                    # Update user info if needed
                     if user.first_name != validated_data['firstName'] or user.last_name != validated_data['lastName']:
                         user.first_name = validated_data['firstName']
                         user.last_name = validated_data['lastName']
                         user.phone_number = validated_data['phoneNumber']
                         user.save()
                 except CustomUsers.DoesNotExist:
-                    # Create a new user
                     user = CustomUsers.objects.create(
-                        username=validated_data['emailAddress'],  # Use email as username
+                        username=validated_data['emailAddress'],
                         email=validated_data['emailAddress'],
                         first_name=validated_data['firstName'],
                         last_name=validated_data['lastName'],
@@ -194,7 +187,6 @@ class BookingRequestSerializer(serializers.Serializer):
 
         is_venue_booking = validated_data.get('isVenueBooking', False)
         
-        # Process the ID upload
         valid_id = validated_data.get('validId')
         if valid_id:
             try:
@@ -316,7 +308,7 @@ class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reviews
         fields = ['id', 'booking', 'user', 'review_text', 'rating', 'created_at', 
-                 'user_name', 'booking_details', 'user_profile_image', 'formatted_date']
+                'user_name', 'booking_details', 'user_profile_image', 'formatted_date']
         read_only_fields = ['user', 'created_at']
     
     def get_user_name(self, obj):

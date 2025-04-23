@@ -1,7 +1,6 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, FreeMode, Mousewheel } from "swiper/modules";
 
-// Import your images (adjust paths as needed)
 import deluxe_single from "../../../assets/deluxe_single.webp";
 import deluxe_double from "../../../assets/deluxe_double.jpg";
 import deluxe_twin from "../../../assets/deluxe_twin.jpg";
@@ -27,7 +26,7 @@ const ImageSlider = () => {
     <div className="w-full overflow-hidden">
       <Swiper
         slidesPerView={5}
-        spaceBetween={0} // No gap between images
+        spaceBetween={0}
         freeMode={true}
         mousewheel={{
           forceToAxis: true,
@@ -36,16 +35,17 @@ const ImageSlider = () => {
         autoplay={{
           delay: 10000,
           disableOnInteraction: false,
-          reverseDirection: true, // Right-to-left movement
+          reverseDirection: false,
         }}
         loop={true}
         modules={[Autoplay, FreeMode, Mousewheel]}
-        className="!overflow-visible" // Swiper container handles overflow
+        className="!overflow-visible"
       >
         {images.map((image) => (
           <SwiperSlide key={image.id} className="!w-fit">
             <div className="h-80 w-[calc(100vw/5)] overflow-hidden">
               <img
+                loading="lazy"
                 src={image.src}
                 alt={image.alt}
                 className="h-full w-full object-cover transition-transform hover:scale-105"

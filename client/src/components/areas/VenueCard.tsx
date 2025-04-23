@@ -1,5 +1,4 @@
-import { motion } from "framer-motion";
-import { AlertCircle, Book } from "lucide-react";
+import { AlertCircle, Book, Eye } from "lucide-react";
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
@@ -36,7 +35,6 @@ const VenueCard: FC<AreaCardProps> = ({
     navigate(`/area-booking/${id}`);
   };
 
-  // Truncate description to 50 characters
   const truncatedDescription =
     description && description.length > 50
       ? `${description.substring(0, 50)}...`
@@ -56,18 +54,21 @@ const VenueCard: FC<AreaCardProps> = ({
 
   return (
     <div
-      className="rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg cursor-pointer"
+      className="rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-transform  hover:shadow-lg cursor-pointer group"
       onClick={() => navigate(`/areas/${id}`)}
     >
-      <motion.img
-        loading="lazy"
-        src={image}
-        alt={title}
-        className="w-full h-64 object-cover"
-        initial={{ opacity: 0.8 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      />
+      <div className="relative w-full h-48 overflow-hidden">
+        <img
+          loading="lazy"
+          src={image}
+          alt={title}
+          className="w-full h-full object-cover transition-transform duration-300 ease-in-out"
+        />
+        <div className="absolute inset-0 bg-purple-600/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center">
+          <Eye className="w-8 h-8 text-white mb-2" />
+          <span className="text-white font-semibold text-lg">View Details</span>
+        </div>
+      </div>
 
       <div className="p-5 flex flex-col flex-1">
         <div className="flex-1">

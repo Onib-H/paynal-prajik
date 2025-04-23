@@ -27,7 +27,7 @@ interface ConfirmBookingFormValues {
 const ConfirmBooking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated } = useUserContext();
+  const { isAuthenticated, userDetails } = useUserContext();
 
   const roomId = searchParams.get("roomId");
   const arrival = searchParams.get("arrival");
@@ -90,8 +90,8 @@ const ConfirmBooking = () => {
   } = useForm<ConfirmBookingFormValues>({
     mode: "onBlur",
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      firstName: userDetails.first_name || "",
+      lastName: userDetails.last_name || "",
       phoneNumber: "",
       numberOfGuests: 1,
       arrivalTime: "",

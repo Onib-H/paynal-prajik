@@ -1,4 +1,4 @@
-import { Book } from "lucide-react";
+import { Book, Eye } from "lucide-react";
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
@@ -31,18 +31,26 @@ const RoomCard: FC<RoomCardProps> = ({
 
   return (
     <div
-      className="rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-transform  hover:shadow-lg cursor-pointer group"
+      className="relative rounded-lg overflow-hidden shadow-md bg-white flex flex-col transition-all hover:shadow-lg cursor-pointer group h-full"
       onClick={() => navigate(`/rooms/${id}`)}
     >
+      {/* Image container with hover overlay */}
       <div className="relative w-full h-48 overflow-hidden">
         <img
           loading="lazy"
           src={image}
           alt={title}
-          className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-300 "
         />
+
+        {/* Violet overlay that appears on hover */}
+        <div className="absolute inset-0 bg-purple-600/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center">
+          <Eye className="w-8 h-8 text-white mb-2" />
+          <span className="text-white font-semibold text-lg">View Details</span>
+        </div>
       </div>
 
+      {/* Card content */}
       <div className="flex flex-col flex-1 p-4">
         <div className="mb-3">
           <div className="flex justify-between items-center">

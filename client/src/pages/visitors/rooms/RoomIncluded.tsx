@@ -61,7 +61,7 @@ const RoomIncluded = () => {
     }),
     hover: {
       scale: 1.05,
-      color: "#1E40AF", // blue-800
+      color: "#1E40AF",
       transition: { duration: 0.2 },
     },
   };

@@ -24,7 +24,7 @@ import {
 const ConfirmVenueBooking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated } = useUserContext();
+  const { isAuthenticated, userDetails } = useUserContext();
 
   const areaId = searchParams.get("areaId");
   const startTime = searchParams.get("startTime");
@@ -51,8 +51,8 @@ const ConfirmVenueBooking = () => {
   } = useForm<FormData>({
     mode: "onBlur",
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      firstName: userDetails.first_name || "",
+      lastName: userDetails.last_name || "",
       phoneNumber: "",
       emailAddress: "",
       specialRequests: "",
@@ -594,8 +594,8 @@ const ConfirmVenueBooking = () => {
                       onChange: onFileChange,
                     })}
                     accept="image/*"
-                    className={`w-full py-2 ${
-                      errors.validId ? "border-red-500" : ""
+                    className={`w-full py-2 border pl-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300 ${
+                      errors.validId ? "border-red-500" : "border-gray-300"
                     }`}
                   />
                   {errors.validId && (

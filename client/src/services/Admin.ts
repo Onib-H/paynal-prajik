@@ -653,7 +653,7 @@ export const fetchMonthlyRevenue = async ({ month, year }: { month?: number; yea
       if (!booking.check_in_date) return false;
 
       const checkInDate = new Date(booking.check_in_date);
-      const bookingMonth = checkInDate.getMonth() + 1; // JavaScript months are 0-indexed
+      const bookingMonth = checkInDate.getMonth() + 1;
       const bookingYear = checkInDate.getFullYear();
 
       return bookingMonth === currentMonth && bookingYear === currentYear;

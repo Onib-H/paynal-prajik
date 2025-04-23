@@ -33,7 +33,6 @@ const NotFound = () => {
     tap: { scale: 0.95 }
   };
 
-  // 3D animation for the 404 text
   const textVariants = {
     animate: {
       rotateY: [0, 10, 0, -10, 0],

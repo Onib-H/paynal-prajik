@@ -13,7 +13,6 @@ export const GuestReservationSkeleton = () => {
   );
 };
 
-// Skeleton loader component for the bookings table
 export const BookingsTableSkeleton = () => {
   return (
     <div className="space-y-6 container mx-auto py-4 animate-fade-in">
@@ -92,7 +91,6 @@ export const BookingsTableSkeleton = () => {
   );
 };
 
-// Skeleton loader for booking details
 export const BookingDetailsSkeleton = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6 overflow-y-auto h-[calc(100vh-3rem)] pr-2">

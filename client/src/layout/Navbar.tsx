@@ -17,7 +17,6 @@ import SlotNavButton from "../motions/CustomNavbar";
 import { logout } from "../services/Auth";
 import { getGuestDetails, getGuestNotifications, markAllNotificationsAsRead, markNotificationAsRead } from "../services/Guest";
 
-// Add notification interface
 interface NotificationType {
   id: string;
   message: string;
@@ -246,15 +245,14 @@ const Navbar: FC = () => {
                     <motion.div
                       animate={notificationCount > 0 ? {
                         scale: [1, 1.1, 1],
-                        rotate: [0, -5, 5, -5, 0]
                       } : {}}
                       transition={{
-                        repeat: notificationCount > 0 ? Infinity : 0,
+                        repeat: Infinity,
                         repeatDelay: 5,
                         duration: 0.5
                       }}
                     >
-                      <FontAwesomeIcon icon={faBell} size="2x" className="text-purple-900/80" />
+                      <FontAwesomeIcon icon={faBell} size="2x" className="text-purple-900/80 cursor-pointer" />
                     </motion.div>
                     {notificationCount > 0 && !hasViewedNotifications && (
                       <motion.span

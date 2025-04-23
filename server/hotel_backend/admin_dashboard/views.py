@@ -607,6 +607,12 @@ def admin_bookings(request):
         except EmptyPage:
             paginated_bookings = paginator.page(paginator.num_pages)
         
+        status_filter = request.query_params.get('status')
+        bookings = Bookings.objects.all().order_by('-created_at')
+        
+        if status_filter and status_filter.lower() != 'all':
+            bookings = bookings.filter(status__iexact=status_filter)
+        
         serializer = BookingSerializer(paginated_bookings, many=True)
         
         return Response({
@@ -619,7 +625,9 @@ def admin_bookings(request):
             }
         }, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        import traceback
+        traceback.print_exc()
+        return Response({"error": str(e), "traceback": traceback.format_exc()}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -699,32 +707,24 @@ def update_booking_status(request, booking_id):
     
     serializer = BookingSerializer(booking)
     
-    # Create property_name based on the booking type
     property_name = ""
+
     try:
         if booking.is_venue_booking and booking.area:
             property_name = booking.area.area_name
-            print(f"Using venue name: {property_name}")
         elif booking.room:
             property_name = booking.room.room_name
-            print(f"Using room name: {property_name}")
         else:
             property_name = "your reservation"
-            print("Using default property name")
     except Exception as e:
-        print(f"Error getting property name: {str(e)}")
         property_name = "your reservation"
     
-    # Set the property_name attribute for notification creation
     booking.property_name = property_name
-    print(f"Set property_name to: {booking.property_name}")
     
-    # Create notifications based on status changes
     if status_value == 'reserved' and previous_status != 'reserved':
         try:
             user_email = booking.user.email
             send_booking_confirmation_email(user_email, serializer.data)
-            # Create reservation notification
             create_notification(booking.user, booking, 'reserved')
         except Exception as e:
             return Response({
@@ -735,7 +735,6 @@ def update_booking_status(request, booking_id):
         try:
             user_email = booking.user.email
             send_booking_rejection_email(user_email, serializer.data)
-            # Create rejection notification
             create_notification(booking.user, booking, 'rejected')
         except Exception as e:
             return Response({
@@ -744,31 +743,35 @@ def update_booking_status(request, booking_id):
     
     elif status_value == 'no_show' and previous_status != 'no_show':
         try:
-            # Create no-show notification
             create_notification(booking.user, booking, 'no_show')
         except Exception as e:
-            print(f"Failed to create no-show notification: {e}")
-    
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
     elif status_value == 'checked_in' and previous_status != 'checked_in':
         try:
-            # Create a check-in notification
             create_notification(booking.user, booking, 'checked_in')
         except Exception as e:
-            print(f"Failed to create check-in notification: {e}")
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
     elif status_value == 'checked_out' and previous_status != 'checked_out':
         try:
-            # Create a check-out notification
             create_notification(booking.user, booking, 'checked_out')
         except Exception as e:
-            print(f"Failed to create check-out notification: {e}")
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
     elif status_value == 'cancelled' and previous_status != 'cancelled':
         try:
-            # Create a cancellation notification
             create_notification(booking.user, booking, 'cancelled')
         except Exception as e:
-            print(f"Failed to create cancellation notification: {e}")
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
     if booking.status not in ['reserved', 'checked_in'] and (status_value == 'cancelled' or status_value == 'rejected'):
         if booking.is_venue_booking and booking.area:
