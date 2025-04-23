@@ -102,7 +102,6 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [cancel, isOpen]);
 
-  // Animation variants for staggered children
   const formVariants = {
     hidden: { opacity: 0 },
     visible: {

@@ -36,7 +36,6 @@ const VenueCard: FC<AreaCardProps> = ({
     navigate(`/area-booking/${id}`);
   };
 
-  // Truncate description to 50 characters
   const truncatedDescription =
     description && description.length > 50
       ? `${description.substring(0, 50)}...`

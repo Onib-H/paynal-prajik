@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getUserBookingsForToday } from '../services/Booking';
 import { useUserContext } from './AuthContext';
@@ -24,7 +26,7 @@ export const BookingLimitProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const [currentBookings, setCurrentBookings] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const { isAuthenticated, userDetails } = useUserContext();
-    const maxLimit = 3; // Maximum bookings per day
+    const maxLimit = 3;
 
     const fetchBookingCount = async () => {
         if (!isAuthenticated || !userDetails?.id) {
@@ -38,23 +40,19 @@ export const BookingLimitProvider: React.FC<{ children: React.ReactNode }> = ({ 
             const response = await getUserBookingsForToday();
             setCurrentBookings(response.data.booking_count || 0);
         } catch (error) {
-            console.error('Failed to fetch booking count:', error);
-            // Default to 0 on error to not block users from booking
+            console.error(`Failed to fetch booking count: ${error}`);
             setCurrentBookings(0);
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Fetch booking count when auth state changes
     useEffect(() => {
         fetchBookingCount();
     }, [isAuthenticated, userDetails?.id]);
 
-    // Calculate if user can make more bookings
     const canBook = currentBookings < maxLimit;
 
-    // Function to manually refresh the booking limit
     const refreshLimit = () => {
         fetchBookingCount();
     };

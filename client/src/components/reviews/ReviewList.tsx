@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Star, User } from "lucide-react";
-import { ReviewData } from "../../services/Booking";
+import { ReviewData } from "../../types/ReviewsClient";
 
 interface ReviewListProps {
     reviews: ReviewData[];

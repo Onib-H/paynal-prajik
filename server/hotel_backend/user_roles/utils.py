@@ -3,7 +3,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     
-    # Add role claim to tokens
     refresh['role'] = 'admin' if user.is_staff else 'guest'
     
     return {

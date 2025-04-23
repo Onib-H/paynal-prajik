@@ -6,36 +6,7 @@ import { useSearchParams } from "react-router-dom";
 import BookingData from "../../components/bookings/BookingData";
 import { BookingDetailsSkeleton, BookingsTableSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
 import { fetchBookingDetail, fetchUserBookings } from "../../services/Booking";
-
-const formatDate = (dateString: string): string => {
-  if (!dateString) return 'N/A';
-  try {
-    const options: Intl.DateTimeFormatOptions = {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  } catch (e) {
-    console.error(`Error formatting date: ${dateString}`, e);
-    return dateString;
-  }
-};
-
-const getStatusColor = (status: string): string => {
-  const normalizedStatus = status.toLowerCase().replace(/_/g, ' ');
-
-  switch (normalizedStatus) {
-    case 'cancelled':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
-  }
-};
-
-const formatStatus = (status: string): string => {
-  return status.toUpperCase().replace(/_/g, ' ');
-};
+import { formatDate, getStatusColor, formatStatus } from "../../utils/formatters";
 
 const GuestCancellations: FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -48,20 +19,16 @@ const GuestCancellations: FC = () => {
   const userBookingsQuery = useQuery({
     queryKey: ['userBookings', 'cancelled', currentPage, pageSize],
     queryFn: async () => {
-      // Fetch all user bookings - the API doesn't support status filtering
       const response = await fetchUserBookings({ page: 1, pageSize: 100 });
 
-      // Filter cancelled bookings on the client side
       const allBookings = response.data || [];
       const cancelledBookings = allBookings.filter(
         (booking: any) => booking.status.toLowerCase() === "cancelled"
       );
 
-      // Implement manual pagination for the filtered bookings
       const totalCancelledItems = cancelledBookings.length;
       const calculatedTotalPages = Math.max(1, Math.ceil(totalCancelledItems / pageSize));
 
-      // Get the current page of cancelled bookings
       const startIndex = (currentPage - 1) * pageSize;
       const endIndex = startIndex + pageSize;
       const paginatedBookings = cancelledBookings.slice(startIndex, endIndex);
@@ -91,7 +58,6 @@ const GuestCancellations: FC = () => {
   }, [changingPage, userBookingsQuery.isPending]);
 
   const { bookings, totalPages, isLoading, errorMessage } = useMemo(() => {
-    // Data is already filtered in the queryFn
     return {
       bookings: userBookingsQuery.data?.data || [],
       totalPages: userBookingsQuery.data?.pagination?.total_pages || 1,
@@ -108,7 +74,6 @@ const GuestCancellations: FC = () => {
   bookingDetailsQuery.isPending, bookingDetailsQuery.isError, bookingId, changingPage]);
 
   const filteredBookings = useMemo(() => {
-    // Apply search filtering
     return bookings.filter((booking: any) => {
       const matchesSearch =
         (booking.is_venue_booking
@@ -363,7 +328,6 @@ const GuestCancellations: FC = () => {
 
                 {/* Page number buttons - limited to max 5 shown */}
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  // Show pages around current page
                   let pageToShow = i + 1;
                   if (totalPages > 5 && currentPage > 3) {
                     pageToShow = currentPage - 2 + i;

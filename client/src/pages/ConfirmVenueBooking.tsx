@@ -24,7 +24,7 @@ import {
 const ConfirmVenueBooking = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated } = useUserContext();
+  const { isAuthenticated, userDetails } = useUserContext();
 
   const areaId = searchParams.get("areaId");
   const startTime = searchParams.get("startTime");
@@ -48,8 +48,8 @@ const ConfirmVenueBooking = () => {
   } = useForm<FormData>({
     mode: "onBlur",
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      firstName: userDetails.first_name || "",
+      lastName: userDetails.last_name || "",
       phoneNumber: "",
       emailAddress: "",
       specialRequests: "",

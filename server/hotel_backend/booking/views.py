@@ -13,7 +13,7 @@ from .serializers import (
 )
 from django.utils import timezone
 from rest_framework.permissions import IsAuthenticated
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.db.models import Q
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
