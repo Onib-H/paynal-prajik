@@ -55,7 +55,7 @@ export interface BookingFormData {
     checkOut: string | null;
     status?: "pending" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
     totalPrice?: number;
-    arrivalTime?: string;
+    arrivalTime: string;
     numberOfGuests?: number;
 }
 

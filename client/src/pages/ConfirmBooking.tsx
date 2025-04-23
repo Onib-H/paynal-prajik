@@ -184,8 +184,10 @@ const ConfirmBooking = () => {
   };
 
   const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
+    console.log(`Submitting booking data:`, data);
     setGeneralError(null);
     if (!roomData || isSubmitting) return;
+    
     if (isAuthenticated && !canBookToday) {
       setGeneralError(bookingLimitMessage || "Booking limit reached");
       return;
@@ -209,6 +211,7 @@ const ConfirmBooking = () => {
   };
 
   const handleConfirmBooking = async () => {
+    console.log(`Pending form data:`, pendingFormData);
     if (!pendingFormData) return;
     setShowConfirmModal(false);
     setIsSubmitting(true);
@@ -218,6 +221,7 @@ const ConfirmBooking = () => {
       const arrDate = new Date(pendingFormData.checkIn);
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
+
       if (isAuthenticated && arrDate.getTime() === todayStart.getTime()) {
         const res = await checkCanBookToday();
         if (!res.canBook) {
@@ -777,7 +781,6 @@ const ConfirmBooking = () => {
                       return true;
                     },
                   })}
-                  placeholder="Select arrival time"
                   className={`w-full px-3 py-2 border ${errors.arrivalTime ? "border-red-500" : "border-gray-300"
                     } rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50`}
                 />

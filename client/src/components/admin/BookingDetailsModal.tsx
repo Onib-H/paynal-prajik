@@ -503,7 +503,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 whileHover={{ scale: 1.02, backgroundColor: "#dc2626" }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={onReject}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg curp transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                className="px-4 py-2 cursor-pointer bg-red-600 text-white rounded-lg curp transition-colors flex items-center justify-center gap-2 shadow-sm"
                             >
                                 <X size={18} />
                                 Reject Booking

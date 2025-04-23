@@ -51,7 +51,6 @@ const ConfirmVenueBooking = () => {
       firstName: userDetails.first_name || "",
       lastName: userDetails.last_name || "",
       phoneNumber: "",
-      emailAddress: "",
       specialRequests: "",
       numberOfGuests: "1",
     },
