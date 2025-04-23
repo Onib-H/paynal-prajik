@@ -35,7 +35,7 @@ const ImageSlider = () => {
         autoplay={{
           delay: 10000,
           disableOnInteraction: false,
-          reverseDirection: true,
+          reverseDirection: false,
         }}
         loop={true}
         modules={[Autoplay, FreeMode, Mousewheel]}
