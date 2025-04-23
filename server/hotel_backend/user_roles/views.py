@@ -1,11 +1,12 @@
 from django.contrib.auth import authenticate, logout, login
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUsers
-from .serializers import CustomUserSerializer
+from .models import CustomUsers, Notification
+from .serializers import CustomUserSerializer, NotificationSerializer
 from .email.email import send_otp_to_email, send_reset_password
 from django.core.cache import cache
 from .validation.validation import RegistrationForm
@@ -38,6 +39,33 @@ def save_google_profile_image_to_cloudinary(image_url):
         )
         
         return result['secure_url']
+    except Exception as e:
+        return None
+    
+def create_notification(user, booking, notification_type):
+    try:        
+        messages = {
+            'reserved': f"Your booking for {booking.property_name} has been confirmed!",
+            'no_show': f"You did not show up for your booking at {booking.property_name}.",
+            'rejected': f"Your booking for {booking.property_name} has been rejected. Click to see booking details.",
+            'checkin_reminder': f"Reminder: You have a booking at {booking.property_name} today. Click to see booking details.",
+            'checked_in': f"You have been checked in to {booking.property_name}. Welcome!",
+            'checked_out': f"You have been checked out from {booking.property_name}. Thank you for staying with us!",
+            'cancelled': f"Your booking for {booking.property_name} has been cancelled. Click to see details."
+        }
+        
+        message = messages.get(notification_type)
+        if not message:
+            return None
+            
+        notification = Notification.objects.create(
+            user=user,
+            message=message,
+            notification_type=notification_type,
+            booking=booking
+        )
+        
+        return notification
     except Exception as e:
         return None
 
@@ -738,3 +766,41 @@ def get_guest_bookings(request):
         }, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_notifications(request):
+    try:
+        notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response({
+            'notifications': serializer.data,
+            'unread_count': notifications.filter(is_read=False).count()
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def mark_notification_read(request, id):
+    notification = get_object_or_404(Notification, id=id, user=request.user)
+    notification.is_read = True
+    notification.save()
+    return Response({
+        'message': 'Notification marked as read'
+    }, status=status.HTTP_200_OK)
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def mark_all_notifications_read(request):
+    try:
+        Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        return Response({
+            'message': 'All notifications marked as read'
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

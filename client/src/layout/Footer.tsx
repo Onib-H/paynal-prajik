@@ -8,6 +8,7 @@ const Footer = () => {
       <img
         loading="lazy"
         src={hotel_logo}
+        alt={hotel_logo}
         className="h-12 w-auto cursor-pointer mb-4 mx-auto sm:mx-0"
       />
       <div className="px-5">

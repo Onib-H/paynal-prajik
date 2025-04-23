@@ -86,3 +86,39 @@ export const updateProfileImage = async (formData: FormData) => {
     throw error;
   }
 };
+
+export const getGuestNotifications = async () => {
+  try {
+    const response = await guest.get("/notifications", {
+      withCredentials: true,
+    })
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch guest notifications: ${error}`);
+    throw error;
+  }
+};
+
+export const markNotificationAsRead = async (id: string) => {
+  try {
+    const response = await guest.patch(`/notifications/${id}/read`, {}, {
+      withCredentials: true
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to mark notification as read: ${error}`);
+    throw error;
+  }
+};
+
+export const markAllNotificationsAsRead = async () => {
+  try {
+    const response = await guest.patch('/notifications/read-all', {}, {
+      withCredentials: true
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to mark all notifications as read: ${error}`);
+    throw error;
+  }
+};

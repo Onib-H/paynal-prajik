@@ -1,4 +1,4 @@
-from .models import CustomUsers
+from .models import CustomUsers, Notification
 from rest_framework import serializers
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -32,3 +32,22 @@ class CustomUserSerializer(serializers.ModelSerializer):
             user.set_password(password)
         user.save()
         return user
+
+class NotificationSerializer(serializers.ModelSerializer):
+    booking_id = serializers.SerializerMethodField()
+    
+    def get_booking_id(self, obj):
+        return str(obj.booking.id) if obj.booking else None
+    
+    class Meta:
+        model = Notification
+        fields = [
+            'id',
+            'user',
+            'message',
+            'notification_type',
+            'booking',
+            'booking_id',
+            'is_read',
+            'created_at'
+        ]

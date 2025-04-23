@@ -10,18 +10,15 @@ const formatTime = (time: string): string => {
   if (!time) return 'N/A';
 
   try {
-    // Parse the time (assuming format is HH:MM)
     const [hours, minutes] = time.split(':').map(Number);
 
-    // Convert to 12-hour format
     const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+    const displayHours = hours % 12 || 12;
 
-    // Format with leading zeros for minutes
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   } catch (error) {
-    console.error('Error formatting time:', error);
-    return time; // Return original if parsing fails
+    console.error(`Error parsing time: ${error}`);
+    return time;
   }
 };
 
@@ -273,9 +270,9 @@ const BookingCard: FC<BookingCardProps> = memo(({
                 <span className="font-medium text-lg">{userDetails.email}</span>
               </div>
               {userDetails.phoneNumber && (
-                <div className="flex flex-col sm:col-span-2">
-                  <span className="text-sm text-gray-500">Phone</span>
-                  <span className="font-medium">{userDetails.phoneNumber}</span>
+                <div className="flex flex-col">
+                  <span className="text-lg font-semibold text-gray-700">Phone</span>
+                  <span className="font-medium text-lg">{userDetails.phoneNumber}</span>
                 </div>
               )}
             </div>

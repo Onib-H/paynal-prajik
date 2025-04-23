@@ -38,7 +38,6 @@ const ManageRooms = lazy(() => import("./pages/admin/ManageRooms"));
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers"));
 
 const GuestProfile = lazy(() => import("./pages/guests/GuestProfile"));
-const GuestDashboard = lazy(() => import("./pages/guests/GuestDashboard"));
 const GuestBookings = lazy(() => import("./pages/guests/GuestBookings"));
 const GuestCancellations = lazy(() => import("./pages/guests/GuestCancellations"));
 const GuestLayout = lazy(() => import("./layout/guest/GuestLayout"));
@@ -102,7 +101,6 @@ const App = () => {
           {/* Protected guest routes */}
           <Route element={<ProtectedRoute requiredRole="guest" />}>
             <Route path="/guest" element={<GuestLayout />}>
-              <Route index element={<GuestDashboard />} />
               <Route path=":id" element={<GuestProfile />} />
               <Route path="bookings" element={<GuestBookings />} />
               <Route path="cancellations" element={<GuestCancellations />} />

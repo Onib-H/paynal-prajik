@@ -1,32 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  Plus,
-  Search,
-  Trash2,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Edit, Plus, Search, Trash2 } from "lucide-react";
 import { useState } from "react";
 import EditAmenityModal from "../../components/admin/EditAmenityModal";
 import { IAmenity } from "../../types/AmenityAdmin";
 import Modal from "../../components/Modal";
 import ManageRoomLoader from "../../motions/loaders/EventLoader";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
-import {
-  createAmenity,
-  deleteAmenity,
-  fetchAmenities,
-  updateAmenity,
-} from "../../services/Admin";
+import { createAmenity, deleteAmenity, fetchAmenities, updateAmenity } from "../../services/Admin";
 import Error from "../_ErrorBoundary";
-import {
-  Amenity,
-  PaginatedAmenities,
-  AddAmenityResponse,
-} from "../../types/AmenityClient";
+import { Amenity, PaginatedAmenities, AddAmenityResponse } from "../../types/AmenityClient";
 
 const ManageAmenities = () => {
   const [search, setSearch] = useState<string>("");
@@ -36,12 +20,10 @@ const ManageAmenities = () => {
   const [deleteAmenityId, setDeleteAmenityId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loaderText, setLoaderText] = useState("");
-  const [pageTransition, setPageTransition] = useState<"next" | "prev" | null>(
-    null
-  );
+  const [pageTransition, setPageTransition] = useState<"next" | "prev" | null>(null);
 
   const [page, setPage] = useState<number>(1);
-  const pageSize = 15;
+  const pageSize = 12;
 
   const queryClient = useQueryClient();
 

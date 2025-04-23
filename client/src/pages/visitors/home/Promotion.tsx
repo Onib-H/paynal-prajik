@@ -44,11 +44,9 @@ const Promotion = () => {
     }),
   };
 
-  // Split heading into words, not characters, to maintain better readability
   const headingText = "Unparalleled luxury, timeless comfort";
   const headingWords = headingText.split(" ");
 
-  // Split paragraph text into words
   const paragraphText =
     "Elevate the guest experience with a seamless and sophisticated hotel management solution. Designed for premium resorts and luxury accommodations, it streamlines operations while delivering unparalleled comfort, efficiency, and elegance.";
   const paragraphWords = paragraphText.split(" ");

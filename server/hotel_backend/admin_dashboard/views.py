@@ -1,23 +1,22 @@
 from django.utils import timezone
-from django.db.models import Count, Sum, Q
-from .email.booking import send_booking_confirmation_email, send_booking_rejection_email
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
+from django.core.validators import ValidationError
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from property.models import Areas, Rooms, Amenities
+from property.serializers import AreaSerializer, RoomSerializer, AmenitySerializer
 from booking.models import Bookings, Reservations, Transactions
-from django.core.exceptions import ValidationError
-from user_roles.serializers import CustomUserSerializer
-from user_roles.models import CustomUsers
-from property.models import Rooms, Amenities, Areas
-from property.serializers import RoomSerializer, AmenitySerializer, AreaSerializer
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from booking.serializers import BookingSerializer
-import datetime
+from user_roles.models import CustomUsers
+from user_roles.serializers import CustomUserSerializer
+from user_roles.views import create_notification
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Q, Count, Sum
+from datetime import datetime, date, timedelta
 
-# Create your views here.
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
+from .email.booking import send_booking_confirmation_email, send_booking_rejection_email
+
 def get_admin_details(request):
     user = request.user
     
@@ -45,10 +44,10 @@ def dashboard_stats(request):
     try:
         now = timezone.now()
         current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        current_month_end = (current_month_start.replace(month=current_month_start.month % 12 + 1, day=1) - datetime.timedelta(days=1)).replace(hour=23, minute=59, second=59)
+        current_month_end = (current_month_start.replace(month=current_month_start.month % 12 + 1, day=1) - timedelta(days=1)).replace(hour=23, minute=59, second=59)
         
         if current_month_start.month == 12:
-            current_month_end = current_month_start.replace(year=current_month_start.year + 1, month=1, day=1) - datetime.timedelta(days=1)
+            current_month_end = current_month_start.replace(year=current_month_start.year + 1, month=1, day=1) - timedelta(days=1)
         
         total_rooms = Rooms.objects.count()
         
@@ -481,7 +480,7 @@ def fetch_amenities(request):
     try:
         amenities = Amenities.objects.all().order_by('id')
         page = request.query_params.get('page', 1)
-        page_size = request.query_params.get('page_size', 15)
+        page_size = request.query_params.get('page_size', 12)
         
         paginator = Paginator(amenities, page_size)
         try:
@@ -608,6 +607,12 @@ def admin_bookings(request):
         except EmptyPage:
             paginated_bookings = paginator.page(paginator.num_pages)
         
+        status_filter = request.query_params.get('status')
+        bookings = Bookings.objects.all().order_by('-created_at')
+        
+        if status_filter and status_filter.lower() != 'all':
+            bookings = bookings.filter(status__iexact=status_filter)
+        
         serializer = BookingSerializer(paginated_bookings, many=True)
         
         return Response({
@@ -620,7 +625,9 @@ def admin_bookings(request):
             }
         }, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        import traceback
+        traceback.print_exc()
+        return Response({"error": str(e), "traceback": traceback.format_exc()}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -700,10 +707,25 @@ def update_booking_status(request, booking_id):
     
     serializer = BookingSerializer(booking)
     
+    property_name = ""
+
+    try:
+        if booking.is_venue_booking and booking.area:
+            property_name = booking.area.area_name
+        elif booking.room:
+            property_name = booking.room.room_name
+        else:
+            property_name = "your reservation"
+    except Exception as e:
+        property_name = "your reservation"
+    
+    booking.property_name = property_name
+    
     if status_value == 'reserved' and previous_status != 'reserved':
         try:
             user_email = booking.user.email
             send_booking_confirmation_email(user_email, serializer.data)
+            create_notification(booking.user, booking, 'reserved')
         except Exception as e:
             return Response({
                 "error": str(e)
@@ -713,8 +735,41 @@ def update_booking_status(request, booking_id):
         try:
             user_email = booking.user.email
             send_booking_rejection_email(user_email, serializer.data)
+            create_notification(booking.user, booking, 'rejected')
         except Exception as e:
-           return Response({
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    elif status_value == 'no_show' and previous_status != 'no_show':
+        try:
+            create_notification(booking.user, booking, 'no_show')
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    elif status_value == 'checked_in' and previous_status != 'checked_in':
+        try:
+            create_notification(booking.user, booking, 'checked_in')
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    elif status_value == 'checked_out' and previous_status != 'checked_out':
+        try:
+            create_notification(booking.user, booking, 'checked_out')
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    elif status_value == 'cancelled' and previous_status != 'cancelled':
+        try:
+            create_notification(booking.user, booking, 'cancelled')
+        except Exception as e:
+            return Response({
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -803,7 +858,7 @@ def booking_status_counts(request):
 @permission_classes([IsAuthenticated])
 def fetch_all_users(request):
     try:
-        users = CustomUsers.objects.filter(role="admin")
+        users = CustomUsers.objects.filter(role="guest")
         serializer = CustomUserSerializer(users, many=True)
         return Response({
             "data": serializer.data
@@ -936,12 +991,12 @@ def daily_revenue(request):
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))
         
-        start_date = datetime.datetime(year, month, 1)
+        start_date = datetime(year, month, 1)
         
         if month == 12:
-            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
         else:
-            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
         
         end_date = end_date.replace(hour=23, minute=59, second=59)        
         days_in_month = (end_date.day)
@@ -976,12 +1031,12 @@ def daily_bookings(request):
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))
         
-        start_date = datetime.datetime(year, month, 1)
+        start_date = datetime(year, month, 1)
         
         if month == 12:
-            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
         else:
-            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
         
         end_date = end_date.replace(hour=23, minute=59, second=59)        
         days_in_month = (end_date.day)        
@@ -1014,12 +1069,12 @@ def daily_occupancy(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))        
-        start_date = datetime.datetime(year, month, 1).date()
+        start_date = datetime(year, month, 1).date()
         
         if month == 12:
-            end_date = datetime.datetime(year + 1, 1, 1).date() - datetime.timedelta(days=1)
+            end_date = datetime(year + 1, 1, 1).date() - timedelta(days=1)
         else:
-            end_date = datetime.datetime(year, month + 1, 1).date() - datetime.timedelta(days=1)
+            end_date = datetime(year, month + 1, 1).date() - timedelta(days=1)
         
         days_in_month = (end_date.day)        
         daily_occupancy = [0] * days_in_month
@@ -1034,7 +1089,7 @@ def daily_occupancy(request):
             }, status=status.HTTP_200_OK)
         
         for day in range(1, days_in_month + 1):
-            current_date = datetime.date(year, month, day)
+            current_date = date(year, month, day)
             
             occupied_rooms = Bookings.objects.filter(
                 Q(check_in_date__lte=current_date) & 
@@ -1064,12 +1119,12 @@ def daily_checkins_checkouts(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))
-        start_date = datetime.datetime(year, month, 1)
+        start_date = datetime(year, month, 1)
         
         if month == 12:
-            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
         else:
-            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
         
         end_date = end_date.replace(hour=23, minute=59, second=59)
         
@@ -1111,12 +1166,12 @@ def daily_cancellations(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))       
-        start_date = datetime.datetime(year, month, 1)
+        start_date = datetime(year, month, 1)
         
         if month == 12:
-            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
         else:
-            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
         
         end_date = end_date.replace(hour=23, minute=59, second=59)
         days_in_month = (end_date.day)
@@ -1149,12 +1204,12 @@ def room_revenue(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))        
-        start_date = datetime.datetime(year, month, 1)
+        start_date = datetime(year, month, 1)
         
         if month == 12:
-            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
         else:
-            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
 
         end_date = end_date.replace(hour=23, minute=59, second=59)
         
@@ -1192,12 +1247,12 @@ def room_bookings(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))        
-        start_date = datetime.datetime(year, month, 1)
+        start_date = datetime(year, month, 1)
         
         if month == 12:
-            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
         else:
-            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
         
         end_date = end_date.replace(hour=23, minute=59, second=59)
         
@@ -1234,12 +1289,12 @@ def daily_no_shows_rejected(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))        
-        start_date = datetime.datetime(year, month, 1)
+        start_date = datetime(year, month, 1)
         
         if month == 12:
-            end_date = datetime.datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
         else:
-            end_date = datetime.datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
         
         end_date = end_date.replace(hour=23, minute=59, second=59)        
         days_in_month = (end_date.day)

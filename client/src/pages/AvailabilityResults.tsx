@@ -240,49 +240,6 @@ const AvailabilityResults = () => {
                           price={room.room_price}
                           description={room.description}
                         />
-                        {/* <Link to={`/rooms/${room.id}`} className="block">
-                          <div className="relative">
-                            <img
-                              loading="lazy"
-                              src={room.room_image || "/default-room.jpg"}
-                              alt={room.room_name}
-                              className="w-full h-56 object-cover"
-                            />
-                          </div>
-
-                          <div className="p-6">
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">
-                              {room.room_name}
-                            </h3>
-
-                            <div className="flex justify-between items-end mt-3">
-                              <div>
-                                <p className="text-2xl font-bold text-blue-600">
-                                  {room.room_price}
-                                </p>
-                              </div>
-
-                              <div className="flex gap-2">
-                                {isAuthenticated ? (
-                                  <Link
-                                    to={`/confirm-booking?roomId=${room.id}&arrival=${arrival}&departure=${departure}`}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-1 text-md uppercase font-semibold"
-                                  >
-                                    <Book size={16} /> <span>Book</span>
-                                  </Link>
-                                ) : (
-                                  <button
-                                    disabled
-                                    className="bg-gray-400 text-white px-3 py-2 rounded-lg flex items-center gap-1 cursor-not-allowed text-md"
-                                    title="Please login to book"
-                                  >
-                                    <Book size={16} /> <span>Book</span>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </Link> */}
                       </motion.div>
                     ))}
                   </motion.div>

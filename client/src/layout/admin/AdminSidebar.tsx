@@ -1,14 +1,14 @@
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { FC, Suspense, useState } from "react";
+import { FC, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import Modal from "../../components/Modal";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { menuItems } from "../../constants/AdminMenuSidebar";
 import { useUserContext } from "../../contexts/AuthContext";
-import { fetchAdminProfile } from "../../services/Admin";
+// import { fetchAdminProfile } from "../../services/Admin";
 import { logout } from "../../services/Auth";
-import AdminProfile from "./AdminProfile";
+// import AdminProfile from "./AdminProfile";
 import hotelLogo from "../../assets/hotel_logo.png";
 
 const AdminSidebar: FC = () => {
@@ -18,13 +18,13 @@ const AdminSidebar: FC = () => {
 
   const modalCancel = () => setIsModalOpen(false);
 
-  const { data: adminData, isLoading: profileLoading } = useQuery({
-    queryKey: ["adminProfile"],
-    queryFn: async () => {
-      const response = await fetchAdminProfile();
-      return response.data.data;
-    },
-  });
+  // const { data: adminData, isLoading: profileLoading } = useQuery({
+  //   queryKey: ["adminProfile"],
+  //   queryFn: async () => {
+  //     const response = await fetchAdminProfile();
+  //     return response.data.data;
+  //   },
+  // });
 
   const { mutate: logoutMutation, isPending: logoutLoading } = useMutation({
     mutationFn: logout,
@@ -68,17 +68,6 @@ const AdminSidebar: FC = () => {
           />
         </div>
 
-        {/* Admin profile */}
-        <div className="p-2 mb-4 bg-purple-100 rounded-md shadow-sm shadow-purple-300 w-full">
-          <Suspense fallback={<div>Loading...</div>}>
-            {profileLoading ? (
-              <div>Loading...</div>
-            ) : (
-              adminData && <AdminProfile admin={adminData} />
-            )}
-          </Suspense>
-        </div>
-
         {/* Menu items */}
         <div className="flex-grow overflow-y-auto p-2 w-full">
           <ul className="space-y-4">
@@ -88,9 +77,10 @@ const AdminSidebar: FC = () => {
                   to={item.link}
                   end={item.link === "/admin"}
                   className={({ isActive }) =>
-                    `flex items-center space-x-2 rounded-md cursor-pointer ${isActive
-                      ? "border-r-4 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
-                      : "hover:bg-purple-100/80 transition-colors duration-300"
+                    `flex items-center space-x-2 rounded-md cursor-pointer ${
+                      isActive
+                        ? "border-r-4 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
+                        : "hover:bg-purple-100/80 transition-colors duration-300"
                     } py-2 px-3`
                   }
                 >
@@ -126,8 +116,9 @@ const AdminSidebar: FC = () => {
         cancel={modalCancel}
         onConfirm={handleLogout}
         loading={logoutLoading}
-        className={`bg-red-600 text-white hover:bg-red-700 font-bold uppercase text-sm px-6 py-3 rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-300 cursor-pointer ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""
-          }`}
+        className={`bg-red-600 text-white hover:bg-red-700 font-bold uppercase text-sm px-6 py-3 rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-300 cursor-pointer ${
+          logoutLoading ? "opacity-50 cursor-not-allowed" : ""
+        }`}
         confirmText={
           logoutLoading ? (
             <>

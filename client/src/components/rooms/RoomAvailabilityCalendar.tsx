@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../Alert";
 
-// Local storage keys
 const ARRIVAL_DATE_KEY = "hotel_arrival_date";
 const DEPARTURE_DATE_KEY = "hotel_departure_date";
 
@@ -18,16 +17,13 @@ const RoomAvailabilityCalendar = () => {
     type: "success" | "error" | "info" | "warning";
   } | null>(null);
 
-  // Load dates from query params or localStorage on component mount
   useEffect(() => {
-    // First try to get from URL params (highest priority)
     const arrivalParam = searchParams.get("arrival");
     const departureParam = searchParams.get("departure");
 
     if (arrivalParam) {
       setArrivalDate(arrivalParam);
     } else {
-      // Fall back to localStorage
       const savedArrival = localStorage.getItem(ARRIVAL_DATE_KEY);
       if (savedArrival) setArrivalDate(savedArrival);
     }
@@ -35,13 +31,11 @@ const RoomAvailabilityCalendar = () => {
     if (departureParam) {
       setDepartureDate(departureParam);
     } else {
-      // Fall back to localStorage
       const savedDeparture = localStorage.getItem(DEPARTURE_DATE_KEY);
       if (savedDeparture) setDepartureDate(savedDeparture);
     }
   }, [searchParams]);
 
-  // Save dates to localStorage whenever they change
   useEffect(() => {
     if (arrivalDate) {
       localStorage.setItem(ARRIVAL_DATE_KEY, arrivalDate);
@@ -63,8 +57,7 @@ const RoomAvailabilityCalendar = () => {
   const handleCheckAvailability = () => {
     if (!arrivalDate || !departureDate) {
       setAlertInfo({
-        message:
-          "Please provide both arrival and departure dates. Please try again",
+        message: "Please provide both arrival and departure dates. Please try again",
         type: "error",
       });
       return;
@@ -96,7 +89,6 @@ const RoomAvailabilityCalendar = () => {
 
     setAlertInfo(null);
 
-    // Save to localStorage before navigating
     localStorage.setItem(ARRIVAL_DATE_KEY, arrivalDate);
     localStorage.setItem(DEPARTURE_DATE_KEY, departureDate);
 

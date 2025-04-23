@@ -233,7 +233,7 @@ const ManageUsers: FC = () => {
   return (
     <div className="min-h-[calc(100vh-25px)] p-3 md:p-3 overflow-y-auto container mx-auto">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl md:text-3xl font-semibold">Manage Admin</h1>
+        <h1 className="text-2xl md:text-3xl font-semibold">Manage Users</h1>
       </div>
 
       {users && users.length === 0 ? (
