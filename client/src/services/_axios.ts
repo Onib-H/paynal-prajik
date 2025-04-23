@@ -23,6 +23,37 @@ export const guest = axios.create({
   withCredentials: true,
 });
 
+// Add request/response interceptors for debugging
+guest.interceptors.request.use(
+  (config) => {
+    console.log(`Request to ${config.url}:`, {
+      method: config.method?.toUpperCase(),
+      headers: config.headers,
+      withCredentials: config.withCredentials
+    });
+    return config;
+  },
+  (error) => {
+    console.error('Request error:', error);
+    return Promise.reject(error);
+  }
+);
+
+guest.interceptors.response.use(
+  (response) => {
+    console.log(`Response from ${response.config.url}:`, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers
+    });
+    return response;
+  },
+  (error) => {
+    console.error('Response error:', error);
+    return Promise.reject(error);
+  }
+);
+
 export const staff = axios.create({
   baseURL: `${import.meta.env.VITE_API_URL}/api/staff`,
   headers: {

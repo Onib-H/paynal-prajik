@@ -7,7 +7,7 @@ import { Bar, Doughnut, Line } from "react-chartjs-2";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
 import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
-import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyCheckInsCheckOuts, fetchDailyNoShowsRejected, fetchDailyOccupancy, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
+import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyCheckInsCheckOuts, fetchDailyNoShowsRejected, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import "../../styles/print.css";
 import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
@@ -107,14 +107,14 @@ const AdminDashboard = () => {
       }),
   });
 
-  const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } = useQuery({
-    queryKey: ["dailyOccupancy", selectedMonth, selectedYear],
-    queryFn: () =>
-      fetchDailyOccupancy({
-        month: selectedMonth + 1,
-        year: selectedYear,
-      }),
-  });
+  // const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } = useQuery({
+  //   queryKey: ["dailyOccupancy", selectedMonth, selectedYear],
+  //   queryFn: () =>
+  //     fetchDailyOccupancy({
+  //       month: selectedMonth + 1,
+  //       year: selectedYear,
+  //     }),
+  // });
 
   const { data: checkinCheckoutData, isLoading: checkinsDataLoading } = useQuery({
     queryKey: ["dailyCheckInsCheckOuts", selectedMonth, selectedYear],
@@ -210,7 +210,7 @@ const AdminDashboard = () => {
     isLoading ||
     bookingStatusLoading ||
     bookingsDataLoading ||
-    occupancyDataLoading ||
+    // occupancyDataLoading ||
     checkinsDataLoading ||
     cancellationsDataLoading ||
     roomRevenueLoading ||
@@ -261,7 +261,7 @@ const AdminDashboard = () => {
 
   const dailyRevenueData = limitArrayToCurrentDay(data?.daily_revenue);
   const dailyBookingsData = limitArrayToCurrentDay(dailyBookingsResponse?.data);
-  const dailyOccupancyRates = limitArrayToCurrentDay(dailyOccupancyResponse?.data);
+  // const dailyOccupancyRates = limitArrayToCurrentDay(dailyOccupancyResponse?.data);
   const dailyCheckIns = limitArrayToCurrentDay(checkinCheckoutData?.checkins);
   const dailyCheckOuts = limitArrayToCurrentDay(checkinCheckoutData?.checkouts);
   const dailyCancellations = limitArrayToCurrentDay(dailyCancellationsResponse?.data);
@@ -367,19 +367,19 @@ const AdminDashboard = () => {
     ],
   };
 
-  const occupancyRateData = {
-    labels: daysInMonth,
-    datasets: [
-      {
-        label: 'Occupancy Rate (%)',
-        data: dailyOccupancyRates,
-        borderColor: '#FFC107',
-        backgroundColor: 'rgba(255, 193, 7, 0.1)',
-        fill: true,
-        tension: 0.3
-      }
-    ]
-  };
+  // const occupancyRateData = {
+  //   labels: daysInMonth,
+  //   datasets: [
+  //     {
+  //       label: 'Occupancy Rate (%)',
+  //       data: dailyOccupancyRates,
+  //       borderColor: '#FFC107',
+  //       backgroundColor: 'rgba(255, 193, 7, 0.1)',
+  //       fill: true,
+  //       tension: 0.3
+  //     }
+  //   ]
+  // };
 
   const checkInOutData = {
     labels: daysInMonth,
@@ -628,11 +628,11 @@ const AdminDashboard = () => {
           value={stats.activeBookings}
           borderColor="border-green-500"
         />
-        <StatCard
+        {/* <StatCard
           title="Pending Bookings"
           value={stats.pendingBookings}
           borderColor="border-yellow-500"
-        />
+        /> */}
         <StatCard
           title="Checked-in Guests"
           value={stats.checkedInCount}
@@ -643,7 +643,7 @@ const AdminDashboard = () => {
           value={stats.totalBookings}
           borderColor="border-blue-500"
         />
-        <StatCard
+        {/* <StatCard
           title="Occupancy Rate"
           value={`${Math.round(
             (stats.totalRooms > 0
@@ -651,7 +651,7 @@ const AdminDashboard = () => {
               : 0) * 100
           )}%`}
           borderColor="border-purple-500"
-        />
+        /> */}
         <StatCard
           title="Monthly Revenue"
           value={monthlyRevenueData?.formatted_revenue || "₱0.00"}
@@ -742,7 +742,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white shadow-lg rounded-lg p-4">
+          {/* <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">Occupancy Rate</h3>
             <div className="h-64">
               <Line
@@ -777,7 +777,7 @@ const AdminDashboard = () => {
                 }}
               />
             </div>
-          </div>
+          </div> */}
 
           <div className="bg-white shadow-lg rounded-lg p-4">
             <h3 className="text-lg font-medium mb-2 text-center">

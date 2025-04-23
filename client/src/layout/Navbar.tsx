@@ -1,9 +1,10 @@
-import { faChevronDown, faCircleUser, faRightToBracket, faSpinner } from "@fortawesome/free-solid-svg-icons";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { faBell, faChevronDown, faCircleUser, faRightToBracket, faSpinner, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 import { FC, useCallback, useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import DefaultImg from "../assets/Default_pfp.jpg";
 import hotelLogo from "../assets/hotel_logo.png";
 import Dropdown from "../components/Dropdown";
 import LoginModal from "../components/LoginModal";
@@ -14,21 +15,33 @@ import { navLinks } from "../constants/Navbar";
 import { useUserContext } from "../contexts/AuthContext";
 import SlotNavButton from "../motions/CustomNavbar";
 import { logout } from "../services/Auth";
-import { getGuestDetails } from "../services/Guest";
+import { getGuestDetails, getGuestNotifications, markAllNotificationsAsRead, markNotificationAsRead } from "../services/Guest";
+
+// Add notification interface
+interface NotificationType {
+  id: string;
+  message: string;
+  notification_type: string;
+  booking_id: string;
+  is_read: boolean;
+  created_at: string;
+}
 
 const Navbar: FC = () => {
   const [loginModal, setLoginModal] = useState(false);
   const [registerModal, setRegisterModal] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
-
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error" | "info" | "warning";
     icon: string;
   } | null>(null);
+  const [hasViewedNotifications, setHasViewedNotifications] = useState(false);
 
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const {
     isAuthenticated,
@@ -38,18 +51,58 @@ const Navbar: FC = () => {
     clearAuthState,
   } = useUserContext();
 
+  const {
+    data: notificationsData
+  } = useQuery({
+    queryKey: ["guestNotifications"],
+    queryFn: getGuestNotifications,
+    enabled: isAuthenticated,
+    staleTime: 15000
+  });
+
+  const notifications = notificationsData?.notifications || [];
+  const notificationCount = notificationsData?.unread_count || 0;
+
+  const markAsReadMutation = useMutation({
+    mutationFn: (notificationId: string) => markNotificationAsRead(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["guestNotifications"] });
+    }
+  });
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: markAllNotificationsAsRead,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["guestNotifications"] });
+    }
+  });
+
+  const handleNotificationClick = useCallback((notification: NotificationType) => {
+    if (!notification.is_read) {
+      markAsReadMutation.mutate(notification.id.toString());
+    }
+
+    navigate(`/guest/bookings?bookingId=${notification.booking_id}`);
+    setIsNotificationsOpen(false);
+  }, [navigate, markAsReadMutation]);
+
+  const handleMarkAllAsRead = useCallback(() => {
+    markAllAsReadMutation.mutate();
+  }, [markAllAsReadMutation]);
+
+  const toggleNotifications = useCallback(() => {
+    setIsNotificationsOpen(prev => !prev);
+    if (!hasViewedNotifications) {
+      setHasViewedNotifications(true);
+    }
+  }, [hasViewedNotifications]);
+
   const handleLogout = useCallback(() => {
-    logoutMutation()
+    logoutMutation();
   }, []);
 
-  const toggleLoginModal = useCallback(
-    () => setLoginModal((prev) => !prev),
-    []
-  );
-  const toggleRegisterModal = useCallback(
-    () => setRegisterModal((prev) => !prev),
-    []
-  );
+  const toggleLoginModal = useCallback(() => setLoginModal((prev) => !prev), []);
+  const toggleRegisterModal = useCallback(() => setRegisterModal((prev) => !prev), []);
 
   const toggleMenu = useCallback(() => setMenuOpen((prev) => !prev), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -59,16 +112,17 @@ const Navbar: FC = () => {
       if (e.key === "Escape") {
         if (loginModal) setLoginModal(false);
         if (registerModal) setRegisterModal(false);
+        if (isNotificationsOpen) setIsNotificationsOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [loginModal, registerModal]);
+  }, [loginModal, registerModal, isNotificationsOpen]);
 
   const { refetch: fetchGuestDetails } = useQuery({
     queryKey: ['guestDetails', userDetails?.id],
     queryFn: async () => {
-      if (!isAuthenticated || userDetails?.id) return null;
+      if (!isAuthenticated || !userDetails?.id) return null;
       const response = await getGuestDetails(userDetails.id);
       return response.data;
     },
@@ -86,8 +140,7 @@ const Navbar: FC = () => {
         throw new Error("Logout failed");
       }
     },
-    onError: (error) => {
-      console.error(`Failed to error: ${error}`);
+    onError: () => {
       setNotification({
         message: "Error during logout, but session cleared",
         type: "warning",
@@ -106,6 +159,21 @@ const Navbar: FC = () => {
   useEffect(() => {
     if (isAuthenticated && userDetails?.id) fetchGuestDetails();
   }, [isAuthenticated, userDetails?.id, fetchGuestDetails]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        queryClient.invalidateQueries({ queryKey: ["guestNotifications"] });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthenticated, queryClient]);
 
   return (
     <>
@@ -166,39 +234,322 @@ const Navbar: FC = () => {
                 </button>
               </div>
             ) : (
-              <Dropdown
-                options={[
-                  {
-                    label: "Account",
-                    onClick: () => navigate(`/guest/${userDetails?.id}`),
-                    icon: <FontAwesomeIcon icon={faCircleUser} />,
-                  },
-                  {
-                    label: "Log Out",
-                    onClick: () => setIsModalOpen(true),
-                    icon: <FontAwesomeIcon icon={faRightToBracket} />,
-                  },
-                ]}
-                position="bottom"
-              >
-                <div className="flex items-center bg-gray-50 rounded-full px-2 py-1">
-                  <img
-                    loading="lazy"
-                    src={profileImage || DefaultImg}
-                    alt="Profile"
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
-                  <FontAwesomeIcon
-                    icon={faChevronDown}
-                    className="ml-2 text-gray-700"
-                  />
+              <div className="flex items-center space-x-4">
+                {/* Notification Bell */}
+                <div className="relative">
+                  <motion.button
+                    className="p-2 relative flex items-center justify-center hover:bg-gray-200 rounded-full"
+                    onClick={toggleNotifications}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <motion.div
+                      animate={notificationCount > 0 ? {
+                        scale: [1, 1.1, 1],
+                        rotate: [0, -5, 5, -5, 0]
+                      } : {}}
+                      transition={{
+                        repeat: notificationCount > 0 ? Infinity : 0,
+                        repeatDelay: 5,
+                        duration: 0.5
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faBell} size="2x" className="text-purple-900/80" />
+                    </motion.div>
+                    {notificationCount > 0 && !hasViewedNotifications && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                        className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold font-montserrat rounded-full w-5 h-5 flex items-center justify-center"
+                      >
+                        {notificationCount > 9 ? '9+' : notificationCount}
+                      </motion.span>
+                    )}
+                  </motion.button>
+
+                  {/* Notifications Dropdown */}
+                  {isNotificationsOpen && (
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        className="absolute -right-28 mt-2 w-80 bg-white rounded-lg shadow-xl z-50 max-h-96 overflow-hidden flex flex-col"
+                      >
+                        <motion.div
+                          className="px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-indigo-50"
+                          initial={{ y: -10 }}
+                          animate={{ y: 0 }}
+                          transition={{ delay: 0.1 }}
+                        >
+                          <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                              <FontAwesomeIcon icon={faBell} className="text-purple-600" />
+                              Notifications
+                            </h3>
+                            {notificationCount > 0 && (
+                              <button
+                                onClick={handleMarkAllAsRead}
+                                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                Mark all as read
+                              </button>
+                            )}
+                          </div>
+                        </motion.div>
+                        <motion.div
+                          className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 divide-y divide-gray-100 flex-grow"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.2 }}
+                        >
+                          {notifications && notifications.length > 0 ? (
+                            <AnimatePresence>
+                              {notifications.map((notif: NotificationType, index: number) => (
+                                <motion.div
+                                  key={notif.id || index}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.05 * index }}
+                                  whileHover={{ backgroundColor: "rgba(243, 244, 246, 0.8)" }}
+                                  className={`px-4 py-3 cursor-pointer transition-colors ${!notif.is_read ? 'bg-blue-50 border-l-4 border-blue-600' : 'hover:bg-gray-50'}`}
+                                  onClick={() => handleNotificationClick(notif)}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className={`shrink-0 mt-1 rounded-full p-2.5 shadow-sm ${notif.notification_type === 'reserved' ? 'bg-green-100 text-green-800' :
+                                      notif.notification_type === 'no_show' ? 'bg-purple-100 text-purple-800' :
+                                        notif.notification_type === 'rejected' ? 'bg-red-100 text-red-800' :
+                                          notif.notification_type === 'checked_in' ? 'bg-blue-100 text-blue-800' :
+                                            notif.notification_type === 'checked_out' ? 'bg-teal-100 text-teal-800' :
+                                              notif.notification_type === 'cancelled' ? 'bg-amber-100 text-amber-800' :
+                                                'bg-blue-100 text-blue-800'
+                                      }`}>
+                                      <FontAwesomeIcon icon={
+                                        notif.notification_type === 'reserved' ? faCircleUser :
+                                          notif.notification_type === 'no_show' ? faCircleUser :
+                                            notif.notification_type === 'rejected' ? faCircleUser :
+                                              notif.notification_type === 'checked_in' ? faCircleUser :
+                                                notif.notification_type === 'checked_out' ? faCircleUser :
+                                                  notif.notification_type === 'cancelled' ? faCircleUser :
+                                                    faBell
+                                      } />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium text-gray-800 mb-0.5">{notif.message}</p>
+                                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                                        <span className="inline-block w-2 h-2 rounded-full bg-gray-300"></span>
+                                        {new Date(notif.created_at).toLocaleDateString('en-US', {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </AnimatePresence>
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="flex flex-col items-center justify-center py-12 px-4 text-center text-gray-500"
+                            >
+                              <FontAwesomeIcon icon={faBell} className="text-gray-300 text-4xl mb-3" />
+                              <p className="text-gray-600">No notifications yet</p>
+                              <p className="text-xs text-gray-400 mt-1">We'll notify you when something happens</p>
+                            </motion.div>
+                          )}
+                        </motion.div>
+                      </motion.div>
+                    </AnimatePresence>
+                  )}
                 </div>
-              </Dropdown>
+
+                <Dropdown
+                  options={[
+                    {
+                      label: "Account",
+                      onClick: () => navigate(`/guest/${userDetails?.id}`),
+                      icon: <FontAwesomeIcon icon={faCircleUser} />,
+                    },
+                    {
+                      label: "Log Out",
+                      onClick: () => setIsModalOpen(true),
+                      icon: <FontAwesomeIcon icon={faRightToBracket} />,
+                    },
+                  ]}
+                  position="bottom"
+                >
+                  <div className="flex items-center bg-gray-50 rounded-full px-2 py-1">
+                    <img
+                      loading="lazy"
+                      src={profileImage}
+                      alt="Profile"
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
+                    <FontAwesomeIcon
+                      icon={faChevronDown}
+                      className="ml-2 text-gray-700"
+                    />
+                  </div>
+                </Dropdown>
+              </div>
             )}
           </div>
 
           {/* Mobile Menu */}
           <div className="lg:hidden flex items-center">
+            {isAuthenticated && (
+              <div className="relative mr-4">
+                <motion.button
+                  className="p-2"
+                  onClick={toggleNotifications}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <motion.div
+                    animate={notificationCount > 0 ? {
+                      scale: [1, 1.1, 1],
+                      rotate: [0, -5, 5, -5, 0]
+                    } : {}}
+                    transition={{
+                      repeat: notificationCount > 0 ? Infinity : 0,
+                      repeatDelay: 5,
+                      duration: 0.5
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faBell} size="lg" className="text-gray-700" />
+                  </motion.div>
+                  {notificationCount > 0 && !hasViewedNotifications && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                      className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
+                    >
+                      {notificationCount > 9 ? '9+' : notificationCount}
+                    </motion.span>
+                  )}
+                </motion.button>
+
+                {/* Mobile Notifications Dropdown */}
+                {isNotificationsOpen && (
+                  <div className="fixed inset-0 bg-black/30 z-40" onClick={toggleNotifications}>
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, x: 300, y: 0 }}
+                        animate={{ opacity: 1, x: 0, y: 0 }}
+                        exit={{ opacity: 0, x: 300 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                        className="absolute right-4 top-16 w-80 bg-white rounded-lg shadow-xl z-50 max-h-[80vh] overflow-hidden flex flex-col"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <motion.div
+                          className="px-4 py-3 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50"
+                          initial={{ y: -20 }}
+                          animate={{ y: 0 }}
+                          transition={{ delay: 0.1 }}
+                        >
+                          <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                              <FontAwesomeIcon icon={faBell} className="text-purple-600" />
+                              Notifications
+                            </h3>
+                            {notificationCount > 0 && (
+                              <button
+                                onClick={handleMarkAllAsRead}
+                                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                              >
+                                Mark all as read
+                              </button>
+                            )}
+                          </div>
+                          <motion.button
+                            whileHover={{ scale: 1.1, rotate: 90 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={toggleNotifications}
+                            className="text-gray-500 hover:text-gray-700 transition-colors p-1.5 rounded-full hover:bg-gray-100"
+                          >
+                            <FontAwesomeIcon icon={faTimes} />
+                          </motion.button>
+                        </motion.div>
+
+                        <motion.div
+                          className="overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 divide-y divide-gray-100 flex-grow"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.2 }}
+                        >
+                          {notifications && notifications.length > 0 ? (
+                            <AnimatePresence>
+                              {notifications.map((notif: NotificationType, index: number) => (
+                                <motion.div
+                                  key={notif.id || index}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.05 * index }}
+                                  whileHover={{ backgroundColor: "rgba(243, 244, 246, 0.8)" }}
+                                  className={`px-4 py-3 cursor-pointer transition-colors ${!notif.is_read ? 'bg-blue-50 border-l-4 border-blue-600' : 'hover:bg-gray-50'}`}
+                                  onClick={() => handleNotificationClick(notif)}
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className={`shrink-0 mt-1 rounded-full p-2.5 shadow-sm ${notif.notification_type === 'reserved' ? 'bg-green-100 text-green-800' :
+                                      notif.notification_type === 'no_show' ? 'bg-purple-100 text-purple-800' :
+                                        notif.notification_type === 'rejected' ? 'bg-red-100 text-red-800' :
+                                          notif.notification_type === 'checked_in' ? 'bg-blue-100 text-blue-800' :
+                                            notif.notification_type === 'checked_out' ? 'bg-teal-100 text-teal-800' :
+                                              notif.notification_type === 'cancelled' ? 'bg-amber-100 text-amber-800' :
+                                                'bg-blue-100 text-blue-800'
+                                      }`}>
+                                      <FontAwesomeIcon icon={
+                                        notif.notification_type === 'reserved' ? faCircleUser :
+                                          notif.notification_type === 'no_show' ? faCircleUser :
+                                            notif.notification_type === 'rejected' ? faCircleUser :
+                                              notif.notification_type === 'checked_in' ? faCircleUser :
+                                                notif.notification_type === 'checked_out' ? faCircleUser :
+                                                  notif.notification_type === 'cancelled' ? faCircleUser :
+                                                    faBell
+                                      } />
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium text-gray-800 mb-0.5">{notif.message}</p>
+                                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                                        <span className="inline-block w-2 h-2 rounded-full bg-gray-300"></span>
+                                        {new Date(notif.created_at).toLocaleDateString('en-US', {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              ))}
+                            </AnimatePresence>
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              className="flex flex-col items-center justify-center py-12 px-4 text-center text-gray-500"
+                            >
+                              <FontAwesomeIcon icon={faBell} className="text-gray-300 text-4xl mb-3" />
+                              <p className="text-gray-600">No notifications yet</p>
+                              <p className="text-xs text-gray-400 mt-1">We'll notify you when something happens</p>
+                            </motion.div>
+                          )}
+                        </motion.div>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            )}
+
             <button onClick={toggleMenu} className="text-2xl p-2">
               <i className="fa fa-bars"></i>
             </button>
@@ -236,8 +587,7 @@ const Navbar: FC = () => {
                     <NavLink
                       to={link.link}
                       className={({ isActive }) =>
-                        `flex items-center ${
-                          isActive ? "text-purple-600 font-bold" : ""
+                        `flex items-center ${isActive ? "text-purple-600 font-bold" : ""
                         }`
                       }
                     >
@@ -305,9 +655,8 @@ const Navbar: FC = () => {
         description="Are you sure you want to log out?"
         cancel={() => setIsModalOpen(!isModalOpen)}
         onConfirm={handleLogout}
-        className={`bg-red-600 text-white active:bg-red-700 font-bold uppercase px-4 py-2 cursor-pointer rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 transition-all duration-150 ${
-          logoutLoading ? "opacity-50 cursor-not-allowed" : ""
-        }`}
+        className={`bg-red-600 text-white active:bg-red-700 font-bold uppercase px-4 py-2 cursor-pointer rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 transition-all duration-150 ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         loading={logoutLoading}
         confirmText={
           logoutLoading ? (

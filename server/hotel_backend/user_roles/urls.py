@@ -25,4 +25,9 @@ urlpatterns = [
     path('guest/<int:id>', views.user_details, name='user_details'),
     path('guest/update/<int:id>', views.update_user_details, name='update_user_details'),
     path('guest/bookings', views.get_guest_bookings, name='get_guest_bookings'),
+    
+    # Notifications using /guest
+    path('guest/notifications', views.get_notifications, name='get_notifications'),
+    path('guest/notifications/<int:id>/read', views.mark_notification_read, name='mark_notification_read'),
+    path('guest/notifications/read-all', views.mark_all_notifications_read, name='mark_all_notifications_read'),
 ]

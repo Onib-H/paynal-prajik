@@ -78,10 +78,9 @@ def bookings_list(request):
     try:
         if request.method == 'GET':
             if not request.user.is_authenticated:
-                return Response(
-                    {"error": "Authentication required to view bookings"}, 
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
+                return Response({
+                    "error": "Authentication required to view bookings"
+                }, status=status.HTTP_401_UNAUTHORIZED)
 
             page = request.query_params.get('page', 1)
             page_size = request.query_params.get('page_size', 10)
@@ -593,7 +592,6 @@ def check_max_bookings(request):
     user = request.user
     today = timezone.now().date()
     
-    # Get bookings created today by this user
     bookings_today = Bookings.objects.filter(
         user=user,
         created_at__date=today
@@ -617,7 +615,6 @@ def check_can_book_today(request):
     today = timezone.now().date()
     
     if user.role != 'guest':
-        # Admin users can always make bookings
         return Response({
             'can_book': True
         })

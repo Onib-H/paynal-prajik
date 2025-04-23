@@ -185,11 +185,8 @@ const ManageAreas = () => {
     }
 
     try {
-      if (!areaData.id) {
-        await addAreaMutation.mutateAsync(formData);
-      } else {
-        await editAreaMutation.mutateAsync({ areaId: areaData.id, formData });
-      }
+      if (!areaData.id) await addAreaMutation.mutateAsync(formData);
+      else await editAreaMutation.mutateAsync({ areaId: areaData.id, formData });
     } catch (error) {
       console.error("Error saving area:", error);
       throw error;
