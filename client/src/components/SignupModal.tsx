@@ -126,10 +126,10 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
     },
     onError: (error: any) => {
       console.error(`Failed to register: ${error}`);
+      const { data, status } = error.response;
       if (!error.response) {
-        setError("root", { message: "Somethin went wrong. Please try again later" });
+        setError("root", { message: data.error.general });
       } else {
-        const { data, status } = error.response;
         if (status === 500) {
           const message = data.error;
           setError("root", { message: message })
