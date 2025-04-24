@@ -139,6 +139,9 @@ export const getStatusColor = (status: string): string => {
   }
 };
 
+/**
+ * Calculate the number of days until the next stay
+ */
 export const calculateDaysUntilNextStay = (bookings: any[]): number | string => {
   if (!bookings || bookings.length === 0) return "N/A";
 
@@ -159,4 +162,19 @@ export const calculateDaysUntilNextStay = (bookings: any[]): number | string => 
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   return diffDays;
+}
+
+/**
+ * Format time into 12-hour format
+ */
+export const formatTime = (time: string): string => {
+  if (!time) return "";
+
+  const [hours, minutes] = time.split(":");
+  const hour = parseInt(hours, 10);
+
+  const period = hour >= 12 ? "PM" : "AM";
+  const formattedHour = hour % 12 || 12;
+
+  return `${formattedHour}:${minutes} ${period}`;
 }

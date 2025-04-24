@@ -10,16 +10,8 @@ import Modal from "../components/Modal";
 import SignupModal from "../components/SignupModal";
 import { useUserContext } from "../contexts/AuthContext";
 import EventLoader from "../motions/loaders/EventLoader";
-import {
-  checkCanBookToday,
-  createReservation,
-  fetchAreaById,
-} from "../services/Booking";
-import {
-  AreaData,
-  FormData,
-  ReservationFormData,
-} from "../types/BookingClient";
+import { checkCanBookToday, createReservation, fetchAreaById } from "../services/Booking";
+import { AreaData, FormData, ReservationFormData } from "../types/BookingClient";
 
 const ConfirmVenueBooking = () => {
   const navigate = useNavigate();
@@ -34,20 +26,18 @@ const ConfirmVenueBooking = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [pendingFormData, setPendingFormData] =
-    useState<ReservationFormData | null>(null);
+  const [pendingFormData, setPendingFormData] = useState<ReservationFormData | null>(null);
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | any>(null);
   const [canBookToday, setCanBookToday] = useState<boolean>(true);
-  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(
-    null
-  );
+  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch
   } = useForm<FormData>({
     mode: "onBlur",
     defaultValues: {
@@ -55,9 +45,15 @@ const ConfirmVenueBooking = () => {
       lastName: userDetails.last_name || "",
       phoneNumber: "",
       specialRequests: "",
-      numberOfGuests: "1",
+      numberOfGuests: 1,
     },
   });
+
+  const firstName = watch("firstName");
+  const lastName = watch("lastName");
+  const phoneNumber = watch("phoneNumber");
+  const numberOfGuests = watch("numberOfGuests");
+  const specialRequests = watch("specialRequests");
 
   const { data: areaData, isLoading } = useQuery<AreaData>({
     queryKey: ["area", areaId],
@@ -120,12 +116,11 @@ const ConfirmVenueBooking = () => {
       "November",
       "December",
     ];
-    const formatted = `${day}, ${date.getDate()} ${
-      monthNames[date.getMonth()]
-    }, ${date.getFullYear()} at ${date.getHours() % 12 || 12}:${date
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")} ${date.getHours() >= 12 ? "PM" : "AM"}`;
+    const formatted = `${day}, ${date.getDate()} ${monthNames[date.getMonth()]
+      }, ${date.getFullYear()} at ${date.getHours() % 12 || 12}:${date
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")} ${date.getHours() >= 12 ? "PM" : "AM"}`;
     return formatted;
   };
 
@@ -163,7 +158,7 @@ const ConfirmVenueBooking = () => {
       totalPrice: parseFloat(totalPrice),
       status: "pending",
       isVenueBooking: true,
-      numberOfGuests: parseInt(data.numberOfGuests),
+      numberOfGuests: data.numberOfGuests,
     };
 
     setPendingFormData(reservationData);
@@ -200,7 +195,7 @@ const ConfirmVenueBooking = () => {
       console.error(`Error creating reservation: ${error}`);
       setError(
         error.response?.data?.message ||
-          "An error occurred while creating the reservation."
+        "An error occurred while creating the reservation."
       );
     } finally {
       setIsSubmitting(false);
@@ -275,11 +270,10 @@ const ConfirmVenueBooking = () => {
       <Modal
         icon="fa-solid fa-book"
         title="Confirm Your Area Booking"
-        description={`You're about to book ${
-          areaData?.area_name
-        } for ${formattedStartTime} to ${formattedEndTime}. The total price is ₱${parseFloat(
-          totalPrice || "0"
-        ).toLocaleString()}. Would you like to proceed?`}
+        description={`You're about to book ${areaData?.area_name
+          } for ${formattedStartTime} to ${formattedEndTime}. The total price is ₱${parseFloat(
+            totalPrice || "0"
+          ).toLocaleString()}. Would you like to proceed?`}
         cancel={() => setShowConfirmModal(false)}
         onConfirm={handleConfirmBooking}
         confirmText={
@@ -418,7 +412,7 @@ const ConfirmVenueBooking = () => {
                 className="text-xl font-semibold mb-4 text-blue-800"
                 variants={itemVariants}
               >
-                Your details
+                Enter Your Booking Details
               </motion.h2>
 
               {/* Name Fields */}
@@ -444,9 +438,8 @@ const ConfirmVenueBooking = () => {
                         message: "Name must be at least 2 characters long",
                       },
                     })}
-                    className={`w-full px-3 py-2 border ${
-                      errors.firstName ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.firstName ? "border-red-500" : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.firstName && (
                     <motion.p
@@ -480,9 +473,8 @@ const ConfirmVenueBooking = () => {
                         message: "Name must be at least 2 characters long",
                       },
                     })}
-                    className={`w-full px-3 py-2 border ${
-                      errors.lastName ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.lastName ? "border-red-500" : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.lastName && (
                     <motion.p
@@ -519,9 +511,8 @@ const ConfirmVenueBooking = () => {
                         return true;
                       },
                     })}
-                    className={`w-full px-3 py-2 border ${
-                      errors.phoneNumber ? "border-red-500" : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.phoneNumber ? "border-red-500" : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.phoneNumber && (
                     <p className="text-red-500 text-sm mt-1">
@@ -557,11 +548,10 @@ const ConfirmVenueBooking = () => {
                       },
                     })}
                     min="1"
-                    className={`w-full px-3 py-2 border ${
-                      errors.numberOfGuests
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.numberOfGuests
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.numberOfGuests && (
                     <p className="text-red-500 text-sm mt-1">
@@ -577,7 +567,7 @@ const ConfirmVenueBooking = () => {
               </div>
 
               {/* Valid ID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 gap-4 mb-4">
                 <div>
                   <label
                     htmlFor="validId"
@@ -593,9 +583,8 @@ const ConfirmVenueBooking = () => {
                       onChange: onFileChange,
                     })}
                     accept="image/*"
-                    className={`w-full py-2 border pl-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300 ${
-                      errors.validId ? "border-red-500" : "border-gray-300"
-                    }`}
+                    className={`w-full py-2 border pl-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300 ${errors.validId ? "border-red-500" : "border-gray-300"
+                      }`}
                   />
                   {errors.validId && (
                     <p className="text-red-500 text-sm mt-1">
@@ -606,8 +595,8 @@ const ConfirmVenueBooking = () => {
                   {validIdPreview && (
                     <div className="mt-2 relative">
                       <div
-                        className="relative border rounded-md overflow-hidden"
-                        style={{ height: "120px" }}
+                        className="relative overflow-hidden"
+                      // style={{ height: "120px" }}
                       >
                         <img
                           loading="lazy"
@@ -699,11 +688,10 @@ const ConfirmVenueBooking = () => {
                   type="button"
                   onClick={() => handleSubmit(onSubmit)()}
                   disabled={isSubmitting}
-                  className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${
-                    isSubmitting
-                      ? "bg-blue-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
-                  }`}
+                  className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${isSubmitting
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
+                    }`}
                   whileTap={{ scale: 0.98 }}
                   whileHover={{
                     boxShadow:
@@ -740,7 +728,7 @@ const ConfirmVenueBooking = () => {
                 <motion.img
                   loading="lazy"
                   src={areaData?.area_image}
-                  alt={areaData?.area_name || "Venue"}
+                  alt={areaData?.area_name}
                   className="w-full h-40 object-cover rounded-md"
                   whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.3 }}
@@ -752,25 +740,25 @@ const ConfirmVenueBooking = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                {areaData?.area_name || "Venue"}
+                {areaData?.area_name}
               </motion.h3>
 
               {/* Additional Venue Details */}
               <motion.div
-                className="border-t pt-3 space-y-2 mt-2"
+                className="border-t pt-3 space-y-1"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Capacity:</span>
-                  <span className="font-semibold">
+                  <span className="text-gray-600 text-lg">Max Guests:</span>
+                  <span className="font-semibold text-lg">
                     {areaData?.capacity} people
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Price:</span>
-                  <span className="font-semibold">
+                  <span className="text-gray-600 text-lg">Price:</span>
+                  <span className="font-semibold text-lg">
                     {areaData?.price_per_hour}
                   </span>
                 </div>
@@ -788,30 +776,71 @@ const ConfirmVenueBooking = () => {
               transition={{ type: "spring", stiffness: 100, damping: 10 }}
             >
               <motion.h3
-                className="text-lg font-semibold mb-4 text-blue-800"
+                className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-800 bg-clip-text text-transparent"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.3 }}
               >
-                Your booking details
+                Your Booking Details
               </motion.h3>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 gap-2 mb-2">
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <p className="text-lg text-gray-800 font-semibold">Start:</p>
-                  <p className="font-semibold">{formattedStartTime}</p>
+                  <p className="text-lg text-gray-800">
+                    Name: <span className="font-semibold">{firstName} {lastName}</span>
+                  </p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <p className="text-lg text-gray-800 font-semibold">End:</p>
-                  <p className="font-semibold">{formattedEndTime}</p>
+                  <p className="text-lg text-gray-800">
+                    Phone Number: <span className="font-semibold">{phoneNumber}</span>
+                  </p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-lg text-gray-800">
+                    Number of Guests: <span className="font-semibold">{numberOfGuests} {numberOfGuests <= 1 ? "guest" : "guests"}</span>
+                  </p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-lg text-gray-800">
+                    Start: <span className="font-semibold">{formattedStartTime}</span>
+                  </p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-lg text-gray-800">
+                    End: <span className="font-semibold">{formattedEndTime}</span>
+                  </p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-lg text-gray-800">
+                    Special Requests: 
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-semibold">{specialRequests}</span>
+                  </p>
                 </motion.div>
               </div>
             </motion.div>
@@ -827,7 +856,7 @@ const ConfirmVenueBooking = () => {
               transition={{ type: "spring", stiffness: 100, damping: 10 }}
             >
               <motion.h3
-                className="text-xl font-semibold mb-4 text-blue-800"
+                className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-800 bg-clip-text text-transparent"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
@@ -847,7 +876,7 @@ const ConfirmVenueBooking = () => {
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
                 >
-                  ₱{parseFloat(totalPrice || "0").toLocaleString()}
+                  ₱{parseFloat(totalPrice).toLocaleString()}
                 </motion.span>
               </motion.div>
             </motion.div>
@@ -857,11 +886,10 @@ const ConfirmVenueBooking = () => {
                 type="button"
                 onClick={() => handleSubmit(onSubmit)()}
                 disabled={isSubmitting}
-                className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex items-center justify-center ${
-                  isSubmitting
-                    ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
-                }`}
+                className={`w-full py-3 px-6 rounded-md text-white text-center text-xl font-semibold flex items-center justify-center ${isSubmitting
+                  ? "bg-blue-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-600 to-indigo-600 cursor-pointer hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
+                  }`}
                 variants={itemVariants}
                 whileTap={{ scale: 0.98 }}
                 whileHover={{

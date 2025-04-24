@@ -12,17 +12,8 @@ import SignupModal from "../components/SignupModal";
 import { useUserContext } from "../contexts/AuthContext";
 import EventLoader from "../motions/loaders/EventLoader";
 import { checkCanBookToday, createBooking, fetchRoomById } from "../services/Booking";
-import { BookingFormData, RoomData } from "../types/BookingClient";
-
-interface ConfirmBookingFormValues {
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  numberOfGuests: number;
-  validId: FileList;
-  arrivalTime: string;
-  specialRequests: string;
-}
+import { BookingFormData, RoomData, ConfirmBookingFormValues } from "../types/BookingClient";
+import { formatTime } from "../utils/formatters";
 
 const ConfirmBooking = () => {
   const navigate = useNavigate();
@@ -87,6 +78,7 @@ const ConfirmBooking = () => {
     register,
     handleSubmit: validateForm,
     formState: { errors },
+    watch
   } = useForm<ConfirmBookingFormValues>({
     mode: "onBlur",
     defaultValues: {
@@ -98,6 +90,12 @@ const ConfirmBooking = () => {
       specialRequests: "",
     },
   });
+
+  const firstName = watch("firstName");
+  const lastName = watch("lastName");
+  const phoneNumber = watch("phoneNumber");
+  const numberOfGuests = watch("numberOfGuests");
+  const arrivalTime = watch("arrivalTime");
 
   const { data: roomData, isLoading } = useQuery<RoomData>({
     queryKey: ["room", roomId],
@@ -184,7 +182,7 @@ const ConfirmBooking = () => {
   };
 
   const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
-    console.log(`Submitting booking data: ${data}`);
+    console.table(`Submitting booking data: ${data}`);
     setGeneralError(null);
     if (!roomData || isSubmitting) return;
 
@@ -495,7 +493,7 @@ const ConfirmBooking = () => {
                 className="text-xl font-semibold mb-4 text-blue-800"
                 variants={itemVariants}
               >
-                Your details
+                Enter Your Booking Details
               </motion.h2>
 
               {/* Name Fields */}
@@ -925,71 +923,69 @@ const ConfirmBooking = () => {
               transition={{ type: "spring", stiffness: 100, damping: 10 }}
             >
               <motion.h3
-                className="text-lg font-semibold mb-4 text-blue-800"
+                className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-800 bg-clip-text text-transparent"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
+                transition={{ delay: 0.3 }}
               >
-                Your booking details
+                Your Booking Details
               </motion.h3>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 gap-2 mb-2">
                 <motion.div
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <p className="text-lg text-gray-800 font-semibold">
-                    Check-in :
+                  <p className="text-lg text-gray-800">
+                    Name: <span className="font-semibold">{firstName} {lastName}</span>
                   </p>
-                  <p className="font-semibold">{formattedArrival}</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-lg text-gray-800">
+                    Phone Number: <span className="font-semibold">{phoneNumber}</span>
+                  </p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-lg text-gray-800">
+                    Number of Guest(s): <span className="font-semibold">{numberOfGuests} {numberOfGuests <= 1 ? "guest" : "guests"}</span>
+                  </p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-lg text-gray-800">
+                    Check-in: <span className="font-semibold">{formattedArrival}</span>
+                  </p>
                 </motion.div>
                 <motion.div
                   initial={{ opacity: 0, x: 10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <p className="text-lg text-gray-800 font-semibold">
-                    Check-out :
+                  <p className="text-lg text-gray-800">
+                    Check-out: <span className="font-semibold">{formattedDeparture}</span>
                   </p>
-                  <p className="font-semibold">{formattedDeparture}</p>
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <p className="text-lg text-gray-800">
+                    Arrival Time: <span className="font-semibold">{arrivalTime ? formatTime(arrivalTime) : "Not specified"}</span>
+                  </p>
                 </motion.div>
               </div>
-
-              <motion.div
-                className="mb-4"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-              >
-                <p className="text-lg text-gray-800 font-semibold">
-                  Arrival Time :
-                </p>
-                <p className="font-semibold">
-                  {errors.arrivalTime
-                    ? new Date(
-                      `2000-01-01T${errors.arrivalTime}`
-                    ).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                    : "Not specified"}
-                </p>
-              </motion.div>
-
-              <motion.div
-                className="mb-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-              >
-                <p className="text-md font-medium">
-                  {roomData?.room_name || "Deluxe Room"}
-                </p>
-                <p className="text-md text-gray-600">
-                  {nights} night{nights > 1 ? "s" : ""}
-                </p>
-              </motion.div>
             </motion.div>
 
             {/* Pricing Summary */}
@@ -1003,7 +999,7 @@ const ConfirmBooking = () => {
               transition={{ type: "spring", stiffness: 100, damping: 10 }}
             >
               <motion.h3
-                className="text-xl font-semibold mb-4 text-blue-800"
+                className="text-2xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-800 bg-clip-text text-transparent"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}

@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { sendRegisterOtp } from "../services/Auth";
 import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
+import TermsModal from "./TermsModal";
 
 interface SignupModalProps {
   toggleRegisterModal: () => void;
@@ -21,6 +22,8 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [showTermsModal, setShowTermsModal] = useState<boolean>(false);
+  const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;
@@ -36,8 +39,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
   const navigate = useNavigate();
 
   const togglePassword = () => setPasswordVisible(!passwordVisible);
-  const toggleConfirmPassword = () =>
-    setConfirmPasswordVisible(!confirmPasswordVisible);
+  const toggleConfirmPassword = () => setConfirmPasswordVisible(!confirmPasswordVisible);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value);
@@ -137,6 +139,12 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
   const handleRegisterSubmit = (e: FormEvent) => {
     e.preventDefault();
     setErrors({});
+
+    if (!termsAgreed) {
+      setShowTermsModal(true);
+      return;
+    }
+
     registerMutation();
   };
 
@@ -335,7 +343,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                       Registering...
                     </div>
                   ) : (
-                    "Register"
+                    termsAgreed ? "Register" : "Review Terms to Register"
                   )}
                 </motion.button>
 
@@ -349,7 +357,10 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                     <span className="px-3 text-gray-500 text-sm">OR</span>
                     <hr className="w-full border-gray-300" />
                   </div>
-                  <GoogleButton text="Sign up with Google" />
+                  <GoogleButton 
+                    text="Sign up with Google"
+                    requireTermsAgreement={true}
+                  />
                 </motion.div>
               </form>
 
@@ -375,6 +386,11 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
           </motion.div>
         </motion.section>
       </AnimatePresence>
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onAgree={() => setTermsAgreed(true)}
+      />
       {notification && (
         <Notification
           icon={notification.icon}
