@@ -25,3 +25,4 @@ date-fns
 react-error-boundary
 jspdf
 @react-oauth/google
+@types/websocket

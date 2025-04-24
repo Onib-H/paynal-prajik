@@ -99,7 +99,7 @@ export const getGuestNotifications = async () => {
   }
 };
 
-export const markNotificationAsRead = async (id: string) => {
+export const markNotificationAsRead = async (id: string) => { 
   try {
     const response = await guest.patch(`/notifications/${id}/read`, {}, {
       withCredentials: true

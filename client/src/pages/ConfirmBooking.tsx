@@ -209,7 +209,6 @@ const ConfirmBooking = () => {
   };
 
   const handleConfirmBooking = async () => {
-    console.log(`Pending form data:`, pendingFormData);
     if (!pendingFormData) return;
     setShowConfirmModal(false);
     setIsSubmitting(true);

@@ -31,17 +31,22 @@ SECRET_KEY = 'django-insecure-+b0(xsw8z5jwpu=+p1+=pom=xb59ry+iu+t9kdwdo6wi@9%k4r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    os.getenv('CLIENT_URL', 'http://localhost:5173'),
+]
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt',
@@ -69,7 +74,26 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
-    os.getenv('CLIENT_URL')
+    'http://localhost:5173',
+    os.getenv('CLIENT_URL'),
+]
+
+# Allow WebSocket connections
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'connection',
+    'upgrade',
+    'sec-websocket-extensions',
+    'sec-websocket-key',
+    'sec-websocket-version',
 ]
 
 ROOT_URLCONF = 'hotel_backend.urls'
@@ -106,7 +130,13 @@ PASSWORD_HASHERS = [
 ]
 
 WSGI_APPLICATION = 'hotel_backend.wsgi.application'
+ASGI_APPLICATION = 'hotel_backend.asgi.application'
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

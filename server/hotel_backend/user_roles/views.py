@@ -16,6 +16,8 @@ from booking.serializers import BookingSerializer
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from property.serializers import AreaSerializer
 from .google.oauth import google_auth as google_oauth_util
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 import os
 import uuid
 import requests
@@ -41,7 +43,7 @@ def save_google_profile_image_to_cloudinary(image_url):
         return result['secure_url']
     except Exception as e:
         return None
-    
+
 def create_notification(user, booking, notification_type):
     try:        
         messages = {
@@ -66,8 +68,69 @@ def create_notification(user, booking, notification_type):
         )
         
         return notification
-    except Exception as e:
+    except Exception:
         return None
+
+def create_booking_notification(booking, new_status):
+    try:
+        notification_types = {
+            'reserved': {
+                'type': 'reserved',
+                'message': lambda b: f"Your booking for {b.property_name} has been confirmed!"
+            },
+            'no_show': {
+                'type': 'no_show',
+                'message': lambda b: f"You did not show up for your booking at {b.property_name}."
+            },
+            'rejected': {
+                'type': 'rejected',
+                'message': lambda b: f"Your booking for {b.property_name} has been rejected. Click to see booking details."
+            },
+            'checked_in': {
+                'type': 'checked_in',
+                'message': lambda b: f"You have been checked in to {b.property_name}. Welcome!"
+            },
+            'checked_out': {
+                'type': 'checked_out',
+                'message': lambda b: f"You have been checked out from {b.property_name}. Thank you for staying with us!"
+            },
+            'cancelled': {
+                'type': 'cancelled',
+                'message': lambda b: f"Your booking for {b.property_name} has been cancelled. Click to see details."
+            }
+        }
+        
+        notification_config = notification_types.get(new_status)
+        if notification_config:
+            notification = Notification.objects.create(
+                user=booking.user,
+                message=notification_config['message'](booking),
+                notification_type=notification_config['type'],
+                booking=booking
+            )
+            
+            try:
+                channel_layer = get_channel_layer()
+                notification_data = NotificationSerializer(notification).data
+                
+                async_to_sync(channel_layer.group_send)(
+                    f"notifications_{booking.user.id}",
+                    {
+                        "type": "send_notification",
+                        "notification": notification_data,
+                        "unread_count": Notification.objects.filter(
+                            user=booking.user,
+                            is_read=False
+                        ).count()
+                    }
+                )
+            except Exception:
+                return None
+            return notification
+    except Exception:
+        return None
+    
+    return None
 
 # Create your views here.
 @api_view(['POST'])
@@ -788,6 +851,16 @@ def mark_notification_read(request, id):
     notification = get_object_or_404(Notification, id=id, user=request.user)
     notification.is_read = True
     notification.save()
+    
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"notifications_{request.user.id}",
+        {
+            'type': 'update_unread_count',
+            'count': Notification.objects.filter(user=request.user, is_read=False).count()
+        }
+    )
+    
     return Response({
         'message': 'Notification marked as read'
     }, status=status.HTTP_200_OK)
@@ -797,6 +870,15 @@ def mark_notification_read(request, id):
 def mark_all_notifications_read(request):
     try:
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+        
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            f"notifications_{request.user.id}",
+            {
+                'type': 'update_unread_count',
+                'count': 0
+            }
+        )
         return Response({
             'message': 'All notifications marked as read'
         }, status=status.HTTP_200_OK)

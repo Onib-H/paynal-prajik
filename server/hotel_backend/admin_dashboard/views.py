@@ -10,7 +10,7 @@ from booking.models import Bookings, Reservations, Transactions
 from booking.serializers import BookingSerializer
 from user_roles.models import CustomUsers
 from user_roles.serializers import CustomUserSerializer
-from user_roles.views import create_notification
+from user_roles.views import create_notification, create_booking_notification
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q, Count, Sum
 from datetime import datetime, date, timedelta
@@ -721,58 +721,20 @@ def update_booking_status(request, booking_id):
     
     booking.property_name = property_name
     
-    if status_value == 'reserved' and previous_status != 'reserved':
+    if status_value != previous_status:
         try:
-            user_email = booking.user.email
-            send_booking_confirmation_email(user_email, serializer.data)
-            create_notification(booking.user, booking, 'reserved')
-        except Exception as e:
-            return Response({
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    elif status_value == 'rejected' and previous_status != 'rejected':
-        try:
-            user_email = booking.user.email
-            send_booking_rejection_email(user_email, serializer.data)
-            create_notification(booking.user, booking, 'rejected')
-        except Exception as e:
-            return Response({
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    elif status_value == 'no_show' and previous_status != 'no_show':
-        try:
-            create_notification(booking.user, booking, 'no_show')
-        except Exception as e:
-            return Response({
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    elif status_value == 'checked_in' and previous_status != 'checked_in':
-        try:
-            create_notification(booking.user, booking, 'checked_in')
+            create_booking_notification(booking, status_value)
+            if status_value == 'reserved':
+                user_email = booking.user.email
+                send_booking_confirmation_email(user_email, serializer.data)
+            elif status_value == 'rejected':
+                user_email = booking.user.email
+                send_booking_rejection_email(user_email, serializer.data)
         except Exception as e:
             return Response({
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
-    elif status_value == 'checked_out' and previous_status != 'checked_out':
-        try:
-            create_notification(booking.user, booking, 'checked_out')
-        except Exception as e:
-            return Response({
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-    elif status_value == 'cancelled' and previous_status != 'cancelled':
-        try:
-            create_notification(booking.user, booking, 'cancelled')
-        except Exception as e:
-            return Response({
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
     if booking.status not in ['reserved', 'checked_in'] and (status_value == 'cancelled' or status_value == 'rejected'):
         if booking.is_venue_booking and booking.area:
             area = booking.area
