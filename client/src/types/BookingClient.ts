@@ -55,7 +55,7 @@ export interface BookingFormData {
     checkOut: string | null;
     status?: "pending" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
     totalPrice?: number;
-    arrivalTime?: string;
+    arrivalTime: string;
     numberOfGuests?: number;
 }
 
@@ -93,7 +93,7 @@ export interface FormData {
     emailAddress: string;
     validId: FileList;
     specialRequests: string;
-    numberOfGuests: string;
+    numberOfGuests: number;
 }
 
 export interface AmenityObject {
@@ -157,4 +157,14 @@ export interface BookingsByDate {
         bookingId: number;
         unavailableTimes?: UnavailableTime[];
     };
+}
+
+export interface ConfirmBookingFormValues {
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    numberOfGuests: number;
+    validId: FileList;
+    arrivalTime: string;
+    specialRequests: string;
 }

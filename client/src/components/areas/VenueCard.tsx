@@ -1,4 +1,4 @@
-import { AlertCircle, Book, Eye, Users, PhilippinePeso } from "lucide-react";
+import { AlertCircle, Book, Eye } from "lucide-react";
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
@@ -8,7 +8,6 @@ interface AreaCardProps {
   id: number;
   title: string;
   priceRange: string;
-  capacity?: number;
   image: string;
   description: string;
 }
@@ -17,7 +16,6 @@ const VenueCard: FC<AreaCardProps> = ({
   id,
   title,
   priceRange,
-  capacity,
   image,
   description,
 }) => {
@@ -77,14 +75,6 @@ const VenueCard: FC<AreaCardProps> = ({
             <div className="w-8 h-0.5 bg-blue-300 mt-2 rounded-full"></div>
           </div>
         </div>
-
-        {/* Discrete corner indicator */}
-        <div className="absolute top-3 right-3 bg-white/90 text-blue-600 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Eye className="w-3 h-3" />
-        </div>
-
-        {/* Animated border indicator */}
-        <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-400/50 transition-all duration-500 rounded-xl pointer-events-none"></div>
       </div>
 
       {/* Card content with subtle animation */}
@@ -104,29 +94,23 @@ const VenueCard: FC<AreaCardProps> = ({
           {truncatedDescription}
         </p>
 
-        <div className="mt-auto pt-4 border-t border-gray-100 group-hover:border-purple-200 transition-colors flex items-center justify-between">
+        <div className="mt-auto w-full pt-4 border-t border-gray-100 group-hover:border-purple-200 transition-colors">
           <button
-            className={`${buttonClass} text-white text-sm px-4 py-2.5 rounded-lg transition-all duration-300 flex items-center gap-2`}
+            className={`${buttonClass} w-full text-center text-white text-sm px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden`}
             onClick={handleBookNow}
             title={buttonTitle}
             disabled={!isAuthenticated || !canBook}
           >
-            {isAuthenticated && !canBook ? (
-              <AlertCircle size={16} />
-            ) : (
-              <Book size={16} />
-            )}
-            <span>Book Now</span>
-          </button>
+            {/* Animated background layer */}
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-          <button
-            className="text-sm text-purple-600 hover:text-purple-800 transition-colors flex items-center gap-1"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/areas/${id}`);
-            }}
-          >
-            <Eye size={16} /> View Details
+            {/* Button content */}
+            {isAuthenticated && !canBook ? (
+              <AlertCircle size={18} className="shrink-0" />
+            ) : (
+              <Book size={18} className="shrink-0" />
+            )}
+            <span className="font-medium tracking-wide">Book Now</span>
           </button>
         </div>
       </div>

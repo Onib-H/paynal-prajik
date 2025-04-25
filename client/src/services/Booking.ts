@@ -96,7 +96,7 @@ export const createBooking = async (bookingData: BookingFormData) => {
     formData.append("checkOut", bookingData.checkOut || "");
     formData.append("status", bookingData.status || "pending");
 
-    formData.append("arrivalTime", bookingData.arrivalTime || "12:00");
+    formData.append("arrivalTime", bookingData.arrivalTime);
 
     if (bookingData.totalPrice !== undefined) {
       formData.append("totalPrice", bookingData.totalPrice.toString());

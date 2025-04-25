@@ -2,13 +2,14 @@
 import { faEye, faEyeSlash, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "framer-motion";
-import { FC, FormEvent, useState } from "react";
+import { FC, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserContext } from "../contexts/AuthContext";
 import { login } from "../services/Auth";
 import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
 import { useMutation } from "@tanstack/react-query";
+import { SubmitHandler, useForm } from "react-hook-form";
 
 interface LoginProps {
   toggleLoginModal: () => void;
@@ -17,28 +18,31 @@ interface LoginProps {
   bookingInProgress?: boolean;
 }
 
+interface LoginFormInputs {
+  email: string;
+  password: string;
+}
+
 const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSuccessfulLogin, bookingInProgress = false }) => {
+  const navigate = useNavigate();
+  const { setIsAuthenticated, setRole, setUserDetails, setProfileImage } = useUserContext();
+
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [errors, setErrors] = useState<{
-    email?: string;
-    password?: string;
-    general?: string;
-  }>({});
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error" | "info" | "warning";
     icon: string;
   } | null>(null);
 
-  const navigate = useNavigate();
-  const { setIsAuthenticated, setRole, setUserDetails, setProfileImage } = useUserContext();
+  const { register, handleSubmit, formState: { errors }, setError } = useForm<LoginFormInputs>({
+    mode: "onBlur",
+    defaultValues: {
+      email: "",
+      password: ""
+    }
+  });
 
   const togglePassword = () => setPasswordVisible(!passwordVisible);
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value);
 
   const overlayVariants = {
     hidden: { opacity: 0 },
@@ -92,8 +96,8 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
   };
 
   const { mutate: loginMutation, isPending: loading } = useMutation({
-    mutationFn: async () => {
-      return await login(email, password);
+    mutationFn: async (formData: LoginFormInputs) => {
+      return await login(formData.email, formData.password);
     },
     onSuccess: (response) => {
       if (response.status === 200) {
@@ -125,22 +129,20 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
       if (errData && errData.error) {
         const message = errData.error;
         if (message.toLowerCase().includes("user does not exist")) {
-          setErrors({ email: message });
+          setError("email", { message: message, type: "404" });
         } else if (message.toLowerCase().includes("password")) {
-          setErrors({ password: message });
+          setError("password", { message: message, type: "401" });
         } else {
-          setErrors({ general: message });
+          setError("root.serverError", { message: message, type: "500" });
         }
       } else {
-        setErrors({ general: "An error occured" });
+        setError("root.serverError", { message: "An error occured", type: "500" });
       }
     }
   });
 
-  const loginSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    loginMutation();
+  const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {
+    loginMutation(data);
   }
 
   return (
@@ -205,7 +207,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                 custom={3}
               ></motion.div>
 
-              <form onSubmit={loginSubmit} className="space-y-4 md:space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
                 <motion.div
                   className="mb-3"
                   variants={formItemVariants}
@@ -222,15 +224,17 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                     <motion.input
                       type="email"
                       id="email"
-                      value={email}
+                      {...register('email', {
+                        required: "Email is required",
+                        pattern: {
+                          value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                          message: "Invalid email address"
+                        }
+                      })}
+                      // value={email}
                       placeholder="email@gmail.com"
-                      onChange={handleEmailChange}
-                      className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-sm mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
-                      required
-                      whileFocus={{
-                        boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.3)",
-                        borderColor: "#3b82f6"
-                      }}
+                      // onChange={handleEmailChange}
+                      className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-sm mt-1 focus:ring-blue-600 block w-full p-2.5 pl-9"
                     />
                     {errors.email && (
                       <motion.p
@@ -239,7 +243,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {errors.email}
+                        {errors.email.message}
                       </motion.p>
                     )}
                   </div>
@@ -259,17 +263,17 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                   <div className="relative flex items-center">
                     <i className="fa-solid fa-lock absolute left-3 top-4 z-20 text-gray-600"></i>
                     <motion.input
-                      placeholder="Enter your password"
                       type={passwordVisible ? "text" : "password"}
                       id="password"
-                      value={password}
-                      onChange={handlePasswordChange}
+                      {...register("password", {
+                        required: "Password is required",
+                        minLength: {
+                          value: 6,
+                          message: "Password must be at least 6 characters"
+                        }
+                      })}
                       className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-sm mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
-                      required
-                      whileFocus={{
-                        boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.3)",
-                        borderColor: "#3b82f6"
-                      }}
+                      placeholder="Enter your password"
                     />
                     <motion.div
                       whileHover={{ scale: 1.1 }}
@@ -289,7 +293,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {errors.password}
+                      {errors.password.message}
                     </motion.p>
                   )}
                   <div className="py-2">
@@ -312,7 +316,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                   whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(59, 130, 246, 0.3)" }}
                   whileTap={{ scale: 0.95 }}
                   type="submit"
-                  disabled={!email || !password || loading}
+                  disabled={loading}
                   className={`w-full bg-purple-700 text-white py-2 rounded-lg hover:bg-purple-800 cursor-pointer transition-all duration-300 flex items-center justify-center ${loading ? "bg-purple-700/30 cursor-not-allowed" : ""}`}
                 >
                   {loading ? (

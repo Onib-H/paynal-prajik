@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { faBell, faChevronDown, faCircleUser, faRightToBracket, faSpinner, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -16,6 +17,7 @@ import { useUserContext } from "../contexts/AuthContext";
 import SlotNavButton from "../motions/CustomNavbar";
 import { logout } from "../services/Auth";
 import { getGuestDetails, getGuestNotifications, markAllNotificationsAsRead, markNotificationAsRead } from "../services/Guest";
+import { NotificationMessage, webSocketService } from "../services/websockets";
 
 interface NotificationType {
   id: string;
@@ -26,18 +28,23 @@ interface NotificationType {
   created_at: string;
 }
 
+interface WebSocketNotification {
+  notification: NotificationMessage;
+  unread_count: number;
+}
+
 const Navbar: FC = () => {
   const [loginModal, setLoginModal] = useState(false);
   const [registerModal, setRegisterModal] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error" | "info" | "warning";
     icon: string;
   } | null>(null);
-  const [hasViewedNotifications, setHasViewedNotifications] = useState(false);
 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -50,14 +57,123 @@ const Navbar: FC = () => {
     clearAuthState,
   } = useUserContext();
 
-  const {
-    data: notificationsData
-  } = useQuery({
+  const { data: notificationsData, refetch: refetchNotifications } = useQuery({
     queryKey: ["guestNotifications"],
     queryFn: getGuestNotifications,
     enabled: isAuthenticated,
     staleTime: 15000
   });
+
+  useEffect(() => {
+    if (!isAuthenticated || !userDetails?.id) return;
+
+    const handleAuthResponse = ({ success, message }: { success: boolean; message?: string }) => {
+      if (!success) {
+        console.error(`WebSocket auth failed: ${message}`);
+        webSocketService.disconnect();
+      }
+    }
+
+    const handleNewNotification = ({ notification, unread_count }: WebSocketNotification) => {
+      // Update notifications in React Query cache
+      queryClient.setQueryData(['guestNotifications'], (old: any) => {
+        if (!old) return { notifications: [notification], unread_count };
+
+        const currentNotifications = old.notifications || [];
+
+        // Check if notification already exists by id and created_at
+        const notificationExists = currentNotifications.some(
+          (existingNotif: NotificationType) =>
+            existingNotif.id === notification.id ||
+            (existingNotif.booking_id === notification.booking_id &&
+              existingNotif.notification_type === notification.notification_type &&
+              Math.abs(new Date(existingNotif.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
+        );
+
+        // Only add the notification if it doesn't already exist
+        if (notificationExists) {
+          return old;
+        }
+
+        return {
+          notifications: [notification, ...currentNotifications],
+          unread_count
+        };
+      });
+
+      // Update unread count state
+      setUnreadCount(unread_count);
+    };
+
+    const handleCountUpdate = ({ count }: { count: number }) => {
+      // Update notifications in React Query cache
+      queryClient.setQueryData(['guestNotifications'], (old: any) => ({
+        ...old,
+        unread_count: count
+      }));
+
+      // Update unread count state
+      setUnreadCount(count);
+    };
+
+    const setupWebSocket = () => {
+      webSocketService.connect(userDetails?.id.toString());
+
+      webSocketService.on('auth_response', handleAuthResponse);
+      webSocketService.on('new_notification', handleNewNotification);
+      webSocketService.on('unread_update', handleCountUpdate);
+      webSocketService.on('initial_count', handleCountUpdate);
+    };
+
+    setupWebSocket();
+
+    const reconnectInterval = setInterval(() => {
+      if (!webSocketService.isConnected && isAuthenticated) {
+        setupWebSocket();
+      }
+    }, 5000);
+
+    const refetchInterval = setInterval(() => {
+      if (isAuthenticated) {
+        refetchNotifications();
+      }
+    }, 30000);
+
+    return () => {
+      webSocketService.disconnect();
+      webSocketService.off('auth_response');
+      webSocketService.off('new_notification');
+      webSocketService.off('unread_update');
+      webSocketService.off('initial_count');
+      clearInterval(reconnectInterval);
+      clearInterval(refetchInterval);
+    }
+  }, [isAuthenticated, userDetails?.id, queryClient, refetchNotifications]);
+
+  // Update local unread count when notifications data changes
+  useEffect(() => {
+    if (notificationsData) {
+      setUnreadCount(notificationsData.unread_count);
+    }
+  }, [notificationsData]);
+
+  const handleMarkAllRead = useCallback(async () => {
+    try {
+      await markAllNotificationsAsRead();
+      webSocketService.markAsRead();
+      await queryClient.invalidateQueries({ queryKey: ["guestNotifications"] });
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  }, [queryClient]);
+
+  const toggleNotifications = useCallback(() => {
+    setIsNotificationsOpen(prev => !prev);
+    if (unreadCount > 0 && isNotificationsOpen) {
+      handleMarkAllRead();
+    }
+  }, [unreadCount, isNotificationsOpen, handleMarkAllRead]);
 
   const notifications = notificationsData?.notifications || [];
   const notificationCount = notificationsData?.unread_count || 0;
@@ -88,13 +204,6 @@ const Navbar: FC = () => {
   const handleMarkAllAsRead = useCallback(() => {
     markAllAsReadMutation.mutate();
   }, [markAllAsReadMutation]);
-
-  const toggleNotifications = useCallback(() => {
-    setIsNotificationsOpen(prev => !prev);
-    if (!hasViewedNotifications) {
-      setHasViewedNotifications(true);
-    }
-  }, [hasViewedNotifications]);
 
   const handleLogout = useCallback(() => {
     logoutMutation();
@@ -237,7 +346,7 @@ const Navbar: FC = () => {
                 {/* Notification Bell */}
                 <div className="relative">
                   <motion.button
-                    className="p-2 relative flex items-center justify-center hover:bg-gray-200 rounded-full"
+                    className="p-2 relative flex items-center justify-center rounded-full"
                     onClick={toggleNotifications}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -252,16 +361,16 @@ const Navbar: FC = () => {
                         duration: 0.5
                       }}
                     >
-                      <FontAwesomeIcon icon={faBell} size="2x" className="text-purple-900/80 cursor-pointer" />
+                      <FontAwesomeIcon icon={faBell} size="2x" className="text-purple-900/80 hover:text-purple-800 transition-colors duration-300 cursor-pointer" />
                     </motion.div>
-                    {notificationCount > 0 && !hasViewedNotifications && (
+                    {unreadCount > 0 && (
                       <motion.span
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: "spring", stiffness: 500, damping: 15 }}
                         className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold font-montserrat rounded-full w-5 h-5 flex items-center justify-center"
                       >
-                        {notificationCount > 9 ? '9+' : notificationCount}
+                        {unreadCount > 9 ? '9+' : unreadCount}
                       </motion.span>
                     )}
                   </motion.button>
@@ -356,9 +465,9 @@ const Navbar: FC = () => {
                               animate={{ opacity: 1 }}
                               className="flex flex-col items-center justify-center py-12 px-4 text-center text-gray-500"
                             >
-                              <FontAwesomeIcon icon={faBell} className="text-gray-300 text-4xl mb-3" />
-                              <p className="text-gray-600">No notifications yet</p>
-                              <p className="text-xs text-gray-400 mt-1">We'll notify you when something happens</p>
+                              <FontAwesomeIcon icon={faBell} size="4x" className="text-purple-600 mb-3" />
+                              <p className="text-gray-600 text-xl">No notifications yet</p>
+                              <p className="text-sm text-gray-400 mt-1">We'll notify you when something happens</p>
                             </motion.div>
                           )}
                         </motion.div>
@@ -422,14 +531,14 @@ const Navbar: FC = () => {
                   >
                     <FontAwesomeIcon icon={faBell} size="lg" className="text-gray-700" />
                   </motion.div>
-                  {notificationCount > 0 && !hasViewedNotifications && (
+                  {unreadCount > 9 && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
                       transition={{ type: "spring", stiffness: 500, damping: 15 }}
                       className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center"
                     >
-                      {notificationCount > 9 ? '9+' : notificationCount}
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </motion.span>
                   )}
                 </motion.button>
@@ -535,7 +644,7 @@ const Navbar: FC = () => {
                               animate={{ opacity: 1 }}
                               className="flex flex-col items-center justify-center py-12 px-4 text-center text-gray-500"
                             >
-                              <FontAwesomeIcon icon={faBell} className="text-gray-300 text-4xl mb-3" />
+                              <FontAwesomeIcon icon={faBell} size="4x" className="text-gray-700 mb-3" />
                               <p className="text-gray-600">No notifications yet</p>
                               <p className="text-xs text-gray-400 mt-1">We'll notify you when something happens</p>
                             </motion.div>

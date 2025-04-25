@@ -528,7 +528,7 @@ def review_detail(request, review_id):
     
     if review.user.id != request.user.id and not request.user.is_staff:
         return Response({"error": "You don't have permission to access this review"}, 
-                       status=status.HTTP_403_FORBIDDEN)
+                    status=status.HTTP_403_FORBIDDEN)
     
     if request.method == 'GET':
         serializer = ReviewSerializer(review)

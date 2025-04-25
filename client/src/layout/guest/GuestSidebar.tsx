@@ -15,7 +15,6 @@ const GuestSidebar: FC = () => {
 
   return (
     <aside className="w-60 min-h-screen flex flex-col bg-white shadow-md border-r border-gray-200">
-      {/* Go to Homepage Button */}
       <div className="px-3 py-4 border-b border-gray-200">
         <button
           onClick={() => navigate('/')}

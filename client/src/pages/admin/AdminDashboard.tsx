@@ -654,7 +654,7 @@ const AdminDashboard = () => {
         /> */}
         <StatCard
           title="Monthly Revenue"
-          value={monthlyRevenueData?.formatted_revenue || "₱0.00"}
+          value={stats.formattedRevenue}
           borderColor="border-orange-500"
           tooltip={`Revenue from checked-in and checked-out bookings for ${formattedMonthYear}`}
         />

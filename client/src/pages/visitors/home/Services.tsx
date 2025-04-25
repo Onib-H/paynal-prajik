@@ -64,7 +64,7 @@ const Services = () => {
             variants={itemVariants}
           >
             <motion.div
-              className="w-24 h-24 bg-purple-600 text-white flex justify-center items-center rounded-full mb-6"
+              className="w-24 h-24 bg-gradient-to-r from-indigo-600 to-purple-700 text-white flex justify-center items-center rounded-full mb-6"
               whileHover={{ rotate: 10, scale: 1.1 }}
             >
               <i className="fas fa-bed text-4xl"></i>
@@ -94,7 +94,7 @@ const Services = () => {
             variants={itemVariants}
           >
             <motion.div
-              className="w-24 h-24 bg-purple-600 text-white flex justify-center items-center rounded-full mb-6"
+              className="w-24 h-24 bg-gradient-to-r from-indigo-600 to-purple-700 text-white flex justify-center items-center rounded-full mb-6"
               whileHover={{ rotate: 10, scale: 1.1 }}
             >
               <i className="fas fa-map-marked-alt text-4xl"></i>

@@ -3,11 +3,13 @@ import { faEye, faEyeSlash, faSpinner } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { FC, FormEvent, useState } from "react";
+import { FC, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { sendRegisterOtp } from "../services/Auth";
 import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
+import TermsModal from "./TermsModal";
+import { SubmitHandler, useForm } from "react-hook-form";
 
 interface SignupModalProps {
   toggleRegisterModal: () => void;
@@ -15,33 +17,40 @@ interface SignupModalProps {
   onSuccessfulSignup?: () => void;
 }
 
+interface SignupFormInputs {
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
 const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal, onSuccessfulSignup }) => {
+  const navigate = useNavigate();
+
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState<boolean>(false);
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [errors, setErrors] = useState<{
-    email?: string;
-    password?: string;
-    confirmPassword?: string;
-    general?: string;
-  }>({});
+  const [showTermsModal, setShowTermsModal] = useState<boolean>(false);
+  const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error" | "info" | "warning";
     icon: string;
   } | null>(null);
 
-  const navigate = useNavigate();
+  const { register, handleSubmit, formState: { errors, isValid }, setError, getValues, watch } = useForm<SignupFormInputs>({
+    mode: "onBlur",
+    defaultValues: {
+      email: "",
+      password: "",
+      confirmPassword: ""
+    }
+  });
+
+  const email = watch("email");
+  const password = watch("password");
+  const confirmPassword = watch("confirmPassword");
 
   const togglePassword = () => setPasswordVisible(!passwordVisible);
-  const toggleConfirmPassword = () =>
-    setConfirmPasswordVisible(!confirmPasswordVisible);
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value);
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value);
-  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value);
+  const toggleConfirmPassword = () => setConfirmPasswordVisible(!confirmPasswordVisible);
 
   const overlayVariants = {
     hidden: { opacity: 0 },
@@ -95,8 +104,8 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
   };
 
   const { mutate: registerMutation, isPending: loading } = useMutation({
-    mutationFn: async () => {
-      return await sendRegisterOtp(email, password, confirmPassword)
+    mutationFn: async (formData: SignupFormInputs) => {
+      return await sendRegisterOtp(formData.email, formData.password, formData.confirmPassword);
     },
     onSuccess: (response) => {
       if (response.status === 200) {
@@ -111,33 +120,36 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
           localStorage.setItem('bookingReturnUrl', window.location.pathname + window.location.search);
         }
 
-        navigate("/registration", { state: { email, password } });
+        const formValues = getValues();
+        navigate("/registration", { state: { email: formValues.email, password } });
       }
     },
     onError: (error: any) => {
       console.error(`Failed to register: ${error}`);
+      const { data, status } = error.response;
       if (!error.response) {
-        setErrors({ general: "Something went wrong. Please try again later." });
+        setError("root", { message: data.error.general });
       } else {
-        const { data, status } = error.response;
         if (status === 500) {
-          setErrors({ general: "Something went wrong. Please try again later." });
-        } else {
-          setErrors((prevErrors) => ({
-            ...prevErrors,
-            email: data.email || "",
-            password: data.password || "",
-            general: data.message || "",
-          }));
+          const message = data.error;
+          setError("root", { message: message })
+        } else if (data.error) {
+          if (data.error.email) setError("email", { message: data.error.email });
+          if (data.error.password) setError("password", { message: data.error.password });
+          if (data.error.confirm_password) setError("confirmPassword", { message: data.error.confirm_password });
+          if (data.error.general) setError("root", { message: data.error.general, type: "500" });
         }
       }
     }
   });
 
-  const handleRegisterSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    registerMutation();
+  const onSubmit: SubmitHandler<SignupFormInputs> = (data) => {
+    if (!termsAgreed) {
+      setShowTermsModal(true);
+      return;
+    }
+
+    registerMutation(data);
   };
 
   return (
@@ -185,7 +197,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                 custom={2}
               ></motion.div>
 
-              <form onSubmit={handleRegisterSubmit} className="space-y-4 md:space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 md:space-y-6">
                 <motion.div
                   className="mb-3"
                   variants={formItemVariants}
@@ -202,14 +214,15 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                     <motion.input
                       type="email"
                       id="email"
-                      placeholder="email@gmail.com"
-                      onChange={handleEmailChange}
+                      {...register("email", {
+                        required: "Email is required",
+                        pattern: {
+                          value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                          message: "Invalid email address"
+                        }
+                      })}
                       className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-sm mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
-                      required
-                      whileFocus={{
-                        boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.3)",
-                        borderColor: "#3b82f6"
-                      }}
+                      placeholder="email@gmail.com"
                     />
                     {errors.email && (
                       <motion.p
@@ -218,7 +231,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {errors.email}
+                        {errors.email.message}
                       </motion.p>
                     )}
                   </div>
@@ -238,16 +251,17 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                   <div className="relative flex items-center">
                     <i className="fa-solid fa-lock absolute left-3 top-4 z-20 text-gray-600"></i>
                     <motion.input
-                      placeholder="Enter your password"
                       type={passwordVisible ? "text" : "password"}
                       id="password"
-                      onChange={handlePasswordChange}
-                      required
+                      {...register("password", {
+                        required: "Password is required",
+                        minLength: {
+                          value: 8,
+                          message: "Password must be at least 8 characters"
+                        }
+                      })}
                       className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-sm mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
-                      whileFocus={{
-                        boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.3)",
-                        borderColor: "#3b82f6"
-                      }}
+                      placeholder="Enter your password"
                     />
                     <motion.div
                       whileHover={{ scale: 1.1 }}
@@ -267,7 +281,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {errors.password}
+                      {errors.password.message}
                     </motion.p>
                   )}
                 </motion.div>
@@ -286,16 +300,14 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                   <div className="relative flex items-center">
                     <i className="fa-solid fa-lock absolute left-3 top-4 z-20 text-gray-600"></i>
                     <motion.input
-                      placeholder="Confirm your password"
                       id="confirmPassword"
-                      onChange={handleConfirmPasswordChange}
-                      required
+                      placeholder="Confirm your password"
+                      {...register("confirmPassword", {
+                        required: "Confirm Password is required",
+                        validate: value => value === watch("password") || "Passwords do not match"
+                      })}
                       type={confirmPasswordVisible ? "text" : "password"}
                       className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-md mt-1 focus:ring-blue-600 focus:border-blue-600 block w-full p-2.5 pl-9"
-                      whileFocus={{
-                        boxShadow: "0 0 0 2px rgba(59, 130, 246, 0.3)",
-                        borderColor: "#3b82f6"
-                      }}
                     />
                     <motion.div
                       whileHover={{ scale: 1.1 }}
@@ -315,7 +327,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {errors.confirmPassword}
+                      {errors.confirmPassword.message}
                     </motion.p>
                   )}
                 </motion.div>
@@ -326,7 +338,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                   whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(59, 130, 246, 0.3)" }}
                   whileTap={{ scale: 0.95 }}
                   type="submit"
-                  disabled={!email || !password || !confirmPassword || loading}
+                  disabled={!email || !password || !confirmPassword || loading || !isValid}
                   className={`w-full bg-purple-700 text-white py-2 rounded-lg hover:bg-purple-800 cursor-pointer transition-colors duration-300 flex items-center justify-center ${loading ? "bg-purple-700/30 cursor-not-allowed" : ""}`}
                 >
                   {loading ? (
@@ -349,7 +361,10 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                     <span className="px-3 text-gray-500 text-sm">OR</span>
                     <hr className="w-full border-gray-300" />
                   </div>
-                  <GoogleButton text="Sign up with Google" />
+                  <GoogleButton 
+                    text="Sign up with Google"
+                    requireTermsAgreement={true}
+                  />
                 </motion.div>
               </form>
 
@@ -375,6 +390,15 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
           </motion.div>
         </motion.section>
       </AnimatePresence>
+      <TermsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onAgree={() => {
+          setTermsAgreed(true);
+          setShowTermsModal(false);
+          handleSubmit(onSubmit)();
+        }}
+      />
       {notification && (
         <Notification
           icon={notification.icon}
