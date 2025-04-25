@@ -75,13 +75,11 @@ const Navbar: FC = () => {
     }
 
     const handleNewNotification = ({ notification, unread_count }: WebSocketNotification) => {
-      // Update notifications in React Query cache
       queryClient.setQueryData(['guestNotifications'], (old: any) => {
         if (!old) return { notifications: [notification], unread_count };
 
         const currentNotifications = old.notifications || [];
 
-        // Check if notification already exists by id and created_at
         const notificationExists = currentNotifications.some(
           (existingNotif: NotificationType) =>
             existingNotif.id === notification.id ||
@@ -90,7 +88,6 @@ const Navbar: FC = () => {
               Math.abs(new Date(existingNotif.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
         );
 
-        // Only add the notification if it doesn't already exist
         if (notificationExists) {
           return old;
         }
@@ -101,18 +98,15 @@ const Navbar: FC = () => {
         };
       });
 
-      // Update unread count state
       setUnreadCount(unread_count);
     };
 
     const handleCountUpdate = ({ count }: { count: number }) => {
-      // Update notifications in React Query cache
       queryClient.setQueryData(['guestNotifications'], (old: any) => ({
         ...old,
         unread_count: count
       }));
 
-      // Update unread count state
       setUnreadCount(count);
     };
 
@@ -150,7 +144,6 @@ const Navbar: FC = () => {
     }
   }, [isAuthenticated, userDetails?.id, queryClient, refetchNotifications]);
 
-  // Update local unread count when notifications data changes
   useEffect(() => {
     if (notificationsData) {
       setUnreadCount(notificationsData.unread_count);

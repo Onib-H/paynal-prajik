@@ -270,7 +270,7 @@ const GuestCancellations: FC = () => {
                               />
                             </div>
                             <div className="ml-4">
-                              <div className="text-md font-medium text-gray-900">{itemName}</div>
+                              <div className="text-md font-semibold text-gray-900">{itemName}</div>
                               {isVenueBooking ? (
                                 <div className="text-md bg-blue-100 text-blue-800 px-2 py-0.5 rounded inline-block mt-1">Venue</div>
                               ) : (
