@@ -43,19 +43,24 @@ def get_admin_details(request):
 @permission_classes([IsAuthenticated])
 def dashboard_stats(request):
     try:
-        now = timezone.now()
-        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        current_month_end = (current_month_start.replace(month=current_month_start.month % 12 + 1, day=1) - timedelta(days=1)).replace(hour=23, minute=59, second=59)
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
         
-        if current_month_start.month == 12:
-            current_month_end = current_month_start.replace(year=current_month_start.year + 1, month=1, day=1) - timedelta(days=1)
+        start_date = timezone.datetime(year, month, 1)
+        if month == 12:
+            end_date = timezone.datetime(year + 1, 1, 1) - timezone.timedelta(days=1)
+        else:
+            end_date = timezone.datetime(year, month + 1, 1) - timezone.timedelta(days=1)
+        
+        end_date = end_date.replace(hour=23, minute=59, second=59)
         
         total_rooms = Rooms.objects.count()
         
         checked_in_room_ids = Bookings.objects.filter(
             Q(status='checked_in') & 
             Q(is_venue_booking=False) & 
-            Q(check_out_date__gte=now.date())
+            Q(check_in_date__lte=end_date.date()) &
+            Q(check_out_date__gte=start_date.date())
         ).values_list('room_id', flat=True).distinct()
         
         available_rooms = Rooms.objects.filter(
@@ -67,43 +72,44 @@ def dashboard_stats(request):
         occupied_rooms = Bookings.objects.filter(
             Q(status='checked_in') & 
             Q(is_venue_booking=False) & 
-            Q(check_in_date__lte=now.date()) & 
-            Q(check_out_date__gte=now.date())
+            Q(check_in_date__lte=end_date.date()) &
+            Q(check_out_date__gte=start_date.date())
         ).count()
+        
         maintenance_rooms = Rooms.objects.filter(status='maintenance').count()
         
         active_bookings = Bookings.objects.filter(
             Q(status__in=['confirmed', 'reserved', 'checked_in']) &
-            Q(created_at__range=(current_month_start, current_month_end))
+            Q(created_at__range=(start_date, end_date))
         ).count()
         
         pending_bookings = Bookings.objects.filter(
             Q(status='pending') &
-            Q(created_at__range=(current_month_start, current_month_end))
+            Q(created_at__range=(start_date, end_date))
         ).count()
         
         unpaid_bookings = Bookings.objects.filter(
             Q(payment_status='unpaid') &
-            Q(created_at__range=(current_month_start, current_month_end))
+            Q(created_at__range=(start_date, end_date))
         ).count()
         
         checked_in_count = Bookings.objects.filter(
             Q(status='checked_in') &
-            Q(created_at__range=(current_month_start, current_month_end))
+            Q(check_in_date__range=(start_date.date(), end_date.date()))
         ).count()
         
         total_bookings = Bookings.objects.filter(
-            created_at__range=(current_month_start, current_month_end)
+            created_at__range=(start_date, end_date)
         ).count()
         
         upcoming_reservations = Bookings.objects.filter(
             Q(is_venue_booking=True) &
             Q(status__in=['confirmed', 'reserved']) &
-            Q(check_in_date__gte=now.date())
+            Q(check_in_date__gte=start_date.date())
         ).count()
         
         transactions_this_month = Transactions.objects.filter(
-            transaction_date__range=(current_month_start, current_month_end),
+            transaction_date__range=(start_date, end_date),
             status='completed'
         )
         
@@ -116,8 +122,7 @@ def dashboard_stats(request):
         
         venue_revenue = transactions_this_month.filter(
             Q(booking__isnull=False) & 
-            Q(booking__is_venue_booking=True) | 
-            Q(reservation__isnull=False)
+            (Q(booking__is_venue_booking=True) | Q(reservation__isnull=False))
         ).aggregate(Sum('amount'))['amount__sum'] or 0
         
         formatted_revenue = f"₱{revenue:,.2f}"
@@ -140,7 +145,9 @@ def dashboard_stats(request):
             'venue_revenue': venue_revenue,
             'formatted_revenue': formatted_revenue,
             'formatted_room_revenue': formatted_room_revenue,
-            'formatted_venue_revenue': formatted_venue_revenue
+            'formatted_venue_revenue': formatted_venue_revenue,
+            'month': month,
+            'year': year
         }
         
         return Response(response_data, status=status.HTTP_200_OK)

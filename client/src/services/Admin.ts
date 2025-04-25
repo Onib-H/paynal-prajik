@@ -595,9 +595,9 @@ export const generatePdfReport = async (reportType: string, dateRange?: { start:
       report_type: reportType,
       ...(dateRange && { date_range: dateRange }),
     }, {
-        responseType: "blob",
-        withCredentials: true,
-      }
+      responseType: "blob",
+      withCredentials: true,
+    }
     );
 
     const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -636,9 +636,15 @@ export const fetchMonthlyRevenue = async ({ month, year }: { month?: number; yea
     const currentMonth = month || new Date().getMonth() + 1;
     const currentYear = year || new Date().getFullYear();
 
+    const startDate = new Date(currentYear, currentMonth - 1, 1);
+    const endDate = new Date(currentYear, currentMonth, 0);
+    endDate.setHours(23, 59, 59, 999);
+
     const response = await ADMIN.get("/bookings", {
       params: {
-        page_size: 500
+        page_size: 500,
+        month: currentMonth,
+        year: currentYear
       },
       withCredentials: true,
     });
@@ -646,17 +652,15 @@ export const fetchMonthlyRevenue = async ({ month, year }: { month?: number; yea
     const allBookings = response.data.data || [];
 
     const relevantBookings = allBookings.filter((booking: any) => {
-      if (booking.status !== "checked_in" && booking.status !== "checked_out") {
-        return false;
-      }
-
-      if (!booking.check_in_date) return false;
+      if (!booking.check_in_date || !booking.check_out_date) return false;
 
       const checkInDate = new Date(booking.check_in_date);
-      const bookingMonth = checkInDate.getMonth() + 1;
-      const bookingYear = checkInDate.getFullYear();
+      const checkOutDate = new Date(booking.check_out_date);
 
-      return bookingMonth === currentMonth && bookingYear === currentYear;
+      return (
+        (checkInDate <= endDate && checkOutDate >= startDate) &&
+        (booking.status === "checked_in" || booking.status === "checked_out")
+      );
     });
 
     let totalRevenue = 0;
@@ -681,15 +685,17 @@ export const fetchMonthlyRevenue = async ({ month, year }: { month?: number; yea
           totalRevenue += basePrice;
           return;
         } else if (!booking.is_venue_booking && booking.room_details) {
-          const checkIn = booking.check_in_date;
-          const checkOut = booking.check_out_date;
-          let nights = 1;
-          if (checkIn && checkOut) {
-            const start = new Date(checkIn);
-            const end = new Date(checkOut);
-            const diffTime = Math.abs(end.getTime() - start.getTime());
-            nights = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
-          }
+          const checkIn = new Date(booking.check_in_date);
+          const checkOut = new Date(booking.check_out_date);
+
+          const monthStart = startDate;
+          const monthEnd = endDate;
+
+          const effectiveStart = checkIn < monthStart ? monthStart : checkIn;
+          const effectiveEnd = checkOut > monthEnd ? monthEnd : checkOut;
+
+          const diffTime = Math.abs(effectiveEnd.getTime() - effectiveStart.getTime());
+          const nights = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
 
           if (booking.room_details.room_price) {
             const priceString = booking.room_details.room_price;

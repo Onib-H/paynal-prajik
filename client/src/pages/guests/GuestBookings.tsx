@@ -360,7 +360,7 @@ const GuestBookings = () => {
                             <div className="h-10 w-10 flex-shrink-0">
                               <img
                                 loading="lazy"
-                                src={itemImage || '/default-room.jpg'}
+                                src={itemImage}
                                 alt={itemName}
                                 className="h-10 w-10 rounded-md object-cover"
                               />

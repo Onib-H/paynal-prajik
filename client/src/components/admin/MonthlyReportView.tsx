@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { format } from 'date-fns';
-import { useEffect, useRef } from 'react';
+import { FC, useEffect, useRef } from 'react';
 import { Doughnut, Line } from 'react-chartjs-2';
 import { createPortal } from 'react-dom';
 import '../../styles/print.css';
@@ -24,49 +24,51 @@ interface MonthlyReportViewProps {
     };
 }
 
-const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
-    reportData,
-    onClose,
-    chartOptions,
-    chartData
-}) => {
+const MonthlyReportView: FC<MonthlyReportViewProps> = ({ reportData, onClose, chartOptions, chartData }) => {
     const printRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const style = document.createElement('style');
         style.innerHTML = `
             @media print {
-                /* Hide ALL page elements */
                 body > * {
                     display: none !important;
                 }
-                
-                /* Only show the report wrapper */
-                #report-print-wrapper {
-                    display: block !important;
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: auto !important; 
+
+                #report-print-wrapper, #report-print-wrapper * {
+                    visibility: visible !important;
                     overflow: visible !important;
+                    height: auto !important;
                 }
                 
-                /* Hide the controls when printing */
+                #report-print-wrapper {
+                    display: block !important;
+                    position: relative;
+                    width: 100% !important;
+                    max-width: none !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                }
+                
                 #report-controls {
                     display: none !important;
                 }
                 
-                /* Basic page setup */
                 @page {
                     size: A4 portrait;
-                    margin: 1cm;
+                    margin: 0.5cm;
                 }
                 
                 body {
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
+                    -webkit-print-color-adjust: exact;
+                    print-color-adjust: exact;
                     background: white !important;
+                    overflow: visible !important;
+                }
+
+                .chart-container {
+                    height: auto !important;
+                    page-break-inside: avoid;
                 }
             }
         `;
@@ -94,7 +96,6 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
 
     return createPortal(
         <div id="report-print-wrapper" className="fixed inset-0 bg-white z-50 flex flex-col">
-            {/* Control bar - fixed at top */}
             <div id="report-controls" className="bg-white border-b border-gray-200 p-4 flex justify-between items-center print:hidden">
                 <h2 className="text-xl font-bold">Monthly Report Preview</h2>
                 <div className="flex gap-3">
@@ -121,7 +122,7 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-bold text-blue-500">Azurea Hotel Management System</h1>
                         <h2 className="text-2xl font-semibold mt-2">Monthly Performance Report</h2>
-                        <p className="text-lg italic mt-1">{reportData.period || format(new Date(), 'MMMM yyyy')}</p>
+                        <p className="text-lg italic mt-1">{reportData.period}</p>
                         <p className="text-sm text-gray-500 mt-1">Generated on: {format(new Date(), 'PPpp')}</p>
                     </div>
 
@@ -140,24 +141,12 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                     <div className="mb-8 page-break-after-avoid">
                         <h3 className="text-xl font-bold bg-gray-100 p-2 rounded-md">1. Key Performance Indicators</h3>
                         <p className="mt-3 mb-4 text-gray-700 italic">
-                            These key metrics provide a snapshot of the hotel's current operational status and financial performance for the current month.
+                            These key metrics provide a snapshot of the hotel's current operational status and financial performance for {reportData.period}.
                         </p>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                            <div className="bg-gray-50 p-4 rounded-md border-l-4 border-green-500">
-                                <p className="text-sm text-gray-500">Active Bookings</p>
-                                <p className="text-xl font-bold">{reportData.stats.activeBookings}</p>
-                            </div>
-                            <div className="bg-gray-50 p-4 rounded-md border-l-4 border-indigo-500">
-                                <p className="text-sm text-gray-500">Checked-in Guests</p>
-                                <p className="text-xl font-bold">{reportData.stats.checkedInCount}</p>
-                            </div>
-                            {/* <div className="bg-gray-50 p-4 rounded-md border-l-4 border-yellow-500">
-                                <p className="text-sm text-gray-500">Pending Bookings</p>
-                                <p className="text-xl font-bold">{reportData.stats.pendingBookings}</p>
-                            </div> */}
                             <div className="bg-gray-50 p-4 rounded-md border-l-4 border-blue-500">
-                                <p className="text-sm text-gray-500">Total Bookings</p>
+                                <p className="text-sm text-gray-500">Total Monthly Bookings</p>
                                 <p className="text-xl font-bold">{reportData.stats.totalBookings}</p>
                             </div>
                             <div className="bg-gray-50 p-4 rounded-md border-l-4 border-orange-500">
@@ -165,13 +154,6 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                                 <p className="text-xl font-bold">{reportData.stats.formattedRevenue}</p>
                             </div>
                         </div>
-
-                        {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="bg-gray-50 p-4 rounded-md border-l-4 border-purple-500">
-                                <p className="text-sm text-gray-500">Occupancy Rate</p>
-                                <p className="text-xl font-bold">{reportData.stats.occupancyRate}</p>
-                            </div>
-                        </div> */}
                     </div>
 
                     {/* Revenue & Booking Analysis */}
@@ -189,7 +171,6 @@ const MonthlyReportView: React.FC<MonthlyReportViewProps> = ({
                             Total monthly revenue: {reportData.stats.formattedRevenue}.
                             Room revenue accounts for approximately 75% of total revenue, with the remainder coming from venue bookings and additional services.
                         </p>
-
                         <h4 className="text-lg font-semibold mt-6 mb-3">Booking Pattern Analysis</h4>
                         <div className="bg-white p-4 border rounded-md h-64">
                             <Line data={chartData.bookingTrendsData} options={chartOptions.line} />
