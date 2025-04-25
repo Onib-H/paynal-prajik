@@ -233,7 +233,7 @@ class BookingRequestSerializer(serializers.Serializer):
                     special_request=validated_data.get('specialRequests', ''),
                     total_price=total_price,
                     is_venue_booking=True,
-                    time_of_arrival=validated_data.get('arrivalTime', None),
+                    time_of_arrival=validated_data.get('arrivalTime'),
                     start_time=start_time,
                     end_time=end_time,
                     number_of_guests=validated_data.get('numberOfGuests', 1)
@@ -257,7 +257,7 @@ class BookingRequestSerializer(serializers.Serializer):
                     special_request=validated_data.get('specialRequests', ''),
                     is_venue_booking=False,
                     total_price=validated_data.get('totalPrice'),
-                    time_of_arrival=validated_data.get('arrivalTime', None),
+                    time_of_arrival=validated_data.get('arrivalTime'),
                     number_of_guests=validated_data.get('numberOfGuests', 1)
                 )
                 

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Eye, MessageSquare, Search, XCircle } from "lucide-react";
-import { FC, useCallback, useMemo, useState } from "react";
+import { ArrowLeft, ArrowRight, Eye, MessageSquare, Search, XCircle, Calendar, SearchIcon, Filter } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -9,16 +10,20 @@ import BookingData from "../../components/bookings/BookingData";
 import CancellationModal from "../../components/bookings/CancellationModal";
 import GuestBookingComment from "../../components/guests/GuestBookingComment";
 import { useUserContext } from "../../contexts/AuthContext";
-import { BookingDetailsSkeleton, BookingsTableSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
+import { BookingDetailsSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
 import { cancelBooking, fetchBookingDetail, fetchUserReviews } from "../../services/Booking";
 import { BookingResponse } from "../../types/BookingClient";
 import { fetchGuestBookings } from "../../services/Guest";
 import { formatStatus, formatDate, getStatusColor } from "../../utils/formatters";
+import GuestBookingsSkeleton from "../../motions/skeletons/GuestBookingsSkeleton";
+import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
 
-const GuestBookings: FC = () => {
+const GuestBookings = () => {
   const { userDetails } = useUserContext();
+
   const [searchParams, setSearchParams] = useSearchParams();
   const bookingId = searchParams.get('bookingId');
+
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -27,6 +32,7 @@ const GuestBookings: FC = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewBookingId, setReviewBookingId] = useState<string | null>(null);
   const [reviewBookingDetails, setReviewBookingDetails] = useState<any>(null);
+
   const queryClient = useQueryClient();
   const pageSize = 5;
 
@@ -39,8 +45,8 @@ const GuestBookings: FC = () => {
       page_size: number;
     }
   }, Error>({
-    queryKey: ["guest-bookings", userDetails?.id, currentPage, pageSize],
-    queryFn: () => fetchGuestBookings({ page: currentPage, pageSize }),
+    queryKey: ["guest-bookings", userDetails?.id, currentPage, pageSize, filterStatus],
+    queryFn: () => fetchGuestBookings({ page: currentPage, page_size: pageSize, status: filterStatus }),
     enabled: !!userDetails?.id,
   });
 
@@ -81,41 +87,48 @@ const GuestBookings: FC = () => {
         (bookingDetailsQuery.isPending && !!bookingId) ||
         cancelBookingMutation.isPending,
       errorMessage: bookingsQuery.isError
-        ? "Failed to load bookings. Please try again later."
+        ? <GuestBookingsError error={cancelBookingMutation.error} />
         : (bookingDetailsQuery.isError && !!bookingId)
-          ? "Failed to load booking details. Please try again later."
+          ? <GuestBookingsError error={bookingDetailsQuery.error} />
           : cancelBookingMutation.isError
-            ? "Failed to cancel booking. Please try again later."
+            ? <GuestBookingsError error={cancelBookingMutation.error} />
             : null
     };
   }, [
     bookingsQuery.data, bookingsQuery.isPending, bookingsQuery.isError,
     bookingDetailsQuery.isPending, bookingDetailsQuery.isError, bookingId,
-    cancelBookingMutation.isPending, cancelBookingMutation.isError
+    cancelBookingMutation.isPending, cancelBookingMutation.isError, cancelBookingMutation.error, bookingDetailsQuery.error
   ]);
 
   const filteredBookings = useMemo(() => {
+    if (!searchTerm.trim()) return bookings;
+
+    const searchRegex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+
     return bookings.filter((booking: any) => {
+      const propertyName = booking.is_venue_booking
+        ? (booking.area_name || booking.area_details?.area_name || '')
+        : (booking.room_name || booking.room_details?.room_name || '');
+
+      const propertyType = booking.is_venue_booking
+        ? (booking.area_type || booking.area_details?.area_type || '')
+        : (booking.room_type || booking.room_details?.room_type || '');
+
+      const reference = (booking.booking_reference || booking.id || '').toString();
+
+      const guestName = (booking.guest_name || booking.guest?.name || '');
+
       const matchesSearch =
-        (booking.is_venue_booking
-          ? (booking.area_name || booking.area_details?.area_name || '')
-          : (booking.room_name || booking.room_details?.room_name || ''))
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        (booking.room_type || booking.room_details?.room_type || '')
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        (booking.booking_reference || booking.id || '')
-          .toString()
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase());
+        searchRegex.test(propertyName) ||
+        searchRegex.test(propertyType) ||
+        searchRegex.test(reference) ||
+        searchRegex.test(guestName);
 
       const matchesStatus = filterStatus
         ? (booking.status || '').toLowerCase() === filterStatus.toLowerCase()
         : true;
 
-      const isNotCancelled = (booking.status || '').toLowerCase() !== 'cancelled';
-      return matchesSearch && matchesStatus && isNotCancelled;
+      return matchesSearch && matchesStatus;
     });
   }, [bookings, searchTerm, filterStatus]);
 
@@ -195,7 +208,7 @@ const GuestBookings: FC = () => {
 
   if (isLoading) {
     return (
-      bookingId ? <BookingDetailsSkeleton /> : <BookingsTableSkeleton />
+      bookingId ? <BookingDetailsSkeleton /> : <GuestBookingsSkeleton />
     );
   }
 
@@ -277,7 +290,7 @@ const GuestBookings: FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredBookings.map((booking: any) => {
+                  {bookings.map((booking: any) => {
                     const alreadyReviewed = reviewedBookingIds.has(booking.id.toString());
                     const isVenueBooking = booking.is_venue_booking;
                     let itemName, itemImage, totalAmount;
@@ -411,54 +424,135 @@ const GuestBookings: FC = () => {
                   })}
                 </tbody>
               </table>
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center space-x-1">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`px-3 py-1 rounded-l-md border ${currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-purple-600 cursor-pointer hover:bg-purple-50'
+                        }`}
+                      aria-label="Previous Page"
+                    >
+                      <ArrowLeft size={20} />
+                    </button>
+
+                    <div className="text-gray-700 text-lg border rounded-lg p-1 border-purple-600 font-medium">
+                      Page <span className="text-purple-600">{currentPage}</span> | <span className="text-purple-600">{totalPages}</span>
+                    </div>
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`px-3 py-1 rounded-r-md border ${currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-purple-600 cursor-pointer hover:bg-purple-50'
+                        }`}
+                    >
+                      <ArrowRight size={20} />
+                    </button>
+                  </nav>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              No bookings found matching your criteria.
-            </div>
-          )}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="py-16 flex flex-col items-center justify-center text-center"
+            >
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  duration: 0.5,
+                  delay: 0.2,
+                  type: "spring",
+                  stiffness: 200
+                }}
+                className="bg-gray-100 p-4 rounded-full mb-4"
+              >
+                <Calendar size={50} className="text-purple-500" />
+              </motion.div>
 
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex justify-center mt-6">
-              <nav className="flex items-center">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded-l-md border ${currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-blue-600 hover:bg-blue-50'
-                    }`}
+              <motion.h3
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-xl font-bold text-gray-800 mb-2"
+              >
+                No Bookings Found
+              </motion.h3>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="text-gray-500 max-w-md mb-6"
+              >
+                {searchTerm || filterStatus ? (
+                  <>
+                    We couldn't find any bookings matching your search criteria. Try adjusting your filters or search terms.
+                  </>
+                ) : (
+                  <>
+                    You don't have any bookings yet. When you make a reservation, it will appear here.
+                  </>
+                )}
+              </motion.p>
+
+              {(searchTerm || filterStatus) && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex flex-col sm:flex-row gap-3"
                 >
-                  <ChevronLeft size={20} />
-                </button>
+                  {searchTerm && (
+                    <div className="flex items-center bg-purple-50 text-purple-700 px-4 py-2 rounded-lg">
+                      <SearchIcon size={18} className="mr-2" />
+                      <span>Search: <strong>"{searchTerm}"</strong></span>
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="ml-2 text-purple-500 hover:text-purple-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
 
-                {/* Page number buttons */}
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`px-3 py-1 border-t border-b ${currentPage === page
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white text-blue-600 hover:bg-blue-50'
-                      }`}
-                  >
-                    {page}
-                  </button>
-                ))}
+                  {filterStatus && (
+                    <div className="flex items-center bg-purple-50 text-purple-700 px-4 py-2 rounded-lg">
+                      <Filter size={18} className="mr-2" />
+                      <span>Status: <strong>{filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}</strong></span>
+                      <button
+                        onClick={() => setFilterStatus("")}
+                        className="ml-2 text-purple-500 hover:text-purple-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
 
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-1 rounded-r-md border ${currentPage === totalPages
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-blue-600 hover:bg-blue-50'
-                    }`}
+              {!searchTerm && !filterStatus && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium shadow-md"
                 >
-                  <ChevronRight size={20} />
-                </button>
-              </nav>
-            </div>
+                  Book Now
+                </motion.button>
+              )}
+            </motion.div>
           )}
         </div>
       </div>

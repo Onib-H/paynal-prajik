@@ -1,4 +1,4 @@
-import { Book, Eye, Star, MapPin, Users } from "lucide-react";
+import { Book, Eye } from "lucide-react";
 import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
@@ -58,16 +58,7 @@ const RoomCard: FC<RoomCardProps> = ({
             <div className="w-8 h-0.5 bg-blue-300 mt-2 rounded-full"></div>
           </div>
         </div>
-
-        {/* Discrete corner indicator */}
-        <div className="absolute top-3 right-3 bg-white/90 text-blue-600 px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Eye className="w-3 h-3" />
-        </div>
-
-        {/* Animated border indicator */}
-        <div className="absolute inset-0 border-2 border-transparent group-hover:border-blue-400/50 transition-all duration-500 rounded-xl pointer-events-none"></div>
       </div>
-
       {/* Card content with subtle animation */}
       <div className="flex flex-col flex-1 p-5 transition-all duration-300 group-hover:bg-gray-50">
         <div className="mb-3">

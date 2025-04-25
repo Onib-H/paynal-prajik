@@ -2,13 +2,21 @@
 import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useGoogleLogin } from "@react-oauth/google";
-import { FC } from "react";
+import { FC, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../contexts/AuthContext";
 import { googleAuth } from "../services/Auth";
 import { motion } from "framer-motion";
+import TermsModal from "./TermsModal";
 
-const GoogleButton: FC<{ text: string }> = ({ text }) => {
+interface GoogleButtonProps {
+    text: string;
+    onTermsAgreed?: () => void;
+    requireTermsAgreement?: boolean;
+}
+
+const GoogleButton: FC<GoogleButtonProps> = ({ text, onTermsAgreed, requireTermsAgreement = false }) => {
+    const [showTermsModal, setShowTermsModal] = useState<boolean>(false);
     const { setIsAuthenticated, setUserDetails, setRole, setProfileImage } = useUserContext();
     const navigate = useNavigate();
 
@@ -78,19 +86,36 @@ const GoogleButton: FC<{ text: string }> = ({ text }) => {
         redirect_uri: import.meta.env.VITE_REDIRECT_URI
     });
 
+    const handleLoginClick = () => {
+        if (requireTermsAgreement && !onTermsAgreed) setShowTermsModal(true);
+        else login();
+    };
+
+    const handleTermsAgree = () => {
+        setShowTermsModal(false);
+        if (onTermsAgreed) onTermsAgreed();
+        else login();
+    };
+
     return (
         <div className="flex flex-col items-center">
             <motion.button
                 variants={formItemVariants}
                 whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(59, 130, 246, 0.3)" }}
                 whileTap={{ scale: 0.95 }}
-                onClick={login}
+                onClick={handleLoginClick}
                 type="button"
                 className="pt-2 pb-2 pl-8 pr-8 rounded-full text-white bg-purple-700 hover:bg-purple-800 cursor-pointer flex items-center justify-center transition-colors duration-300"
             >
                 <FontAwesomeIcon icon={faGoogle} className="mr-2" />
                 {text}
             </motion.button>
+
+            <TermsModal 
+                isOpen={showTermsModal}
+                onClose={() => setShowTermsModal(false)}
+                onAgree={handleTermsAgree}
+            />
         </div>
     );
 };

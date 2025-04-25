@@ -716,9 +716,6 @@ export const fetchMonthlyRevenue = async ({ month, year }: { month?: number; yea
     };
   } catch (error) {
     console.error(`Failed to fetch monthly revenue: ${error}`);
-    return {
-      revenue: 0,
-      formatted_revenue: '₱0.00'
-    };
+    throw error;
   }
 };
