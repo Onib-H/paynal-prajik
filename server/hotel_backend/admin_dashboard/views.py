@@ -616,13 +616,7 @@ def admin_bookings(request):
             paginated_bookings = paginator.page(1)
         except EmptyPage:
             paginated_bookings = paginator.page(paginator.num_pages)
-        
-        # status_filter = request.query_params.get('status')
-        # bookings = Bookings.objects.all().order_by('-created_at')
-        
-        # if status_filter and status_filter.lower() != 'all':
-        #     bookings = bookings.filter(status__iexact=status_filter)
-        
+
         serializer = BookingSerializer(paginated_bookings, many=True)
         
         return Response({

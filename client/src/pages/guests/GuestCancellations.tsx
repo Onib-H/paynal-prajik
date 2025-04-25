@@ -5,10 +5,12 @@ import { ArrowLeft, ArrowRight, Eye, Loader, Search, Calendar } from "lucide-rea
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import BookingData from "../../components/bookings/BookingData";
-import { BookingDetailsSkeleton, BookingsTableSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
+import { BookingDetailsSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
 import { fetchBookingDetail, fetchUserBookings } from "../../services/Booking";
 import { formatDate, getStatusColor, formatStatus } from "../../utils/formatters";
 import { useUserContext } from "../../contexts/AuthContext";
+import GuestBookingsSkeleton from "../../motions/skeletons/GuestBookingsSkeleton";
+import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
 
 const GuestCancellations: FC = () => {
   const { userDetails } = useUserContext();
@@ -70,13 +72,13 @@ const GuestCancellations: FC = () => {
         (bookingDetailsQuery.isPending && !!bookingId) ||
         changingPage,
       errorMessage: userBookingsQuery.isError
-        ? "Failed to load bookings. Please try again later."
+        ? <GuestBookingsError error={userBookingsQuery.error} />
         : (bookingDetailsQuery.isError && !!bookingId)
-          ? "Failed to load booking details. Please try again later."
+          ? <GuestBookingsError error={bookingDetailsQuery.error} />
           : null
     };
   }, [userBookingsQuery.data, userBookingsQuery.isPending, userBookingsQuery.isError,
-  bookingDetailsQuery.isPending, bookingDetailsQuery.isError, bookingId, changingPage]);
+  bookingDetailsQuery.isPending, bookingDetailsQuery.isError, bookingId, changingPage, userBookingsQuery.error, bookingDetailsQuery.error]);
 
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking: any) => {
@@ -123,7 +125,7 @@ const GuestCancellations: FC = () => {
 
   if (isLoading) {
     return (
-      bookingId ? <BookingDetailsSkeleton /> : <BookingsTableSkeleton />
+      bookingId ? <BookingDetailsSkeleton /> : <GuestBookingsSkeleton />
     )
   }
 

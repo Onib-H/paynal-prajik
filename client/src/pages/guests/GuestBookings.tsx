@@ -10,11 +10,13 @@ import BookingData from "../../components/bookings/BookingData";
 import CancellationModal from "../../components/bookings/CancellationModal";
 import GuestBookingComment from "../../components/guests/GuestBookingComment";
 import { useUserContext } from "../../contexts/AuthContext";
-import { BookingDetailsSkeleton, BookingsTableSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
+import { BookingDetailsSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
 import { cancelBooking, fetchBookingDetail, fetchUserReviews } from "../../services/Booking";
 import { BookingResponse } from "../../types/BookingClient";
 import { fetchGuestBookings } from "../../services/Guest";
 import { formatStatus, formatDate, getStatusColor } from "../../utils/formatters";
+import GuestBookingsSkeleton from "../../motions/skeletons/GuestBookingsSkeleton";
+import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
 
 const GuestBookings = () => {
   const { userDetails } = useUserContext();
@@ -85,17 +87,17 @@ const GuestBookings = () => {
         (bookingDetailsQuery.isPending && !!bookingId) ||
         cancelBookingMutation.isPending,
       errorMessage: bookingsQuery.isError
-        ? "Failed to load bookings. Please try again later."
+        ? <GuestBookingsError error={cancelBookingMutation.error} />
         : (bookingDetailsQuery.isError && !!bookingId)
-          ? "Failed to load booking details. Please try again later."
+          ? <GuestBookingsError error={bookingDetailsQuery.error} />
           : cancelBookingMutation.isError
-            ? "Failed to cancel booking. Please try again later."
+            ? <GuestBookingsError error={cancelBookingMutation.error} />
             : null
     };
   }, [
     bookingsQuery.data, bookingsQuery.isPending, bookingsQuery.isError,
     bookingDetailsQuery.isPending, bookingDetailsQuery.isError, bookingId,
-    cancelBookingMutation.isPending, cancelBookingMutation.isError
+    cancelBookingMutation.isPending, cancelBookingMutation.isError, cancelBookingMutation.error, bookingDetailsQuery.error
   ]);
 
   const filteredBookings = useMemo(() => {
@@ -206,7 +208,7 @@ const GuestBookings = () => {
 
   if (isLoading) {
     return (
-      bookingId ? <BookingDetailsSkeleton /> : <BookingsTableSkeleton />
+      bookingId ? <BookingDetailsSkeleton /> : <GuestBookingsSkeleton />
     );
   }
 
