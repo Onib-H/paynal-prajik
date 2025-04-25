@@ -29,9 +29,13 @@ const RoomCard: FC<RoomCardProps> = ({
       ? `${description.substring(0, 65)}...`
       : description || "No description available.";
 
+  const buttonClass = isAuthenticated
+    ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-purple-100 hover:shadow-purple-200 cursor-pointer"
+    : "bg-gray-400 cursor-not-allowed";
+
   return (
     <div
-      className="relative rounded-xl overflow-hidden shadow-lg bg-white flex flex-col cursor-pointer group h-full transition-all duration-500"
+      className="relative rounded-xl overflow-hidden shadow-lg bg-white flex flex-col cursor-pointer group h-full transition-all duration-500 hover:-translate-y-1 hover:shadow-xl"
       onClick={() => navigate(`/rooms/${id}`)}
     >
       {/* Image container with elegant overlay */}
@@ -55,7 +59,6 @@ const RoomCard: FC<RoomCardProps> = ({
           </div>
         </div>
       </div>
-      
       {/* Card content with subtle animation */}
       <div className="flex flex-col flex-1 p-5 transition-all duration-300 group-hover:bg-gray-50">
         <div className="mb-3">
@@ -73,19 +76,21 @@ const RoomCard: FC<RoomCardProps> = ({
           {truncatedDescription}
         </p>
 
-        <div className="mt-auto pt-4 border-t border-gray-100 group-hover:border-purple-200 transition-colors flex items-center justify-between">
+        <div className="mt-auto w-full pt-4 border-t border-gray-100 group-hover:border-purple-200 transition-colors">
           <button
-            className={`${
-              isAuthenticated
-                ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-purple-100 hover:shadow-purple-200 cursor-pointer"
-                : "bg-gray-400 cursor-not-allowed"
-            } text-white text-sm px-4 py-2.5 rounded-lg transition-all duration-300 flex items-center gap-2`}
+            className={`${buttonClass} w-full text-center text-white text-sm px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden`}
             onClick={handleReserveClick}
             title={
               isAuthenticated ? "Book this room" : "Login required to book"
             }
+            disabled={!isAuthenticated}
           >
-            <Book size={16} /> <span>Book Now</span>
+            {/* Animated background layer */}
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+            {/* Button content */}
+            <Book size={18} className="shrink-0" />
+            <span className="font-medium tracking-wide">Book Now</span>
           </button>
         </div>
       </div>

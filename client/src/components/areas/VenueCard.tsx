@@ -94,19 +94,23 @@ const VenueCard: FC<AreaCardProps> = ({
           {truncatedDescription}
         </p>
 
-        <div className="mt-auto pt-4 border-t border-gray-100 group-hover:border-purple-200 transition-colors flex items-center justify-between">
+        <div className="mt-auto w-full pt-4 border-t border-gray-100 group-hover:border-purple-200 transition-colors">
           <button
-            className={`${buttonClass} text-white text-sm px-4 py-2.5 rounded-lg transition-all duration-300 flex items-center gap-2`}
+            className={`${buttonClass} w-full text-center text-white text-sm px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden`}
             onClick={handleBookNow}
             title={buttonTitle}
             disabled={!isAuthenticated || !canBook}
           >
+            {/* Animated background layer */}
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+            {/* Button content */}
             {isAuthenticated && !canBook ? (
-              <AlertCircle size={16} />
+              <AlertCircle size={18} className="shrink-0" />
             ) : (
-              <Book size={16} />
+              <Book size={18} className="shrink-0" />
             )}
-            <span>Book Now</span>
+            <span className="font-medium tracking-wide">Book Now</span>
           </button>
         </div>
       </div>
