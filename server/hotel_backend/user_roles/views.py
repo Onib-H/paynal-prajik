@@ -18,12 +18,13 @@ from property.serializers import AreaSerializer
 from .google.oauth import google_auth as google_oauth_util
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.db.models import Q
+from io import BytesIO
 import os
 import uuid
 import requests
 import cloudinary
 import cloudinary.uploader
-from io import BytesIO
 
 def save_google_profile_image_to_cloudinary(image_url):
     try:
@@ -781,10 +782,15 @@ def update_user_details(request, id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_guest_bookings(request):
-    try:        
+    try:
         user = request.user
-        bookings = Bookings.objects.filter(user=user).order_by('-created_at')
+        bookings = Bookings.objects.filter(user=user).exclude(status='cancelled').order_by('-created_at')
+
+        status_filter = request.query_params.get('status', '')
         
+        if status_filter:
+            bookings = bookings.filter(status=status_filter.lower())
+
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 5)
         

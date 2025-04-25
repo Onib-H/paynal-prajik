@@ -32,18 +32,17 @@ export const getGuestBookings = async (
   }
 };
 
-export const fetchGuestBookings = async ({
-  page = 1,
-  pageSize = 5,
-}: {
+export const fetchGuestBookings = async ({ page = 1, page_size = 5, status }: {
   page?: number;
-  pageSize?: number;
+  page_size?: number;
+  status?: string;
 } = {}) => {
   try {
     const response = await guest.get("/bookings", {
       params: {
-        page,
-        page_size: pageSize,
+        page: page,
+        page_size: page_size,
+        status: status,
       },
       withCredentials: true,
     });

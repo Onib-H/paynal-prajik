@@ -1,14 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Eye, Loader, Search } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, Eye, Loader, Search, Calendar } from "lucide-react";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import BookingData from "../../components/bookings/BookingData";
 import { BookingDetailsSkeleton, BookingsTableSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
 import { fetchBookingDetail, fetchUserBookings } from "../../services/Booking";
 import { formatDate, getStatusColor, formatStatus } from "../../utils/formatters";
+import { useUserContext } from "../../contexts/AuthContext";
 
 const GuestCancellations: FC = () => {
+  const { userDetails } = useUserContext();
+
   const [searchParams, setSearchParams] = useSearchParams();
   const bookingId = searchParams.get('bookingId');
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,6 +47,7 @@ const GuestCancellations: FC = () => {
         }
       };
     },
+    enabled: !!userDetails?.id
   });
 
   const bookingDetailsQuery = useQuery({
@@ -304,64 +309,117 @@ const GuestCancellations: FC = () => {
                   })}
                 </tbody>
               </table>
-            </div>
-          ) : !changingPage ? (
-            <div className="text-center py-8 text-gray-500">
-              No cancelled bookings found.
-            </div>
-          ) : null}
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && !changingPage && (
-            <div className="flex justify-center mt-6">
-              <nav className="flex items-center">
-                <button
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-1 rounded-l-md border ${currentPage === 1
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-blue-600 hover:bg-blue-50'
-                    }`}
-                >
-                  <ChevronLeft size={20} />
-                </button>
-
-                {/* Page number buttons - limited to max 5 shown */}
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  let pageToShow = i + 1;
-                  if (totalPages > 5 && currentPage > 3) {
-                    pageToShow = currentPage - 2 + i;
-                    if (pageToShow > totalPages) {
-                      pageToShow = totalPages - (4 - i);
-                    }
-                  }
-
-                  return (
+              {totalPages > 1 && !changingPage && (
+                <div className="flex justify-center mt-6">
+                  <nav className="flex items-center space-x-1">
                     <button
-                      key={pageToShow}
-                      onClick={() => handlePageChange(pageToShow)}
-                      className={`px-3 py-1 border-t border-b ${currentPage === pageToShow
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white text-blue-600 hover:bg-blue-50'
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`px-3 py-1 rounded-l-md border ${currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-purple-600 hover:bg-purple-50 cursor-pointer'
                         }`}
                     >
-                      {pageToShow}
+                      <ArrowLeft size={20} />
                     </button>
-                  );
-                })}
 
-                <button
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-1 rounded-r-md border ${currentPage === totalPages
-                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-blue-600 hover:bg-blue-50'
-                    }`}
-                >
-                  <ChevronRight size={20} />
-                </button>
-              </nav>
+                    <div className="text-gray-700 text-lg border rounded-lg p-1 border-purple-600 font-medium">
+                      Page <span className="text-purple-600">{currentPage}</span> | <span className="text-purple-600">{totalPages}</span>
+                    </div>
+
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={`px-3 py-1 rounded-r-md border ${currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-purple-600 hover:bg-purple-50 cursor-pointer'
+                        }`}
+                    >
+                      <ArrowRight size={20} />
+                    </button>
+                  </nav>
+                </div>
+              )}
             </div>
+          ) : !changingPage && filteredBookings.length === 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="py-12 flex flex-col items-center justify-center text-center"
+            >
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 260,
+                  damping: 20
+                }}
+                className="relative mb-6"
+              >
+                <motion.div
+                  animate={{
+                    rotate: [0, 10, -10, 10, 0],
+                    scale: [1, 1.05, 1]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 3
+                  }}
+                  className="bg-purple-100 p-6 rounded-full"
+                >
+                  <Calendar size={64} className="text-purple-600" />
+                </motion.div>
+                <motion.div
+                  animate={{
+                    y: [0, -10, 0],
+                    opacity: [0.8, 1, 0.8]
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatDelay: 1
+                  }}
+                  className="absolute -top-3 -right-3 bg-gray-100 p-2 rounded-full"
+                >
+                  <Search size={24} className="text-gray-500" />
+                </motion.div>
+              </motion.div>
+
+              <motion.h3
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-2xl font-semibold text-gray-800 mb-3"
+              >
+                No cancelled bookings found
+              </motion.h3>
+
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="text-gray-500 max-w-md mb-8"
+              >
+                You don't have any cancelled bookings at the moment. All your future cancellations will appear here.
+              </motion.p>
+
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center justify-center"
+              >
+                <a
+                  href="/bookings"
+                  className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium flex items-center hover:bg-purple-700 transition-colors"
+                >
+                  <ArrowLeft size={18} className="mr-2" />
+                  Go to active bookings
+                </a>
+              </motion.div>
+            </motion.div>
           )}
         </div>
       </div>

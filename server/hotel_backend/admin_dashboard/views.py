@@ -10,13 +10,14 @@ from booking.models import Bookings, Reservations, Transactions
 from booking.serializers import BookingSerializer
 from user_roles.models import CustomUsers
 from user_roles.serializers import CustomUserSerializer
-from user_roles.views import create_notification, create_booking_notification
+from user_roles.views import create_booking_notification
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q, Count, Sum
 from datetime import datetime, date, timedelta
-
 from .email.booking import send_booking_confirmation_email, send_booking_rejection_email
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_admin_details(request):
     user = request.user
     
@@ -593,7 +594,16 @@ def delete_amenity(request, pk):
 @permission_classes([IsAuthenticated])
 def admin_bookings(request):
     try:
-        bookings = Bookings.objects.all().order_by('-created_at')
+        exclude_statuses = [
+            'cancelled',
+            'rejected',
+            'no_show',
+            'checked_out'
+        ]
+        
+        bookings = Bookings.objects.filter(
+            ~Q(status__in=exclude_statuses)
+        ).order_by('-created_at')
         
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
@@ -607,11 +617,11 @@ def admin_bookings(request):
         except EmptyPage:
             paginated_bookings = paginator.page(paginator.num_pages)
         
-        status_filter = request.query_params.get('status')
-        bookings = Bookings.objects.all().order_by('-created_at')
+        # status_filter = request.query_params.get('status')
+        # bookings = Bookings.objects.all().order_by('-created_at')
         
-        if status_filter and status_filter.lower() != 'all':
-            bookings = bookings.filter(status__iexact=status_filter)
+        # if status_filter and status_filter.lower() != 'all':
+        #     bookings = bookings.filter(status__iexact=status_filter)
         
         serializer = BookingSerializer(paginated_bookings, many=True)
         

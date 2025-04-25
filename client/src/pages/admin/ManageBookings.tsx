@@ -21,6 +21,7 @@ const ManageBookings: FC = () => {
   const [showNoShowModal, setShowNoShowModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  
   const pageSize = 9;
 
   const { data: bookingsResponse, error } = useQuery<{
