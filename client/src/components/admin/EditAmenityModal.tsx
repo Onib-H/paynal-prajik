@@ -3,13 +3,7 @@ import { FC, useState, useEffect, FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { IAmenity, IEditAmenityModalProps } from "../../types/AmenityAdmin";
 
-const EditAmenityModal: FC<IEditAmenityModalProps> = ({
-  isOpen,
-  amenityData,
-  onSave,
-  cancel,
-  loading = false,
-}) => {
+const EditAmenityModal: FC<IEditAmenityModalProps> = ({ isOpen, amenityData, onSave, cancel, loading = false }) => {
   const [formState, setFormState] = useState<IAmenity>({
     id: 0,
     description: "",

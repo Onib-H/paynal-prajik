@@ -26,5 +26,3 @@ react-error-boundary
 jspdf
 @react-oauth/google
 @types/websocket
-react-google-recaptcha-v3
-react-google-recaptcha

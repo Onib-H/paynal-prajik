@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Eye, Filter, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Filter, Search, FolderX } from "lucide-react";
 import { FC, useState } from "react";
 import { toast } from "react-toastify";
 import CancellationModal from "../../components/bookings/CancellationModal";
@@ -11,6 +11,10 @@ import { formatDate } from "../../utils/formatters";
 import BookingStatusBadge from "../../components/admin/BookingStatusBadge";
 import BookingDetailsModal from "../../components/admin/BookingDetailsModal";
 import { getBookingPrice } from "../../utils/formatters";
+import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
+import ManageBookingSkeleton from "../../motions/skeletons/ManageBookingSkeleton";
+import { BookingQuery } from "../../types/BookingsAdmin";
+import { AnimatePresence, motion } from "framer-motion";
 
 const ManageBookings: FC = () => {
   const queryClient = useQueryClient();
@@ -21,19 +25,11 @@ const ManageBookings: FC = () => {
   const [showNoShowModal, setShowNoShowModal] = useState(false);
   const [showCancellationModal, setShowCancellationModal] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  
+
   const pageSize = 9;
 
-  const { data: bookingsResponse, error } = useQuery<{
-    data: BookingResponse[];
-    pagination?: {
-      total_pages: number;
-      current_page: number;
-      total_items: number;
-      page_size: number;
-    };
-  }, Error>({
-    queryKey: ["admin-bookings", currentPage, pageSize],
+  const { data: bookingsResponse, error, isLoading } = useQuery<BookingQuery>({
+    queryKey: ["adminBookings", currentPage, pageSize],
     queryFn: () => getAllBookings({ page: currentPage, pageSize }),
   });
 
@@ -73,7 +69,7 @@ const ManageBookings: FC = () => {
       return { result, status };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["adminBookings"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
 
       const { status } = data;
@@ -109,13 +105,8 @@ const ManageBookings: FC = () => {
     },
   });
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setStatusFilter(e.target.value);
-  };
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value);
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value);
 
   const handleViewBooking = async (booking: BookingResponse) => {
     try {
@@ -247,17 +238,14 @@ const ManageBookings: FC = () => {
 
   const closeCancellationModal = () => setShowCancellationModal(false);
 
+  if (isLoading) return <ManageBookingSkeleton />;
+  if (error) return <GuestBookingsError />;
+
   return (
     <div className="min-h-[calc(100vh-25px)] p-3 md:p-3 overflow-y-auto container mx-auto">
       <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-6">
         Manage Bookings
       </h1>
-
-      {error && (
-        <div className="mb-4 text-red-600 p-3 bg-red-50 rounded-lg">
-          {error.message}
-        </div>
-      )}
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 md:mb-6 gap-3">
         <div className="relative w-full md:w-1/3">
@@ -390,11 +378,47 @@ const ManageBookings: FC = () => {
                   );
                 })
               ) : (
-                <tr>
-                  <td colSpan={9} className="py-6 text-center text-gray-500">
-                    No bookings found.
-                  </td>
-                </tr>
+                <AnimatePresence>
+                  {filteredBookings.length === 0 && (
+                    <motion.tr
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <td colSpan={9} className="py-12 text-center">
+                        <motion.div
+                          initial={{ y: -20 }}
+                          animate={{ y: 0 }}
+                          className="flex flex-col items-center justify-center gap-4"
+                        >
+                          <div className="p-4 bg-purple-50 rounded-full">
+                            {searchTerm || statusFilter !== "all" ? (
+                              <Search className="w-12 h-12 text-purple-600" strokeWidth={1.5} />
+                            ) : (
+                              <FolderX className="w-12 h-12 text-purple-600" strokeWidth={1.5} />
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            <h3 className="text-xl font-semibold text-gray-900">
+                              {searchTerm ? "No matching bookings found"
+                                : statusFilter !== "all" ? "No bookings with this status"
+                                  : "No bookings available"}
+                            </h3>
+                            <p className="text-gray-600 max-w-prose mx-auto">
+                              {searchTerm ?
+                                <>
+                                  No bookings match your search for "<span className="font-medium">{searchTerm}</span>". Try adjusting your search terms.
+                                </> : statusFilter !== "all" ? (
+                                  `No bookings currently marked as ${statusFilter.replace("_", " ")}. Try checking other statuses.`
+                                ) : "There are currently no bookings in the system. New bookings will appear here as they're created."}
+                            </p>
+                          </div>
+                        </motion.div>
+                      </td>
+                    </motion.tr>
+                  )}
+                </AnimatePresence>
               )}
             </tbody>
           </table>

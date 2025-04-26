@@ -1,5 +1,3 @@
-import { IUser } from "../components/admin/EditUserModal";
-
 export interface CreateUserFormData {
     email: string;
     password: string;
@@ -19,4 +17,23 @@ export interface PaginationData {
 export interface UsersResponse {
     data: IUser[];
     pagination: PaginationData;
+}
+
+export interface IUser {
+    id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    password?: string;
+    confirm_password: string;
+    role: string;
+    profile_image?: string;
+}
+
+export interface IUserFormModalProps {
+    isOpen: boolean;
+    cancel: () => void;
+    onSave: (user: IUser) => Promise<void>;
+    userData?: IUser | null;
+    loading?: boolean;
 }

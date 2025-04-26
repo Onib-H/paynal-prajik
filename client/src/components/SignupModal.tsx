@@ -10,6 +10,7 @@ import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
 import TermsModal from "./TermsModal";
 import { SubmitHandler, useForm } from "react-hook-form";
+import logo from "../assets/logo.png";
 
 interface SignupModalProps {
   toggleRegisterModal: () => void;
@@ -21,6 +22,7 @@ interface SignupFormInputs {
   email: string;
   password: string;
   confirmPassword: string;
+  termsAgreed?: boolean;
 }
 
 const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal, onSuccessfulSignup }) => {
@@ -29,25 +31,23 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState<boolean>(false);
   const [showTermsModal, setShowTermsModal] = useState<boolean>(false);
-  const [termsAgreed, setTermsAgreed] = useState<boolean>(false);
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error" | "info" | "warning";
     icon: string;
   } | null>(null);
 
-  const { register, handleSubmit, formState: { errors, isValid }, setError, getValues, watch } = useForm<SignupFormInputs>({
+  const { register, handleSubmit, formState: { errors }, setError, getValues, watch, setValue } = useForm<SignupFormInputs>({
     mode: "onBlur",
     defaultValues: {
       email: "",
       password: "",
-      confirmPassword: ""
+      confirmPassword: "",
+      termsAgreed: false
     }
   });
 
-  const email = watch("email");
   const password = watch("password");
-  const confirmPassword = watch("confirmPassword");
 
   const togglePassword = () => setPasswordVisible(!passwordVisible);
   const toggleConfirmPassword = () => setConfirmPasswordVisible(!confirmPasswordVisible);
@@ -144,17 +144,12 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
   });
 
   const onSubmit: SubmitHandler<SignupFormInputs> = (data) => {
-    if (!termsAgreed) {
-      setShowTermsModal(true);
-      return;
-    }
-
     registerMutation(data);
   };
 
   return (
     <>
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout">
         <motion.section
           className="relative z-20 min-h-screen flex items-center justify-center"
           initial="hidden"
@@ -167,15 +162,24 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
             variants={modalVariants}
           >
             <motion.button
-              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="absolute top-3 right-3 z-40 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="absolute top-3 right-3 z-40 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
               onClick={toggleRegisterModal}
             >
               <i className="fa fa-x"></i>
             </motion.button>
 
             <div className="p-7 space-y-4 md:space-y-6 sm:p-9">
+              <motion.img
+                src={logo}
+                alt={logo}
+                loading="lazy"
+                className="w-16 h-16 mx-auto mb-2"
+                variants={formItemVariants}
+                custom={0}
+              />
+              
               <motion.h1
                 className="text-3xl text-center font-bold text-gray-800 mb-2 tracking-wide"
                 variants={formItemVariants}
@@ -183,16 +187,9 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
               >
                 Register to <span className="text-purple-600">Azurea</span>
               </motion.h1>
-              <motion.h3
-                className="text-normal text-center text-gray-500 tracking-wide mb-4"
-                variants={formItemVariants}
-                custom={1}
-              >
-                Azurea Hotel Management System
-              </motion.h3>
 
               <motion.div
-                className="border-b-2 border-gray-300 mb-4 origin-center"
+                className="border-b-2 border-gray-300 my-4 origin-center"
                 variants={formItemVariants}
                 custom={2}
               ></motion.div>
@@ -205,7 +202,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                 >
                   <label
                     htmlFor="email"
-                    className="text-md font-semibold text-gray-700 tracking-tighter"
+                    className="text-lg font-semibold text-gray-700 tracking-tighter"
                   >
                     Email
                   </label>
@@ -244,7 +241,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                 >
                   <label
                     htmlFor="password"
-                    className="text-md font-semibold text-gray-700 tracking-tighter"
+                    className="text-lg font-semibold text-gray-700 tracking-tighter"
                   >
                     Password
                   </label>
@@ -267,10 +264,11 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={togglePassword}
-                      className="absolute right-3 cursor-pointer text-gray-800"
+                      className="absolute right-3 bottom-2 cursor-pointer text-gray-800"
                     >
                       <FontAwesomeIcon
                         icon={passwordVisible ? faEyeSlash : faEye}
+                        size="lg"
                       />
                     </motion.div>
                   </div>
@@ -293,7 +291,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                 >
                   <label
                     htmlFor="confirmPassword"
-                    className="text-md font-semibold text-gray-700 tracking-tighter"
+                    className="text-lg font-semibold text-gray-700 tracking-tighter"
                   >
                     Confirm Password
                   </label>
@@ -313,10 +311,11 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={toggleConfirmPassword}
-                      className="absolute right-3 cursor-pointer text-gray-800"
+                      className="absolute right-3 bottom-2 cursor-pointer text-gray-800"
                     >
                       <FontAwesomeIcon
                         icon={confirmPasswordVisible ? faEyeSlash : faEye}
+                        size="lg"
                       />
                     </motion.div>
                   </div>
@@ -332,13 +331,40 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                   )}
                 </motion.div>
 
+                <motion.div
+                  className="mb-4"
+                  variants={formItemVariants}
+                  custom={6}
+                >
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="termsAgreed"
+                      checked={watch("termsAgreed")}
+                      onClick={() => setShowTermsModal(true)}
+                      readOnly
+                      className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
+                    />
+                    <label htmlFor="termsAgreed" className="ml-2 text-md text-gray-700">
+                      I agree to the{" "}
+                      <button
+                        type="button"
+                        onClick={() => setShowTermsModal(true)}
+                        className="text-purple-600 hover:underline"
+                      >
+                        Terms and Conditions
+                      </button>
+                    </label>
+                  </div>
+                </motion.div>
+
                 <motion.button
                   variants={formItemVariants}
                   custom={6}
                   whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(59, 130, 246, 0.3)" }}
                   whileTap={{ scale: 0.95 }}
                   type="submit"
-                  disabled={!email || !password || !confirmPassword || loading || !isValid}
+                  disabled={loading}
                   className={`w-full bg-purple-700 text-white py-2 rounded-lg hover:bg-purple-800 cursor-pointer transition-colors duration-300 flex items-center justify-center ${loading ? "bg-purple-700/30 cursor-not-allowed" : ""}`}
                 >
                   {loading ? (
@@ -361,7 +387,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                     <span className="px-3 text-gray-500 text-sm">OR</span>
                     <hr className="w-full border-gray-300" />
                   </div>
-                  <GoogleButton 
+                  <GoogleButton
                     text="Sign up with Google"
                     requireTermsAgreement={true}
                   />
@@ -394,9 +420,8 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
         isOpen={showTermsModal}
         onClose={() => setShowTermsModal(false)}
         onAgree={() => {
-          setTermsAgreed(true);
+          setValue("termsAgreed", true);
           setShowTermsModal(false);
-          handleSubmit(onSubmit)();
         }}
       />
       {notification && (

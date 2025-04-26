@@ -10,6 +10,7 @@ import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
 import { useMutation } from "@tanstack/react-query";
 import { SubmitHandler, useForm } from "react-hook-form";
+import logo from "../assets/logo.png";
 
 interface LoginProps {
   toggleLoginModal: () => void;
@@ -147,7 +148,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
 
   return (
     <>
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout">
         <motion.section
           className="relative z-20 min-h-screen flex items-center justify-center"
           initial="hidden"
@@ -162,13 +163,22 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="absolute top-3 right-3 z-40 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="absolute top-3 right-3 z-40 cursor-pointer w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-red-600 bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
               onClick={toggleLoginModal}
             >
               <i className="fa fa-x"></i>
             </motion.button>
 
             <div className="p-7 space-y-4 md:space-y-6 sm:p-9">
+              <motion.img 
+                src={logo}
+                alt={logo}
+                loading="lazy"
+                className="w-16 h-16 mx-auto mb-2"
+                variants={formItemVariants}
+                custom={0}
+              />
+
               <motion.h1
                 className="text-3xl text-center font-bold text-gray-800 mb-2 tracking-wide"
                 variants={formItemVariants}
@@ -176,14 +186,6 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
               >
                 Welcome to <span className="text-purple-600">Azurea</span>
               </motion.h1>
-
-              <motion.h3
-                className="text-normal text-center text-gray-500 tracking-wide mb-4"
-                variants={formItemVariants}
-                custom={1}
-              >
-                Azurea Hotel Management System
-              </motion.h3>
 
               {bookingInProgress && (
                 <motion.div
@@ -202,7 +204,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
               )}
 
               <motion.div
-                className="border-b-2 border-gray-300 mb-4 origin-center"
+                className="border-b-2 border-gray-300 my-4 origin-center"
                 variants={formItemVariants}
                 custom={3}
               ></motion.div>
@@ -279,10 +281,11 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
                       onClick={togglePassword}
-                      className="absolute right-3 cursor-pointer text-gray-800"
+                      className="absolute right-3 bottom-2 cursor-pointer text-gray-800"
                     >
                       <FontAwesomeIcon
                         icon={passwordVisible ? faEyeSlash : faEye}
+                        size="lg"
                       />
                     </motion.div>
                   </div>

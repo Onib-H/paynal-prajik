@@ -8,7 +8,7 @@ export const footerLinks = [
       },
       {
         links: "Areas",
-        to: '/venues'
+        to: '/areas'
       },
       {
         links: "Rooms",

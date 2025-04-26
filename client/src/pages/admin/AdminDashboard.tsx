@@ -11,32 +11,9 @@ import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, 
 import "../../styles/print.css";
 import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
+import { formatMonthYear, getDaysInMonth } from "../../utils/formatters";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, ArcElement, PointElement, Title, Tooltip, Legend, Filler);
-
-const getDaysInMonth = (month: number, year: number, limitToCurrentDay = false) => {
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const currentDate = new Date();
-
-  const maxDay =
-    limitToCurrentDay &&
-      month === currentDate.getMonth() &&
-      year === currentDate.getFullYear()
-      ? currentDate.getDate()
-      : daysInMonth;
-
-  return Array.from({ length: maxDay }, (_, i) => {
-    const day = i + 1;
-    return `${day}`;
-  });
-};
-
-const formatMonthYear = (month: number, year: number) => {
-  return new Date(year, month).toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-};
 
 const AdminDashboard = () => {
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
@@ -67,7 +44,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const { data, isLoading, error, refetch: refetchStats } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["stats", selectedMonth + 1, selectedYear],
     queryFn: async () => {
       const statsData = await fetchStats({
@@ -87,16 +64,15 @@ const AdminDashboard = () => {
     },
   });
 
-  const { data: bookingStatusData, isLoading: bookingStatusLoading, refetch: refetchBookingStatus } = useQuery({
+  const { data: bookingStatusData, isLoading: bookingStatusLoading } = useQuery({
     queryKey: ["bookingStatusCounts", selectedMonth + 1, selectedYear],
-    queryFn: () =>
-      fetchBookingStatusCounts({
-        month: selectedMonth + 1,
-        year: selectedYear,
-      }),
+    queryFn: () => fetchBookingStatusCounts({
+      month: selectedMonth + 1,
+      year: selectedYear,
+    }),
   });
 
-  const { data: dailyBookingsResponse, isLoading: bookingsDataLoading, refetch: refetchDailyBookings } = useQuery({
+  const { data: dailyBookingsResponse, isLoading: bookingsDataLoading } = useQuery({
     queryKey: ["dailyBookings", selectedMonth + 1, selectedYear],
     queryFn: () => fetchDailyBookings({
       month: selectedMonth + 1,
@@ -104,7 +80,7 @@ const AdminDashboard = () => {
     }),
   });
 
-  const { data: dailyCancellationsResponse, isLoading: cancellationsDataLoading, refetch: refetchCancellations } = useQuery({
+  const { data: dailyCancellationsResponse, isLoading: cancellationsDataLoading } = useQuery({
     queryKey: ["dailyCancellations", selectedMonth + 1, selectedYear],
     queryFn: () => fetchDailyCancellations({
       month: selectedMonth + 1,
@@ -112,7 +88,7 @@ const AdminDashboard = () => {
     }),
   });
 
-  const { data: dailyNoShowsRejectedResponse, isLoading: noShowsRejectedDataLoading, refetch: refetchNoShowsRejected } = useQuery({
+  const { data: dailyNoShowsRejectedResponse, isLoading: noShowsRejectedDataLoading } = useQuery({
     queryKey: ["dailyNoShowsRejected", selectedMonth + 1, selectedYear],
     queryFn: () => fetchDailyNoShowsRejected({
       month: selectedMonth + 1,
@@ -120,7 +96,7 @@ const AdminDashboard = () => {
     }),
   });
 
-  const { data: roomRevenueResponse, isLoading: roomRevenueLoading, refetch: refetchRoomRevenue } = useQuery({
+  const { data: roomRevenueResponse, isLoading: roomRevenueLoading } = useQuery({
     queryKey: ["roomRevenue", selectedMonth + 1, selectedYear],
     queryFn: () => fetchRoomRevenue({
       month: selectedMonth + 1,
@@ -128,7 +104,7 @@ const AdminDashboard = () => {
     }),
   });
 
-  const { data: roomBookingsResponse, isLoading: roomBookingsLoading, refetch: refetchRoomBookings } = useQuery({
+  const { data: roomBookingsResponse, isLoading: roomBookingsLoading } = useQuery({
     queryKey: ["roomBookings", selectedMonth + 1, selectedYear],
     queryFn: () => fetchRoomBookings({
       month: selectedMonth + 1,
@@ -136,30 +112,13 @@ const AdminDashboard = () => {
     }),
   });
 
-  const { data: monthlyRevenueData, isLoading: monthlyRevenueLoading, refetch: refetchMonthlyRevenue } = useQuery({
+  const { data: monthlyRevenueData, isLoading: monthlyRevenueLoading } = useQuery({
     queryKey: ["monthlyRevenue", selectedMonth + 1, selectedYear],
     queryFn: () => fetchMonthlyRevenue({
       month: selectedMonth + 1,
       year: selectedYear,
     }),
   });
-
-  useEffect(() => {
-    const refetchAllData = async () => {
-      await Promise.all([
-        refetchStats(),
-        refetchBookingStatus(),
-        refetchDailyBookings(),
-        refetchCancellations(),
-        refetchNoShowsRejected(),
-        refetchRoomRevenue(),
-        refetchRoomBookings(),
-        refetchMonthlyRevenue()
-      ]);
-    };
-
-    refetchAllData();
-  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     if (
