@@ -7,7 +7,7 @@ import { Bar, Doughnut, Line } from "react-chartjs-2";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
 import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
-import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyCheckInsCheckOuts, fetchDailyNoShowsRejected, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
+import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyNoShowsRejected, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import "../../styles/print.css";
 import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
@@ -67,8 +67,8 @@ const AdminDashboard = () => {
     }
   };
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["stats", selectedMonth, selectedYear],
+  const { data, isLoading, error, refetch: refetchStats } = useQuery({
+    queryKey: ["stats", selectedMonth + 1, selectedYear],
     queryFn: async () => {
       const statsData = await fetchStats({
         month: selectedMonth + 1,
@@ -87,88 +87,79 @@ const AdminDashboard = () => {
     },
   });
 
-  const { data: bookingStatusData, isLoading: bookingStatusLoading } = useQuery(
-    {
-      queryKey: ["bookingStatusCounts", selectedMonth, selectedYear],
-      queryFn: () =>
-        fetchBookingStatusCounts({
-          month: selectedMonth + 1,
-          year: selectedYear,
-        }),
-    }
-  );
-
-  const { data: dailyBookingsResponse, isLoading: bookingsDataLoading } = useQuery({
-    queryKey: ["dailyBookings", selectedMonth, selectedYear],
+  const { data: bookingStatusData, isLoading: bookingStatusLoading, refetch: refetchBookingStatus } = useQuery({
+    queryKey: ["bookingStatusCounts", selectedMonth + 1, selectedYear],
     queryFn: () =>
-      fetchDailyBookings({
+      fetchBookingStatusCounts({
         month: selectedMonth + 1,
         year: selectedYear,
       }),
   });
 
-  // const { data: dailyOccupancyResponse, isLoading: occupancyDataLoading } = useQuery({
-  //   queryKey: ["dailyOccupancy", selectedMonth, selectedYear],
-  //   queryFn: () =>
-  //     fetchDailyOccupancy({
-  //       month: selectedMonth + 1,
-  //       year: selectedYear,
-  //     }),
-  // });
-
-  const { data: checkinCheckoutData, isLoading: checkinsDataLoading } = useQuery({
-    queryKey: ["dailyCheckInsCheckOuts", selectedMonth, selectedYear],
-    queryFn: () =>
-      fetchDailyCheckInsCheckOuts({
-        month: selectedMonth + 1,
-        year: selectedYear,
-      }),
+  const { data: dailyBookingsResponse, isLoading: bookingsDataLoading, refetch: refetchDailyBookings } = useQuery({
+    queryKey: ["dailyBookings", selectedMonth + 1, selectedYear],
+    queryFn: () => fetchDailyBookings({
+      month: selectedMonth + 1,
+      year: selectedYear,
+    }),
   });
 
-  const { data: dailyCancellationsResponse, isLoading: cancellationsDataLoading } = useQuery({
-    queryKey: ["dailyCancellations", selectedMonth, selectedYear],
-    queryFn: () =>
-      fetchDailyCancellations({
-        month: selectedMonth + 1,
-        year: selectedYear,
-      }),
+  const { data: dailyCancellationsResponse, isLoading: cancellationsDataLoading, refetch: refetchCancellations } = useQuery({
+    queryKey: ["dailyCancellations", selectedMonth + 1, selectedYear],
+    queryFn: () => fetchDailyCancellations({
+      month: selectedMonth + 1,
+      year: selectedYear,
+    }),
   });
 
-  const { data: dailyNoShowsRejectedResponse, isLoading: noShowsRejectedDataLoading } = useQuery({
-    queryKey: ["dailyNoShowsRejected", selectedMonth, selectedYear],
-    queryFn: () =>
-      fetchDailyNoShowsRejected({
-        month: selectedMonth + 1,
-        year: selectedYear,
-      }),
+  const { data: dailyNoShowsRejectedResponse, isLoading: noShowsRejectedDataLoading, refetch: refetchNoShowsRejected } = useQuery({
+    queryKey: ["dailyNoShowsRejected", selectedMonth + 1, selectedYear],
+    queryFn: () => fetchDailyNoShowsRejected({
+      month: selectedMonth + 1,
+      year: selectedYear,
+    }),
   });
 
-  const { data: roomRevenueResponse, isLoading: roomRevenueLoading } = useQuery({
-    queryKey: ["roomRevenue", selectedMonth, selectedYear],
-    queryFn: () =>
-      fetchRoomRevenue({
-        month: selectedMonth + 1,
-        year: selectedYear,
-      }),
+  const { data: roomRevenueResponse, isLoading: roomRevenueLoading, refetch: refetchRoomRevenue } = useQuery({
+    queryKey: ["roomRevenue", selectedMonth + 1, selectedYear],
+    queryFn: () => fetchRoomRevenue({
+      month: selectedMonth + 1,
+      year: selectedYear,
+    }),
   });
 
-  const { data: roomBookingsResponse, isLoading: roomBookingsLoading } = useQuery({
-    queryKey: ["roomBookings", selectedMonth, selectedYear],
-    queryFn: () =>
-      fetchRoomBookings({
-        month: selectedMonth + 1,
-        year: selectedYear,
-      }),
+  const { data: roomBookingsResponse, isLoading: roomBookingsLoading, refetch: refetchRoomBookings } = useQuery({
+    queryKey: ["roomBookings", selectedMonth + 1, selectedYear],
+    queryFn: () => fetchRoomBookings({
+      month: selectedMonth + 1,
+      year: selectedYear,
+    }),
   });
 
-  const { data: monthlyRevenueData, isLoading: monthlyRevenueLoading } = useQuery({
-    queryKey: ["monthlyRevenue", selectedMonth, selectedYear],
-    queryFn: () =>
-      fetchMonthlyRevenue({
-        month: selectedMonth + 1,
-        year: selectedYear,
-      }),
+  const { data: monthlyRevenueData, isLoading: monthlyRevenueLoading, refetch: refetchMonthlyRevenue } = useQuery({
+    queryKey: ["monthlyRevenue", selectedMonth + 1, selectedYear],
+    queryFn: () => fetchMonthlyRevenue({
+      month: selectedMonth + 1,
+      year: selectedYear,
+    }),
   });
+
+  useEffect(() => {
+    const refetchAllData = async () => {
+      await Promise.all([
+        refetchStats(),
+        refetchBookingStatus(),
+        refetchDailyBookings(),
+        refetchCancellations(),
+        refetchNoShowsRejected(),
+        refetchRoomRevenue(),
+        refetchRoomBookings(),
+        refetchMonthlyRevenue()
+      ]);
+    };
+
+    refetchAllData();
+  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     if (
@@ -181,7 +172,7 @@ const AdminDashboard = () => {
       const modifiedData = {
         ...data,
         revenue: monthlyRevenueData.revenue,
-        formatted_revenue: monthlyRevenueData.formatted_revenue,
+        formattedRevenue: monthlyRevenueData.formatted_revenue,
       };
 
       const prepared = prepareReportData(
@@ -210,8 +201,6 @@ const AdminDashboard = () => {
     isLoading ||
     bookingStatusLoading ||
     bookingsDataLoading ||
-    // occupancyDataLoading ||
-    checkinsDataLoading ||
     cancellationsDataLoading ||
     roomRevenueLoading ||
     roomBookingsLoading ||
@@ -261,9 +250,6 @@ const AdminDashboard = () => {
 
   const dailyRevenueData = limitArrayToCurrentDay(data?.daily_revenue);
   const dailyBookingsData = limitArrayToCurrentDay(dailyBookingsResponse?.data);
-  // const dailyOccupancyRates = limitArrayToCurrentDay(dailyOccupancyResponse?.data);
-  const dailyCheckIns = limitArrayToCurrentDay(checkinCheckoutData?.checkins);
-  const dailyCheckOuts = limitArrayToCurrentDay(checkinCheckoutData?.checkouts);
   const dailyCancellations = limitArrayToCurrentDay(dailyCancellationsResponse?.data);
   const dailyNoShows = limitArrayToCurrentDay(dailyNoShowsRejectedResponse?.no_shows);
   const dailyRejected = limitArrayToCurrentDay(dailyNoShowsRejectedResponse?.rejected);
@@ -362,42 +348,6 @@ const AdminDashboard = () => {
         borderColor: "#2196F3",
         backgroundColor: "rgba(33, 150, 243, 0.1)",
         fill: true,
-        tension: 0.3,
-      },
-    ],
-  };
-
-  // const occupancyRateData = {
-  //   labels: daysInMonth,
-  //   datasets: [
-  //     {
-  //       label: 'Occupancy Rate (%)',
-  //       data: dailyOccupancyRates,
-  //       borderColor: '#FFC107',
-  //       backgroundColor: 'rgba(255, 193, 7, 0.1)',
-  //       fill: true,
-  //       tension: 0.3
-  //     }
-  //   ]
-  // };
-
-  const checkInOutData = {
-    labels: daysInMonth,
-    datasets: [
-      {
-        label: "Check-ins",
-        data: dailyCheckIns,
-        borderColor: "#4CAF50",
-        backgroundColor: "rgba(76, 175, 80, 0.1)",
-        fill: false,
-        tension: 0.3,
-      },
-      {
-        label: "Check-outs",
-        data: dailyCheckOuts,
-        borderColor: "#F44336",
-        backgroundColor: "rgba(244, 67, 54, 0.1)",
-        fill: false,
         tension: 0.3,
       },
     ],
@@ -628,30 +578,16 @@ const AdminDashboard = () => {
           value={stats.activeBookings}
           borderColor="border-green-500"
         />
-        {/* <StatCard
+        <StatCard
           title="Pending Bookings"
           value={stats.pendingBookings}
           borderColor="border-yellow-500"
-        /> */}
-        <StatCard
-          title="Checked-in Guests"
-          value={stats.checkedInCount}
-          borderColor="border-indigo-500"
         />
         <StatCard
-          title="Total Bookings"
+          title="Total Monthly Bookings"
           value={stats.totalBookings}
           borderColor="border-blue-500"
         />
-        {/* <StatCard
-          title="Occupancy Rate"
-          value={`${Math.round(
-            (stats.totalRooms > 0
-              ? stats.occupiedRooms / stats.totalRooms
-              : 0) * 100
-          )}%`}
-          borderColor="border-purple-500"
-        /> */}
         <StatCard
           title="Monthly Revenue"
           value={stats.formattedRevenue}
@@ -737,67 +673,6 @@ const AdminDashboard = () => {
                   if (ref) {
                     bookingTrendsChartRef.current = ref.canvas;
                   }
-                }}
-              />
-            </div>
-          </div>
-
-          {/* <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">Occupancy Rate</h3>
-            <div className="h-64">
-              <Line
-                data={occupancyRateData}
-                options={{
-                  ...lineOptions,
-                  plugins: {
-                    ...lineOptions.plugins,
-                    tooltip: {
-                      ...lineOptions.plugins?.tooltip,
-                      callbacks: {
-                        label: function (context: any) {
-                          let label = context.dataset.label || '';
-                          if (label) {
-                            label += ': ';
-                          }
-                          if (context.parsed.y !== null) {
-                            label += `${context.parsed.y.toFixed(1)}%`;
-                          }
-                          return label;
-                        }
-                      }
-                    },
-                    title: {
-                      display: true,
-                      text: `Daily Occupancy Rates - ${formattedMonthYear}`,
-                      font: {
-                        size: 16
-                      }
-                    }
-                  }
-                }}
-              />
-            </div>
-          </div> */}
-
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">
-              Check-ins & Check-outs
-            </h3>
-            <div className="h-64">
-              <Line
-                data={checkInOutData}
-                options={{
-                  ...lineOptions,
-                  plugins: {
-                    ...lineOptions.plugins,
-                    title: {
-                      display: true,
-                      text: `Daily Check-ins & Check-outs - ${formattedMonthYear}`,
-                      font: {
-                        size: 16,
-                      },
-                    },
-                  },
                 }}
               />
             </div>

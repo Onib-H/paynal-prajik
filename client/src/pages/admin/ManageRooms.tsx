@@ -160,9 +160,7 @@ const ManageRooms: FC = () => {
   }, []);
 
   const confirmDelete = () => {
-    if (deleteRoomId !== null) {
-      deleteRoomMutation.mutate(deleteRoomId);
-    }
+    if (deleteRoomId !== null) deleteRoomMutation.mutate(deleteRoomId);
   };
   const cancelDelete = () => {
     setDeleteRoomId(null);

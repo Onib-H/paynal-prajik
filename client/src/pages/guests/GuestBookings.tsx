@@ -360,13 +360,13 @@ const GuestBookings = () => {
                             <div className="h-10 w-10 flex-shrink-0">
                               <img
                                 loading="lazy"
-                                src={itemImage || '/default-room.jpg'}
+                                src={itemImage}
                                 alt={itemName}
                                 className="h-10 w-10 rounded-md object-cover"
                               />
                             </div>
                             <div className="ml-4">
-                              <div className="text-md font-medium text-gray-900">{itemName}</div>
+                              <div className="text-md font-semibold text-gray-900">{itemName}</div>
                               {isVenueBooking ? (
                                 <div className="text-md bg-blue-100 text-blue-800 px-2 py-0.5 rounded inline-block mt-1">Venue</div>
                               ) : (
