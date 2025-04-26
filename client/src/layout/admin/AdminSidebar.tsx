@@ -1,30 +1,23 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import Modal from "../../components/Modal";
 import { useMutation } from "@tanstack/react-query";
 import { menuItems } from "../../constants/AdminMenuSidebar";
 import { useUserContext } from "../../contexts/AuthContext";
-// import { fetchAdminProfile } from "../../services/Admin";
 import { logout } from "../../services/Auth";
-// import AdminProfile from "./AdminProfile";
 import hotelLogo from "../../assets/hotel_logo.png";
+import { webSocketService } from "../../services/websockets";
 
 const AdminSidebar: FC = () => {
   const navigate = useNavigate();
-  const { setIsAuthenticated, role, setRole } = useUserContext();
+  const { setIsAuthenticated, role, setRole, userDetails } = useUserContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState<number>(0);
 
   const modalCancel = () => setIsModalOpen(false);
-
-  // const { data: adminData, isLoading: profileLoading } = useQuery({
-  //   queryKey: ["adminProfile"],
-  //   queryFn: async () => {
-  //     const response = await fetchAdminProfile();
-  //     return response.data.data;
-  //   },
-  // });
 
   const { mutate: logoutMutation, isPending: logoutLoading } = useMutation({
     mutationFn: logout,
@@ -42,7 +35,47 @@ const AdminSidebar: FC = () => {
 
   const handleLogout = () => logoutMutation();
 
-  const filteredMenuItems = menuItems.filter((item) => {
+  useEffect(() => {
+    if (!userDetails?.id) return;
+
+    webSocketService.connect(userDetails.id.toString());
+    
+    const handlePendingCount = (data: any) => {
+      if (data.type === "pending_count") {
+        setPendingCount(data.count);
+      }
+    };
+
+    webSocketService.on('pending_count', handlePendingCount);
+    webSocketService.send({ type: "get_pending_count" });
+
+    return () => {
+      webSocketService.disconnect();
+      webSocketService.off('pending_count');
+    }
+  }, [userDetails?.id]);
+
+  const updatedMenuItems = menuItems.map(item => {
+    if (item.label === "Manage Bookings") {
+      return {
+        ...item,
+        label: (
+          <div className="flex items-center justify-between w-full">
+            <span>Manage Bookings</span>
+            {pendingCount > 0 && (
+              <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
+                {pendingCount}
+              </span>
+            )}
+          </div>
+        )
+      }
+    }
+
+    return item;
+  });
+
+  const filteredMenuItems = updatedMenuItems.filter((item) => {
     if (role.toLowerCase() === "staff") {
       if (
         item.label === "Dashboard" ||
@@ -77,10 +110,9 @@ const AdminSidebar: FC = () => {
                   to={item.link}
                   end={item.link === "/admin"}
                   className={({ isActive }) =>
-                    `flex items-center space-x-2 rounded-md cursor-pointer ${
-                      isActive
-                        ? "border-r-4 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
-                        : "hover:bg-purple-100/80 transition-colors duration-300"
+                    `flex items-center space-x-2 rounded-md cursor-pointer ${isActive
+                      ? "border-r-4 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
+                      : "hover:bg-purple-100/80 transition-colors duration-300"
                     } py-2 px-3`
                   }
                 >
@@ -116,9 +148,7 @@ const AdminSidebar: FC = () => {
         cancel={modalCancel}
         onConfirm={handleLogout}
         loading={logoutLoading}
-        className={`bg-red-600 text-whitehover:bg-red-700 font-bold uppercase text-white text-sm px-6 py-3 rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-300 cursor-pointer ${
-          logoutLoading ? "opacity-50 cursor-not-allowed" : ""
-        }`}
+        className={`bg-red-600 text-whitehover:bg-red-700 font-bold uppercase text-white text-sm px-6 py-3 rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-300 cursor-pointer ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""}`}
         confirmText={
           logoutLoading ? (
             <>

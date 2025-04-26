@@ -142,7 +142,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             const currentDate = new Date();
             const checkOutDate = new Date(booking.check_out_date);
 
-            if (currentDate <= checkOutDate) {
+            if (currentDate >= checkOutDate) {
                 return { isValid: true, message: "" };
             }
 
