@@ -13,6 +13,33 @@ export const formatCurrency = (amount: number): string => {
 };
 
 /**
+ * Format month and year from a date string
+ */
+export const formatMonthYear = (month: number, year: number) => {
+  return new Date(year, month).toLocaleString("en-US", {
+    month: "long",
+    year: "numeric"
+  });
+};
+
+/**
+ * Get the number of days in a month
+ */
+export const getDaysInMonth = (month: number, year: number, limitToCurrentDay: boolean = false) => {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const currentDate = new Date();
+
+  const maxDay = limitToCurrentDay && 
+    month === currentDate.getMonth() && year === currentDate.getFullYear()
+      ? currentDate.getDate() : daysInMonth;
+    
+  return Array.from({ length: maxDay }, (_, i) => {
+    const day = i + 1;
+    return `${day}`;
+  });
+};
+
+/**
  * Parse a price value from a formatted string (removes ₱ and commas)
  * @param price The price string or number to parse
  * @returns A numeric value

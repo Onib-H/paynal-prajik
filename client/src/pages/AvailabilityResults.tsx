@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { Calendar } from "lucide-react";
@@ -18,55 +18,62 @@ const DEPARTURE_DATE_KEY = "hotel_departure_date";
 const AvailabilityResults = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isAuthenticated } = useUserContext();
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
 
-  const [arrival, setArrival] = useState<string>(searchParams.get("arrival") || "");
-  const [departure, setDeparture] = useState<string>(searchParams.get("departure") || "");
+  const [arrival, setArrival] = useState<string>(() => {
+    const param = searchParams.get("arrival");
+    if (param) return param;
+    return localStorage.getItem(ARRIVAL_DATE_KEY) || "";
+  });
+
+  const [departure, setDeparture] = useState<string>(() => {
+    const param = searchParams.get("departure");
+    if (param) return param;
+    return localStorage.getItem(DEPARTURE_DATE_KEY) || "";
+  });
 
   useEffect(() => {
-    if (!arrival) {
-      const savedArrival = localStorage.getItem(ARRIVAL_DATE_KEY);
-      if (savedArrival) {
-        setArrival(savedArrival);
-        if (departure || localStorage.getItem(DEPARTURE_DATE_KEY)) {
-          const depDate = departure || localStorage.getItem(DEPARTURE_DATE_KEY) || "";
-          navigate(`/availability?arrival=${savedArrival}&departure=${depDate}`, { replace: true });
-        }
-      }
-    }
+    if (arrival && departure) {
+      const currentArrival = searchParams.get("arrival");
+      const currentDeparture = searchParams.get("departure");
 
-    if (!departure) {
-      const savedDeparture = localStorage.getItem(DEPARTURE_DATE_KEY);
-      if (savedDeparture) {
-        setDeparture(savedDeparture);
-        if (arrival || localStorage.getItem(ARRIVAL_DATE_KEY)) {
-          const arrDate = arrival || localStorage.getItem(ARRIVAL_DATE_KEY) || "";
-          navigate(`/availability?arrival=${arrDate}&departure=${savedDeparture}`, { replace: true });
-        }
+      if (currentArrival !== arrival || currentDeparture !== departure) {
+        navigate(`/availability?arrival=${arrival}&departure=${departure}`, { replace: true });
       }
-    }
-  }, [arrival, departure, navigate]);
-
-  useEffect(() => {
-    if (!arrival || !departure) {
+    } else if (!arrival || !departure) {
       const savedArrival = localStorage.getItem(ARRIVAL_DATE_KEY);
       const savedDeparture = localStorage.getItem(DEPARTURE_DATE_KEY);
 
       if (savedArrival && savedDeparture) {
+        setArrival(savedArrival);
+        setDeparture(savedDeparture);
         navigate(`/availability?arrival=${savedArrival}&departure=${savedDeparture}`, { replace: true });
-      } else if (!arrival || !departure) {
+      } else {
         navigate("/", { replace: true });
       }
     }
-  }, [arrival, departure, navigate]);
+  }, [arrival, departure, navigate, searchParams]);
 
-  const { data, isLoading, error } = useQuery({
+  const availabilityQuery = useQuery({
     queryKey: ["availability", arrival, departure],
     queryFn: () => fetchAvailability(arrival, departure),
-    enabled: !!arrival && !!departure,
+    enabled: Boolean(arrival && departure),
+    staleTime: 1000 * 60 * 5, 
+    refetchOnWindowFocus: false,
   });
+
+  const handleDatesChange = useCallback((newArrival: string, newDeparture: string) => {
+    localStorage.setItem(ARRIVAL_DATE_KEY, newArrival);
+    localStorage.setItem(DEPARTURE_DATE_KEY, newDeparture);
+
+    setArrival(newArrival);
+    setDeparture(newDeparture);
+
+    queryClient.invalidateQueries({ queryKey: ["availability"] });
+  }, [queryClient]);
 
   const formatDisplayDate = (dateString: string) => {
     try {
@@ -80,18 +87,23 @@ const AvailabilityResults = () => {
   const formattedDeparture = formatDisplayDate(departure);
 
   const getAvailableRooms = () => {
-    if (!data || !data.rooms) return [];
-    return data.rooms.filter(
+    if (!availabilityQuery.data || !availabilityQuery.data.rooms) return [];
+    return availabilityQuery.data.rooms.filter(
       (room: any) => room.status !== "reserved" && room.status !== "checked_in"
     );
   };
 
   const getAvailableAreas = () => {
-    if (!data || !data.areas) return [];
-    return data.areas.filter(
+    if (!availabilityQuery.data || !availabilityQuery.data.areas) return [];
+    return availabilityQuery.data.areas.filter(
       (area: any) => area.status !== "reserved" && area.status !== "checked_in"
     );
   };
+
+  const toggleLoginModal = useCallback(() => setShowLoginModal((prev) => !prev), []);
+  const toggleSignupModal = useCallback(() => setShowSignupModal((prev) => !prev), []);
+
+  const handleSuccessfulLogin = () => window.location.reload();
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -127,22 +139,12 @@ const AvailabilityResults = () => {
     },
   };
 
-  const toggleLoginModal = useCallback(
-    () => setShowLoginModal((prev) => !prev),
-    []
-  );
-  const toggleSignupModal = useCallback(
-    () => setShowSignupModal((prev) => !prev),
-    []
-  );
-
-  const handleSuccessfulLogin = () => window.location.reload();
-
   return (
     <>
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
         <div className="container mx-auto px-4 py-12 mt-[120px] pb-16">
-          <RoomAvailabilityCalendar />
+          <RoomAvailabilityCalendar onDatesChange={handleDatesChange} />
+
           {/* Page Header with Animation */}
           <motion.div
             className="mb-10 text-center"
@@ -166,7 +168,7 @@ const AvailabilityResults = () => {
 
           {/* Loading State */}
           <AnimatePresence>
-            {isLoading && (
+            {availabilityQuery.isLoading && (
               <motion.div
                 className="flex justify-center items-center h-60"
                 initial={{ opacity: 0 }}
@@ -185,7 +187,7 @@ const AvailabilityResults = () => {
 
           {/* Error State */}
           <AnimatePresence>
-            {error && (
+            {availabilityQuery.error && (
               <motion.div
                 className="bg-red-50 border border-red-200 text-red-600 px-6 py-4 rounded-lg text-center max-w-2xl mx-auto"
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -203,7 +205,7 @@ const AvailabilityResults = () => {
           </AnimatePresence>
 
           {/* Results */}
-          {data && (
+          {availabilityQuery.data && (
             <div className="space-y-16">
               {/* Rooms Section */}
               <motion.section
@@ -263,31 +265,31 @@ const AvailabilityResults = () => {
               {/* Call to action footer */}
               {(getAvailableRooms().length > 0 ||
                 getAvailableAreas().length > 0) && (
-                <motion.div
-                  className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl p-6 text-center mt-12"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4, duration: 0.5 }}
-                >
-                  <h3 className="text-2xl font-bold mb-3">
-                    Found your perfect stay?
-                  </h3>
-                  <p className="text-gray-100 mb-6 min-w-2xl text-2xl mx-auto">
-                    Book now to secure your preferred accommodation for{" "}
-                    {formattedArrival} to {formattedDeparture}.
-                  </p>
-                  {!isAuthenticated && (
-                    <motion.button
-                      onClick={() => setShowLoginModal(true)}
-                      className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-6 py-3 rounded-lg shadow-md"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Login to Book
-                    </motion.button>
-                  )}
-                </motion.div>
-              )}
+                  <motion.div
+                    className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-xl p-6 text-center mt-12"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.5 }}
+                  >
+                    <h3 className="text-2xl font-bold mb-3">
+                      Found your perfect stay?
+                    </h3>
+                    <p className="text-gray-100 mb-6 min-w-2xl text-2xl mx-auto">
+                      Book now to secure your preferred accommodation for{" "}
+                      {formattedArrival} to {formattedDeparture}.
+                    </p>
+                    {!isAuthenticated && (
+                      <motion.button
+                        onClick={() => setShowLoginModal(true)}
+                        className="bg-white text-blue-600 hover:bg-blue-50 font-semibold px-6 py-3 rounded-lg shadow-md"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        Login to Book
+                      </motion.button>
+                    )}
+                  </motion.div>
+                )}
             </div>
           )}
         </div>

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, useState, useRef, useEffect } from "react";
 
@@ -68,13 +69,6 @@ const TermsModal: FC<TermsModalProps> = ({ isOpen, onClose, onAgree }) => {
             };
         }
     }, []);
-
-    const handleAgree = () => {
-        if (isChecked) {
-            onAgree();
-            onClose();
-        }
-    };
 
     return (
         <AnimatePresence>
@@ -181,8 +175,8 @@ const TermsModal: FC<TermsModalProps> = ({ isOpen, onClose, onAgree }) => {
                                 <motion.button
                                     whileHover={{ scale: 1.02, boxShadow: "0 10px 15px -3px rgba(124, 58, 237, 0.3)" }}
                                     whileTap={{ scale: 0.95 }}
-                                    onClick={handleAgree}
-                                    disabled={!isChecked || !hasScrolledToBottom}
+                                    onClick={onAgree}
+                                    disabled={!hasScrolledToBottom}
                                     className={`px-4 py-2 cursor-pointer text-lg font-medium text-white rounded-lg transition-colors ${(!isChecked || !hasScrolledToBottom) ? "bg-purple-400 cursor-not-allowed" : "bg-purple-700 hover:bg-purple-800"}`}
                                 >
                                     I Agree

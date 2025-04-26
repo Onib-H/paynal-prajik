@@ -1,13 +1,17 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { CalendarRange } from "lucide-react";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Alert from "../Alert";
 
 const ARRIVAL_DATE_KEY = "hotel_arrival_date";
 const DEPARTURE_DATE_KEY = "hotel_departure_date";
 
-const RoomAvailabilityCalendar = () => {
+interface RoomAvailabilityCalendarProps {
+  onDatesChange?: (arrival: string, departure: string) => void;
+}
+
+const RoomAvailabilityCalendar = memo(({ onDatesChange }: RoomAvailabilityCalendarProps) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [arrivalDate, setArrivalDate] = useState<string>("");
@@ -54,13 +58,13 @@ const RoomAvailabilityCalendar = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const handleCheckAvailability = () => {
+  const validateDates = (): boolean => {
     if (!arrivalDate || !departureDate) {
       setAlertInfo({
         message: "Please provide both arrival and departure dates. Please try again",
         type: "error",
       });
-      return;
+      return false;
     }
 
     const today = getTodayString();
@@ -69,14 +73,14 @@ const RoomAvailabilityCalendar = () => {
         message: "Arrival date cannot be in the past. Please try again",
         type: "error",
       });
-      return;
+      return false;
     }
     if (departureDate < today) {
       setAlertInfo({
         message: "Departure date cannot be in the past. Please try again",
         type: "error",
       });
-      return;
+      return false;
     }
     if (departureDate <= arrivalDate) {
       setAlertInfo({
@@ -84,15 +88,24 @@ const RoomAvailabilityCalendar = () => {
           "Departure date must be greater than arrival date. Please try again",
         type: "error",
       });
-      return;
+      return false;
     }
 
     setAlertInfo(null);
+    return true;
+  };
+
+  const handleCheckAvailability = () => {
+    if (!validateDates()) return;
 
     localStorage.setItem(ARRIVAL_DATE_KEY, arrivalDate);
     localStorage.setItem(DEPARTURE_DATE_KEY, departureDate);
 
-    navigate(`/availability?arrival=${arrivalDate}&departure=${departureDate}`);
+    if (onDatesChange) {
+      onDatesChange(arrivalDate, departureDate);
+    } else {
+      navigate(`/availability?arrival=${arrivalDate}&departure=${departureDate}`, { replace: true });
+    }
   };
 
   const handleArrivalDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -265,6 +278,6 @@ const RoomAvailabilityCalendar = () => {
       </motion.div>
     </div>
   );
-};
+});
 
 export default RoomAvailabilityCalendar;
