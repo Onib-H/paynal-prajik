@@ -3,38 +3,29 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, FC, useEffect, useState } from "react";
 import { parsePriceValue } from "../../utils/formatters";
 import { IArea, IAreaFormModalProps } from "../../types/AreaAdmin";
+import { useForm } from "react-hook-form";
 
-const EditAreaModal: FC<IAreaFormModalProps> = ({
-  onSave,
-  areaData,
-  isOpen,
-  cancel,
-  loading = false,
-}) => {
-  const [formState, setFormState] = useState<IArea>({
-    id: areaData?.id || 0,
-    area_name: areaData?.area_name || "",
-    description: areaData?.description || "",
-    capacity: areaData?.capacity || 0,
-    price_per_hour: areaData?.price_per_hour ? parsePriceValue(areaData.price_per_hour) : 0,
-    status: areaData?.status || "available",
-    area_image: areaData?.area_image || "",
+const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, cancel, loading = false }) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>("");
+
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue, setError } = useForm<IArea>({
+    mode: "onBlur",
+    defaultValues: {
+      id: areaData?.id || 0,
+      area_name: areaData?.area_name || "",
+      description: areaData?.description || "",
+      capacity: areaData?.capacity || 0,
+      price_per_hour: areaData?.price_per_hour ? parsePriceValue(areaData.price_per_hour) : 0,
+      status: areaData?.status || "available",
+      area_image: areaData?.area_image || "",
+    }
   });
 
-  const [previewUrl, setPreviewUrl] = useState<string | null>("");
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-  const fieldMapping: { [key: string]: string } = {
-    area_name: "area_name",
-    description: "description",
-    capacity: "capacity",
-    price_per_hour: "price_per_hour",
-    status: "status",
-  };
+  const image = watch("area_image");
 
   useEffect(() => {
     if (areaData) {
-      setFormState({
+      reset({
         id: areaData.id || 0,
         area_name: areaData.area_name || "",
         description: areaData.description || "",
@@ -44,50 +35,42 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
         area_image: areaData.area_image || "",
       });
     }
-  }, [areaData]);
+  }, [areaData, reset]);
 
   useEffect(() => {
-    if (formState.area_image instanceof File) {
-      const objectUrl = URL.createObjectURL(formState.area_image);
+    if (image instanceof File) {
+      const objectUrl = URL.createObjectURL(image);
       setPreviewUrl(objectUrl);
       return () => URL.revokeObjectURL(objectUrl);
-    } else if (typeof formState.area_image === "string" && formState.area_image !== "") {
-      if (formState.area_image.startsWith("http")) {
-        setPreviewUrl(formState.area_image);
+    } else if (typeof image === "string" && image !== "") {
+      if (image.startsWith("http")) {
+        setPreviewUrl(image);
       } else {
-        setPreviewUrl(`https://res.cloudinary.com/dxxzqzq0y/image/upload/${formState.area_image}`);
+        setPreviewUrl(`https://res.cloudinary.com/dxxzqzq0y/image/upload/${image}`);
       }
     } else {
       setPreviewUrl("");
     }
-  }, [formState.area_image]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
-  };
+  }, [image]);
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setFormState((prev) => ({ ...prev, area_image: file }));
+      setValue('area_image', file);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: IArea) => {
     try {
       if (!areaData?.id) {
-        setFormState(prev => ({ ...prev, status: "available" }));
-        await onSave({ ...formState, status: "available" });
-      } else {
-        await onSave(formState);
+        data.status = "available";
       }
-      setErrors({});
+      await onSave(data);
     } catch (error: any) {
-      setErrors(error.response?.data?.error || {});
+      const errors = error.response?.data?.error || {};
+      Object.entries(errors).forEach(([key, message]) => {
+        setError(key as keyof IArea, { type: 'server', message: message as string });
+      })
     }
   };
 
@@ -159,7 +142,7 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
             </motion.h2>
 
             <motion.form
-              onSubmit={handleSubmit}
+              onSubmit={handleSubmit(onSubmit)}
               className="space-y-4"
               variants={formVariants}
               initial="hidden"
@@ -176,19 +159,18 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
                     <input
                       type="text"
                       name="area_name"
-                      value={formState.area_name}
-                      onChange={handleChange}
+                      {...register('area_name', { required: "Area name is required" })}
                       placeholder="Enter Area Name"
                       className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     />
-                    {errors[fieldMapping.name] && (
+                    {errors.area_name && (
                       <motion.p
                         className="text-red-500 text-xs mt-1"
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {errors[fieldMapping.name]}
+                        {errors.area_name.message}
                       </motion.p>
                     )}
                   </motion.div>
@@ -203,18 +185,21 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
                       <input
                         type="number"
                         name="capacity"
-                        value={formState.capacity}
-                        onChange={handleChange}
+                        {...register("capacity", {
+                          required: "Capacity is required",
+                          valueAsNumber: true,
+                          min: { value: 1, message: "Capacity must be at least 1" }
+                        })}
                         className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                       />
-                      {errors[fieldMapping.capacity] && (
+                      {errors.capacity && (
                         <motion.p
                           className="text-red-500 text-xs mt-1"
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.2 }}
                         >
-                          {errors[fieldMapping.capacity]}
+                          {errors.capacity.message}
                         </motion.p>
                       )}
                     </motion.div>
@@ -227,18 +212,21 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
                       <input
                         type="number"
                         name="price_per_hour"
-                        value={formState.price_per_hour}
-                        onChange={handleChange}
+                        {...register("price_per_hour", {
+                          required: "Price is required",
+                          valueAsNumber: true,
+                          min: { value: 0, message: "Price cannot be negative" }
+                        })}
                         className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                       />
-                      {errors[fieldMapping.price_per_hour] && (
+                      {errors.price_per_hour && (
                         <motion.p
                           className="text-red-500 text-xs mt-1"
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.2 }}
                         >
-                          {errors[fieldMapping.price_per_hour]}
+                          {errors.price_per_hour.message}
                         </motion.p>
                       )}
                     </motion.div>
@@ -252,21 +240,20 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
                       </label>
                       <select
                         name="status"
-                        value={formState.status}
-                        onChange={handleChange}
+                        {...register("status")}
                         className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                       >
                         <option value="available">Available</option>
                         <option value="maintenance">Maintenance</option>
                       </select>
-                      {errors[fieldMapping.status] && (
+                      {errors.status && (
                         <motion.p
                           className="text-red-500 text-xs mt-1"
                           initial={{ opacity: 0, y: -5 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.2 }}
                         >
-                          {errors[fieldMapping.status]}
+                          {errors.status.message}
                         </motion.p>
                       )}
                     </motion.div>
@@ -279,20 +266,19 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
                     </label>
                     <textarea
                       name="description"
-                      value={formState.description}
-                      onChange={handleChange}
+                      {...register("description")}
                       rows={4}
                       placeholder="Enter description"
                       className="border border-gray-300 rounded-md w-full p-2 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                     />
-                    {errors[fieldMapping.description] && (
+                    {errors.description && (
                       <motion.p
                         className="text-red-500 text-xs mt-1"
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {errors[fieldMapping.description]}
+                        {errors.description.message}
                       </motion.p>
                     )}
                   </motion.div>
@@ -339,26 +325,28 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({
                           alt="Preview"
                           className="w-full h-48 object-cover border border-gray-200 rounded-md shadow-sm"
                         />
-                        <button
+                        <motion.button
                           type="button"
-                          onClick={() => setFormState(prev => ({ ...prev, area_image: "" }))}
+                          onClick={() => setValue("area_image", '')}
                           className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors duration-200"
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>
-                        </button>
+                        </motion.button>
                       </motion.div>
                     )}
 
-                    {errors["area_image"] && (
+                    {errors.area_image && (
                       <motion.p
                         className="text-red-500 text-xs mt-1"
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {errors["area_image"]}
+                        {errors.area_image.message}
                       </motion.p>
                     )}
                   </motion.div>

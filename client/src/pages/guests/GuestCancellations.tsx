@@ -264,7 +264,7 @@ const GuestCancellations: FC = () => {
                             <div className="h-10 w-10 flex-shrink-0">
                               <img
                                 loading="lazy"
-                                src={itemImage || '/default-room.jpg'}
+                                src={itemImage}
                                 alt={itemName}
                                 className="h-10 w-10 rounded-md object-cover"
                               />
@@ -296,10 +296,10 @@ const GuestCancellations: FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-lg font-semibold text-gray-900">
                           {typeof totalAmount === 'number' ? totalAmount.toLocaleString() : totalAmount}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-lg font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-semibold">
                           <div className="flex justify-center space-x-2">
                             <button
-                              className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
+                              className="bg-gray-600 hover:bg-gray-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
                               onClick={() => viewBookingDetails(id.toString())}
                             >
                               <Eye size={30} className="mr-1" /> View

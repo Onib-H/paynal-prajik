@@ -1,49 +1,29 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AnimatePresence, motion } from "framer-motion";
-import { ChangeEvent, FC, FormEvent, memo, useCallback, useEffect, useState } from "react";
+import { FC, memo, useEffect } from "react";
+import { IUserFormModalProps, IUser } from "../../types/UsersAdmin";
+import { useForm } from "react-hook-form";
 
-export interface IUser {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-    password?: string;
-    confirm_password: string;
-    role: string;
-    profile_image?: string;
-}
-
-interface IUserFormModalProps {
-    isOpen: boolean;
-    cancel: () => void;
-    onSave: (user: IUser) => Promise<void>;
-    userData?: IUser | null;
-    loading?: boolean;
-}
-
-const EditUserModal: FC<IUserFormModalProps> = ({
-    isOpen,
-    cancel,
-    onSave,
-    userData,
-    loading = false,
-}) => {
-    const [formState, setFormState] = useState<IUser>({
-        id: userData?.id || 0,
-        first_name: userData?.first_name || "",
-        last_name: userData?.last_name || "",
-        email: userData?.email || "",
-        password: "",
-        confirm_password: "",
-        role: userData?.role || "guest",
-        profile_image: userData?.profile_image,
+const EditUserModal: FC<IUserFormModalProps> = ({ isOpen, cancel, onSave, userData, loading = false }) => {
+    const { register, handleSubmit, formState: { errors }, reset, watch, setError, clearErrors } = useForm<IUser>({
+        mode: "onBlur",
+        defaultValues: {
+            id: userData?.id || 0,
+            first_name: userData?.first_name || "",
+            last_name: userData?.last_name || "",
+            email: userData?.email || "",
+            password: "",
+            confirm_password: "",
+            role: userData?.role || "guest",
+            profile_image: userData?.profile_image,
+        }
     });
 
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const password = watch("password");
 
     useEffect(() => {
         if (userData) {
-            setFormState({
+            reset({
                 id: userData.id || 0,
                 first_name: userData.first_name || "",
                 last_name: userData.last_name || "",
@@ -53,60 +33,35 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                 role: userData.role || "guest",
                 profile_image: userData.profile_image,
             });
-            setErrors({});
         }
-    }, [userData]);
+    }, [userData, reset]);
 
-    const handleChange = useCallback((e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormState((prev) => ({ ...prev, [name]: value }));
-
-        if (errors[name]) {
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[name];
-                return newErrors;
-            });
-        }
-    }, [errors]);
-
-    const validateForm = useCallback(() => {
-        const newErrors: Record<string, string> = {};
-
-        if (!formState.first_name.trim()) newErrors.first_name = "First name is required";
-        if (!formState.last_name.trim()) newErrors.last_name = "Last name is required";
-        if (!formState.email.trim()) newErrors.email = "Email is required";
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (formState.email && !emailRegex.test(formState.email)) {
-            newErrors.email = "Please enter a valid email address";
-        }
-
-        if (formState.password && formState.password.length < 8) {
-            newErrors.password = "Password must be at least 8 characters";
-        }
-
-        if (formState.password && formState.password !== formState.confirm_password) {
-            newErrors.confirm_password = "Passwords do not match";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    }, [formState]);
-
-    const handleSubmit = useCallback(async (e: FormEvent) => {
-        e.preventDefault();
-
-        if (!validateForm()) return;
-
+    const onSubmit = async (data: IUser) => {
         try {
-            await onSave(formState);
+            const submitData = userData?.id && !data.password ? {
+                ...data,
+                password: undefined,
+                confirm_password: undefined
+            } : data;
+
+            await onSave(submitData);
         } catch (error: any) {
-            console.error("Error saving user:", error);
             const errorData = error.response?.data?.error;
-            setErrors(errorData ? errorData : { general: "An error occurred" });
+            if (error) {
+                Object.entries(errorData).forEach(([key, message]) => {
+                    setError(key as keyof IUser, {
+                        type: "server",
+                        message: message as string,
+                    });
+                });
+            } else {
+                setError('root', {
+                    type: "manual",
+                    message: "An error occured"
+                })
+            }
         }
-    }, [formState, onSave, validateForm]);
+    }
 
     useEffect(() => {
         const handleKeyDown = (evt: KeyboardEvent) => {
@@ -145,15 +100,15 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                             {userData?.id ? "Edit User" : "Add New User"}
                         </motion.h2>
 
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={handleSubmit(onSubmit)}>
                             <div className="space-y-4">
-                                {errors.general && (
+                                {errors.root && (
                                     <motion.div
                                         initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         className="p-3 bg-red-100 text-red-700 rounded-md text-sm"
                                     >
-                                        {errors.general}
+                                        {errors.root.message}
                                     </motion.div>
                                 )}
 
@@ -168,10 +123,11 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                     <input
                                         type="text"
                                         name="first_name"
-                                        value={formState.first_name}
-                                        onChange={handleChange}
-                                        className={`w-full p-2 border rounded-md ${errors.first_name ? "border-red-500" : "border-gray-300"
-                                            }`}
+                                        {...register("first_name", {
+                                            required: "First name is required",
+                                            onChange: () => clearErrors("first_name")
+                                        })}
+                                        className={`w-full p-2 border rounded-md ${errors.first_name ? "border-red-500" : "border-gray-300"}`}
                                         disabled={loading}
                                     />
                                     {errors.first_name && (
@@ -180,7 +136,7 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                             animate={{ opacity: 1, y: 0 }}
                                             className="mt-1 text-xs text-red-500"
                                         >
-                                            {errors.first_name}
+                                            {errors.first_name.message}
                                         </motion.p>
                                     )}
                                 </motion.div>
@@ -196,10 +152,11 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                     <input
                                         type="text"
                                         name="last_name"
-                                        value={formState.last_name}
-                                        onChange={handleChange}
-                                        className={`w-full p-2 border rounded-md ${errors.last_name ? "border-red-500" : "border-gray-300"
-                                            }`}
+                                        {...register("last_name", {
+                                            required: "Last name is required",
+                                            onChange: () => clearErrors("last_name")
+                                        })}
+                                        className={`w-full p-2 border rounded-md ${errors.last_name ? "border-red-500" : "border-gray-300"}`}
                                         disabled={loading}
                                     />
                                     {errors.last_name && (
@@ -208,7 +165,7 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                             animate={{ opacity: 1, y: 0 }}
                                             className="mt-1 text-xs text-red-500"
                                         >
-                                            {errors.last_name}
+                                            {errors.last_name.message}
                                         </motion.p>
                                     )}
                                 </motion.div>
@@ -224,10 +181,15 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                     <input
                                         type="email"
                                         name="email"
-                                        value={formState.email}
-                                        onChange={handleChange}
-                                        className={`w-full p-2 border rounded-md ${errors.email ? "border-red-500" : "border-gray-300"
-                                            }`}
+                                        {...register("email", {
+                                            required: "Email is required",
+                                            pattern: {
+                                                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                                                message: "Please enter a valid email address"
+                                            },
+                                            onChange: () => clearErrors("email")
+                                        })}
+                                        className={`w-full p-2 border rounded-md ${errors.email ? "border-red-500" : "border-gray-300"}`}
                                         disabled={loading}
                                     />
                                     {errors.email && (
@@ -236,7 +198,7 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                             animate={{ opacity: 1, y: 0 }}
                                             className="mt-1 text-xs text-red-500"
                                         >
-                                            {errors.email}
+                                            {errors.email.message}
                                         </motion.p>
                                     )}
                                 </motion.div>
@@ -252,10 +214,10 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                     <input
                                         type="password"
                                         name="password"
-                                        value={formState.password}
-                                        onChange={handleChange}
-                                        className={`w-full p-2 border rounded-md ${errors.password ? "border-red-500" : "border-gray-300"
-                                            }`}
+                                        {...register("password", {
+                                            validate: value => !userData?.id || value ? (value?.length >= 8 || "Password must be at least 8 characters") : true
+                                        })}
+                                        className={`w-full p-2 border rounded-md ${errors.password ? "border-red-500" : "border-gray-300"}`}
                                         disabled={loading}
                                     />
                                     {errors.password && (
@@ -264,7 +226,7 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                             animate={{ opacity: 1, y: 0 }}
                                             className="mt-1 text-xs text-red-500"
                                         >
-                                            {errors.password}
+                                            {errors.password.message}
                                         </motion.p>
                                     )}
                                 </motion.div>
@@ -280,10 +242,10 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                     <input
                                         type="password"
                                         name="confirm_password"
-                                        value={formState.confirm_password}
-                                        onChange={handleChange}
-                                        className={`w-full p-2 border rounded-md ${errors.confirm_password ? "border-red-500" : "border-gray-300"
-                                            }`}
+                                        {...register("confirm_password", {
+                                            validate: value => value === password || "Password do not match"
+                                        })}
+                                        className={`w-full p-2 border rounded-md ${errors.confirm_password ? "border-red-500" : "border-gray-300"}`}
                                         disabled={loading}
                                     />
                                     {errors.confirm_password && (
@@ -292,7 +254,7 @@ const EditUserModal: FC<IUserFormModalProps> = ({
                                             animate={{ opacity: 1, y: 0 }}
                                             className="mt-1 text-xs text-red-500"
                                         >
-                                            {errors.confirm_password}
+                                            {errors.confirm_password.message}
                                         </motion.p>
                                     )}
                                 </motion.div>

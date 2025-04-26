@@ -4,33 +4,33 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, FC, useEffect, useState } from "react";
 import { fetchAmenities } from "../../services/Admin";
 import { IRoom, IRoomFormModalProps } from "../../types/RoomAdmin";
+import { useForm } from "react-hook-form";
 
-const EditRoomModal: FC<IRoomFormModalProps> = ({
-    isOpen,
-    cancel,
-    onSave,
-    roomData,
-    loading = false,
-}) => {
-    const [formState, setFormState] = useState<IRoom>({
-        id: roomData?.id || 0,
-        roomName: roomData?.roomName || "",
-        roomType: roomData?.roomType || "premium",
-        bedType: roomData?.bedType || "single",
-        capacity: roomData?.capacity || "",
-        amenities: roomData?.amenities || [],
-        roomPrice: roomData?.roomPrice,
-        status: roomData?.status || "Available",
-        description: roomData?.description || "",
-        roomImage: roomData?.roomImage || "",
-        maxGuests: roomData?.maxGuests || 1,
-    });
+const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomData, loading = false }) => {
     const [previewUrl, setPreviewUrl] = useState<string>("");
-    const [errors, setErrors] = useState<Record<string, string>>({});
+
+    const { register, handleSubmit, formState: { errors }, reset, watch, setError, setValue, getValues } = useForm<IRoom>({
+        mode: "onBlur",
+        defaultValues: {
+            id: roomData?.id || 0,
+            roomName: roomData?.roomName || "",
+            roomType: roomData?.roomType || "premium",
+            bedType: roomData?.bedType || "single",
+            capacity: roomData?.capacity || "",
+            amenities: roomData?.amenities || [],
+            roomPrice: roomData?.roomPrice,
+            status: roomData?.status || "Available",
+            description: roomData?.description || "",
+            roomImage: roomData?.roomImage || "",
+            maxGuests: roomData?.maxGuests || 1,
+        }
+    });
+
+    const image = watch("roomImage");
 
     useEffect(() => {
         if (roomData) {
-            setFormState({
+            reset({
                 id: roomData.id || 0,
                 roomName: roomData.roomName || "",
                 roomType: roomData.roomType || "premium",
@@ -44,13 +44,9 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                 maxGuests: roomData.maxGuests || 1,
             });
         }
-    }, [roomData]);
+    }, [roomData, reset]);
 
-    const {
-        data: amenitiesData,
-        isLoading: isLoadingAmenities,
-        isError: isErrorAmenities,
-    } = useQuery({
+    const { data: amenitiesData, isLoading: isLoadingAmenities, isError: isErrorAmenities } = useQuery({
         queryKey: ["amenities", 1, 100],
         queryFn: fetchAmenities,
         enabled: isOpen,
@@ -58,64 +54,35 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
 
     const availableAmenities = amenitiesData?.data || [];
 
-    const fieldMapping: Record<string, string> = {
-        roomName: "room_name",
-        roomType: "room_type",
-        bedType: "bed_type",
-        capacity: "capacity",
-        amenities: "amenities",
-        roomPrice: "room_price",
-        status: "status",
-        description: "description",
-        roomImage: "room_image",
-        maxGuests: "max_guests",
-    };
-
     useEffect(() => {
-        if (formState.roomImage instanceof File) {
-            const objectUrl = URL.createObjectURL(formState.roomImage);
+        if (image instanceof File) {
+            const objectUrl = URL.createObjectURL(image);
             setPreviewUrl(objectUrl);
             return () => URL.revokeObjectURL(objectUrl);
-        } else if (typeof formState.roomImage === "string") {
-            setPreviewUrl(formState.roomImage);
-        } else {
-            setPreviewUrl("");
-        }
-    }, [formState.roomImage]);
-
-    const handleChange = (
-        e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-    ) => {
-        const { name, value } = e.target;
-        setFormState((prev) => ({ ...prev, [name]: value }));
-    };
+        } else if (typeof image === "string") setPreviewUrl(image);
+        else setPreviewUrl("");
+    }, [image]);
 
     const handleAmenityChange = (amenityId: number) => {
-        setFormState((prev) => {
-            const amenitySet = new Set(prev.amenities);
-            if (amenitySet.has(amenityId)) {
-                amenitySet.delete(amenityId);
-            } else {
-                amenitySet.add(amenityId);
-            }
-            return { ...prev, amenities: Array.from(amenitySet) };
-        });
+        const currentAmenities = getValues("amenities");
+        const newAmenities = currentAmenities.includes(amenityId)
+            ? currentAmenities.filter(id => id !== amenityId)
+            : [...currentAmenities, amenityId];
+        setValue("amenities", newAmenities);
     };
 
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0];
-            setFormState((prev) => ({ ...prev, roomImage: file }));
-        }
+        if (e.target.files?.[0]) setValue("roomImage", e.target.files[0]);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const onSubmit = async (data: IRoom) => {
         try {
-            await onSave(formState);
-            setErrors({});
+            await onSave(data);
         } catch (error: any) {
-            setErrors(error.response?.data?.error || {});
+            const apiErrors = error.response?.data?.error || {};
+            Object.entries(apiErrors).forEach(([key, message]) => {
+                setError(key as keyof IRoom, { type: 'server', message: message as string });
+            });
         }
     };
 
@@ -198,7 +165,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                         </motion.h2>
 
                         <motion.form
-                            onSubmit={handleSubmit}
+                            onSubmit={handleSubmit(onSubmit)}
                             className="space-y-4"
                             variants={formVariants}
                             initial="hidden"
@@ -216,19 +183,20 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                         <input
                                             type="text"
                                             name="roomName"
-                                            value={formState.roomName}
-                                            onChange={handleChange}
+                                            {...register("roomName", {
+                                                required: "Room name is required"
+                                            })}
                                             placeholder="Enter Room Name"
                                             className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                         />
-                                        {errors[fieldMapping.roomName] && (
+                                        {errors.roomName && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                {errors[fieldMapping.roomName]}
+                                                {errors.roomName.message}
                                             </motion.p>
                                         )}
                                     </motion.div>
@@ -241,8 +209,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                         <div className="relative">
                                             <select
                                                 name="roomType"
-                                                value={formState.roomType}
-                                                onChange={handleChange}
+                                                {...register("roomType")}
                                                 className="appearance-none border border-gray-300 rounded-md w-full p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white"
                                             >
                                                 <option value="" disabled>Select Room Type</option>
@@ -255,14 +222,14 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                                 </svg>
                                             </div>
                                         </div>
-                                        {errors[fieldMapping.roomType] && (
+                                        {errors.roomType && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                {errors[fieldMapping.roomType]}
+                                                {errors.roomType.message}
                                             </motion.p>
                                         )}
                                     </motion.div>
@@ -275,8 +242,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                         <div className="relative">
                                             <select
                                                 name="bedType"
-                                                value={formState.bedType}
-                                                onChange={handleChange}
+                                                {...register("bedType")}
                                                 className="appearance-none border border-gray-300 rounded-md w-full p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white"
                                             >
                                                 <option value="" disabled>Select Bed Type</option>
@@ -292,14 +258,14 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                                 </svg>
                                             </div>
                                         </div>
-                                        {errors["bed_type"] && (
+                                        {errors.bedType && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                {errors["bed_type"]}
+                                                {errors.bedType.message}
                                             </motion.p>
                                         )}
                                     </motion.div>
@@ -312,20 +278,22 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                         <input
                                             type="number"
                                             name="maxGuests"
-                                            value={formState.maxGuests}
-                                            onChange={handleChange}
-                                            min="1"
+                                            {...register("maxGuests", {
+                                                required: "Max guests is required",
+                                                valueAsNumber: true,
+                                                min: { value: 1, message: "Minimum 1 guest" }
+                                            })}
                                             placeholder="Maximum number of guests"
                                             className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                         />
-                                        {errors[fieldMapping.maxGuests] && (
+                                        {errors.maxGuests && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                {errors[fieldMapping.maxGuests]}
+                                                {errors.maxGuests.message}
                                             </motion.p>
                                         )}
                                     </motion.div>
@@ -338,21 +306,20 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                             </label>
                                             <select
                                                 name="status"
-                                                value={formState.status}
-                                                onChange={handleChange}
+                                                {...register("status")}
                                                 className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                             >
                                                 <option value="Available">Available</option>
                                                 <option value="Maintenance">Maintenance</option>
                                             </select>
-                                            {errors[fieldMapping.status] && (
+                                            {errors.status && (
                                                 <motion.p
                                                     className="text-red-500 text-xs mt-1"
                                                     initial={{ opacity: 0, y: -5 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ duration: 0.2 }}
                                                 >
-                                                    {errors[fieldMapping.status]}
+                                                    {errors.status.message}
                                                 </motion.p>
                                             )}
                                         </motion.div>
@@ -366,18 +333,21 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                         <input
                                             type="number"
                                             name="roomPrice"
-                                            value={formState.roomPrice}
-                                            onChange={handleChange}
+                                            {...register("roomPrice", {
+                                                required: "Room price is required",
+                                                valueAsNumber: true,
+                                                min: { value: 0, message: "Price cannot be negative" }
+                                            })}
                                             className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                         />
-                                        {errors[fieldMapping.roomPrice] && (
+                                        {errors.roomPrice && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                {errors[fieldMapping.roomPrice]}
+                                                {errors.roomPrice.message}
                                             </motion.p>
                                         )}
                                     </motion.div>
@@ -389,20 +359,19 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                         </label>
                                         <textarea
                                             name="description"
-                                            value={formState.description}
-                                            onChange={handleChange}
+                                            {...register("description")}
                                             rows={5}
                                             placeholder="Enter room description"
                                             className="border border-gray-300 rounded-md w-full p-2 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                         />
-                                        {errors[fieldMapping.description] && (
+                                        {errors.description && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                {errors[fieldMapping.description]}
+                                                {errors.description.message}
                                             </motion.p>
                                         )}
                                     </motion.div>
@@ -451,7 +420,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                                 />
                                                 <motion.button
                                                     type="button"
-                                                    onClick={() => setFormState(prev => ({ ...prev, roomImage: "" }))}
+                                                    onClick={() => setValue("roomImage", '')}
                                                     className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors duration-200"
                                                     whileHover={{ scale: 1.1 }}
                                                     whileTap={{ scale: 0.9 }}
@@ -463,14 +432,14 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                             </motion.div>
                                         )}
 
-                                        {errors[fieldMapping.roomImage] && (
+                                        {errors.roomImage && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                {errors[fieldMapping.roomImage]}
+                                                {errors.roomImage.message}
                                             </motion.p>
                                         )}
                                     </motion.div>
@@ -506,7 +475,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                                                 <input
                                                                     type="checkbox"
                                                                     id={`amenity-${amenity.id}`}
-                                                                    checked={formState.amenities.includes(amenity.id)}
+                                                                    checked={watch("amenities").includes(amenity.id)}
                                                                     onChange={() => handleAmenityChange(amenity.id)}
                                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
                                                                 />
@@ -522,14 +491,14 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({
                                                 </div>
                                             )}
                                         </div>
-                                        {errors[fieldMapping.amenities] && (
+                                        {errors.amenities && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                {errors[fieldMapping.amenities]}
+                                                {errors.amenities.message}
                                             </motion.p>
                                         )}
                                     </motion.div>

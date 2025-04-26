@@ -4,22 +4,23 @@ import { Room } from "../../types/RoomClient";
 import { Amenity } from "../../types/AmenityClient";
 import { MemoizedImage } from "../../memo/MemoizedImage";
 
-const RoomDetailsModal: FC<{
+interface RoomDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     roomData: Room | null;
     allAmenities: Amenity[];
-}> = ({ isOpen, onClose, roomData, allAmenities }) => {
+}
+
+const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData, allAmenities }) => {
     const getAmenityDescription = (id: number) => {
         const found = allAmenities.find((a) => a.id === id);
         return found ? found.description : `ID: ${id}`;
     };
 
     const roomImage = useMemo(() => ({
-            src: roomData.room_image,
-            alt: roomData.room_name || roomData.room_image,
-        }),[roomData.room_image, roomData.room_name]
-    );
+        src: roomData.room_image,
+        alt: roomData.room_name || roomData.room_image,
+    }), [roomData.room_image, roomData.room_name]);
 
     if (!roomData) return null;
 
@@ -101,8 +102,8 @@ const RoomDetailsModal: FC<{
                                             >
                                                 <span
                                                     className={`px-3 py-1 rounded-full text-sm font-medium ${roomData.status === "available"
-                                                            ? "bg-green-100 text-green-800"
-                                                            : "bg-amber-100 text-amber-800"
+                                                        ? "bg-green-100 text-green-800"
+                                                        : "bg-amber-100 text-amber-800"
                                                         }`}
                                                 >
                                                     {roomData.status === "available"
@@ -150,8 +151,8 @@ const RoomDetailsModal: FC<{
                                         <div className="flex items-center mt-2">
                                             <span
                                                 className={`px-3 py-1 rounded-full text-sm font-medium ${roomData.status === "available"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : "bg-amber-100 text-amber-800"
+                                                    ? "bg-green-100 text-green-800"
+                                                    : "bg-amber-100 text-amber-800"
                                                     }`}
                                             >
                                                 {roomData.status === "available"

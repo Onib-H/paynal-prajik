@@ -1,9 +1,9 @@
-import { FC, useState } from "react";
 import { motion } from "framer-motion";
-import { BookingResponse } from "../../types/BookingClient";
-import EventLoader from "../../motions/loaders/EventLoader";
 import { AlertCircle, Calendar, Check, CheckCircle2, Clock, IdCard, X } from "lucide-react";
-import { getBookingPrice, formatDate } from "../../utils/formatters";
+import { FC, useState } from "react";
+import EventLoader from "../../motions/loaders/EventLoader";
+import { BookingResponse } from "../../types/BookingClient";
+import { formatDate, getBookingPrice } from "../../utils/formatters";
 import BookingStatusBadge from "./BookingStatusBadge";
 
 interface BookingDetailProps {
@@ -21,7 +21,7 @@ interface BookingDetailProps {
 
 const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, onCancel, canManage, isUpdating }) => {
     const [paymentAmount, setPaymentAmount] = useState<string>("");
-    
+
     const isVenueBooking = booking?.is_venue_booking;
     const bookingPrice = getBookingPrice(booking);
     const currentPayment = parseFloat(paymentAmount) || 0;
@@ -43,7 +43,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             const [h, m] = booking.time_of_arrival.split(':').map(Number);
             cutOff.setHours(h, m, 0, 0);
         }
-        const eligible = todayOnly.getTime() === checkInOnly.getTime() && currentDate.getTime() < cutOff.getTime();
+        const eligible = todayOnly.getTime() === checkInOnly.getTime() && currentDate.getTime() > cutOff.getTime();
 
         return eligible;
     };
@@ -102,7 +102,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
 
                     const currentTimeInMinutes = (currentHour * 60) + currentMinute;
                     const arrivalTimeInMinutes = (arrivalHour * 60) + arrivalMinute;
-                    
+
                     const standardCheckInTime = 14 * 60;
 
                     if (arrivalTimeInMinutes < standardCheckInTime) {
@@ -119,7 +119,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
 
                     if (currentTimeInMinutes < arrivalTimeInMinutes) {
                         const formattedArrivalTime = `${arrivalHour % 12 || 12}:${arrivalMinute.toString().padStart(2, '0')} ${arrivalHour >= 12 ? "PM" : "AM"}`;
-                        
+
                         return {
                             isValid: false,
                             message: `Guest is expected to arrive at ${formattedArrivalTime}`,
@@ -142,7 +142,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             const currentDate = new Date();
             const checkOutDate = new Date(booking.check_out_date);
 
-            if (currentDate >= checkOutDate) {
+            if (currentDate <= checkOutDate) {
                 return { isValid: true, message: "" };
             }
 
@@ -538,7 +538,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                             <div className="relative group">
                                 <motion.button
                                     whileTap={canMarkNoShow ? { scale: 0.98 } : {}}
-                                    onClick={canMarkNoShow ? onNoShow : undefined}
+                                    onClick={() => onNoShow && canMarkNoShow && onNoShow()}
                                     className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 shadow-sm ${canMarkNoShow
                                         ? 'bg-amber-600 text-white cursor-pointer'
                                         : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}

@@ -84,11 +84,11 @@ const ManageSkeleton: React.FC<ManageSkeletonProps> = ({
         </motion.div>
     );
 
-  return (
+    return (
         <div className="p-4 container mx-auto">
             {/* Header */}
             <div className="flex flex-row items-center mb-5 justify-between">
-    <div>
+                <div>
                     <Skeleton width={180} height={36} className="mb-2" /> {/* Title */}
                     <Skeleton width={120} height={20} /> {/* Count */}
                 </div>
@@ -115,7 +115,7 @@ const ManageSkeleton: React.FC<ManageSkeletonProps> = ({
                 </div>
                 <Skeleton width={40} height={40} className="rounded-full" /> {/* Next */}
             </div>
-    </div>
+        </div>
     );
 };
 

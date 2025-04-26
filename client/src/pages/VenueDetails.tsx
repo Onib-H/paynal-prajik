@@ -148,7 +148,7 @@ const VenueDetails = () => {
                         className="p-6"
                     >
                         <Link
-                            to="/venues"
+                            to="/areas"
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300"
                         >
                             <ArrowLeft className="w-4 h-4" />
@@ -230,7 +230,7 @@ const VenueDetails = () => {
                         >
                             <div className="flex justify-between items-center">
                                 {prevVenue ? (
-                                    <Link to={`/venues/${prevVenue.id}`}>
+                                    <Link to={`/areas/${prevVenue.id}`}>
                                         <motion.div
                                             initial="initial"
                                             whileHover="hover"
@@ -259,7 +259,7 @@ const VenueDetails = () => {
                                 </motion.div>
 
                                 {nextVenue ? (
-                                    <Link to={`/venues/${nextVenue.id}`}>
+                                    <Link to={`/areas/${nextVenue.id}`}>
                                         <motion.div
                                             initial="initial"
                                             whileHover="hover"
