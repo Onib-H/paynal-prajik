@@ -1,5 +1,8 @@
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, FreeMode, Mousewheel } from "swiper/modules";
+import { useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react"; // or use your own icons
+import "../../../App.css";
 
 import deluxe_single from "../../../assets/deluxe_single.webp";
 import deluxe_double from "../../../assets/deluxe_double.jpg";
@@ -11,6 +14,8 @@ import skyline_suite from "../../../assets/skyline_suite.jpg";
 import rooftop_garden from "../../../assets/rooftop_garden.jpg";
 
 const ImageSlider = () => {
+  const swiperRef = useRef();
+
   const images = [
     { id: 1, src: deluxe_single, alt: "Deluxe Single Room" },
     { id: 2, src: deluxe_double, alt: "Deluxe Double Room" },
@@ -23,35 +28,46 @@ const ImageSlider = () => {
   ];
 
   return (
-    <div className="w-full overflow-hidden">
+    <div className="relative w-full group">
+      {/* Arrows */}
+      <button
+        onClick={() => swiperRef.current?.slidePrev()}
+        className="absolute top-1/2 left-2 z-10 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+      >
+        <ChevronLeft />
+      </button>
+      <button
+        onClick={() => swiperRef.current?.slideNext()}
+        className="absolute top-1/2 right-2 z-10 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition"
+      >
+        <ChevronRight />
+      </button>
+
+      {/* Swiper */}
       <Swiper
-        slidesPerView={5}
+        onSwiper={(swiper) => (swiperRef.current = swiper)}
         spaceBetween={0}
-        freeMode={true}
-        mousewheel={{
-          forceToAxis: true,
-          invert: false,
-        }}
-        autoplay={{
-          delay: 10000,
-          disableOnInteraction: false,
-          reverseDirection: false,
-        }}
+        freeMode={false}
+        mousewheel={{ forceToAxis: true, invert: false }}
+        autoplay={{ delay: 10000, disableOnInteraction: false }}
         loop={true}
         modules={[Autoplay, FreeMode, Mousewheel]}
-        className="!overflow-visible"
+        breakpoints={{
+          1280: { slidesPerView: 5 },
+          1024: { slidesPerView: 4 },
+          768: { slidesPerView: 3 },
+          0: { slidesPerView: 2 },
+        }}
       >
         {images.map((image) => (
-          <SwiperSlide key={image.id} className="!w-fit">
-            <div className="h-80 w-[calc(100vw/5)] overflow-hidden">
-              <img
-                loading="lazy"
-                src={image.src}
-                alt={image.alt}
-                className="h-full w-full object-cover transition-transform hover:scale-105"
-                draggable="false"
-              />
-            </div>
+          <SwiperSlide key={image.id}>
+            <img
+              loading="lazy"
+              src={image.src}
+              alt={image.alt}
+              className="w-full h-[300px] object-cover transition-transform hover:scale-105"
+              draggable="false"
+            />
           </SwiperSlide>
         ))}
       </Swiper>

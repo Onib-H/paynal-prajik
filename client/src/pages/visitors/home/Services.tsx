@@ -52,7 +52,7 @@ const Services = () => {
 
         {/* Services Grid with staggered animations */}
         <motion.div
-          className="grid grid-cols-1 xl:grid-cols-2 gap-12 h-full"
+          className="grid grid-cols-1 md:grid-cols-2 md:gap-6 gap-12 h-full"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}

@@ -22,8 +22,12 @@ const AvailabilityResults = () => {
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
 
-  const [arrival, setArrival] = useState<string>(searchParams.get("arrival") || "");
-  const [departure, setDeparture] = useState<string>(searchParams.get("departure") || "");
+  const [arrival, setArrival] = useState<string>(
+    searchParams.get("arrival") || ""
+  );
+  const [departure, setDeparture] = useState<string>(
+    searchParams.get("departure") || ""
+  );
 
   useEffect(() => {
     if (!arrival) {
@@ -31,8 +35,12 @@ const AvailabilityResults = () => {
       if (savedArrival) {
         setArrival(savedArrival);
         if (departure || localStorage.getItem(DEPARTURE_DATE_KEY)) {
-          const depDate = departure || localStorage.getItem(DEPARTURE_DATE_KEY) || "";
-          navigate(`/availability?arrival=${savedArrival}&departure=${depDate}`, { replace: true });
+          const depDate =
+            departure || localStorage.getItem(DEPARTURE_DATE_KEY) || "";
+          navigate(
+            `/availability?arrival=${savedArrival}&departure=${depDate}`,
+            { replace: true }
+          );
         }
       }
     }
@@ -42,8 +50,12 @@ const AvailabilityResults = () => {
       if (savedDeparture) {
         setDeparture(savedDeparture);
         if (arrival || localStorage.getItem(ARRIVAL_DATE_KEY)) {
-          const arrDate = arrival || localStorage.getItem(ARRIVAL_DATE_KEY) || "";
-          navigate(`/availability?arrival=${arrDate}&departure=${savedDeparture}`, { replace: true });
+          const arrDate =
+            arrival || localStorage.getItem(ARRIVAL_DATE_KEY) || "";
+          navigate(
+            `/availability?arrival=${arrDate}&departure=${savedDeparture}`,
+            { replace: true }
+          );
         }
       }
     }
@@ -55,7 +67,10 @@ const AvailabilityResults = () => {
       const savedDeparture = localStorage.getItem(DEPARTURE_DATE_KEY);
 
       if (savedArrival && savedDeparture) {
-        navigate(`/availability?arrival=${savedArrival}&departure=${savedDeparture}`, { replace: true });
+        navigate(
+          `/availability?arrival=${savedArrival}&departure=${savedDeparture}`,
+          { replace: true }
+        );
       } else if (!arrival || !departure) {
         navigate("/", { replace: true });
       }
@@ -141,16 +156,16 @@ const AvailabilityResults = () => {
   return (
     <>
       <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-        <div className="container mx-auto px-4 py-12 mt-[120px] pb-16">
+        <div className="container mx-auto py-12 mt-[85px] pb-16">
           <RoomAvailabilityCalendar />
-          {/* Page Header with Animation */}
+
           <motion.div
             className="mb-10 text-center"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
               Available Accommodations
             </h1>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-gray-600 mt-3">
@@ -164,7 +179,6 @@ const AvailabilityResults = () => {
             </div>
           </motion.div>
 
-          {/* Loading State */}
           <AnimatePresence>
             {isLoading && (
               <motion.div
@@ -183,7 +197,6 @@ const AvailabilityResults = () => {
             )}
           </AnimatePresence>
 
-          {/* Error State */}
           <AnimatePresence>
             {error && (
               <motion.div
@@ -202,10 +215,8 @@ const AvailabilityResults = () => {
             )}
           </AnimatePresence>
 
-          {/* Results */}
           {data && (
             <div className="space-y-16">
-              {/* Rooms Section */}
               <motion.section
                 variants={sectionVariants}
                 initial="hidden"
@@ -213,14 +224,14 @@ const AvailabilityResults = () => {
               >
                 <div className="flex items-center mb-6">
                   <div className="h-10 w-2 bg-blue-600 rounded-full mr-3"></div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
                     Rooms
                   </h2>
                 </div>
 
                 {getAvailableRooms().length > 0 ? (
                   <motion.div
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
                     variants={containerVariants}
                     initial="hidden"
                     animate="visible"
@@ -260,11 +271,10 @@ const AvailabilityResults = () => {
                 )}
               </motion.section>
 
-              {/* Call to action footer */}
               {(getAvailableRooms().length > 0 ||
                 getAvailableAreas().length > 0) && (
                 <motion.div
-                  className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl p-6 text-center mt-12"
+                  className="bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-xl p-6 sm:p-8 text-center mt-12"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4, duration: 0.5 }}
@@ -272,7 +282,7 @@ const AvailabilityResults = () => {
                   <h3 className="text-2xl font-bold mb-3">
                     Found your perfect stay?
                   </h3>
-                  <p className="text-gray-100 mb-6 min-w-2xl text-2xl mx-auto">
+                  <p className="text-gray-100 mb-6 text-lg sm:text-xl max-w-2xl mx-auto">
                     Book now to secure your preferred accommodation for{" "}
                     {formattedArrival} to {formattedDeparture}.
                   </p>
@@ -293,7 +303,6 @@ const AvailabilityResults = () => {
         </div>
       </div>
 
-      {/* Login Modal */}
       {showLoginModal && (
         <div className="fixed inset-0 bg-black/50 z-50">
           <LoginModal
@@ -308,7 +317,6 @@ const AvailabilityResults = () => {
         </div>
       )}
 
-      {/* Signup Modal */}
       {showSignupModal && (
         <div className="fixed inset-0 bg-black/50 z-50">
           <SignupModal
