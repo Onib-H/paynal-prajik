@@ -487,8 +487,8 @@ def delete_area(request, area_id):
 def fetch_amenities(request):
     try:
         amenities = Amenities.objects.all().order_by('id')
-        page = request.query_params.get('page', 1)
-        page_size = request.query_params.get('page_size', 12)
+        page = request.query_params.get('page')
+        page_size = request.query_params.get('page_size')
         
         paginator = Paginator(amenities, page_size)
         try:

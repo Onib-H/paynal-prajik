@@ -226,7 +226,7 @@ export const fetchAreaById = async (areaId: string) => {
   }
 };
 
-export const fetchBookingDetail = async (bookingId: string) => {
+export const fetchBookingDetail = async (bookingId: number | string) => {
   try {
     const response = await booking.get(`/bookings/${bookingId}`, {
       headers: { "Content-Type": "application/json" },

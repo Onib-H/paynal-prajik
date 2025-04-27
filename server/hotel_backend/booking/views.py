@@ -149,6 +149,9 @@ def bookings_list(request):
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def booking_detail(request, booking_id):
+    if not booking_id.isdigit():
+        return Response({"error": "Invalid booking ID"}, status=status.HTTP_400_BAD_REQUEST)
+    
     try:
         booking = Bookings.objects.get(id=booking_id)
         

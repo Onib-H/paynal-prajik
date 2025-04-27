@@ -14,7 +14,7 @@ const GuestSidebar: FC = () => {
   const { userDetails } = useUserContext();
 
   return (
-    <aside className="w-60 min-h-screen flex flex-col bg-white shadow-md border-r border-gray-200">
+    <aside className="w-68 min-h-screen flex flex-col bg-white shadow-md border-r border-gray-200 overflow-hidden">
       <div className="px-3 py-4 border-b border-gray-200">
         <button
           onClick={() => navigate('/')}

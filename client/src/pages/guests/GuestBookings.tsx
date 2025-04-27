@@ -4,14 +4,12 @@ import { ArrowLeft, ArrowRight, Eye, MessageSquare, Search, XCircle, Calendar, S
 import { useCallback, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import "react-loading-skeleton/dist/skeleton.css";
-import { useSearchParams } from "react-router-dom";
+import ViewBookingDetailsModal from "../../components/guests/ViewBookingDetailsModal";
 import { toast } from "react-toastify";
-import BookingData from "../../components/bookings/BookingData";
 import CancellationModal from "../../components/bookings/CancellationModal";
 import GuestBookingComment from "../../components/guests/GuestBookingComment";
 import { useUserContext } from "../../contexts/AuthContext";
-import { BookingDetailsSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
-import { cancelBooking, fetchBookingDetail, fetchUserReviews } from "../../services/Booking";
+import { cancelBooking, fetchUserReviews } from "../../services/Booking";
 import { BookingResponse } from "../../types/BookingClient";
 import { fetchGuestBookings } from "../../services/Guest";
 import { formatStatus, formatDate, getStatusColor } from "../../utils/formatters";
@@ -21,9 +19,6 @@ import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError"
 const GuestBookings = () => {
   const { userDetails } = useUserContext();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const bookingId = searchParams.get('bookingId');
-
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -32,6 +27,8 @@ const GuestBookings = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewBookingId, setReviewBookingId] = useState<string | null>(null);
   const [reviewBookingDetails, setReviewBookingDetails] = useState<any>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<number>(null);
+  const [showBookingDetailModal, setShowBookingDetailModal] = useState<boolean>(false);
 
   const queryClient = useQueryClient();
   const pageSize = 5;
@@ -56,12 +53,6 @@ const GuestBookings = () => {
     enabled: !!userDetails?.id,
   });
 
-  const bookingDetailsQuery = useQuery({
-    queryKey: ['bookingDetails', bookingId],
-    queryFn: () => fetchBookingDetail(bookingId || ''),
-    enabled: !!bookingId,
-  });
-
   const cancelBookingMutation = useMutation({
     mutationFn: ({ bookingId, reason }: { bookingId: string; reason: string }) => {
       return cancelBooking(bookingId, reason);
@@ -83,22 +74,14 @@ const GuestBookings = () => {
     return {
       bookings: bookingsQuery.data?.data || [],
       totalPages: bookingsQuery.data?.pagination?.total_pages || 1,
-      isLoading: bookingsQuery.isPending ||
-        (bookingDetailsQuery.isPending && !!bookingId) ||
-        cancelBookingMutation.isPending,
+      isLoading: bookingsQuery.isPending || cancelBookingMutation.isPending,
       errorMessage: bookingsQuery.isError
         ? <GuestBookingsError error={cancelBookingMutation.error} />
-        : (bookingDetailsQuery.isError && !!bookingId)
-          ? <GuestBookingsError error={bookingDetailsQuery.error} />
-          : cancelBookingMutation.isError
-            ? <GuestBookingsError error={cancelBookingMutation.error} />
-            : null
+        : cancelBookingMutation.isError
+          ? <GuestBookingsError error={cancelBookingMutation.error} />
+          : null
     };
-  }, [
-    bookingsQuery.data, bookingsQuery.isPending, bookingsQuery.isError,
-    bookingDetailsQuery.isPending, bookingDetailsQuery.isError, bookingId,
-    cancelBookingMutation.isPending, cancelBookingMutation.isError, cancelBookingMutation.error, bookingDetailsQuery.error
-  ]);
+  }, [bookingsQuery, cancelBookingMutation]);
 
   const filteredBookings = useMemo(() => {
     if (!searchTerm.trim()) return bookings;
@@ -156,18 +139,6 @@ const GuestBookings = () => {
     setCancellationBookingId(null);
   }, []);
 
-  const viewBookingDetails = useCallback((id: string) => {
-    searchParams.delete('cancelled');
-    searchParams.delete('success');
-    searchParams.set('bookingId', id);
-    setSearchParams(searchParams);
-  }, [searchParams, setSearchParams]);
-
-  const backToBookingsList = useCallback(() => {
-    searchParams.delete('bookingId');
-    setSearchParams(searchParams);
-  }, [searchParams, setSearchParams]);
-
   const handlePageChange = useCallback((newPage: number) => {
     setCurrentPage(newPage);
     window.scrollTo(0, 0);
@@ -206,31 +177,8 @@ const GuestBookings = () => {
     setReviewBookingDetails(null);
   }, []);
 
-  if (isLoading) {
-    return (
-      bookingId ? <BookingDetailsSkeleton /> : <GuestBookingsSkeleton />
-    );
-  }
-
+  if (isLoading) return <GuestBookingsSkeleton />;
   if (errorMessage) return <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">{errorMessage}</div>;
-
-  if (bookingId) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6 overflow-y-auto h-[calc(100vh-3rem)] pr-2">
-        <div className="flex justify-between items-center mb-6 sticky top-0 bg-gray-50 py-3 z-10">
-          <h1 className="text-2xl font-bold text-gray-800">Booking Details</h1>
-          <button
-            onClick={backToBookingsList}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md flex items-center"
-          >
-            <span className="mr-2">&larr;</span> Back to Bookings
-          </button>
-        </div>
-
-        <BookingData bookingId={bookingId} />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 container mx-auto py-4">
@@ -366,7 +314,7 @@ const GuestBookings = () => {
                               />
                             </div>
                             <div className="ml-4">
-                              <div className="text-md font-semibold text-gray-900">{itemName}</div>
+                              <div className="text-lg font-semibold text-gray-900">{itemName}</div>
                               {isVenueBooking ? (
                                 <div className="text-md bg-blue-100 text-blue-800 px-2 py-0.5 rounded inline-block mt-1">Venue</div>
                               ) : (
@@ -396,7 +344,10 @@ const GuestBookings = () => {
                           <div className="flex justify-center space-x-2">
                             <button
                               className="bg-gray-600 hover:bg-gray-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
-                              onClick={() => viewBookingDetails(id.toString())}
+                              onClick={() => {
+                                setSelectedBookingId(booking.id);
+                                setShowBookingDetailModal(true);
+                              }}
                             >
                               <Eye size={24} className="pr-1" /> View
                             </button>
@@ -578,6 +529,16 @@ const GuestBookings = () => {
         confirmButtonText="Confirm Cancellation"
         showPolicyNote={true}
       />
+
+      {showBookingDetailModal && (
+        <ViewBookingDetailsModal
+          bookingId={selectedBookingId}
+          onClose={() => {
+            setSelectedBookingId(null);
+            setShowBookingDetailModal(false);
+          }}
+        />
+      )}
     </div>
   );
 };

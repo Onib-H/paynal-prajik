@@ -41,9 +41,7 @@ const AdminSidebar: FC = () => {
     webSocketService.connect(userDetails.id.toString());
     
     const handlePendingCount = (data: any) => {
-      if (data.type === "pending_count") {
-        setPendingCount(data.count);
-      }
+      if (data.type === "pending_count") setPendingCount(data.count);
     };
 
     webSocketService.on('pending_count', handlePendingCount);

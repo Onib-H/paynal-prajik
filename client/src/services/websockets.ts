@@ -13,7 +13,7 @@ type WebSocketEvent =
     | { type: 'unread_update'; count: number }
     | { type: 'new_notification'; notification: NotificationMessage; unread_count: number }
     | { type: 'auth_response'; success: boolean; message?: string }
-    | { type: 'pending_count'; count: number }
+    | { type: 'pending_count'; count: number };
 
 export class WebSocketService {
     private socket: WebSocket | null = null;
@@ -77,9 +77,9 @@ export class WebSocketService {
         try {
             const data: WebSocketEvent = JSON.parse(event.data);
 
-            if (data.type === 'pending_count') {
+            // if (data.type === 'pending_count') {
                 this.triggerEvent(data.type, data);
-            }
+            // }
         } catch (error) {
             console.error('WebSocket: Message parsing error', error);
         }

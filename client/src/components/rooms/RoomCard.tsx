@@ -4,24 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
 import { RoomCardProps } from "../../types/RoomClient";
 
-const RoomCard: FC<RoomCardProps> = ({
-  id,
-  name,
-  image,
-  title,
-  price,
-  description,
-}) => {
+const RoomCard: FC<RoomCardProps> = ({ id, name, image, title, price, description }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
 
   const handleReserveClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (isAuthenticated) {
-      navigate(`/booking/${id}`);
-    } else {
-      navigate(`/rooms/${id}?showLogin=true`);
-    }
+    if (isAuthenticated) navigate(`/booking/${id}`);
+    else navigate(`/rooms/${id}?showLogin=true`);
   };
 
   const truncatedDescription =
@@ -80,9 +70,7 @@ const RoomCard: FC<RoomCardProps> = ({
           <button
             className={`${buttonClass} w-full text-center text-white text-sm px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden`}
             onClick={handleReserveClick}
-            title={
-              isAuthenticated ? "Book this room" : "Login required to book"
-            }
+            title={isAuthenticated ? "Book this room" : "Login required to book"}
             disabled={!isAuthenticated}
           >
             {/* Animated background layer */}
@@ -90,7 +78,7 @@ const RoomCard: FC<RoomCardProps> = ({
 
             {/* Button content */}
             <Book size={18} className="shrink-0" />
-            <span className="font-medium tracking-wide">Book Now</span>
+            <span className="font-semibold tracking-wide uppercase">Book Now</span>
           </button>
         </div>
       </div>

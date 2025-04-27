@@ -1,19 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  AlertCircle,
-  Ban,
-  BookCheck,
-  BookOpen,
-  Calendar,
-  CheckCircle,
-  Clock,
-  CreditCard,
-  LogOut,
-  Receipt,
-  Send,
-  Star,
-  XCircle
-} from "lucide-react";
+import { AlertCircle, Ban, BookCheck, BookOpen, Calendar, CheckCircle, Clock, CreditCard, LogOut, Receipt, Send, Star, XCircle } from "lucide-react";
 import { FC, useEffect, useState } from "react";
 
 interface LoaderProps {
@@ -238,7 +224,7 @@ const EventLoader: FC<LoaderProps> = ({
     >
       {/* Background overlay with blur */}
       <motion.div
-        className="absolute inset-0 bg-white/95 backdrop-blur-sm"
+        className="absolute inset-0 bg-white backdrop-blur-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -246,7 +232,7 @@ const EventLoader: FC<LoaderProps> = ({
 
       {/* Background Pattern */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.03]"
+        <div className="absolute inset-0 opacity-0"
             style={{
             backgroundImage: `radial-gradient(${primary}99 1px, transparent 1px)`,
             backgroundSize: '30px 30px'

@@ -60,9 +60,7 @@ const AvailabilityResults = () => {
   const availabilityQuery = useQuery({
     queryKey: ["availability", arrival, departure],
     queryFn: () => fetchAvailability(arrival, departure),
-    enabled: Boolean(arrival && departure),
-    staleTime: 1000 * 60 * 5, 
-    refetchOnWindowFocus: false,
+    enabled: Boolean(arrival && departure)
   });
 
   const handleDatesChange = useCallback((newArrival: string, newDeparture: string) => {

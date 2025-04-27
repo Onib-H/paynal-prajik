@@ -1,16 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, BookOpen, ArrowLeft as LeftArrow, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
-import { lazy, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
 import { useUserContext } from "../contexts/AuthContext";
 import { fetchAreaDetail, fetchAreas } from "../services/Area";
 import { fetchAreaReviews } from "../services/Booking";
 import { Area } from "../types/AreaClient";
-
-const LoadingDashboard = lazy(() => import("../motions/skeletons/AdminDashboardSkeleton"));
-const Error = lazy(() => import("./_ErrorBoundary"));
+import RoomAndAreaDetailsSkeleton from "../motions/skeletons/RoomAndAreaDetailsSkeleton";
+import Error from "./_ErrorBoundary";
 
 const VenueDetails = () => {
     const { id } = useParams<{ id: string }>();
@@ -46,7 +45,7 @@ const VenueDetails = () => {
         window.scrollTo(0, 0);
     }, [id]);
 
-    if (isLoadingVenue) return <LoadingDashboard />;
+    if (isLoadingVenue) return <RoomAndAreaDetailsSkeleton />;
     if (venueError) return <Error />;
 
     const venueDetail = venueData?.data;

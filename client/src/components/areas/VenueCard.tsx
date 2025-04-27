@@ -3,22 +3,9 @@ import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
 import { useBookingLimit } from "../../contexts/BookingLimitContext";
+import { AreaCardProps } from "../../types/AreaClient";
 
-interface AreaCardProps {
-  id: number;
-  title: string;
-  priceRange: string;
-  image: string;
-  description: string;
-}
-
-const VenueCard: FC<AreaCardProps> = ({
-  id,
-  title,
-  priceRange,
-  image,
-  description,
-}) => {
+const VenueCard: FC<AreaCardProps> = ({ id, title, priceRange, image, description }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
   const { canBook, maxLimit } = useBookingLimit();
@@ -102,7 +89,7 @@ const VenueCard: FC<AreaCardProps> = ({
             disabled={!isAuthenticated || !canBook}
           >
             {/* Animated background layer */}
-            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
             {/* Button content */}
             {isAuthenticated && !canBook ? (
@@ -110,7 +97,7 @@ const VenueCard: FC<AreaCardProps> = ({
             ) : (
               <Book size={18} className="shrink-0" />
             )}
-            <span className="font-medium tracking-wide">Book Now</span>
+            <span className="font-semibold uppercase tracking-wide">Book Now</span>
           </button>
         </div>
       </div>
