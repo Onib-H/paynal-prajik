@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Eye, Loader, Search, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, Search, Calendar, SearchIcon } from "lucide-react";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { fetchUserBookings } from "../../services/Booking";
 import { formatDate, getStatusColor, formatStatus } from "../../utils/formatters";
@@ -63,8 +63,8 @@ const GuestCancellations: FC = () => {
       totalPages: userBookingsQuery.data?.pagination?.total_pages || 1,
       isLoading: userBookingsQuery.isPending || changingPage,
       errorMessage: userBookingsQuery.isError
-          ? <GuestBookingsError error={userBookingsQuery.error} />
-          : null
+        ? <GuestBookingsError error={userBookingsQuery.error} />
+        : null
     };
   }, [userBookingsQuery, changingPage]);
 
@@ -126,14 +126,7 @@ const GuestCancellations: FC = () => {
       {/* Bookings Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="p-6">
-          {changingPage && (
-            <div className="flex justify-center items-center py-10">
-              <Loader size={40} className="animate-spin text-blue-500" />
-              <span className="ml-3 text-lg text-gray-600">Loading cancelled bookings...</span>
-            </div>
-          )}
-
-          {!changingPage && filteredBookings.length > 0 ? (
+          {filteredBookings.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 table-fixed">
                 <thead>
@@ -167,7 +160,7 @@ const GuestCancellations: FC = () => {
                           const diffTime = Math.abs(end.getTime() - start.getTime());
                           duration = Math.ceil(diffTime / (1000 * 60 * 60)) || 1;
                         } catch (e) {
-                          console.error("Error calculating venue duration:", e);
+                          console.error(`"Error calculating venue duration: ${e}`);
                         }
                       }
 
@@ -192,7 +185,7 @@ const GuestCancellations: FC = () => {
                           const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
                           nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
                         } catch (e) {
-                          console.error("Error calculating room nights:", e);
+                          console.error(`Error calculating room nights: ${e}`);
                         }
                       }
 
@@ -267,7 +260,7 @@ const GuestCancellations: FC = () => {
                   })}
                 </tbody>
               </table>
-              {totalPages > 1 && !changingPage && (
+              {totalPages > 1 && (
                 <div className="flex justify-center mt-6">
                   <nav className="flex items-center space-x-1">
                     <button
@@ -299,84 +292,79 @@ const GuestCancellations: FC = () => {
                 </div>
               )}
             </div>
-          ) : !changingPage && filteredBookings.length === 0 && (
+          ) : (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="py-12 flex flex-col items-center justify-center text-center"
+              className="py-16 flex flex-col items-center justify-center text-center"
             >
               <motion.div
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
                 transition={{
+                  duration: 0.5,
+                  delay: 0.2,
                   type: "spring",
-                  stiffness: 260,
-                  damping: 20
+                  stiffness: 200
                 }}
-                className="relative mb-6"
+                className="bg-gray-100 p-4 rounded-full mb-4"
               >
-                <motion.div
-                  animate={{
-                    rotate: [0, 10, -10, 10, 0],
-                    scale: [1, 1.05, 1]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 3
-                  }}
-                  className="bg-purple-100 p-6 rounded-full"
-                >
-                  <Calendar size={64} className="text-purple-600" />
-                </motion.div>
-                <motion.div
-                  animate={{
-                    y: [0, -10, 0],
-                    opacity: [0.8, 1, 0.8]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 1
-                  }}
-                  className="absolute -top-3 -right-3 bg-gray-100 p-2 rounded-full"
-                >
-                  <Search size={24} className="text-gray-500" />
-                </motion.div>
+                <Calendar size={50} className="text-purple-500" />
               </motion.div>
 
               <motion.h3
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-2xl font-semibold text-gray-800 mb-3"
+                className="text-xl font-bold text-gray-800 mb-2"
               >
-                No cancelled bookings found
+                No Cancelled Bookings Found
               </motion.h3>
 
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-gray-500 max-w-md mb-8"
-              >
-                You don't have any cancelled bookings at the moment. All your future cancellations will appear here.
-              </motion.p>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center justify-center"
-              >
-                <a
-                  href="/bookings"
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium flex items-center hover:bg-purple-700 transition-colors"
+              {searchTerm && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-gray-500 max-w-md mb-6"
                 >
-                  <ArrowLeft size={18} className="mr-2" />
-                  Go to active bookings
-                </a>
-              </motion.div>
+                  You don't have any cancelled bookings yet. When you cancel your booking, it will appear here.
+                </motion.p>
+              )}
+
+              {searchTerm && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex flex-col sm:flex-row gap-3"
+                >
+                  <div className="flex items-center bg-purple-50 text-purple-700 px-4 py-2 rounded-lg">
+                    <SearchIcon size={18} className="mr-2" />
+                    <span>Search: <strong>"{searchTerm}"</strong></span>
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="ml-2 text-purple-500 hover:text-purple-700"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {!searchTerm && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium shadow-md"
+                >
+                  Book Now
+                </motion.button>
+              )}
             </motion.div>
           )}
         </div>

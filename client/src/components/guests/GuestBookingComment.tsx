@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Send, Star, X } from "lucide-react";
-import { useState } from "react";
+import { FC, useState } from "react";
 import { toast } from "react-toastify";
 import { createReview } from "../../services/Booking";
 
@@ -17,12 +17,7 @@ interface GuestBookingCommentProps {
     };
 }
 
-const GuestBookingComment = ({
-    bookingId,
-    isOpen,
-    onClose,
-    bookingDetails
-}: GuestBookingCommentProps) => {
+const GuestBookingComment: FC<GuestBookingCommentProps> = ({ bookingId, isOpen, onClose, bookingDetails }) => {
     const [rating, setRating] = useState<number>(0);
     const [hoverRating, setHoverRating] = useState<number>(0);
     const [comment, setComment] = useState<string>("");
@@ -38,12 +33,13 @@ const GuestBookingComment = ({
             queryClient.invalidateQueries({ queryKey: ['userBookings'] });
             queryClient.invalidateQueries({ queryKey: ['guestBookings'] });
             queryClient.invalidateQueries({ queryKey: ['bookingDetails', bookingId] });
+            queryClient.invalidateQueries({ queryKey: ['userReviews'] });
             setRating(0);
             setComment("");
             onClose();
         },
-        onError: (error: Error & { response?: { data?: { error?: string } } }) => {
-            toast.error(error?.response?.data?.error || "Failed to submit review");
+        onError: () => {
+            toast.error("Failed to submit review");
         }
     });
 
@@ -61,9 +57,7 @@ const GuestBookingComment = ({
         reviewMutation.mutate();
     };
 
-    const handleRatingClick = (value: number) => {
-        setRating(value);
-    };
+    const handleRatingClick = (value: number) => setRating(value);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -227,7 +221,7 @@ const GuestBookingComment = ({
                         variants={itemVariants}
                     >
                         <motion.button
-                            className="px-6 py-2.5 bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg mr-2 font-medium focus:outline-none"
+                            className="px-6 py-2.5 bg-gray-300 cursor-pointer dark:bg-gray-700 text-gray-700 dark:text-white rounded-lg mr-2 font-medium focus:outline-none"
                             onClick={onClose}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
@@ -236,7 +230,7 @@ const GuestBookingComment = ({
                             Cancel
                         </motion.button>
                         <motion.button
-                            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium focus:outline-none flex items-center justify-center min-w-[120px]"
+                            className="px-6 py-2.5 bg-blue-600 cursor-pointer text-white rounded-lg font-medium focus:outline-none flex items-center justify-center min-w-[120px]"
                             onClick={handleSubmit}
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}

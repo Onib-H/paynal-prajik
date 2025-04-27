@@ -258,7 +258,7 @@ const GuestBookings = () => {
                           const diffTime = Math.abs(end.getTime() - start.getTime());
                           duration = Math.ceil(diffTime / (1000 * 60 * 60)) || 1;
                         } catch (e) {
-                          console.error("Error calculating venue duration:", e);
+                          console.error(`Error calculating venue duration: ${e}`);
                         }
                       }
 
@@ -283,7 +283,7 @@ const GuestBookings = () => {
                           const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
                           nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
                         } catch (e) {
-                          console.error("Error calculating room nights:", e);
+                          console.error(`Error calculating room nights:`, e);
                         }
                       }
 
@@ -510,7 +510,7 @@ const GuestBookings = () => {
 
       {/* Review Modal */}
       <GuestBookingComment
-        bookingId={reviewBookingId || ""}
+        bookingId={reviewBookingId}
         isOpen={showReviewModal}
         onClose={closeReviewModal}
         bookingDetails={reviewBookingDetails}
