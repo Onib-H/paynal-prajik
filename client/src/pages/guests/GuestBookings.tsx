@@ -19,7 +19,7 @@ import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError"
 const GuestBookings = () => {
   const { userDetails } = useUserContext();
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [filterStatus, setFilterStatus] = useState<string>("");
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancellationBookingId, setCancellationBookingId] = useState<string | null>(null);

@@ -3,23 +3,22 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Eye, Loader, Search, Calendar } from "lucide-react";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import BookingData from "../../components/bookings/BookingData";
-import { BookingDetailsSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
-import { fetchBookingDetail, fetchUserBookings } from "../../services/Booking";
+import { fetchUserBookings } from "../../services/Booking";
 import { formatDate, getStatusColor, formatStatus } from "../../utils/formatters";
 import { useUserContext } from "../../contexts/AuthContext";
 import GuestBookingsSkeleton from "../../motions/skeletons/GuestBookingsSkeleton";
 import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
+import ViewBookingDetailsModal from "../../components/guests/ViewBookingDetailsModal";
 
 const GuestCancellations: FC = () => {
   const { userDetails } = useUserContext();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const bookingId = searchParams.get('bookingId');
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [changingPage, setChangingPage] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<number>(null);
+  const [showBookingDetailModal, setShowBookingDetailModal] = useState<boolean>(false);
+
   const pageSize = 5;
 
   const userBookingsQuery = useQuery({
@@ -52,12 +51,6 @@ const GuestCancellations: FC = () => {
     enabled: !!userDetails?.id
   });
 
-  const bookingDetailsQuery = useQuery({
-    queryKey: ['bookingDetails', bookingId],
-    queryFn: () => fetchBookingDetail(bookingId || ''),
-    enabled: !!bookingId,
-  });
-
   useEffect(() => {
     if (changingPage && !userBookingsQuery.isPending) {
       setChangingPage(false);
@@ -68,17 +61,12 @@ const GuestCancellations: FC = () => {
     return {
       bookings: userBookingsQuery.data?.data || [],
       totalPages: userBookingsQuery.data?.pagination?.total_pages || 1,
-      isLoading: userBookingsQuery.isPending ||
-        (bookingDetailsQuery.isPending && !!bookingId) ||
-        changingPage,
+      isLoading: userBookingsQuery.isPending || changingPage,
       errorMessage: userBookingsQuery.isError
-        ? <GuestBookingsError error={userBookingsQuery.error} />
-        : (bookingDetailsQuery.isError && !!bookingId)
-          ? <GuestBookingsError error={bookingDetailsQuery.error} />
+          ? <GuestBookingsError error={userBookingsQuery.error} />
           : null
     };
-  }, [userBookingsQuery.data, userBookingsQuery.isPending, userBookingsQuery.isError,
-  bookingDetailsQuery.isPending, bookingDetailsQuery.isError, bookingId, changingPage, userBookingsQuery.error, bookingDetailsQuery.error]);
+  }, [userBookingsQuery, changingPage]);
 
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking: any) => {
@@ -100,18 +88,6 @@ const GuestCancellations: FC = () => {
     });
   }, [bookings, searchTerm]);
 
-  const viewBookingDetails = useCallback((id: string) => {
-    searchParams.delete('cancelled');
-    searchParams.delete('success');
-    searchParams.set('bookingId', id);
-    setSearchParams(searchParams);
-  }, [searchParams, setSearchParams]);
-
-  const backToBookingsList = useCallback(() => {
-    searchParams.delete('bookingId');
-    setSearchParams(searchParams);
-  }, [searchParams, setSearchParams]);
-
   const handlePageChange = useCallback((newPage: number) => {
     setChangingPage(true);
     setCurrentPage(newPage);
@@ -123,31 +99,8 @@ const GuestCancellations: FC = () => {
     setCurrentPage(1);
   }, []);
 
-  if (isLoading) {
-    return (
-      bookingId ? <BookingDetailsSkeleton /> : <GuestBookingsSkeleton />
-    )
-  }
-
+  if (isLoading) return <GuestBookingsSkeleton />;
   if (errorMessage) return <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">{errorMessage}</div>;
-
-  if (bookingId) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6 overflow-y-auto h-[calc(100vh-3rem)] pr-2">
-        <div className="flex justify-between items-center mb-6 sticky top-0 bg-gray-50 py-3 z-10">
-          <h1 className="text-2xl font-bold text-gray-800">Booking Details</h1>
-          <button
-            onClick={backToBookingsList}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md flex items-center"
-          >
-            <span className="mr-2">&larr;</span> Back to Cancellations
-          </button>
-        </div>
-
-        {bookingDetailsQuery.isPending ? <BookingDetailsSkeleton /> : <BookingData bookingId={bookingId} />}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 container mx-auto py-4">
@@ -270,7 +223,7 @@ const GuestCancellations: FC = () => {
                               />
                             </div>
                             <div className="ml-4">
-                              <div className="text-md font-semibold text-gray-900">{itemName}</div>
+                              <div className="text-lg font-semibold text-gray-900">{itemName}</div>
                               {isVenueBooking ? (
                                 <div className="text-md bg-blue-100 text-blue-800 px-2 py-0.5 rounded inline-block mt-1">Venue</div>
                               ) : (
@@ -300,7 +253,10 @@ const GuestCancellations: FC = () => {
                           <div className="flex justify-center space-x-2">
                             <button
                               className="bg-gray-600 hover:bg-gray-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
-                              onClick={() => viewBookingDetails(id.toString())}
+                              onClick={() => {
+                                setSelectedBookingId(booking.id);
+                                setShowBookingDetailModal(true);
+                              }}
                             >
                               <Eye size={30} className="mr-1" /> View
                             </button>
@@ -425,6 +381,16 @@ const GuestCancellations: FC = () => {
           )}
         </div>
       </div>
+
+      {showBookingDetailModal && (
+        <ViewBookingDetailsModal
+          bookingId={selectedBookingId}
+          onClose={() => {
+            setShowBookingDetailModal(false);
+            setSelectedBookingId(null);
+          }}
+        />
+      )}
     </div>
   );
 };
