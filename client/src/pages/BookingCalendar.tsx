@@ -22,6 +22,7 @@ import {
   RoomData,
   BookingData,
 } from "../types/BookingClient";
+import { CircleAlert } from "lucide-react";
 
 const isAmenityObject = (amenity: any): amenity is AmenityObject => {
   return amenity && typeof amenity === "object" && "description" in amenity;
@@ -35,16 +36,17 @@ const BookingCalendar = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [checkInDate, setCheckInDate] = useState<Date | null>(null);
   const [checkOutDate, setCheckOutDate] = useState<Date | null>(null);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
-  const [numberOfNights, setNumberOfNights] = useState(1);
-  const [totalPrice, setTotalPrice] = useState(0);
+  const [numberOfNights, setNumberOfNights] = useState<number>(1);
+  const [totalPrice, setTotalPrice] = useState<number>(0);
   const [bookingsByDate, setBookingsByDate] = useState<BookingsByDate>({});
-  const [hasConflict, setHasConflict] = useState(false);
+  const [hasConflict, setHasConflict] = useState<boolean>(false);
   const [conflictMessage, setConflictMessage] = useState<string | null>(null);
-  const [isSameDayBooking, setIsSameDayBooking] = useState(false);
+  const [isSameDayBooking, setIsSameDayBooking] = useState<boolean>(false);
+  const [maxDayExceed, setMaxDayExceed] = useState<boolean>(false);
 
   useEffect(() => {
     if (arrivalParam && departureParam) {
@@ -173,8 +175,9 @@ const BookingCalendar = () => {
       );
       setNumberOfNights(days);
 
-      const priceString =
-        roomData.price_per_night || roomData.room_price || "0";
+      setMaxDayExceed(days > 30);
+
+      const priceString = roomData.price_per_night || roomData.room_price;
 
       let priceValue = 0;
       try {
@@ -268,6 +271,16 @@ const BookingCalendar = () => {
         setCheckInDate(date);
       } else {
         setCheckOutDate(date);
+      }
+    }
+
+    if (checkInDate && checkOutDate) {
+      const daysBetween = Math.round(
+        (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      if (daysBetween > 30) {
+        setMaxDayExceed(true);
+        return;
       }
     }
   };
@@ -441,22 +454,20 @@ const BookingCalendar = () => {
             {isSameDayBooking && (
               <div className="mb-6 p-4 bg-amber-50 border border-amber-300 text-amber-800 rounded-lg">
                 <div className="flex items-center">
-                  <svg
-                    className="h-5 w-5 text-amber-500 mr-2"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  <CircleAlert className="h-5 w-5 text-amber-500 mr-2" />
                   <p>
                     Minimum stay is 1 night. Please select different check-out
                     date.
                   </p>
+                </div>
+              </div>
+            )}
+
+            {maxDayExceed && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-300 text-red-800 rounded-lg">
+                <div className="flex items-center">
+                  <CircleAlert className="h-5 w-5 text-red-500 mr-2" />
+                  <p>Maximum stay duration is 30 days.</p>
                 </div>
               </div>
             )}
@@ -633,13 +644,15 @@ const BookingCalendar = () => {
                   !checkInDate ||
                   !checkOutDate ||
                   hasConflict ||
-                  isSameDayBooking
+                  isSameDayBooking ||
+                  maxDayExceed
                 }
                 className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${
                   checkInDate &&
                   checkOutDate &&
                   !hasConflict &&
-                  !isSameDayBooking
+                  !isSameDayBooking &&
+                  !maxDayExceed
                     ? "bg-blue-600 text-white hover:bg-blue-700"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
@@ -702,35 +715,38 @@ const BookingCalendar = () => {
               </div>
 
               {/* Only show booking details if valid date range (not same day) */}
-              {checkInDate && checkOutDate && !isSameDayBooking && (
-                <div className="border-t border-gray-200 pt-3 mt-3">
-                  <h4 className="font-semibold text-lg mb-3">
-                    Booking Details:
-                  </h4>
-                  <div className="p-1 rounded-md space-y-2">
-                    <div className="flex justify-between">
-                      <span>Check-in:</span>
-                      <span className="font-medium">
-                        {format(checkInDate, "MMM dd, yyyy")}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Check-out:</span>
-                      <span className="font-medium">
-                        {format(checkOutDate, "MMM dd, yyyy")}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Nights:</span>
-                      <span className="font-medium">{numberOfNights}</span>
-                    </div>
-                    <div className="flex justify-between text-3xl font-semibold text-blue-600 pt-2 border-t border-gray-200">
-                      <span>Total Price:</span>
-                      <span>₱{totalPrice.toLocaleString()}</span>
+              {checkInDate &&
+                checkOutDate &&
+                !isSameDayBooking &&
+                !maxDayExceed && (
+                  <div className="border-t border-gray-200 pt-3 mt-3">
+                    <h4 className="font-semibold text-lg mb-3">
+                      Booking Details:
+                    </h4>
+                    <div className="p-1 rounded-md space-y-2">
+                      <div className="flex justify-between">
+                        <span>Check-in:</span>
+                        <span className="font-medium">
+                          {format(checkInDate, "MMM dd, yyyy")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Check-out:</span>
+                        <span className="font-medium">
+                          {format(checkOutDate, "MMM dd, yyyy")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Nights:</span>
+                        <span className="font-medium">{numberOfNights}</span>
+                      </div>
+                      <div className="flex justify-between text-3xl font-semibold text-blue-600 pt-2 border-t border-gray-200">
+                        <span>Total Price:</span>
+                        <span>₱{totalPrice.toLocaleString()}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
           )}
         </div>

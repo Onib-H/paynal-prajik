@@ -64,7 +64,6 @@ const ConfirmVenueBooking = () => {
   const lastName = watch("lastName");
   const phoneNumber = watch("phoneNumber");
   const numberOfGuests = watch("numberOfGuests");
-  const specialRequests = watch("specialRequests");
 
   const { data: areaData, isLoading } = useQuery<AreaData>({
     queryKey: ["area", areaId],
@@ -285,7 +284,7 @@ const ConfirmVenueBooking = () => {
         description={`You're about to book ${
           areaData?.area_name
         } for ${formattedStartTime} to ${formattedEndTime}. The total price is ₱${parseFloat(
-          totalPrice || "0"
+          totalPrice
         ).toLocaleString()}. Would you like to proceed?`}
         cancel={() => setShowConfirmModal(false)}
         onConfirm={handleConfirmBooking}
@@ -552,7 +551,6 @@ const ConfirmVenueBooking = () => {
                   <input
                     type="number"
                     id="numberOfGuests"
-                    max={areaData?.capacity}
                     {...register("numberOfGuests", {
                       required: "Number of guests is required",
                       min: {
@@ -858,16 +856,6 @@ const ConfirmVenueBooking = () => {
                   <p className="text-lg text-gray-800">
                     End:{" "}
                     <span className="font-semibold">{formattedEndTime}</span>
-                  </p>
-                </motion.div>
-                <motion.div
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <p className="text-lg text-gray-800">Special Requests:</p>
-                  <p className="text-sm">
-                    <span className="font-semibold">{specialRequests}</span>
                   </p>
                 </motion.div>
               </div>

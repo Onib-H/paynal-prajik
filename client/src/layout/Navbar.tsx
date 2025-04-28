@@ -157,7 +157,7 @@ const Navbar: FC = () => {
       await queryClient.invalidateQueries({ queryKey: ["guestNotifications"] });
       setUnreadCount(0);
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error(`Error marking notifications as read: ${error}`);
     }
   }, [queryClient]);
 
@@ -541,12 +541,12 @@ const Navbar: FC = () => {
                   <div className="fixed inset-0 bg-black/30 z-40" onClick={toggleNotifications}>
                     <AnimatePresence>
                       <motion.div
+                        onClick={e => e.stopPropagation()}
                         initial={{ opacity: 0, x: 300, y: 0 }}
                         animate={{ opacity: 1, x: 0, y: 0 }}
                         exit={{ opacity: 0, x: 300 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="absolute right-4 top-16 w-80 bg-white rounded-lg shadow-xl z-50 max-h-[80vh] overflow-hidden flex flex-col"
-                        onClick={e => e.stopPropagation()}
                       >
                         <motion.div
                           className="px-4 py-3 border-b border-gray-200 flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50"

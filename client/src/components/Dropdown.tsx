@@ -13,11 +13,7 @@ interface CustomDropdownProps {
     children: ReactNode;
 }
 
-const Dropdown: FC<CustomDropdownProps> = ({
-    options,
-    position = "bottom",
-    children,
-}) => {
+const Dropdown: FC<CustomDropdownProps> = ({ options, position = "bottom", children }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 

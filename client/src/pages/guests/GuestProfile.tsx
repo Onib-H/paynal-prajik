@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, CheckCircle, Edit, Eye, EyeOff, ImageUp, Key, Mail, Save, User, X } from "lucide-react";
+import { AlertCircle, CheckCircle, Eye, EyeOff, ImageUp, Key, Mail, Save, User, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
 import { changePassword } from "../../services/Auth";
 import { getGuestDetails, updateGuestDetails, updateProfileImage } from "../../services/Guest";
 import { FormFields, PasswordFields } from "../../types/GuestProfileClient";
+import { useForm, Controller } from "react-hook-form";
 
 const GuestProfile = () => {
   const { id } = useParams();
@@ -16,12 +17,11 @@ const GuestProfile = () => {
   const { userDetails, profileImage, setProfileImage } = useUserContext();
 
   const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState<FormFields>({
-    first_name: '',
-    last_name: '',
-    email: ''
-  });
-
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState<PasswordFields>({
     oldPassword: '',
@@ -33,11 +33,15 @@ const GuestProfile = () => {
     new: false,
     confirm: false
   });
-  const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
-  const [updateError, setUpdateError] = useState<string | null>(null);
+
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<FormFields>({
+    mode: 'onBlur',
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      email: ''
+    }
+  });
 
   const { data: profile, isLoading: profileLoading, error: profileError } = useQuery({
     queryKey: ["guest", id],
@@ -47,23 +51,16 @@ const GuestProfile = () => {
 
   const updateProfileMutation = useMutation({
     mutationFn: (data: FormFields) => {
-      const updateData = [
-        data.first_name,
-        data.last_name,
-        data.email
-      ];
-      return updateGuestDetails(id as string, updateData);
+      return updateGuestDetails(id as string, [data.first_name, data.last_name, data.email]);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["guest", id] });
-      setEditMode(false);
       setUpdateSuccess("Profile updated successfully!");
-      setUpdateSuccess(null);
+      setEditMode(false);
     },
     onError: (error) => {
       console.error(`Failed to update profile: ${error}`);
       setUpdateError("Failed to update profile. Please try again.");
-      setUpdateError(null);
     }
   });
 
@@ -112,22 +109,14 @@ const GuestProfile = () => {
   }, [userDetails, id, navigate]);
 
   useEffect(() => {
-    if (profile?.data) {
-      setFormData({
-        first_name: profile.data.first_name || '',
-        last_name: profile.data.last_name || '',
-        email: profile.data.email || ''
+    if (userDetails) {
+      reset({
+        first_name: userDetails?.first_name,
+        last_name: userDetails?.last_name,
+        email: userDetails?.email
       });
     }
-  }, [profile]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  }, [userDetails, reset]);
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -138,23 +127,20 @@ const GuestProfile = () => {
     setPasswordError(null);
   };
 
-  const handleSaveProfile = (e: FormEvent) => {
-    e.preventDefault();
+  const handleSaveProfile = (data: FormFields) => {
+    updateProfileMutation.mutate(data);
+  };
 
-    if (!formData.first_name.trim() || !formData.last_name.trim() || !formData.email.trim()) {
-      setUpdateError("All fields are required. Please fill them out.");
-      setUpdateError(null);
-      return;
+
+  const handleCancelEdit = () => {
+    if (userDetails) {
+      reset({
+        first_name: userDetails?.first_name,
+        last_name: userDetails?.last_name,
+        email: userDetails?.email
+      });
+      setEditMode(false);
     }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setUpdateError("Please enter a valid email address.");
-      setUpdateError(null);
-      return;
-    }
-
-    updateProfileMutation.mutate(formData);
   };
 
   const handleChangePassword = (e: FormEvent) => {
@@ -191,7 +177,7 @@ const GuestProfile = () => {
   };
 
   const guestData = profile?.data;
-  const displayImage = guestData?.profile_image || profileImage || "/default-avatar.png";
+  const displayImage = guestData?.profile_image || profileImage;
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -250,7 +236,7 @@ const GuestProfile = () => {
     );
   }
 
-  if (profileError) {
+  if (profileError || profileLoading) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -309,10 +295,9 @@ const GuestProfile = () => {
       {/* Profile header/card */}
       <motion.div
         variants={itemVariants}
-        className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl overflow-hidden mb-8"
+        className="bg-white rounded-2xl ring-3 ring-purple-600 shadow-xl overflow-hidden mb-8"
       >
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 h-36 sm:h-56" />
-        <div className="px-6 sm:px-8 pb-8 pt-0 -mt-16 relative">
+        <div className="px-6 pb-8 mt-6">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col sm:flex-row items-center sm:items-end">
               {/* Profile Image with animation */}
@@ -378,32 +363,22 @@ const GuestProfile = () => {
             </div>
 
             {/* Edit button */}
-            <motion.button
-              variants={itemVariants}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setEditMode(!editMode)}
-              className={`
+            {!editMode && (
+              <motion.button
+                variants={itemVariants}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setEditMode(true)}
+                className={`
                 flex items-center justify-center px-4 py-2 rounded-full cursor-pointer
-                ${editMode
-                  ? "bg-purple-100 text-purple-600 hover:bg-purple-200"
-                  : "bg-purple-600 text-white hover:bg-purple-700"
-                } 
+                ${!editMode && "bg-purple-600 text-white hover:bg-purple-700"} 
                 shadow-md transition-all duration-200 mt-4 sm:mt-0
               `}
-            >
-              {editMode ? (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Profile
-                </>
-              ) : (
-                <>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </>
-              )}
-            </motion.button>
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Edit Profile
+              </motion.button>
+            )}
           </div>
         </div>
       </motion.div>
@@ -411,7 +386,7 @@ const GuestProfile = () => {
       {/* Tab content */}
       <motion.div
         variants={itemVariants}
-        className="bg-white rounded-xl shadow-md overflow-hidden"
+        className="bg-white ring-3 ring-purple-600 rounded-xl shadow-md overflow-hidden"
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -421,7 +396,7 @@ const GuestProfile = () => {
             exit="exit"
             variants={fadeInVariants}
           >
-            <form onSubmit={handleSaveProfile} className="p-6">
+            <form onSubmit={handleSubmit(handleSaveProfile)} className="p-6">
               <h3 className="text-lg font-semibold flex items-center border-b border-gray-200 pb-3 mb-6">
                 <User className="h-5 w-5 mr-2 text-purple-500" />
                 Personal Information
@@ -430,50 +405,74 @@ const GuestProfile = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                  <motion.input
-                    whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
-                    type="text"
+                  <Controller
                     name="first_name"
-                    disabled={!editMode}
-                    className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
-                      ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
-                      : "bg-gray-50 border-gray-200"
-                      }`}
-                    value={formData.first_name}
-                    onChange={handleInputChange}
+                    control={control}
+                    rules={{ required: "First name is required" }}
+                    render={({ field }) => (
+                      <motion.input
+                        {...field}
+                        whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
+                        type="text"
+                        disabled={!editMode}
+                        className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
+                          ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
+                          : "bg-gray-50 border-gray-200"
+                          }`}
+                      />
+                    )}
                   />
+                  {errors.first_name && <p className="text-sm text-red-500 mt-1">{errors.first_name.message}</p>}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                  <motion.input
-                    whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
-                    type="text"
+                  <Controller
                     name="last_name"
-                    disabled={!editMode}
-                    className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
-                      ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
-                      : "bg-gray-50 border-gray-200"
-                      }`}
-                    value={formData.last_name}
-                    onChange={handleInputChange}
+                    control={control}
+                    rules={{ required: "Last name is required" }}
+                    render={({ field }) => (
+                      <motion.input
+                        {...field}
+                        whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
+                        type="text"
+                        disabled={!editMode}
+                        className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
+                          ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
+                          : "bg-gray-50 border-gray-200"
+                          }`}
+                      />
+                    )}
                   />
+                  {errors.last_name && <p className="text-sm text-red-500 mt-1">{errors.last_name.message}</p>}
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                  <motion.input
-                    whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
-                    type="email"
+                  <Controller
                     name="email"
-                    disabled={!editMode}
-                    className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
-                      ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
-                      : "bg-gray-50 border-gray-200"
-                      }`}
-                    value={formData.email}
-                    onChange={handleInputChange}
+                    control={control}
+                    rules={{
+                      required: "Email is required",
+                      pattern: {
+                        value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                        message: "Invalid email address"
+                      }
+                    }}
+                    render={({ field }) => (
+                      <motion.input
+                        {...field}
+                        whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
+                        type="email"
+                        disabled={!editMode}
+                        className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
+                            ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
+                            : "bg-gray-50 border-gray-200"
+                          }`}
+                      />
+                    )}
                   />
+                  {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
                 </div>
 
                 <div className="md:col-span-2">
@@ -489,10 +488,10 @@ const GuestProfile = () => {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setShowPasswordModal(true)}
-                      className="px-3 py-1.5 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition shadow-sm"
+                      className="px-3 py-1.5 text-md cursor-pointer bg-purple-600 text-white rounded-md hover:bg-purple-700 transition shadow-sm"
                       type="button"
                     >
-                      Change
+                      Change Password
                     </motion.button>
                   </div>
                 </div>
@@ -508,7 +507,7 @@ const GuestProfile = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="button"
-                    onClick={() => setEditMode(false)}
+                    onClick={handleCancelEdit}
                     className="mr-3 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                     disabled={updateProfileMutation.isPending}
                   >
@@ -567,7 +566,7 @@ const GuestProfile = () => {
                     setPasswordError(null);
                     setPasswordSuccess(null);
                   }}
-                  className="text-white bg-white/20 hover:bg-white/30 p-1.5 rounded-full"
+                  className="text-white cursor-pointer bg-white/20 hover:bg-white/30 hover:text-red-600 transition-colors duration-300 p-2 rounded-full"
                 >
                   <X size={18} />
                 </motion.button>
@@ -690,7 +689,7 @@ const GuestProfile = () => {
                       whileTap={{ scale: 0.98 }}
                       type="button"
                       onClick={() => setShowPasswordModal(false)}
-                      className="mr-3 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="mr-3 px-4 py-2 cursor-pointer text-gray-700 bg-gray-300 rounded-lg hover:bg-gray-400 transition-colors duration-200"
                       disabled={changePasswordMutation.isPending}
                     >
                       Cancel
@@ -699,7 +698,7 @@ const GuestProfile = () => {
                       whileHover={{ scale: 1.02, boxShadow: "0 4px 6px -1px rgba(147, 51, 234, 0.2)" }}
                       whileTap={{ scale: 0.98 }}
                       type="submit"
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm disabled:bg-purple-400"
+                      className="px-4 py-2 cursor-pointer bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors duration-200 shadow-sm disabled:bg-purple-400"
                       disabled={changePasswordMutation.isPending}
                     >
                       {changePasswordMutation.isPending ? (

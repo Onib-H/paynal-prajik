@@ -72,13 +72,6 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                 };
             }
 
-            if (currentDateOnly.getTime() > checkInDateOnly.getTime()) {
-                return {
-                    isValid: false,
-                    message: `Guest is arriving late. This was scheduled for ${formatDate(booking.check_in_date)}`
-                };
-            }
-
             if (isVenueBooking) {
                 const venueStartHour = 8;
                 const currentHour = currentDate.getHours();
@@ -129,7 +122,6 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                     return { isValid: true, message: "" };
                 }
             }
-
             return { isValid: true, message: "" };
         } catch (error) {
             console.error(`Error validating check-in date: ${error}`);
@@ -142,7 +134,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             const currentDate = new Date();
             const checkOutDate = new Date(booking.check_out_date);
 
-            if (currentDate <= checkOutDate) {
+            if (currentDate >= checkOutDate) {
                 return { isValid: true, message: "" };
             }
 
