@@ -13,7 +13,7 @@ type WebSocketEvent =
     | { type: 'unread_update'; count: number }
     | { type: 'new_notification'; notification: NotificationMessage; unread_count: number }
     | { type: 'auth_response'; success: boolean; message?: string }
-    | { type: 'pending_count'; count: number };
+    | { type: 'active_count'; count: number };
 
 export class WebSocketService {
     private socket: WebSocket | null = null;
@@ -27,24 +27,16 @@ export class WebSocketService {
     private connecting: boolean = false;
     private reconnectTimer?: NodeJS.Timeout;
 
-    constructor() {
+    constructor(private socketPath: string) {
         this.reconnect = this.reconnect.bind(this);
         this.connect = this.connect.bind(this);
         this.handleConnectionError = this.handleConnectionError.bind(this);
     }
 
     connect(userId: string) {
-        if (this.socket?.readyState === WebSocket.OPEN) {
-            return;
-        }
-
-        if (this.connecting) {
-            return;
-        }
-
-        if (!userId) {
-            return;
-        }
+        if (!userId) return;
+        if (this.socket?.readyState === WebSocket.OPEN) return;
+        if (this.connecting) return;
 
         this.connecting = true;
         this.currentUserId = userId;
@@ -52,10 +44,9 @@ export class WebSocketService {
         try {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = window.location.hostname === 'localhost' ? 'localhost:8000' : window.location.host;
-            const url = `${protocol}//${host}/ws/notifications/`;
+            const url = `${protocol}//${host}/${this.socketPath}`;
 
             this.socket = new WebSocket(url);
-
             this.socket.onopen = this.handleOpen.bind(this);
             this.socket.onmessage = this.handleMessage.bind(this);
             this.socket.onclose = this.handleClose.bind(this);
@@ -76,12 +67,9 @@ export class WebSocketService {
     private handleMessage(event: MessageEvent) {
         try {
             const data: WebSocketEvent = JSON.parse(event.data);
-
-            // if (data.type === 'pending_count') {
-                this.triggerEvent(data.type, data);
-            // }
+            this.triggerEvent(data.type, data);
         } catch (error) {
-            console.error('WebSocket: Message parsing error', error);
+            console.error(`WebSocket: Message parsing error: ${error}`);
         }
     }
 
@@ -89,9 +77,7 @@ export class WebSocketService {
         this.connecting = false;
         this.stopHeartbeat();
         
-        if (!event.wasClean) {
-            this.handleConnectionError();
-        }
+        if (!event.wasClean) this.handleConnectionError();
     }
 
     private handleConnectionError() {
@@ -100,10 +86,7 @@ export class WebSocketService {
         if (this.retries < this.maxRetries) {
             const delay = this.retryDelay * Math.pow(2, this.retries);
             
-            if (this.reconnectTimer) {
-                clearTimeout(this.reconnectTimer);
-            }
-
+            if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
             this.reconnectTimer = setTimeout(this.reconnect, delay);
         } else {
             console.error(`WebSocket: Max reconnection attempts (${this.maxRetries}) reached`);
@@ -120,11 +103,8 @@ export class WebSocketService {
     private startHeartbeat() {
         this.stopHeartbeat();
         this.heartbeatTimer = setInterval(() => {
-            if (this.isConnected) {
-                this.send({ type: 'heartbeat' });
-            } else {
-                this.stopHeartbeat();
-            }
+            if (this.isConnected) this.send({ type: 'heartbeat' });
+            else this.stopHeartbeat();
         }, this.heartbeatInterval);
     }
 
@@ -184,4 +164,5 @@ export class WebSocketService {
     }
 }
 
-export const webSocketService = new WebSocketService();
+export const webSocketService = new WebSocketService('ws/notifications/');
+export const webSocketAdminActives = new WebSocketService('ws/admin_dashboard/active-bookings/');

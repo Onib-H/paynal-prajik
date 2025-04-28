@@ -1,6 +1,6 @@
-from django.urls import path
+from django.urls import re_path
 from . import consumers
 
 websockets_urlpatterns = [
-    path('ws/admin_dashboard/pending-bookings', consumers.PendingBookingConsumer.as_asgi()),
+    re_path(r'ws/admin_dashboard/active-bookings/?$', consumers.PendingBookingConsumer.as_asgi()),
 ]
