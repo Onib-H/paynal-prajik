@@ -10,6 +10,7 @@ import { useUserContext } from "../../contexts/AuthContext";
 import { logout } from "../../services/Auth";
 import hotelLogo from "../../assets/hotel_logo.png";
 import { webSocketAdminActives } from "../../services/websockets";
+import { getAllBookings } from "../../services/Admin";
 
 const AdminSidebar: FC = () => {
   const navigate = useNavigate();
@@ -36,20 +37,32 @@ const AdminSidebar: FC = () => {
   const handleLogout = () => logoutMutation();
 
   useEffect(() => {
+    const fetchInitialCount = async () => {
+      try {
+        const response = await getAllBookings({ page: 1, pageSize: 1 });
+        setActiveBookingCount(response.pagination.total_items);
+      } catch (error) {
+        console.log(`Error fetching initial count: ${error}`);
+      }
+    }
+    fetchInitialCount();
+  }, []);
+
+  useEffect(() => {
     if (!userDetails?.id) return;
 
-    webSocketAdminActives.connect(userDetails?.id);
-    
-    const handleActiveCount = (data: any) => {
-      if (data.type === "active_count") setActiveBookingCount(data.count);
-    };
+    const ws = webSocketAdminActives;
+    ws.connect(userDetails.id);
 
-    webSocketAdminActives.on('active_count', handleActiveCount);
-    webSocketAdminActives.send({ type: "get_active_count" });
+    const handleCountUpdate = (data: any) => {
+      if (data.type === "bookings_update") setActiveBookingCount(data.count);
+    }
+
+    ws.on('bookings_update', handleCountUpdate);
 
     return () => {
-      webSocketAdminActives.disconnect();
-      webSocketAdminActives.off('active_count');
+      ws.off('bookings_update');
+      ws.disconnect();
     }
   }, [userDetails?.id]);
 

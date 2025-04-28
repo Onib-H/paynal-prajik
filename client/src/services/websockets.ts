@@ -8,12 +8,14 @@ export interface NotificationMessage {
     booking_id?: string;
 }
 
-type WebSocketEvent =
+export type WebSocketEvent =
     | { type: 'initial_count'; count: number }
     | { type: 'unread_update'; count: number }
     | { type: 'new_notification'; notification: NotificationMessage; unread_count: number }
     | { type: 'auth_response'; success: boolean; message?: string }
-    | { type: 'active_count'; count: number };
+    | { type: 'active_count'; count: number }
+    | { type: 'initial_data'; count: number; bookings: any[] }
+    | { type: 'bookings_update'; count: number; bookings: any[] }
 
 export class WebSocketService {
     private socket: WebSocket | null = null;

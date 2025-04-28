@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Eye, Filter, Search, FolderX } from "lucide-react";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import CancellationModal from "../../components/bookings/CancellationModal";
 import Modal from "../../components/Modal";
@@ -15,8 +15,12 @@ import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError"
 import ManageBookingSkeleton from "../../motions/skeletons/ManageBookingSkeleton";
 import { BookingQuery } from "../../types/BookingsAdmin";
 import { AnimatePresence, motion } from "framer-motion";
+import { webSocketAdminActives, WebSocketEvent } from "../../services/websockets";
+import { useUserContext } from "../../contexts/AuthContext";
 
 const ManageBookings: FC = () => {
+  const { userDetails } = useUserContext();
+
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -32,6 +36,30 @@ const ManageBookings: FC = () => {
     queryKey: ["adminBookings", currentPage, pageSize],
     queryFn: () => getAllBookings({ page: currentPage, pageSize }),
   });
+
+  useEffect(() => {
+    const adminWs = webSocketAdminActives;
+    adminWs.connect(userDetails.id);
+
+    adminWs.on('bookings_update', (data: WebSocketEvent) => {
+      if (data.type === "bookings_update") {
+        queryClient.setQueryData(['adminBookings', currentPage, pageSize], (oldData: BookingQuery | undefined) => ({
+          ...oldData!,
+          data: data.bookings,
+          pagination: {
+            ...oldData?.pagination,
+            total_items: data.count,
+            total_pages: Math.ceil(data.count / pageSize),
+          }
+        }));
+      }
+    });
+
+    return () => {
+      adminWs.off('bookings_update');
+      adminWs.disconnect();
+    }
+  }, [currentPage, pageSize, queryClient, userDetails.id]);
 
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({

@@ -15,6 +15,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q, Count, Sum
 from datetime import datetime, date, timedelta
 from .email.booking import send_booking_confirmation_email, send_booking_rejection_email
+import traceback
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -614,7 +615,6 @@ def admin_bookings(request):
         
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
-        
         paginator = Paginator(bookings, page_size)
         
         try:
@@ -636,7 +636,6 @@ def admin_bookings(request):
             }
         }, status=status.HTTP_200_OK)
     except Exception as e:
-        import traceback
         traceback.print_exc()
         return Response({"error": str(e), "traceback": traceback.format_exc()}, status=status.HTTP_400_BAD_REQUEST)
 
