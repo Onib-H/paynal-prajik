@@ -186,11 +186,9 @@ const Navbar: FC = () => {
   });
 
   const handleNotificationClick = useCallback((notification: NotificationType) => {
-    if (!notification.is_read) {
-      markAsReadMutation.mutate(notification.id.toString());
-    }
+    if (!notification.is_read) markAsReadMutation.mutate(notification.id.toString());
 
-    navigate(`/guest/bookings?bookingId=${notification.booking_id}`);
+    navigate('/guest/bookings/');
     setIsNotificationsOpen(false);
   }, [navigate, markAsReadMutation]);
 

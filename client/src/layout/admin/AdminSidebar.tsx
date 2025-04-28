@@ -10,7 +10,6 @@ import { useUserContext } from "../../contexts/AuthContext";
 import { logout } from "../../services/Auth";
 import hotelLogo from "../../assets/hotel_logo.png";
 import { webSocketAdminActives } from "../../services/websockets";
-import { getAllBookings } from "../../services/Admin";
 
 const AdminSidebar: FC = () => {
   const navigate = useNavigate();
@@ -37,32 +36,23 @@ const AdminSidebar: FC = () => {
   const handleLogout = () => logoutMutation();
 
   useEffect(() => {
-    const fetchInitialCount = async () => {
-      try {
-        const response = await getAllBookings({ page: 1, pageSize: 1 });
-        setActiveBookingCount(response.pagination.total_items);
-      } catch (error) {
-        console.log(`Error fetching initial count: ${error}`);
-      }
-    }
-    fetchInitialCount();
-  }, []);
-
-  useEffect(() => {
     if (!userDetails?.id) return;
 
     const ws = webSocketAdminActives;
     ws.connect(userDetails.id);
-
+    
     const handleCountUpdate = (data: any) => {
-      if (data.type === "bookings_update") setActiveBookingCount(data.count);
+      if (data.type === "bookings_update") {
+        setActiveBookingCount(data.count);
+      }
     }
-
+    
     ws.on('bookings_update', handleCountUpdate);
+    ws.send({ type: "get_active_bookings" });
 
     return () => {
-      ws.off('bookings_update');
       ws.disconnect();
+      ws.off('bookings_update');
     }
   }, [userDetails?.id]);
 
