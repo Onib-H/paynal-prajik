@@ -65,7 +65,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                 checkInDate.getDate()
             );
 
-            if (currentDateOnly.getTime() < checkInDateOnly.getTime()) {
+            if (currentDateOnly.getTime() <= checkInDateOnly.getTime()) {
                 return {
                     isValid: false,
                     message: "Check-in is not available yet. Guest is arriving earlier than the scheduled date."
@@ -134,26 +134,39 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             const currentDate = new Date();
             const checkOutDate = new Date(booking.check_out_date);
 
-            if (currentDate >= checkOutDate) {
-                return { isValid: true, message: "" };
-            }
-
             if (isVenueBooking) {
-                return {
-                    isValid: false,
-                    message: "Venue checkout is only allowed on or after the scheduled check-out date."
-                };
+                const venueCheckOutTime = new Date(checkOutDate);
+                venueCheckOutTime.setHours(17, 0, 0, 0);
+
+                if (currentDate >= venueCheckOutTime) {
+                    return { isValid: true, message: "" };
+                } else {
+                    return {
+                        isValid: false,
+                        message: "Venue checkout is only allowed on or after the scheduled check-out date."
+                    };
+                }
             } else {
-                return {
-                    isValid: false,
-                    message: "Room checkout is only allowed on or after the scheduled check-out date."
+                const checkOutDateOnly = new Date(checkOutDate);
+                const currentDateOnly = new Date(currentDate);
+
+                checkOutDateOnly.setHours(0, 0, 0, 0);
+                currentDateOnly.setHours(0, 0, 0, 0);
+
+                if (currentDateOnly >= checkOutDateOnly) {
+                    return { isValid: true, message: "" }
+                } else {
+                    return {
+                        isValid: false,
+                        message: "Room checkout is only allowed on or after the scheduled check-out date."
+                    }
                 }
             }
         } catch (error) {
             console.error(`Error validating check-out date: ${error}`);
             return { isValid: true, message: "" };
         }
-    }
+    };
 
     const checkInValidation = isCheckInDateValid();
     const canCheckIn = isPaymentComplete && checkInValidation.isValid;
@@ -609,7 +622,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                     whileTap={canCheckOut ? { scale: 0.95 } : {}}
                                     onClick={() => onCheckOut && canCheckOut && onCheckOut()}
                                     className={`px-6 py-3 text-white rounded-lg transition-colors flex items-center justify-center gap-2 shadow-md duration-300 ${canCheckOut
-                                        ? 'bg-indigo-600 hover:bg-indigo-700'
+                                        ? 'bg-indigo-600 cursor-pointer hover:bg-indigo-700'
                                         : 'bg-gray-400 cursor-not-allowed'
                                         }`}
                                     disabled={!canCheckOut}
