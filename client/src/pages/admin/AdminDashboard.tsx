@@ -16,6 +16,7 @@ import { formatMonthYear, getDaysInMonth } from "../../utils/formatters";
 import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
 import { formatCurrency } from "../../utils/formatters";
+import { motion } from "framer-motion";
 
 const locales = { 'en-US': enUS };
 const localizer = dateFnsLocalizer({
@@ -463,6 +464,22 @@ const AdminDashboard = () => {
     );
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0 },
+  };
+
   return (
     <div className="p-3 container mx-auto">
       {renderReport()}
@@ -481,38 +498,6 @@ const AdminDashboard = () => {
               className="px-4 py-2 rounded-lg border-0 focus:outline-none text-center"
             />
           </div>
-
-          {/* Month navigation controls */}
-          {/* <div className="flex items-center bg-white rounded-lg shadow-sm">
-            <button
-              onClick={goToPreviousMonth}
-              className="p-2 hover:bg-gray-100 rounded-l-lg"
-              aria-label="Previous month"
-            >
-              <ChevronLeft size={20} />
-            </button>
-
-            <div className="px-4 py-2 font-medium">
-              {formattedMonthYear}
-              {isCurrentMonth && (
-                <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                  Current
-                </span>
-              )}
-            </div>
-
-            <button
-              onClick={goToNextMonth}
-              className="p-2 hover:bg-gray-100 rounded-r-lg"
-              disabled={isCurrentMonth}
-              aria-label="Next month"
-            >
-              <ChevronRight
-                size={20}
-                className={isCurrentMonth ? "text-gray-300" : ""}
-              />
-            </button>
-          </div> */}
 
           <div className="flex space-x-2">
             <button
@@ -626,64 +611,120 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white shadow-lg rounded-lg p-4">
+        {/* Revenue by Room Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-white shadow-lg rounded-lg p-4 hover:shadow-xl transition-shadow"
+        >
           <h3 className="text-lg font-medium mb-4 text-center">
             Revenue by Room - {formattedMonthYear}
           </h3>
-          <div className="overflow-auto max-h-80">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border p-2 text-left">Room</th>
-                  <th className="border p-2 text-right">Revenue</th>
-                  <th className="border p-2 text-right">Bookings</th>
-                </tr>
-              </thead>
-              <tbody>
-                {roomNames.map((room: string, index: number) => (
-                  <tr key={`room-${index}`} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                    <td className="border p-2">{room}</td>
-                    <td className="border p-2 text-right">
-                      {formatCurrency(roomRevenueValues[index] || 0)}
-                    </td>
-                    <td className="border p-2 text-right">{roomBookingValues[index] || 0}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="space-y-3"
+          >
+            {roomNames.map((room: string, index: number) => {
+              const revenue = roomRevenueValues[index] || 0;
+              const maxRevenue = Math.max(...roomRevenueValues);
+              const widthPercentage = maxRevenue ? (revenue / maxRevenue) * 80 : 0;
 
-        <div className="bg-white shadow-lg rounded-lg p-4">
+              return (
+                <motion.div
+                  key={`room-${index}`}
+                  variants={itemVariants}
+                  className="flex items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex-1">
+                    <p className="font-medium text-gray-700">{room}</p>
+                    <p className="text-sm text-gray-500">
+                      {roomBookingValues[index] || 0} bookings
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${widthPercentage}%` }}
+                        transition={{ duration: 0.8 }}
+                        className="h-full bg-blue-500"
+                      />
+                    </div>
+                    <span className="font-medium text-blue-600">
+                      {formatCurrency(revenue)}
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </motion.div>
+
+        {/* Booking Status Distribution Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="bg-white shadow-lg rounded-lg p-4 hover:shadow-xl transition-shadow"
+        >
           <h3 className="text-lg font-medium mb-4 text-center">
             Booking Status Distribution - {formattedMonthYear}
           </h3>
-          <div className="overflow-auto max-h-80">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border p-2 text-left">Status</th>
-                  <th className="border p-2 text-right">Count</th>
-                  <th className="border p-2 text-right">Percentage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(bookingStatusCounts).map(([status, count], index) => {
-                  const total = Object.values(bookingStatusCounts).reduce((a, b) => a + b, 0);
-                  const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+            className="space-y-3"
+          >
+            {Object.entries(bookingStatusCounts).map(([status, count]) => {
+              const total = Object.values(bookingStatusCounts).reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
+              const statusColors = {
+                pending: 'bg-yellow-400',
+                reserved: 'bg-blue-500',
+                checked_in: 'bg-green-500',
+                checked_out: 'bg-gray-500',
+                cancelled: 'bg-red-500',
+                no_show: 'bg-purple-500',
+                rejected: 'bg-orange-500',
+              };
 
-                  return (
-                    <tr key={status} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                      <td className="border p-2 capitalize">{status.replace('_', ' ')}</td>
-                      <td className="border p-2 text-right">{count}</td>
-                      <td className="border p-2 text-right">{percentage}%</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              return (
+                <motion.div
+                  key={status}
+                  variants={itemVariants}
+                  className="group p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium capitalize text-gray-700">
+                      {status.replace('_', ' ')}
+                    </span>
+                    <span className="text-sm font-semibold text-gray-600">
+                      {percentage}%
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-4 h-4 rounded-full ${statusColors[status as keyof typeof statusColors]}`}
+                    />
+                    <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 0.8 }}
+                        className={`h-full ${statusColors[status as keyof typeof statusColors]}`}
+                      />
+                    </div>
+                    <span className="text-sm text-gray-500">{count}</span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );
