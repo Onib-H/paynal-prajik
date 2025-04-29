@@ -95,7 +95,7 @@ const ManageAreas = () => {
     },
     onError: (error: any) => {
       toast.error(`Failed to update area: ${error.message || "Unknown error"}`);
-      console.error("Error updating area:", error);
+      console.error(`Error updating area: ${error}`);
     },
     onSettled: () => {
       setLoading(false);
@@ -179,7 +179,7 @@ const ManageAreas = () => {
       if (!areaData.id) await addAreaMutation.mutateAsync(formData);
       else await editAreaMutation.mutateAsync({ areaId: areaData.id, formData });
     } catch (error) {
-      console.error("Error saving area:", error);
+      console.error(`Error saving area: ${error}`);
       throw error;
     }
   };

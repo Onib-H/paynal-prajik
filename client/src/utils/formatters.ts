@@ -146,23 +146,23 @@ export const getStatusColor = (status: string): string => {
   const normalizedStatus = status.toLowerCase().replace(/_/g, " ");
   switch (normalizedStatus) {
     case "confirmed":
-      return "bg-green-100 text-green-800";
+      return "bg-green-50 text-green-700";
     case "pending":
-      return "bg-yellow-100 text-yellow-800";
+      return "bg-yellow-50 text-yellow-700";
     case "cancelled":
-      return "bg-red-100 text-red-800";
+      return "bg-red-50 text-red-700";
     case "rejected":
-      return "bg-red-100 text-red-800";
+      return "bg-red-50 text-red-700";
     case "reserved":
-      return "bg-green-100 text-green-800";
+      return "bg-green-50 text-green-700";
     case "checked in":
-      return "bg-blue-100 text-blue-800";
+      return "bg-blue-50 text-blue-700";
     case "checked out":
-      return "bg-gray-100 text-gray-800";
+      return "bg-gray-50 text-gray-700";
     case "no show":
-      return "bg-purple-100 text-purple-800";
+      return "bg-purple-50 text-purple-700";
     default:
-      return "bg-gray-100 text-gray-800";
+      return "bg-gray-50 text-gray-700";
   }
 };
 

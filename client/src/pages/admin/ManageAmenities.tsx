@@ -152,12 +152,9 @@ const ManageAmenities = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="space-y-2 container mx-auto py-4"
+      className="space-y-2 container mx-auto p-3"
     >
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-800">Manage Amenities</h1>
-      </div>
+      <h1 className="text-3xl font-bold text-gray-800">Manage Amenities</h1>
 
       {/* Search and Add Button */}
       <div className="bg-white p-4 rounded-lg shadow-sm flex flex-col md:flex-row justify-between gap-4">
@@ -175,7 +172,7 @@ const ManageAmenities = () => {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
           onClick={handleAddAmenity}
-          className="bg-purple-600 hover:bg-purple-700 cursor-pointer text-white px-6 py-2.5 rounded-full font-medium shadow-md flex items-center gap-2"
+          className="bg-purple-600 hover:bg-purple-700 cursor-pointer text-white px-4 py-1 uppercase rounded-full font-semibold shadow-md flex items-center gap-2"
         >
           <Plus size={18} />
           <span>Add Amenity</span>
@@ -192,7 +189,7 @@ const ManageAmenities = () => {
               transition={{ duration: 0.3 }}
             >
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200 table-fixed">
+                <table className="min-w-full divide-y divide-gray-200">
                   <thead>
                     <tr>
                       <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -212,7 +209,7 @@ const ManageAmenities = () => {
                           animate={{ opacity: 1 }}
                           className="hover:bg-gray-50"
                         >
-                          <td className="px-6 py-4 whitespace-nowrap text-center text-lg text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-center text-md text-gray-900">
                             {amenity.description}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">

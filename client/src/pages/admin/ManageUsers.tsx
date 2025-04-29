@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { AtSign, PencilIcon, TrashIcon, UserRound } from "lucide-react";
@@ -25,6 +26,7 @@ const ManageUsers: FC = () => {
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [editModal, setEditModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [createFormData, setCreateFormData] = useState<CreateUserFormData>({
     email: "",
     password: "",
@@ -36,10 +38,19 @@ const ManageUsers: FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const queryClient = useQueryClient();
+  const pageSize = 6;
 
-  const { data: users, isLoading, isError } = useQuery<IUser[]>({
-    queryKey: ["users"],
-    queryFn: fetchAllUsers,
+  const { data, isLoading, isError } = useQuery<{
+    users: IUser[];
+    pagination: {
+      total_pages: number;
+      current_page: number;
+      total_items: number;
+      page_size: number;
+    }
+  }>({
+    queryKey: ["users", currentPage],
+    queryFn: () => fetchAllUsers(currentPage, pageSize),
   });
 
   const updateMutation = useMutation({
@@ -237,67 +248,89 @@ const ManageUsers: FC = () => {
         <h1 className="text-2xl md:text-3xl font-semibold">Manage Users</h1>
       </div>
 
-      {users && users.length === 0 ? (
+      {data.users && data.users.length === 0 ? (
         <div className="flex flex-col items-center justify-center mt-10">
           <p className="text-5xl font-bold text-gray-700">🚫 No Users Found</p>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-white rounded-lg shadow">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Profile</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">First Name</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Last Name</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users && users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <img
-                      src={user.profile_image || DefaultProfilePic}
-                      alt={`${user.first_name}'s profile`}
-                      className="h-10 w-10 rounded-full object-cover"
-                    />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{user.first_name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{user.last_name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`p-2 inline-flex text-md leading-5 font-semibold rounded-full 
-                      ${user.role.toUpperCase() === 'admin' ? 'bg-purple-100 text-purple-800' :
-                        user.role.toUpperCase() === 'staff' ? 'bg-blue-100 text-blue-800' :
-                          'bg-green-100 text-green-800'}`}>
-                      {user.role.toUpperCase() || 'guest'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-center">
-                    <div className="flex items-center justify-center space-x-2">
-                      <button
-                        onClick={() => handleEdit(user)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white p-3 cursor-pointer rounded-md mr-2 transition-colors duration-300"
-                        title="Edit User"
-                      >
-                        <PencilIcon className="h-5 w-5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user)}
-                        className="bg-red-600 hover:bg-red-700 text-white p-3 cursor-pointer rounded-md transition-colors duration-300"
-                        title="Archive User"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </td>
+        <>
+          <div className="overflow-x-auto bg-white rounded-lg shadow">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Profile</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">First Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Last Name</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {data.users && data.users.map((user: any) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <img
+                        src={user.profile_image || DefaultProfilePic}
+                        alt={`${user.first_name}'s profile`}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{user.first_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{user.last_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{user.email}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`p-2 inline-flex text-md leading-5 font-semibold rounded-full 
+                      ${user.role.toUpperCase() === 'admin' ? 'bg-purple-100 text-purple-800' :
+                          user.role.toUpperCase() === 'staff' ? 'bg-blue-100 text-blue-800' :
+                            'bg-green-100 text-green-800'}`}>
+                        {user.role.toUpperCase() || 'guest'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-center">
+                      <div className="flex items-center justify-center space-x-2">
+                        <button
+                          onClick={() => handleEdit(user)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white p-3 cursor-pointer rounded-md mr-2 transition-colors duration-300"
+                          title="Edit User"
+                        >
+                          <PencilIcon className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(user)}
+                          className="bg-red-600 hover:bg-red-700 text-white p-3 cursor-pointer rounded-md transition-colors duration-300"
+                          title="Archive User"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex justify-center items-center gap-4 mt-4">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50 hover:bg-gray-300 transition-colors"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-600">
+              Page {data.pagination.current_page || 1} of {data?.pagination.total_pages || 1}
+            </span>
+            <button
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              disabled={currentPage === (data?.pagination.total_pages || 1)}
+              className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50 hover:bg-gray-300 transition-colors"
+            >
+              Next
+            </button>
+          </div>
+
+        </>
       )}
 
       {/* Create User Modal */}

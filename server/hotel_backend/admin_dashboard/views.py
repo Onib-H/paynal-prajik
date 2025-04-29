@@ -831,9 +831,27 @@ def booking_status_counts(request):
 def fetch_all_users(request):
     try:
         users = CustomUsers.objects.filter(role="guest")
-        serializer = CustomUserSerializer(users, many=True)
+        
+        page = request.query_params.get('page')
+        page_size = request.query_params.get('page_size')
+        paginator = Paginator(users, page_size)
+        
+        try:
+            paginated_users = paginator.page(page)
+        except PageNotAnInteger:
+            paginated_users = paginator.page(1)
+        except EmptyPage:
+            paginated_users = paginator.page(paginator.num_pages)
+        
+        serializer = CustomUserSerializer(paginated_users, many=True)
         return Response({
-            "data": serializer.data
+            "users": serializer.data,
+            "pagination": {
+                "total_pages": paginator.num_pages,
+                "current_page": int(page),
+                "total_items": paginator.count,
+                "page_size": int(page_size)
+            }
         }, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)

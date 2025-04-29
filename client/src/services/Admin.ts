@@ -208,12 +208,16 @@ export const areaReservations = async () => {
 };
 
 // CRUD Users
-export const fetchAllUsers = async () => {
+export const fetchAllUsers = async (page: number, pageSize: number) => {
   try {
     const response = await ADMIN.get("/users", {
+      params: {
+        page,
+        page_size: pageSize,
+      },
       withCredentials: true,
     });
-    return response.data.data;
+    return response.data;
   } catch (error) {
     console.error(`Failed to fetch users: ${error}`);
     throw error;

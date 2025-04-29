@@ -753,7 +753,7 @@ const Navbar: FC = () => {
         description="Are you sure you want to log out?"
         cancel={() => setIsModalOpen(!isModalOpen)}
         onConfirm={handleLogout}
-        className={`bg-red-600 text-white active:bg-red-700 font-bold uppercase px-4 py-2 cursor-pointer rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 transition-all duration-150 ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""
+        className={`bg-red-600 text-white active:bg-red-700 font-bold uppercase px-4 py-2 cursor-pointer rounded-md shadow hover:shadow-lg outline-none focus:outline-none transition-all duration-150 ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         loading={logoutLoading}
         confirmText={

@@ -103,7 +103,7 @@ const GuestCancellations: FC = () => {
   if (errorMessage) return <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">{errorMessage}</div>;
 
   return (
-    <div className="space-y-6 container mx-auto py-4">
+    <div className="space-y-3 container mx-auto p-3">
       <div>
         <h1 className="text-2xl font-bold text-gray-800">Cancelled Bookings</h1>
         <p className="text-gray-600 text-lg">View your cancelled hotel bookings</p>
@@ -205,7 +205,7 @@ const GuestCancellations: FC = () => {
 
                     return (
                       <tr key={id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="h-10 w-10 flex-shrink-0">
                               <img
@@ -235,7 +235,7 @@ const GuestCancellations: FC = () => {
                           {formatDate(checkOutDate)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 text-md leading-5 font-semibold rounded-full ${getStatusColor(status)}`}>
+                          <span className={`p-2 text-sm font-semibold rounded-full ${getStatusColor(status)}`}>
                             {status}
                           </span>
                         </td>
@@ -251,7 +251,7 @@ const GuestCancellations: FC = () => {
                                 setShowBookingDetailModal(true);
                               }}
                             >
-                              <Eye size={30} className="mr-1" /> View
+                              <Eye size={30} />
                             </button>
                           </div>
                         </td>

@@ -149,7 +149,7 @@ const AdminSidebar: FC = () => {
         cancel={modalCancel}
         onConfirm={handleLogout}
         loading={logoutLoading}
-        className={`bg-red-600 text-whitehover:bg-red-700 font-bold uppercase text-white text-sm px-6 py-3 rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-300 cursor-pointer ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`bg-red-600 hover:bg-red-700 font-bold uppercase text-white px-4 py-2 rounded-md shadow hover:shadow-lg outline-none focus:outline-none ease-linear transition-all duration-300 cursor-pointer ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""}`}
         confirmText={
           logoutLoading ? (
             <>
