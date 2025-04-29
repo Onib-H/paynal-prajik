@@ -188,7 +188,7 @@ const ManageAreas = () => {
   if (isError) return <Error />;
 
   return (
-    <div className="overflow-y-auto h-[calc(100vh-25px)]">
+    <div className="overflow-y-hidden h-full">
       <div className="p-3 container mx-auto">
         {loading && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-900/80 z-[500]">

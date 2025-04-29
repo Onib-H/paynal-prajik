@@ -26,3 +26,5 @@ react-error-boundary
 jspdf
 @react-oauth/google
 @types/websocket
+react-big-calendar
+@types/react-big-calendar

@@ -223,7 +223,7 @@ const ManageRooms: FC = () => {
   const pagination = roomsResponse?.pagination;
 
   return (
-    <div className="overflow-y-auto h-[calc(100vh-25px)]">
+    <div className="overflow-y-hidden h-full">
       <div className="p-3 container mx-auto">
         {/* Loader Overlay */}
         {loading && (

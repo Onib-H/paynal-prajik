@@ -1,171 +1,169 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
-import { ArcElement, BarElement, CategoryScale, Chart as ChartJS, Filler, Legend, LineElement, LinearScale, PointElement, Title, Tooltip } from "chart.js";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { Bar, Doughnut, Line } from "react-chartjs-2";
+import { format, getDay, isAfter, isSameDay, parse, startOfWeek } from "date-fns";
+import { enUS } from "date-fns/locale";
+import { useEffect, useState } from "react";
+import { Calendar, Views, dateFnsLocalizer } from "react-big-calendar";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
 import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
 import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyNoShowsRejected, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import "../../styles/print.css";
+import { formatMonthYear, getDaysInMonth } from "../../utils/formatters";
 import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
-import { formatMonthYear, getDaysInMonth } from "../../utils/formatters";
+import { formatCurrency } from "../../utils/formatters";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, ArcElement, PointElement, Title, Tooltip, Legend, Filler);
+const locales = { 'en-US': enUS };
+const localizer = dateFnsLocalizer({
+  format,
+  parse,
+  startOfWeek,
+  getDay,
+  locales,
+});
 
 const AdminDashboard = () => {
-  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-  const [showReportView, setShowReportView] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [view, setView] = useState<'month' | 'week' | 'day'>("month");
+  const [showReportView, setShowReportView] = useState<boolean>(false);
   const [reportData, setReportData] = useState<any>(null);
+  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
 
-  const isCurrentMonth =
-    selectedMonth === new Date().getMonth() &&
-    selectedYear === new Date().getFullYear();
-  const formattedMonthYear = formatMonthYear(selectedMonth, selectedYear);
-
-  const goToPreviousMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11);
-      setSelectedYear(selectedYear - 1);
-    } else {
-      setSelectedMonth(selectedMonth - 1);
-    }
-  };
-
-  const goToNextMonth = () => {
-    if (selectedMonth === 11) {
-      setSelectedMonth(0);
-      setSelectedYear(selectedYear + 1);
-    } else {
-      setSelectedMonth(selectedMonth + 1);
-    }
-  };
+  const selectedMonth = selectedDate.getMonth() + 1;
+  const selectedYear = selectedDate.getFullYear();
+  const formattedMonthYear = formatMonthYear(selectedMonth - 1, selectedYear);
+  const today = new Date();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["stats", selectedMonth + 1, selectedYear],
+    queryKey: ["stats", selectedMonth, selectedYear],
     queryFn: async () => {
       const statsData = await fetchStats({
-        month: selectedMonth + 1,
+        month: selectedMonth,
         year: selectedYear,
       });
-
-      if (!statsData.daily_revenue) {
-        statsData.daily_revenue = getDaysInMonth(
-          selectedMonth,
-          selectedYear,
-          true
-        ).map(() => 0);
-      }
-
       return statsData;
     },
   });
 
   const { data: bookingStatusData, isLoading: bookingStatusLoading } = useQuery({
-    queryKey: ["bookingStatusCounts", selectedMonth + 1, selectedYear],
+    queryKey: ["bookingStatusCounts", selectedMonth, selectedYear],
     queryFn: () => fetchBookingStatusCounts({
-      month: selectedMonth + 1,
+      month: selectedMonth,
       year: selectedYear,
     }),
   });
 
   const { data: dailyBookingsResponse, isLoading: bookingsDataLoading } = useQuery({
-    queryKey: ["dailyBookings", selectedMonth + 1, selectedYear],
+    queryKey: ["dailyBookings", selectedMonth, selectedYear],
     queryFn: () => fetchDailyBookings({
-      month: selectedMonth + 1,
+      month: selectedMonth,
       year: selectedYear,
     }),
   });
 
   const { data: dailyCancellationsResponse, isLoading: cancellationsDataLoading } = useQuery({
-    queryKey: ["dailyCancellations", selectedMonth + 1, selectedYear],
+    queryKey: ["dailyCancellations", selectedMonth, selectedYear],
     queryFn: () => fetchDailyCancellations({
-      month: selectedMonth + 1,
+      month: selectedMonth,
       year: selectedYear,
     }),
   });
 
   const { data: dailyNoShowsRejectedResponse, isLoading: noShowsRejectedDataLoading } = useQuery({
-    queryKey: ["dailyNoShowsRejected", selectedMonth + 1, selectedYear],
+    queryKey: ["dailyNoShowsRejected", selectedMonth, selectedYear],
     queryFn: () => fetchDailyNoShowsRejected({
-      month: selectedMonth + 1,
+      month: selectedMonth,
       year: selectedYear,
     }),
   });
 
   const { data: roomRevenueResponse, isLoading: roomRevenueLoading } = useQuery({
-    queryKey: ["roomRevenue", selectedMonth + 1, selectedYear],
+    queryKey: ["roomRevenue", selectedMonth, selectedYear],
     queryFn: () => fetchRoomRevenue({
-      month: selectedMonth + 1,
+      month: selectedMonth,
       year: selectedYear,
     }),
   });
 
   const { data: roomBookingsResponse, isLoading: roomBookingsLoading } = useQuery({
-    queryKey: ["roomBookings", selectedMonth + 1, selectedYear],
+    queryKey: ["roomBookings", selectedMonth, selectedYear],
     queryFn: () => fetchRoomBookings({
-      month: selectedMonth + 1,
+      month: selectedMonth,
       year: selectedYear,
     }),
   });
 
   const { data: monthlyRevenueData, isLoading: monthlyRevenueLoading } = useQuery({
-    queryKey: ["monthlyRevenue", selectedMonth + 1, selectedYear],
+    queryKey: ["monthlyRevenue", selectedMonth, selectedYear],
     queryFn: () => fetchMonthlyRevenue({
-      month: selectedMonth + 1,
+      month: selectedMonth,
       year: selectedYear,
     }),
+    staleTime: 10 * 60 * 1000,
   });
 
   useEffect(() => {
     if (
       !isLoading &&
-      !bookingStatusLoading &&
-      data &&
-      bookingStatusData &&
-      monthlyRevenueData
+      !bookingsDataLoading &&
+      !cancellationsDataLoading &&
+      !noShowsRejectedDataLoading &&
+      data?.daily_revenue
     ) {
-      const modifiedData = {
-        ...data,
-        revenue: monthlyRevenueData.revenue,
-        formattedRevenue: monthlyRevenueData.formatted_revenue,
-      };
+      const events: any[] = [];
+      const daysInMonthArray = getDaysInMonth(selectedMonth, selectedYear, true);
+      const dailyRevenueData = data?.daily_revenue || [];
+      const dailyBookingsData = dailyBookingsResponse?.data || [];
+      const dailyCancellations = dailyCancellationsResponse?.data || [];
+      const dailyNoShows = dailyNoShowsRejectedResponse?.no_shows || [];
+      const dailyRejected = dailyNoShowsRejectedResponse?.rejected || [];
 
-      const prepared = prepareReportData(
-        modifiedData,
-        bookingStatusData,
-        selectedMonth,
-        selectedYear
-      );
-      setReportData(prepared);
+      daysInMonthArray.forEach((day, index) => {
+        const dayNumber = parseInt(day.toString(), 10);
+
+        if (isNaN(dayNumber)) return;
+
+        const currentDate = new Date(selectedYear, selectedMonth - 1, dayNumber);
+
+        events.push({
+          id: `revenue-${index}`,
+          title: `Revenue: ${formatCurrency(dailyRevenueData[index] || 0)}`,
+          start: currentDate,
+          end: currentDate,
+          allDay: true,
+          resource: {
+            type: 'revenue',
+            value: dailyRevenueData[index] || 0,
+            bookings: dailyBookingsData[index] || 0,
+            cancellations: dailyCancellations[index] || 0,
+            noShows: dailyNoShows[index] || 0,
+            rejected: dailyRejected[index] || 0
+          }
+        });
+      });
+
+      setCalendarEvents(events);
     }
   }, [
     data,
-    bookingStatusData,
-    monthlyRevenueData,
+    dailyBookingsResponse,
+    dailyCancellationsResponse,
+    dailyNoShowsRejectedResponse,
     selectedMonth,
     selectedYear,
     isLoading,
-    bookingStatusLoading,
+    bookingsDataLoading,
+    cancellationsDataLoading,
+    noShowsRejectedDataLoading
   ]);
 
-  const revenueChartRef = useRef<HTMLCanvasElement | null>(null);
-  const bookingTrendsChartRef = useRef<HTMLCanvasElement | null>(null);
-  const bookingStatusChartRef = useRef<HTMLCanvasElement | null>(null);
-
-  if (
-    isLoading ||
-    bookingStatusLoading ||
-    bookingsDataLoading ||
-    cancellationsDataLoading ||
-    roomRevenueLoading ||
-    roomBookingsLoading ||
-    noShowsRejectedDataLoading ||
-    monthlyRevenueLoading
-  )
+  if (isLoading || bookingStatusLoading || bookingsDataLoading ||
+    cancellationsDataLoading || roomRevenueLoading ||
+    roomBookingsLoading || noShowsRejectedDataLoading || monthlyRevenueLoading)
     return <DashboardSkeleton />;
   if (error) return <Error />;
 
@@ -180,13 +178,13 @@ const AdminDashboard = () => {
     maintenanceRooms: data?.maintenance_rooms || 0,
     upcomingReservations: data?.upcoming_reservations || 0,
     totalBookings: data?.total_bookings || 0,
-    revenue: data?.revenue || 0,
+    revenue: monthlyRevenueData?.revenue || data?.revenue || 0,
     roomRevenue: data?.room_revenue || 0,
     venueRevenue: data?.venue_revenue || 0,
-    formattedRevenue: data?.formatted_revenue || "₱0.00",
-    formattedRoomRevenue: data?.formatted_room_revenue || "₱0.00",
-    formattedVenueRevenue: data?.formatted_venue_revenue || "₱0.00",
-    revenueMonth: selectedMonth + 1,
+    formattedRevenue: data?.formatted_revenue,
+    formattedRoomRevenue: data?.formatted_room_revenue,
+    formattedVenueRevenue: data?.formatted_venue_revenue,
+    revenueMonth: selectedMonth,
     revenueYear: selectedYear,
   };
 
@@ -200,253 +198,250 @@ const AdminDashboard = () => {
     rejected: bookingStatusData?.rejected || 0,
   };
 
-  const daysInMonth = getDaysInMonth(selectedMonth, selectedYear, true);
-
-  const limitArrayToCurrentDay = (dataArray: any[] | undefined) => {
-    if (!dataArray) return daysInMonth.map(() => 0);
-    return dataArray.slice(0, daysInMonth.length);
-  };
-
-  const dailyRevenueData = limitArrayToCurrentDay(data?.daily_revenue);
-  const dailyBookingsData = limitArrayToCurrentDay(dailyBookingsResponse?.data);
-  const dailyCancellations = limitArrayToCurrentDay(dailyCancellationsResponse?.data);
-  const dailyNoShows = limitArrayToCurrentDay(dailyNoShowsRejectedResponse?.no_shows);
-  const dailyRejected = limitArrayToCurrentDay(dailyNoShowsRejectedResponse?.rejected);
-
   const roomNames = roomRevenueResponse?.room_names || [];
   const roomRevenueValues = roomRevenueResponse?.revenue_data || [];
   const roomBookingValues = roomBookingsResponse?.booking_counts || [];
 
-  const lineOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top" as const,
-      },
-      tooltip: {
-        callbacks: {
-          label: function (context: any) {
-            const label = context.dataset.label || "";
-            const value = context.raw || 0;
-            return `${label}: ${value}`;
-          },
-        },
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-    maintainAspectRatio: false,
-  };
-
-  const barOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "top" as const,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-      },
-    },
-    maintainAspectRatio: false,
-  };
-
-  const pieOptions = {
-    responsive: true,
-    plugins: {
-      legend: {
-        position: "right" as const,
-        labels: {
-          boxWidth: 15,
-          padding: 15,
-        },
-      },
-      tooltip: {
-        callbacks: {
-          label: function (context: any) {
-            const label = context.label || "";
-            const value = context.raw || 0;
-            const total = context.chart.data.datasets[0].data.reduce(
-              (a: number, b: number) => a + b,
-              0
-            );
-            const percentage = Math.round((value * 100) / total);
-            return `${label}: ${value} (${percentage}%)`;
-          },
-        },
-      },
-    },
-    maintainAspectRatio: false,
-  };
-
-  const revenueLineData = {
-    labels: daysInMonth,
-    datasets: [
-      {
-        label: "Daily Revenue (₱)",
-        data: dailyRevenueData,
-        borderColor: "#4CAF50",
-        backgroundColor: "rgba(76, 175, 80, 0.1)",
-        fill: true,
-        tension: 0.3,
-      },
-    ],
-  };
-
-  const bookingTrendsData = {
-    labels: daysInMonth,
-    datasets: [
-      {
-        label: "New Bookings",
-        data: dailyBookingsData,
-        borderColor: "#2196F3",
-        backgroundColor: "rgba(33, 150, 243, 0.1)",
-        fill: true,
-        tension: 0.3,
-      },
-    ],
-  };
-
-  const cancellationData = {
-    labels: daysInMonth,
-    datasets: [
-      {
-        label: "Cancellations",
-        data: dailyCancellations,
-        borderColor: "#FF9800",
-        backgroundColor: "rgba(255, 152, 0, 0.2)",
-        fill: true,
-        tension: 0.3,
-        borderWidth: 3,
-      },
-      {
-        label: "No Show",
-        data: dailyNoShows,
-        borderColor: "#673AB7",
-        backgroundColor: "rgba(103, 58, 183, 0.2)",
-        fill: true,
-        tension: 0.3,
-        borderWidth: 3,
-      },
-      {
-        label: "Rejected",
-        data: dailyRejected,
-        borderColor: "#E91E63",
-        backgroundColor: "rgba(233, 30, 99, 0.2)",
-        fill: true,
-        tension: 0.3,
-        borderWidth: 3,
-      },
-    ],
-  };
-
-  const roomRevenueData = {
-    labels: roomNames,
-    datasets: [
-      {
-        label: "Revenue (₱)",
-        data: roomRevenueValues,
-        backgroundColor: "#9C27B0",
-      },
-    ],
-  };
-
-  const roomBookingCountData = {
-    labels: roomNames,
-    datasets: [
-      {
-        label: "Booking Count",
-        data: roomBookingValues,
-        backgroundColor: "#FF9800",
-      },
-    ],
-  };
-
-  const bookingStatusChartData = {
-    labels: [
-      "Pending",
-      "Reserved",
-      "Checked In",
-      "Checked Out",
-      "Cancelled",
-      "No Show",
-      "Rejected",
-    ],
-    datasets: [
-      {
-        data: [
-          bookingStatusCounts.pending,
-          bookingStatusCounts.reserved,
-          bookingStatusCounts.checked_in,
-          bookingStatusCounts.checked_out,
-          bookingStatusCounts.cancelled,
-          bookingStatusCounts.no_show,
-          bookingStatusCounts.rejected,
-        ],
-        backgroundColor: [
-          "#FFC107",
-          "#2196F3",
-          "#4CAF50",
-          "#9E9E9E",
-          "#F44336",
-          "#9C27B0",
-          "#FF5722",
-        ],
-      },
-    ],
-  };
-
-  const roomBookingDistributionData = {
-    labels: roomNames,
-    datasets: [
-      {
-        data: roomBookingValues,
-        backgroundColor: [
-          "#3F51B5",
-          "#4CAF50",
-          "#FFC107",
-          "#F44336",
-          "#9C27B0",
-          "#00BCD4",
-          "#FF9800",
-          "#795548",
-        ],
-      },
-    ],
-  };
-
-  const revenueContributionData = {
-    labels: roomNames,
-    datasets: [
-      {
-        data: roomRevenueValues,
-        backgroundColor: [
-          "#3F51B5",
-          "#4CAF50",
-          "#FFC107",
-          "#F44336",
-          "#9C27B0",
-          "#00BCD4",
-          "#FF9800",
-          "#795548",
-        ],
-      },
-    ],
-  };
-
   const handleGenerateReport = () => {
-    if (reportData) setShowReportView(true);
+    const daysInMonth = getDaysInMonth(selectedMonth, selectedYear, true);
+    const dailyRevenueData = data?.daily_revenue || [];
+    const dailyBookingsData = dailyBookingsResponse?.data || [];
+
+    const revenueLineData = {
+      labels: daysInMonth,
+      datasets: [
+        {
+          label: "Daily Revenue (₱)",
+          data: dailyRevenueData,
+          borderColor: "#4CAF50",
+          backgroundColor: "rgba(76, 175, 80, 0.1)",
+          fill: true,
+          tension: 0.3,
+        },
+      ],
+    };
+
+    const bookingTrendsData = {
+      labels: daysInMonth,
+      datasets: [
+        {
+          label: "New Bookings",
+          data: dailyBookingsData,
+          borderColor: "#2196F3",
+          backgroundColor: "rgba(33, 150, 243, 0.1)",
+          fill: true,
+          tension: 0.3,
+        },
+      ],
+    };
+
+    const bookingStatusChartData = {
+      labels: [
+        "Pending",
+        "Reserved",
+        "Checked In",
+        "Checked Out",
+        "Cancelled",
+        "No Show",
+        "Rejected",
+      ],
+      datasets: [
+        {
+          data: [
+            bookingStatusCounts.pending,
+            bookingStatusCounts.reserved,
+            bookingStatusCounts.checked_in,
+            bookingStatusCounts.checked_out,
+            bookingStatusCounts.cancelled,
+            bookingStatusCounts.no_show,
+            bookingStatusCounts.rejected,
+          ],
+          backgroundColor: [
+            "#FFC107",
+            "#2196F3",
+            "#4CAF50",
+            "#9E9E9E",
+            "#F44336",
+            "#9C27B0",
+            "#FF5722",
+          ],
+        },
+      ],
+    };
+
+    const roomRevenueData = {
+      labels: roomNames,
+      datasets: [
+        {
+          data: roomRevenueValues,
+          backgroundColor: [
+            "#3F51B5",
+            "#4CAF50",
+            "#FFC107",
+            "#F44336",
+            "#9C27B0",
+            "#00BCD4",
+            "#FF9800",
+            "#795548",
+          ],
+        },
+      ],
+    };
+
+    const roomBookingDistributionData = {
+      labels: roomNames,
+      datasets: [
+        {
+          data: roomBookingValues,
+          backgroundColor: [
+            "#3F51B5",
+            "#4CAF50",
+            "#FFC107",
+            "#F44336",
+            "#9C27B0",
+            "#00BCD4",
+            "#FF9800",
+            "#795548",
+          ],
+        },
+      ],
+    };
+
+    const reportDataObj = prepareReportData({
+      period: formattedMonthYear,
+      stats: {
+        ...stats,
+        occupancyRate: `${Math.round((stats.occupiedRooms / stats.totalRooms) * 100)}%`,
+      },
+      bookingStatusCounts,
+      roomData: {
+        names: roomNames,
+        bookings: roomBookingValues,
+        revenue: roomRevenueValues,
+      },
+    });
+
+    setReportData({
+      ...reportDataObj,
+      chartData: {
+        revenueLineData,
+        bookingTrendsData,
+        bookingStatusChartData,
+        roomRevenueData,
+        roomBookingDistributionData,
+      }
+    });
+    setShowReportView(true);
   };
 
   const handleCloseReport = () => setShowReportView(false);
 
+  const handleViewChange = (newView: string) => {
+    setView(newView as 'month' | 'week' | 'day');
+  };
+
+  const handleNavigate = (date: Date) => {
+    if (isAfter(date, today) && !isSameDay(date, today)) {
+      return;
+    }
+    setSelectedDate(date);
+  };
+
+  const handleDateChange = (date: Date) => {
+    if (isAfter(date, today) && !isSameDay(date, today)) {
+      return;
+    }
+    setSelectedDate(date);
+  };
+
+  const EventComponent = ({ event }: { event: any }) => {
+    const resource = event.resource;
+
+    return (
+      <div className="flex flex-col p-1 text-xs overflow-hidden h-full">
+        <div className="font-semibold">{event.title}</div>
+        {resource.type === 'revenue' && (
+          <>
+            <div>Bookings: {resource.bookings}</div>
+            <div>Cancellations: {resource.cancellations}</div>
+            {(resource.noShows > 0 || resource.rejected > 0) && (
+              <div>No Shows: {resource.noShows} | Rejected: {resource.rejected}</div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
+
   const renderReport = () => {
     if (!showReportView || !reportData) return null;
+
+    const lineOptions = {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top" as const,
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context: any) {
+              const label = context.dataset.label || "";
+              const value = context.raw || 0;
+              return `${label}: ${value}`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+      maintainAspectRatio: false,
+    };
+
+    const barOptions = {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top" as const,
+        },
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+        },
+      },
+      maintainAspectRatio: false,
+    };
+
+    const pieOptions = {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "right" as const,
+          labels: {
+            boxWidth: 15,
+            padding: 15,
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context: any) {
+              const label = context.label || "";
+              const value = context.raw || 0;
+              const total = context.chart.data.datasets[0].data.reduce(
+                (a: number, b: number) => a + b,
+                0
+              );
+              const percentage = Math.round((value * 100) / total);
+              return `${label}: ${value} (${percentage}%)`;
+            },
+          },
+        },
+      },
+      maintainAspectRatio: false,
+    };
 
     return (
       <MonthlyReportView
@@ -458,11 +453,11 @@ const AdminDashboard = () => {
           pie: pieOptions,
         }}
         chartData={{
-          revenueData: revenueLineData,
-          bookingTrendsData: bookingTrendsData,
-          bookingStatusData: bookingStatusChartData,
-          revenueContributionData: revenueContributionData,
-          roomBookingDistributionData: roomBookingDistributionData,
+          revenueData: reportData.chartData.revenueLineData,
+          bookingTrendsData: reportData.chartData.bookingTrendsData,
+          bookingStatusData: reportData.chartData.bookingStatusChartData,
+          revenueContributionData: reportData.chartData.roomRevenueData,
+          roomBookingDistributionData: reportData.chartData.roomBookingDistributionData,
         }}
       />
     );
@@ -475,8 +470,20 @@ const AdminDashboard = () => {
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
 
         <div className="flex items-center space-x-4">
-          {/* Month selection controls */}
+          {/* Date Picker for selecting specific dates */}
           <div className="flex items-center bg-white rounded-lg shadow-sm">
+            <DatePicker
+              selected={selectedDate}
+              onChange={handleDateChange}
+              maxDate={today}
+              dateFormat="MMMM yyyy"
+              showMonthYearPicker
+              className="px-4 py-2 rounded-lg border-0 focus:outline-none text-center"
+            />
+          </div>
+
+          {/* Month navigation controls */}
+          {/* <div className="flex items-center bg-white rounded-lg shadow-sm">
             <button
               onClick={goToPreviousMonth}
               className="p-2 hover:bg-gray-100 rounded-l-lg"
@@ -505,6 +512,27 @@ const AdminDashboard = () => {
                 className={isCurrentMonth ? "text-gray-300" : ""}
               />
             </button>
+          </div> */}
+
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setView('month')}
+              className={`px-3 py-1 rounded ${view === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            >
+              Month
+            </button>
+            <button
+              onClick={() => setView('week')}
+              className={`px-3 py-1 rounded ${view === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            >
+              Week
+            </button>
+            <button
+              onClick={() => setView('day')}
+              className={`px-3 py-1 rounded ${view === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
+            >
+              Day
+            </button>
           </div>
 
           <button
@@ -531,7 +559,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-4 mb-6">
         <StatCard
           title="Active Bookings"
           value={stats.activeBookings}
@@ -555,161 +583,105 @@ const AdminDashboard = () => {
         />
       </div>
 
-      <div className="mb-8">
+      <div className="bg-white shadow-lg rounded-lg p-4 mb-6">
         <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-          Monthly Trends - {formattedMonthYear}
+          {view === 'month' ? 'Monthly' : view === 'week' ? 'Weekly' : 'Daily'} Calendar - {formattedMonthYear}
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">
-              Revenue Trends
-            </h3>
-            <div className="h-64">
-              <Line
-                data={revenueLineData}
-                options={{
-                  ...lineOptions,
-                  plugins: {
-                    ...lineOptions.plugins,
-                    tooltip: {
-                      ...lineOptions.plugins?.tooltip,
-                      callbacks: {
-                        label: function (context: any) {
-                          let label = context.dataset.label || "";
-                          if (label) {
-                            label += ": ";
-                          }
-                          if (context.parsed.y !== null) {
-                            label += new Intl.NumberFormat("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            }).format(context.parsed.y);
-                          }
-                          return label;
-                        },
-                      },
-                    },
-                    title: {
-                      display: true,
-                      text: `Daily Revenue - ${formattedMonthYear}`,
-                      font: {
-                        size: 16,
-                      },
-                    },
-                  },
-                }}
-                ref={(ref) => {
-                  if (ref) {
-                    revenueChartRef.current = ref.canvas;
-                  }
-                }}
-              />
-            </div>
-          </div>
+        <div className="h-[700px]">
+          <Calendar
+            localizer={localizer}
+            events={calendarEvents}
+            startAccessor="start"
+            endAccessor="end"
+            view={view}
+            onView={handleViewChange}
+            onNavigate={handleNavigate}
+            date={selectedDate}
+            components={{
+              event: EventComponent
+            }}
+            views={[Views.MONTH, Views.WEEK, Views.DAY]}
+            popup
+            eventPropGetter={(event) => {
+              const { type } = event.resource || {};
+              let backgroundColor = '#4CAF50';
 
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">
-              Booking Trends
-            </h3>
-            <div className="h-64">
-              <Line
-                data={bookingTrendsData}
-                options={{
-                  ...lineOptions,
-                  plugins: {
-                    ...lineOptions.plugins,
-                    title: {
-                      display: true,
-                      text: `Daily Bookings - ${formattedMonthYear}`,
-                      font: {
-                        size: 16,
-                      },
-                    },
-                  },
-                }}
-                ref={(ref) => {
-                  if (ref) {
-                    bookingTrendsChartRef.current = ref.canvas;
-                  }
-                }}
-              />
-            </div>
-          </div>
+              if (type === 'revenue' && event.resource.value === 0) {
+                backgroundColor = '#E0E0E0';
+              }
+
+              return {
+                style: {
+                  backgroundColor,
+                  borderRadius: '4px',
+                  color: '#fff',
+                  border: 'none',
+                }
+              };
+            }}
+            max={new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59)}
+          />
         </div>
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4 text-gray-800">
-          Key Business Insights - {formattedMonthYear}
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">
-              Revenue by Room
-            </h3>
-            <div className="h-64">
-              <Bar data={roomRevenueData} options={barOptions} />
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="bg-white shadow-lg rounded-lg p-4">
+          <h3 className="text-lg font-medium mb-4 text-center">
+            Revenue by Room - {formattedMonthYear}
+          </h3>
+          <div className="overflow-auto max-h-80">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border p-2 text-left">Room</th>
+                  <th className="border p-2 text-right">Revenue</th>
+                  <th className="border p-2 text-right">Bookings</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roomNames.map((room: string, index: number) => (
+                  <tr key={`room-${index}`} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                    <td className="border p-2">{room}</td>
+                    <td className="border p-2 text-right">
+                      {formatCurrency(roomRevenueValues[index] || 0)}
+                    </td>
+                    <td className="border p-2 text-right">{roomBookingValues[index] || 0}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </div>
 
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">
-              Bookings by Room
-            </h3>
-            <div className="h-64">
-              <Bar data={roomBookingCountData} options={barOptions} />
-            </div>
-          </div>
+        <div className="bg-white shadow-lg rounded-lg p-4">
+          <h3 className="text-lg font-medium mb-4 text-center">
+            Booking Status Distribution - {formattedMonthYear}
+          </h3>
+          <div className="overflow-auto max-h-80">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border p-2 text-left">Status</th>
+                  <th className="border p-2 text-right">Count</th>
+                  <th className="border p-2 text-right">Percentage</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(bookingStatusCounts).map(([status, count], index) => {
+                  const total = Object.values(bookingStatusCounts).reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
 
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">
-              Booking Status Distribution
-            </h3>
-            <div className="h-64">
-              <Doughnut
-                data={bookingStatusChartData}
-                options={pieOptions}
-                ref={(ref) => {
-                  if (ref) {
-                    bookingStatusChartRef.current = ref.canvas;
-                  }
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-white shadow-lg rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-2 text-center">
-              Cancellation Trends
-            </h3>
-            <div className="h-64">
-              <Line
-                data={cancellationData}
-                options={{
-                  ...lineOptions,
-                  plugins: {
-                    ...lineOptions.plugins,
-                    legend: {
-                      position: "top",
-                      labels: {
-                        usePointStyle: true,
-                        boxWidth: 10,
-                        padding: 20,
-                      },
-                    },
-                    title: {
-                      display: true,
-                      text: `Booking Cancellations - ${formattedMonthYear}`,
-                      font: {
-                        size: 16,
-                      },
-                    },
-                  },
-                }}
-              />
-            </div>
+                  return (
+                    <tr key={status} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
+                      <td className="border p-2 capitalize">{status.replace('_', ' ')}</td>
+                      <td className="border p-2 text-right">{count}</td>
+                      <td className="border p-2 text-right">{percentage}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

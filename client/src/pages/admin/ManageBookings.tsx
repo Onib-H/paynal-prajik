@@ -316,13 +316,13 @@ const ManageBookings: FC = () => {
           <table className="min-w-full bg-white border border-gray-200">
             <thead>
               <tr className="bg-gray-100">
-                <th className="py-2 md:py-3 px-2 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="py-2 md:py-3 px-2 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Guest
                 </th>
-                <th className="py-2 md:py-3 px-2 md:px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Property
                 </th>
                 <th className="hidden md:table-cell py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -331,13 +331,13 @@ const ManageBookings: FC = () => {
                 <th className="hidden md:table-cell py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Check-out
                 </th>
-                <th className="py-2 md:py-3 px-2 md:px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="hidden md:table-cell py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Amount
                 </th>
-                <th className="py-2 md:py-3 px-2 md:px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -352,14 +352,14 @@ const ManageBookings: FC = () => {
 
                   return (
                     <tr key={booking.id} className="hover:bg-gray-50">
-                      <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
+                      <td className="p-3 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         {formatDate(booking.created_at)}
                       </td>
-                      <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
+                      <td className="p-3 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         {`${booking.user?.first_name || ""} ${booking.user?.last_name || ""
                           }`}
                       </td>
-                      <td className="py-2 md:py-3 px-2 md:px-4 text-sm md:text-base text-gray-700 whitespace-nowrap">
+                      <td className="p-3 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         <div className="flex flex-col items-start">
                           <span className="max-w-[120px] md:max-w-full font-semibold">
                             {propertyName}{" "}
@@ -381,7 +381,7 @@ const ManageBookings: FC = () => {
                       <td className="hidden md:table-cell py-3 px-4 text-base text-gray-700 whitespace-nowrap">
                         {formatDate(booking.check_out_date)}
                       </td>
-                      <td className="py-2 md:py-3 px-2 md:px-4 text-center text-sm md:text-base text-gray-700 whitespace-nowrap">
+                      <td className="p-3 text-center text-sm md:text-base text-gray-700 whitespace-nowrap">
                         <BookingStatusBadge status={booking.status} />
                       </td>
                       <td className="hidden md:table-cell py-3 px-4 text-center text-xl font-semibold text-gray-900 whitespace-nowrap">
@@ -391,7 +391,7 @@ const ManageBookings: FC = () => {
                           maximumFractionDigits: 2,
                         })}
                       </td>
-                      <td className="py-2 md:py-3 px-2 md:px-4 text-center whitespace-nowrap">
+                      <td className="p-3 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center">
                           <button
                             onClick={() => handleViewBooking(booking)}
