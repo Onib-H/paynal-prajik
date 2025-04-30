@@ -171,6 +171,7 @@ def area_reservations(request):
 
 # Rooms
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def fetch_rooms(request):
     try:
         rooms = Rooms.objects.all().order_by('id')
@@ -333,6 +334,7 @@ def delete_room(request, room_id):
 
 # Areas
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def fetch_areas(request):
     try:
         areas = Areas.objects.all().order_by('id')
@@ -892,7 +894,6 @@ def manage_user(request, user_id):
         try:
             if user_id == 0:
                 data = request.POST
-                files = request.FILES
                 
                 email = data.get('email')
                 password = data.get('password')
@@ -1074,7 +1075,6 @@ def daily_occupancy(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))        
-        start_date = datetime(year, month, 1).date()
         
         if month == 12:
             end_date = datetime(year + 1, 1, 1).date() - timedelta(days=1)
@@ -1124,7 +1124,6 @@ def daily_checkins_checkouts(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))
-        start_date = datetime(year, month, 1)
         
         if month == 12:
             end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
