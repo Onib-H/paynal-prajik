@@ -805,13 +805,28 @@ def record_payment(request, booking_id):
 @permission_classes([IsAuthenticated])
 def booking_status_counts(request):
     try:
-        pending_count = Bookings.objects.filter(status='pending').count()
-        reserved_count = Bookings.objects.filter(status='reserved').count()
-        checked_in_count = Bookings.objects.filter(status='checked_in').count()
-        checked_out_count = Bookings.objects.filter(status='checked_out').count()
-        cancelled_count = Bookings.objects.filter(status='cancelled').count()
-        no_show_count = Bookings.objects.filter(status='no_show').count() 
-        rejected_count = Bookings.objects.filter(status='rejected').count()
+        month = int(request.query_params.get('month'))
+        year = int(request.query_params.get('year'))
+        
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        filters = {
+            'created_at__gte': start_date,
+            'created_at__lte': end_date,
+        }
+        
+        pending_count = Bookings.objects.filter(status='pending', **filters).count()
+        reserved_count = Bookings.objects.filter(status='reserved', **filters).count()
+        checked_in_count = Bookings.objects.filter(status='checked_in', **filters).count()
+        checked_out_count = Bookings.objects.filter(status='checked_out', **filters).count()
+        cancelled_count = Bookings.objects.filter(status='cancelled', **filters).count()
+        no_show_count = Bookings.objects.filter(status='no_show', **filters).count() 
+        rejected_count = Bookings.objects.filter(status='rejected', **filters).count()
         
         return Response({
             "pending": pending_count,

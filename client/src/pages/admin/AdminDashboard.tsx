@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { format, getDay, isAfter, isSameDay, parse, startOfWeek } from "date-fns";
 import { enUS } from "date-fns/locale";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Calendar, Views, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import DatePicker from "react-datepicker";
@@ -17,6 +17,10 @@ import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
 import { formatCurrency } from "../../utils/formatters";
 import { motion } from "framer-motion";
+import { Doughnut } from "react-chartjs-2";
+import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
+
+Chart.register(ArcElement, Tooltip, Legend);
 
 const locales = { 'en-US': enUS };
 const localizer = dateFnsLocalizer({
@@ -32,12 +36,11 @@ const AdminDashboard = () => {
   const [view, setView] = useState<'month' | 'week' | 'day'>("month");
   const [showReportView, setShowReportView] = useState<boolean>(false);
   const [reportData, setReportData] = useState<any>(null);
-  const [calendarEvents, setCalendarEvents] = useState<any[]>([]);
 
+  const today = new Date();
   const selectedMonth = selectedDate.getMonth() + 1;
   const selectedYear = selectedDate.getFullYear();
   const formattedMonthYear = formatMonthYear(selectedMonth - 1, selectedYear);
-  const today = new Date();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["stats", selectedMonth, selectedYear],
@@ -47,7 +50,7 @@ const AdminDashboard = () => {
     })
   });
 
-  const { data: dailyRevenueData, isLoading: dailyRevenueLoading } = useQuery({
+  const { data: dailyRevenueData } = useQuery({
     queryKey: ['dailyRevenue', selectedMonth, selectedYear],
     queryFn: () => fetchDailyRevenue({
       month: selectedMonth,
@@ -56,7 +59,7 @@ const AdminDashboard = () => {
     select: (data) => data.data || []
   });
 
-  const { data: bookingStatusData, isLoading: bookingStatusLoading } = useQuery({
+  const { data: bookingStatusData } = useQuery({
     queryKey: ["bookingStatusCounts", selectedMonth, selectedYear],
     queryFn: () => fetchBookingStatusCounts({
       month: selectedMonth,
@@ -88,7 +91,7 @@ const AdminDashboard = () => {
     }),
   });
 
-  const { data: roomRevenueResponse, isLoading: roomRevenueLoading } = useQuery({
+  const { data: roomRevenueResponse } = useQuery({
     queryKey: ["roomRevenue", selectedMonth, selectedYear],
     queryFn: () => fetchRoomRevenue({
       month: selectedMonth,
@@ -96,7 +99,7 @@ const AdminDashboard = () => {
     }),
   });
 
-  const { data: roomBookingsResponse, isLoading: roomBookingsLoading } = useQuery({
+  const { data: roomBookingsResponse } = useQuery({
     queryKey: ["roomBookings", selectedMonth, selectedYear],
     queryFn: () => fetchRoomBookings({
       month: selectedMonth,
@@ -104,7 +107,7 @@ const AdminDashboard = () => {
     }),
   });
 
-  const { data: monthlyRevenueData, isLoading: monthlyRevenueLoading } = useQuery({
+  const { data: monthlyRevenueData } = useQuery({
     queryKey: ["monthlyRevenue", selectedMonth, selectedYear],
     queryFn: () => fetchMonthlyRevenue({
       month: selectedMonth,
@@ -113,16 +116,13 @@ const AdminDashboard = () => {
     staleTime: 10 * 60 * 1000,
   });
 
-  useEffect(() => {
-    if (
-      !isLoading &&
-      !bookingsDataLoading &&
-      !cancellationsDataLoading &&
-      !noShowsRejectedDataLoading &&
-      dailyRevenueData
-    ) {
-      const events: any[] = [];
+  const calendarEventsQuery = useQuery({
+    queryKey: ['calendarEvents', selectedMonth, selectedYear, dailyRevenueData, dailyBookingsResponse, dailyCancellationsResponse, dailyNoShowsRejectedResponse],
+    queryFn: async () => {
       const daysInMonthArray = getDaysInMonth(selectedMonth, selectedYear, true);
+      const events: any[] = [];
+
+      const dailyRevenueValues = dailyRevenueData || [];
       const dailyBookingsData = dailyBookingsResponse?.data || [];
       const dailyCancellations = dailyCancellationsResponse?.data || [];
       const dailyNoShows = dailyNoShowsRejectedResponse?.no_shows || [];
@@ -130,20 +130,19 @@ const AdminDashboard = () => {
 
       daysInMonthArray.forEach((day, index) => {
         const dayNumber = parseInt(day.toString(), 10);
-
         if (isNaN(dayNumber)) return;
 
         const currentDate = new Date(selectedYear, selectedMonth - 1, dayNumber);
 
         events.push({
           id: `revenue-${index}`,
-          title: `Revenue: ${formatCurrency(dailyRevenueData[index] || 0)}`,
+          title: `Revenue: ${formatCurrency(dailyRevenueValues[index] || 0)}`,
           start: currentDate,
           end: currentDate,
           allDay: true,
           resource: {
             type: 'revenue',
-            value: dailyRevenueData[index] || 0,
+            value: dailyRevenueValues[index] || 0,
             bookings: dailyBookingsData[index] || 0,
             cancellations: dailyCancellations[index] || 0,
             noShows: dailyNoShows[index] || 0,
@@ -152,28 +151,16 @@ const AdminDashboard = () => {
         });
       });
 
-      setCalendarEvents(events);
-    }
-  }, [
-    data,
-    dailyRevenueData,
-    dailyBookingsResponse,
-    dailyCancellationsResponse,
-    dailyNoShowsRejectedResponse,
-    selectedMonth,
-    selectedYear,
-    isLoading,
-    dailyRevenueLoading,
-    bookingsDataLoading,
-    cancellationsDataLoading,
-    noShowsRejectedDataLoading
-  ]);
-
-  if (isLoading || bookingStatusLoading || bookingsDataLoading ||
-    cancellationsDataLoading || roomRevenueLoading || dailyRevenueLoading ||
-    roomBookingsLoading || noShowsRejectedDataLoading || monthlyRevenueLoading)
-    return <DashboardSkeleton />;
-  if (error) return <Error />;
+      return events;
+    },
+    enabled: !!(
+      !isLoading &&
+      !bookingsDataLoading &&
+      !cancellationsDataLoading &&
+      !noShowsRejectedDataLoading &&
+      dailyRevenueData
+    )
+  });
 
   const stats = {
     activeBookings: data?.active_bookings || 0,
@@ -483,6 +470,9 @@ const AdminDashboard = () => {
     show: { opacity: 1, y: 0 },
   };
 
+  if (calendarEventsQuery.isLoading) return <DashboardSkeleton />;
+  if (error || calendarEventsQuery.error) return <Error />;
+
   return (
     <div className="p-3 container mx-auto">
       {renderReport()}
@@ -579,7 +569,7 @@ const AdminDashboard = () => {
         <div className="h-[700px]">
           <Calendar
             localizer={localizer}
-            events={calendarEvents}
+            events={calendarEventsQuery.data || []}
             startAccessor="start"
             endAccessor="end"
             view={view}
@@ -613,7 +603,7 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 gap-6 mb-6">
         {/* Revenue by Room Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -621,7 +611,7 @@ const AdminDashboard = () => {
           transition={{ duration: 0.4 }}
           className="bg-white shadow-lg rounded-lg p-4 hover:shadow-xl transition-shadow"
         >
-          <h3 className="text-lg font-medium mb-4 text-center">
+          <h3 className="text-xl font-semibold mb-4 text-center">
             Revenue by Room - {formattedMonthYear}
           </h3>
           <motion.div
@@ -632,8 +622,6 @@ const AdminDashboard = () => {
           >
             {roomNames.map((room: string, index: number) => {
               const revenue = roomRevenueValues[index] || 0;
-              const maxRevenue = Math.max(...roomRevenueValues);
-              const widthPercentage = maxRevenue ? (revenue / maxRevenue) * 80 : 0;
 
               return (
                 <motion.div
@@ -648,15 +636,7 @@ const AdminDashboard = () => {
                     </p>
                   </div>
                   <div className="flex items-center gap-4">
-                    <div className="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${widthPercentage}%` }}
-                        transition={{ duration: 0.8 }}
-                        className="h-full bg-blue-500"
-                      />
-                    </div>
-                    <span className="font-medium text-blue-600">
+                    <span className="font-semibold text-lg text-blue-600">
                       {formatCurrency(revenue)}
                     </span>
                   </div>
@@ -673,60 +653,66 @@ const AdminDashboard = () => {
           transition={{ duration: 0.4, delay: 0.2 }}
           className="bg-white shadow-lg rounded-lg p-4 hover:shadow-xl transition-shadow"
         >
-          <h3 className="text-lg font-medium mb-4 text-center">
+          <h3 className="text-xl font-semibold mb-4 text-center">
             Booking Status Distribution - {formattedMonthYear}
           </h3>
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="space-y-3"
-          >
-            {Object.entries(bookingStatusCounts).map(([status, count]) => {
-              const total = Object.values(bookingStatusCounts).reduce((a, b) => a + b, 0);
-              const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : '0.0';
-              const statusColors = {
-                pending: 'bg-yellow-400',
-                reserved: 'bg-blue-500',
-                checked_in: 'bg-green-500',
-                checked_out: 'bg-gray-500',
-                cancelled: 'bg-red-500',
-                no_show: 'bg-purple-500',
-                rejected: 'bg-orange-500',
-              };
-
-              return (
-                <motion.div
-                  key={status}
-                  variants={itemVariants}
-                  className="group p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-lg capitalize text-gray-700">
-                      {status.replace('_', ' ')}
-                    </span>
-                    <span className="text-sm font-semibold text-gray-600">
-                      {percentage}%
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`w-4 h-4 rounded-full ${statusColors[status as keyof typeof statusColors]}`}
-                    />
-                    <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${percentage}%` }}
-                        transition={{ duration: 0.8 }}
-                        className={`h-full ${statusColors[status as keyof typeof statusColors]}`}
-                      />
-                    </div>
-                    <span className="text-sm text-gray-500">{count}</span>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
+          <div className="h-80 relative">
+            <Doughnut
+              data={{
+                labels: [
+                  'Reserved',
+                  'Checked Out',
+                  'Cancelled',
+                  'No Show',
+                  'Rejected',
+                ],
+                datasets: [
+                  {
+                    data: [
+                      bookingStatusCounts.reserved,
+                      bookingStatusCounts.checked_out,
+                      bookingStatusCounts.cancelled,
+                      bookingStatusCounts.no_show,
+                      bookingStatusCounts.rejected,
+                    ],
+                    backgroundColor: [
+                      '#FFC107',
+                      '#2196F3',
+                      '#4CAF50',
+                      '#9E9E9E',
+                      '#F44336',
+                      '#9C27B0',
+                      '#FF5722',
+                    ],
+                    borderWidth: 2,
+                  },
+                ],
+              }}
+              options={{
+                plugins: {
+                  legend: {
+                    position: 'right',
+                    labels: {
+                      boxWidth: 15,
+                      padding: 15,
+                    },
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: (context) => {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
+                        const percentage = ((Number(value) * 100) / Number(total)).toFixed(1);
+                        return `${label}: ${value} (${percentage}%)`;
+                      },
+                    },
+                  },
+                },
+                maintainAspectRatio: false,
+              }}
+            />
+          </div>
         </motion.div>
       </div>
     </div>

@@ -41,10 +41,7 @@ export const fetchStats = async ({ month, year }: { month?: number; year?: numbe
 export const fetchDailyRevenue = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/daily_revenue", {
-      params: { 
-        month,
-        year
-      },
+      params: { month, year },
       withCredentials: true,
     });
     return response.data;
