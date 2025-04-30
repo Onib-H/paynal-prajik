@@ -15,7 +15,8 @@ export type WebSocketEvent =
     | { type: 'auth_response'; success: boolean; message?: string }
     | { type: 'active_count'; count: number }
     | { type: 'initial_data'; count: number; bookings: any[] }
-    | { type: 'bookings_update'; count: number; bookings: any[] }
+    | { type: 'bookings_data_update'; count: number; bookings: any[] }
+    | { type: 'active_count_update'; count: number }
 
 export class WebSocketService {
     private socket: WebSocket | null = null;

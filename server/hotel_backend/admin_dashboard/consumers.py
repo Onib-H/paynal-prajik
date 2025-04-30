@@ -14,21 +14,26 @@ class PendingBookingConsumer(AsyncWebsocketConsumer):
         )
         await self.accept()
         
-        bookings = await self.get_active_bookings()
-        count = len(bookings)
+        initial_count = await self.get_active_count()
         await self.send(text_data=json.dumps({
-            'type': 'bookings_update',
-            'count': count,
-            'bookings': bookings
+            'type': 'active_count_update',
+            'count': initial_count,
         }))
         
-    async def bookings_update(self, event):
+    async def bookings_data_update(self, event):
         bookings = event['bookings']
         count = event['count']
         await self.send(text_data=json.dumps({
-            'type': 'bookings_update',
+            'type': 'bookings_data_update',
             'count': count,
             'bookings': bookings
+        }))
+    
+    async def active_count_update(self, event):
+        count = event['count']
+        await self.send(text_data=json.dumps({
+            'type': 'active_count_update',
+            'count': count
         }))
     
     async def disconnect(self, close_code):
@@ -40,23 +45,29 @@ class PendingBookingConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
+            if text_data_json.get('type') == 'get_active_count':
+                count = await self.get_active_count()
+                await self.send(text_data=json.dumps({
+                    'type': 'active_count_update',
+                    'count': count,
+                }))
             if text_data_json.get('type') == 'get_active_bookings':
                 bookings = await self.get_active_bookings()
                 count = len(bookings)
                 await self.send(text_data=json.dumps({
-                    'type': 'bookings_update',
+                    'type': 'bookings_data_update',
                     'count': count,
                     'bookings': bookings
                 }))
         except json.JSONDecodeError:
             print(f"Error decoding JSON: {text_data}")
-
-    async def active_count(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'active_count',
-            'count': event['count']
-        }))
     
+    @database_sync_to_async
+    def get_active_count(self):
+        return Bookings.objects.exclude(
+            status__in=['rejected', 'cancelled', 'no_show', 'checked_out']
+        ).count()
+
     @database_sync_to_async
     def get_active_bookings(self):
         bookings = Bookings.objects.exclude(

@@ -23,7 +23,7 @@ const BookingAccepted = () => {
     <AnimatePresence>
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <motion.div
-          className="max-w-2xl w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden"
+          className="max-w-3xl w-full mx-auto bg-white rounded-xl shadow-lg overflow-hidden"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -121,15 +121,6 @@ const BookingAccepted = () => {
                 </div>
                 <p className="text-gray-700">
                   Review your booking details in the "My Bookings" section.
-                </p>
-              </div>
-
-              <div className="flex items-start">
-                <div className="bg-gray-100 rounded-full p-2 mr-3 mt-1">
-                  <span className="flex items-center justify-center w-4 h-4 text-xs font-bold text-gray-700">3</span>
-                </div>
-                <p className="text-gray-700">
-                  Contact customer support if you need to make any changes.
                 </p>
               </div>
             </motion.div>

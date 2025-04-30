@@ -42,17 +42,15 @@ const AdminSidebar: FC = () => {
     ws.connect(userDetails.id);
     
     const handleCountUpdate = (data: any) => {
-      if (data.type === "bookings_update") {
-        setActiveBookingCount(data.count);
-      }
+      if (data.type === "active_count_update") setActiveBookingCount(data.count);
     }
     
-    ws.on('bookings_update', handleCountUpdate);
-    ws.send({ type: "get_active_bookings" });
+    ws.send({ type: "get_active_count" });
+    ws.on('active_count_update', handleCountUpdate);
 
     return () => {
+      ws.off('active_count_update');
       ws.disconnect();
-      ws.off('bookings_update');
     }
   }, [userDetails?.id]);
 

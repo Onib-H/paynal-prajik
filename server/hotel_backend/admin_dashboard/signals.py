@@ -17,8 +17,16 @@ def send_active_count_update(sender, instance, created, **kwargs):
     async_to_sync(channel_layer.group_send)(
         'admin_notifications',
         {
-            'type': 'bookings_update',
-            'count': count,
-            'bookings': serialized_bookings
+            'type': 'bookings_data_update',
+            'bookings': serialized_bookings,
+            'count': count
+        }
+    )
+    
+    async_to_sync(channel_layer.group_send)(
+        'admin_notifications',
+        {
+            'type': 'active_count_update',
+            'count': count
         }
     )

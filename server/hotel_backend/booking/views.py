@@ -483,7 +483,7 @@ def booking_reviews(request, booking_id):
     
     if booking.user.id != request.user.id and not request.user.is_staff:
         return Response({"error": "You don't have permission to access these reviews"}, 
-                       status=status.HTTP_403_FORBIDDEN)
+                    status=status.HTTP_403_FORBIDDEN)
     
     if request.method == 'GET':
         reviews = Reviews.objects.filter(booking=booking)

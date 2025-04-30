@@ -41,8 +41,8 @@ const ManageBookings: FC = () => {
     const adminWs = webSocketAdminActives;
     adminWs.connect(userDetails.id);
 
-    adminWs.on('bookings_update', (data: WebSocketEvent) => {
-      if (data.type === "bookings_update") {
+    adminWs.on('bookings_data_update', (data: WebSocketEvent) => {
+      if (data.type === "bookings_data_update") {
         queryClient.setQueryData(['adminBookings', currentPage, pageSize], (oldData: BookingQuery | undefined) => ({
           ...oldData!,
           data: data.bookings,
@@ -56,7 +56,7 @@ const ManageBookings: FC = () => {
     });
 
     return () => {
-      adminWs.off('bookings_update');
+      adminWs.off('bookings_data_update');
       adminWs.disconnect();
     }
   }, [currentPage, pageSize, queryClient, userDetails.id]);
