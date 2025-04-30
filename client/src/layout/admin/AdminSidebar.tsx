@@ -132,10 +132,10 @@ const AdminSidebar: FC = () => {
         <div className="px-3 py-4 w-full">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full flex items-center space-x-3 py-2 px-3 rounded-md transition-all duration-300 text-red-600 hover:bg-black/15 cursor-pointer"
+            className="w-full flex justify-center items-center space-x-2 p-3 rounded-md transition-all duration-300 text-red-600 hover:bg-black/15 cursor-pointer"
           >
             <i className="fa fa-sign-out-alt font-light"></i>
-            <span className="font-bold uppercase">Log Out</span>
+            <span className="font-semibold text-xl uppercase">Log Out</span>
           </button>
         </div>
       </aside>

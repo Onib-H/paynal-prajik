@@ -28,23 +28,10 @@ export const fetchStaffProfile = async () => {
 export const fetchStats = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/stats", {
-      params: {
-        month,
-        year,
-      },
+      params: { month, year },
       withCredentials: true,
     });
-
-    try {
-      const revenueData = await fetchDailyRevenue({ month, year });
-      return {
-        ...response.data,
-        daily_revenue: revenueData.data || []
-      };
-    } catch (revenueError) {
-      console.error("Failed to fetch daily revenue:", revenueError);
-      return response.data;
-    }
+    return response.data;
   } catch (error) {
     console.error(`Failed to fetch stats: ${error}`);
     throw error;
@@ -54,9 +41,9 @@ export const fetchStats = async ({ month, year }: { month?: number; year?: numbe
 export const fetchDailyRevenue = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/daily_revenue", {
-      params: {
-        month: month || new Date().getMonth() + 1,
-        year: year || new Date().getFullYear()
+      params: { 
+        month,
+        year
       },
       withCredentials: true,
     });

@@ -10,7 +10,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
 import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
-import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyNoShowsRejected, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
+import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyNoShowsRejected, fetchDailyRevenue, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import "../../styles/print.css";
 import { formatMonthYear, getDaysInMonth } from "../../utils/formatters";
 import { prepareReportData } from "../../utils/reports";
@@ -41,13 +41,19 @@ const AdminDashboard = () => {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["stats", selectedMonth, selectedYear],
-    queryFn: async () => {
-      const statsData = await fetchStats({
-        month: selectedMonth,
-        year: selectedYear,
-      });
-      return statsData;
-    },
+    queryFn: () => fetchStats({
+      month: selectedMonth,
+      year: selectedYear,
+    })
+  });
+
+  const { data: dailyRevenueData, isLoading: dailyRevenueLoading } = useQuery({
+    queryKey: ['dailyRevenue', selectedMonth, selectedYear],
+    queryFn: () => fetchDailyRevenue({
+      month: selectedMonth,
+      year: selectedYear,
+    }),
+    select: (data) => data.data || []
   });
 
   const { data: bookingStatusData, isLoading: bookingStatusLoading } = useQuery({
@@ -113,11 +119,10 @@ const AdminDashboard = () => {
       !bookingsDataLoading &&
       !cancellationsDataLoading &&
       !noShowsRejectedDataLoading &&
-      data?.daily_revenue
+      dailyRevenueData
     ) {
       const events: any[] = [];
       const daysInMonthArray = getDaysInMonth(selectedMonth, selectedYear, true);
-      const dailyRevenueData = data?.daily_revenue || [];
       const dailyBookingsData = dailyBookingsResponse?.data || [];
       const dailyCancellations = dailyCancellationsResponse?.data || [];
       const dailyNoShows = dailyNoShowsRejectedResponse?.no_shows || [];
@@ -151,19 +156,21 @@ const AdminDashboard = () => {
     }
   }, [
     data,
+    dailyRevenueData,
     dailyBookingsResponse,
     dailyCancellationsResponse,
     dailyNoShowsRejectedResponse,
     selectedMonth,
     selectedYear,
     isLoading,
+    dailyRevenueLoading,
     bookingsDataLoading,
     cancellationsDataLoading,
     noShowsRejectedDataLoading
   ]);
 
   if (isLoading || bookingStatusLoading || bookingsDataLoading ||
-    cancellationsDataLoading || roomRevenueLoading ||
+    cancellationsDataLoading || roomRevenueLoading || dailyRevenueLoading ||
     roomBookingsLoading || noShowsRejectedDataLoading || monthlyRevenueLoading)
     return <DashboardSkeleton />;
   if (error) return <Error />;
@@ -190,9 +197,7 @@ const AdminDashboard = () => {
   };
 
   const bookingStatusCounts = {
-    pending: bookingStatusData?.pending || 0,
     reserved: bookingStatusData?.reserved || 0,
-    checked_in: bookingStatusData?.checked_in || 0,
     checked_out: bookingStatusData?.checked_out || 0,
     cancelled: bookingStatusData?.cancelled || 0,
     no_show: bookingStatusData?.no_show || 0,
@@ -205,7 +210,7 @@ const AdminDashboard = () => {
 
   const handleGenerateReport = () => {
     const daysInMonth = getDaysInMonth(selectedMonth, selectedYear, true);
-    const dailyRevenueData = data?.daily_revenue || [];
+    const dailyRevenueValues = dailyRevenueData?.data || [];
     const dailyBookingsData = dailyBookingsResponse?.data || [];
 
     const revenueLineData = {
@@ -213,7 +218,7 @@ const AdminDashboard = () => {
       datasets: [
         {
           label: "Daily Revenue (₱)",
-          data: dailyRevenueData,
+          data: dailyRevenueValues,
           borderColor: "#4CAF50",
           backgroundColor: "rgba(76, 175, 80, 0.1)",
           fill: true,
@@ -249,9 +254,7 @@ const AdminDashboard = () => {
       datasets: [
         {
           data: [
-            bookingStatusCounts.pending,
             bookingStatusCounts.reserved,
-            bookingStatusCounts.checked_in,
             bookingStatusCounts.checked_out,
             bookingStatusCounts.cancelled,
             bookingStatusCounts.no_show,
@@ -639,7 +642,7 @@ const AdminDashboard = () => {
                   className="flex items-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex-1">
-                    <p className="font-medium text-gray-700">{room}</p>
+                    <p className="font-semibold text-lg text-gray-700">{room}</p>
                     <p className="text-sm text-gray-500">
                       {roomBookingValues[index] || 0} bookings
                     </p>
@@ -699,7 +702,7 @@ const AdminDashboard = () => {
                   className="group p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium capitalize text-gray-700">
+                    <span className="font-semibold text-lg capitalize text-gray-700">
                       {status.replace('_', ' ')}
                     </span>
                     <span className="text-sm font-semibold text-gray-600">
