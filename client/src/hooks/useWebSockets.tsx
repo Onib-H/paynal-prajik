@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect } from "react"
 import { WebSocketService, WebSocketEvent } from "../services/websockets"
 
@@ -15,12 +14,12 @@ const connectionCounts = new WeakMap<WebSocketService, number>();
 /**
  * Custom Hook able to manage WebSocket connections and events.
  * @params
- * - wsService - Instance of WebSocketService to manage the connection.
- * - userId - User ID to connect to the WebSocket.
- * - eventHandlers - Object containing event handlers for different WebSocket events.
+ * - `wsService` - Instance of WebSocketService to manage the connection.
+ * - `userId` - User ID to connect to the WebSocket.
+ * - `eventHandlers` - Object containing event handlers for different WebSocket events.
  * @returns
- * - send: Function to send messages through the WebSocket.
- * - isConnected: Boolean indicating if the WebSocket is connected.
+ * - `send` - Function to send messages through the WebSocket.
+ * - `isConnected` - Boolean indicating if the WebSocket is connected.
  */
 const useWebSockets = (wsService: WebSocketService, userId: string, eventHandlers: EventHandlers) => {
     useEffect(() => {
@@ -33,7 +32,7 @@ const useWebSockets = (wsService: WebSocketService, userId: string, eventHandler
             wsService.connect(userId);
         }
 
-        (Object.entries(eventHandlers) as Array<[WebSocketEvent['type'], EventHandler<any>]>)
+        (Object.entries(eventHandlers) as Array<[WebSocketEvent['type'], EventHandler<WebSocketEvent['type']>]>)
             .forEach(([eventType, handler]) => {
                 wsService.on(eventType, handler);
             });
