@@ -64,7 +64,7 @@ const Footer = () => {
               ].map((icon, index) => (
                 <i
                   key={index}
-                  className={`fa-brands ${icon.class} text-lg border border-black p-2 rounded-full transition-all duration-300 hover:bg-${icon.bg} hover:text-white`}
+                  className={`fa-brands ${icon.class} text-lg border border-black p-2 rounded-full transition-all duration-300 cursor-pointer`}
                 ></i>
               ))}
             </div>

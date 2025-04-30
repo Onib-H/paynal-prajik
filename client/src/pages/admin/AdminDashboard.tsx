@@ -470,7 +470,7 @@ const AdminDashboard = () => {
     show: { opacity: 1, y: 0 },
   };
 
-  if (calendarEventsQuery.isLoading) return <DashboardSkeleton />;
+  if (isLoading) return <DashboardSkeleton />;
   if (error || calendarEventsQuery.error) return <Error />;
 
   return (

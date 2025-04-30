@@ -248,9 +248,8 @@ export const archiveUser = async (userId: number) => {
 };
 
 // CRUD Rooms
-export const fetchRooms = async ({ queryKey }: any) => {
+export const fetchRooms = async (page: number, pageSize: number) => {
   try {
-    const [, page = 1, pageSize = 9] = queryKey;
     const response = await ADMIN.get("/rooms", {
       params: {
         page,
@@ -320,9 +319,8 @@ export const deleteRoom = async (roomId: number) => {
 };
 
 // CRUD Areas
-export const fetchAreas = async ({ queryKey }: any) => {
+export const fetchAreas = async (page: number, pageSize: number) => {
   try {
-    const [, page = 1, pageSize = 9] = queryKey;
     const response = await ADMIN.get("/areas", {
       params: {
         page,

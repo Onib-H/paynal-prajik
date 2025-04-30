@@ -3,7 +3,7 @@ import "react-loading-skeleton/dist/skeleton.css"
 
 const DashboardSkeleton = () => {
     return (
-        <div className="p-6 animate-pulse">
+        <div className="p-6 container mx-auto animate-pulse">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                 <Skeleton width={250} height={40} className="mb-2 md:mb-0" />

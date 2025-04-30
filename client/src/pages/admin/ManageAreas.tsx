@@ -35,7 +35,8 @@ const ManageAreas = () => {
     pagination: PaginationData;
   }>({
     queryKey: ["areas", currentPage, pageSize],
-    queryFn: fetchAreas,
+    queryFn: () => fetchAreas(currentPage, pageSize),
+    staleTime: 1000 * 60 * 5,
   });
 
   const areas = areasResponse?.data || [];
