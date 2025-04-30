@@ -17,6 +17,7 @@ const useTokenHandler = () => {
           setIsAuthenticated(false);
         }
       } catch (error) {
+        console.error(`Error validating token: ${error}`);
         setIsAuthenticated(false);
       } finally {
         setLoading(false);

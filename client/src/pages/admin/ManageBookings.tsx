@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Eye, Filter, Search, FolderX } from "lucide-react";
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import { toast } from "react-toastify";
 import CancellationModal from "../../components/bookings/CancellationModal";
 import Modal from "../../components/Modal";
@@ -17,6 +17,7 @@ import { BookingQuery } from "../../types/BookingsAdmin";
 import { AnimatePresence, motion } from "framer-motion";
 import { webSocketAdminActives, WebSocketEvent } from "../../services/websockets";
 import { useUserContext } from "../../contexts/AuthContext";
+import useWebSockets from "../../hooks/useWebSockets";
 
 const ManageBookings: FC = () => {
   const { userDetails } = useUserContext();
@@ -37,11 +38,8 @@ const ManageBookings: FC = () => {
     queryFn: () => getAllBookings({ page: currentPage, pageSize }),
   });
 
-  useEffect(() => {
-    const adminWs = webSocketAdminActives;
-    adminWs.connect(userDetails.id);
-
-    adminWs.on('bookings_data_update', (data: WebSocketEvent) => {
+  useWebSockets(webSocketAdminActives, userDetails?.id, {
+    bookings_data_update: (data: WebSocketEvent) => {
       if (data.type === "bookings_data_update") {
         queryClient.setQueryData(['adminBookings', currentPage, pageSize], (oldData: BookingQuery | undefined) => ({
           ...oldData!,
@@ -53,13 +51,8 @@ const ManageBookings: FC = () => {
           }
         }));
       }
-    });
-
-    return () => {
-      adminWs.off('bookings_data_update');
-      adminWs.disconnect();
     }
-  }, [currentPage, pageSize, queryClient, userDetails.id]);
+  })
 
   const updateBookingStatusMutation = useMutation({
     mutationFn: async ({

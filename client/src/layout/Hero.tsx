@@ -68,7 +68,7 @@ const Hero = () => {
                     {slide.heading}
                   </motion.h1>
                   <motion.p
-                    className="font-montserrat text-3xl leading-relaxed sm:text-xl md:text-2xl"
+                    className="font-montserrat text-2xl leading-relaxed sm:text-lg md:text-xl"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{

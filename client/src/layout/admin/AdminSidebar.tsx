@@ -9,11 +9,13 @@ import { menuItems } from "../../constants/AdminMenuSidebar";
 import { useUserContext } from "../../contexts/AuthContext";
 import { logout } from "../../services/Auth";
 import hotelLogo from "../../assets/hotel_logo.png";
-import { webSocketAdminActives } from "../../services/websockets";
+import { webSocketAdminActives, WebSocketEvent } from "../../services/websockets";
+import useWebSockets from "../../hooks/useWebSockets";
+import { useQuery } from "@tanstack/react-query";
 
 const AdminSidebar: FC = () => {
   const navigate = useNavigate();
-  const { setIsAuthenticated, role, setRole, userDetails } = useUserContext();
+  const { setIsAuthenticated, setRole, userDetails } = useUserContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeBookingCount, setActiveBookingCount] = useState<number>(0);
 
@@ -35,24 +37,33 @@ const AdminSidebar: FC = () => {
 
   const handleLogout = () => logoutMutation();
 
+  const { send } = useWebSockets(webSocketAdminActives, userDetails?.id, {
+    active_count_update: (data: WebSocketEvent) => {
+      if (data.type === "active_count_update") {
+        setActiveBookingCount(data.count);
+      }
+    }
+  });
+
+  const fetchActiveBookings = async (send: (message: any) => void): Promise<number> => {
+    return new Promise((resolve) => {
+      send({ type: "get_active_count" });
+      resolve(activeBookingCount);
+    });
+  };
+
+  const { refetch } = useQuery({
+    queryKey: ["activeBookings"],
+    queryFn: () => fetchActiveBookings(send),
+    enabled: !!userDetails?.id,
+    refetchInterval: 10000, 
+    refetchIntervalInBackground: true,
+    initialData: activeBookingCount,
+  });
+
   useEffect(() => {
-    if (!userDetails?.id) return;
-
-    const ws = webSocketAdminActives;
-    ws.connect(userDetails.id);
-    
-    const handleCountUpdate = (data: any) => {
-      if (data.type === "active_count_update") setActiveBookingCount(data.count);
-    }
-    
-    ws.send({ type: "get_active_count" });
-    ws.on('active_count_update', handleCountUpdate);
-
-    return () => {
-      ws.off('active_count_update');
-      ws.disconnect();
-    }
-  }, [userDetails?.id]);
+    if (userDetails?.id) refetch();
+  }, [userDetails?.id, refetch]);
 
   const updatedMenuItems = menuItems.map(item => {
     if (item.label === "Manage Bookings") {
@@ -70,21 +81,7 @@ const AdminSidebar: FC = () => {
         )
       }
     }
-
     return item;
-  });
-
-  const filteredMenuItems = updatedMenuItems.filter((item) => {
-    if (role.toLowerCase() === "staff") {
-      if (
-        item.label === "Dashboard" ||
-        item.label === "Manage Staff" ||
-        item.label === "Reports"
-      ) {
-        return false;
-      }
-    }
-    return true;
   });
 
   return (
@@ -103,7 +100,7 @@ const AdminSidebar: FC = () => {
         {/* Menu items */}
         <div className="flex-grow overflow-y-auto p-2 w-full">
           <ul className="space-y-4">
-            {filteredMenuItems.map((item, index) => (
+            {updatedMenuItems.map((item, index) => (
               <li key={index}>
                 <NavLink
                   to={item.link}
