@@ -54,17 +54,15 @@ const ManageUsers: FC = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: number; payload: FormData }) =>
-      manageUser(id, payload),
+    mutationFn: ({ id, payload }: { id: number; payload: FormData }) => manageUser(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       toast.success("User updated successfully");
       setEditModal(false);
       setIsSubmitting(false);
     },
-    onError: (error: Error | { response?: { data?: { error?: string } } }) => {
-      const errorResponse = error as { response?: { data?: { error?: string } } };
-      toast.error(errorResponse.response?.data?.error || "Failed to update user");
+    onError: () => {
+      toast.error("Failed to update user");
       setIsSubmitting(false);
     }
   });
@@ -85,14 +83,14 @@ const ManageUsers: FC = () => {
         role: "admin",
       });
     },
-    onError: (error: Error | { response?: { data?: { email?: string; password?: string; error?: string } } }) => {
+    onError: (error) => {
       const errorResponse = error as { response?: { data?: { email?: string; password?: string; error?: string } } };
       const errorData = errorResponse.response?.data || {};
 
       if (errorData.email) setFormErrors(prev => ({ ...prev, email: errorData.email }));
       if (errorData.password) setFormErrors(prev => ({ ...prev, password: errorData.password }));
 
-      toast.error(errorData.error || "Failed to create user");
+      toast.error("Failed to create user");
       setIsSubmitting(false);
     }
   });
@@ -141,9 +139,7 @@ const ManageUsers: FC = () => {
     formData.append("email", user.email);
     formData.append("role", user.role || "guest");
 
-    if (user.password) {
-      formData.append("password", user.password);
-    }
+    if (user.password) formData.append("password", user.password);
 
     await updateMutation.mutateAsync({ id: user.id, payload: formData });
   }, [updateMutation]);
@@ -258,11 +254,11 @@ const ManageUsers: FC = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Profile</th>
+                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Profile Image</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">First Name</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Last Name</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">Role</th>
                   <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -271,15 +267,15 @@ const ManageUsers: FC = () => {
                   <tr key={user.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <img
-                        src={user.profile_image || DefaultProfilePic}
+                        src={user.profile_image}
                         alt={`${user.first_name}'s profile`}
-                        className="h-10 w-10 rounded-full object-cover"
+                        className="h-13 w-13 rounded-full object-cover"
                       />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{user.first_name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{user.last_name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-md text-gray-500">{user.email}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-700">{user.first_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-700">{user.last_name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-700">{user.email}</td>
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
                       <span className={`p-2 inline-flex text-md leading-5 font-semibold rounded-full 
                       ${user.role.toUpperCase() === 'admin' ? 'bg-purple-100 text-purple-800' :
                           user.role.toUpperCase() === 'staff' ? 'bg-blue-100 text-blue-800' :
@@ -329,7 +325,6 @@ const ManageUsers: FC = () => {
               Next
             </button>
           </div>
-
         </>
       )}
 
