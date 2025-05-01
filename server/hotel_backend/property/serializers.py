@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db.models import Avg
 from .models import Amenities, Rooms, Areas
 
 class AmenitySerializer(serializers.ModelSerializer):
@@ -8,6 +9,7 @@ class AmenitySerializer(serializers.ModelSerializer):
 
 class RoomSerializer(serializers.ModelSerializer):
     amenities = serializers.PrimaryKeyRelatedField(queryset=Amenities.objects.all(), many=True, required=False)
+    average_rating = serializers.SerializerMethodField()
     
     class Meta:
         model = Rooms
@@ -22,6 +24,7 @@ class RoomSerializer(serializers.ModelSerializer):
             'description',
             'max_guests',
             'amenities',
+            'average_rating',
         ]
         
     def to_representation(self, instance):
@@ -32,7 +35,11 @@ class RoomSerializer(serializers.ModelSerializer):
             representation['room_price'] = f"₱{float(instance.room_price):,.2f}"
         return representation
 
+    def get_average_rating(self, obj):
+        return obj.reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+
 class AreaSerializer(serializers.ModelSerializer):
+    average_rating = serializers.SerializerMethodField()
     class Meta:
         model = Areas
         fields = [
@@ -43,6 +50,7 @@ class AreaSerializer(serializers.ModelSerializer):
             'status',
             'capacity',
             'price_per_hour',
+            'average_rating',
         ]
         
     def to_representation(self, instance):
@@ -52,3 +60,6 @@ class AreaSerializer(serializers.ModelSerializer):
         if instance.price_per_hour is not None:
             representation['price_per_hour'] = f"₱{float(instance.price_per_hour):,.2f}"
         return representation
+
+    def get_average_rating(self, obj):
+        return obj.reviews.aggregate(Avg('rating'))['rating__avg'] or 0

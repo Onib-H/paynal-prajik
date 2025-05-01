@@ -46,7 +46,7 @@ class NotificationSerializer(serializers.ModelSerializer):
             'user',
             'message',
             'notification_type',
-            'booking',
+            # 'booking',
             'booking_id',
             'is_read',
             'created_at'

@@ -16,6 +16,7 @@ interface Room {
   capacity: number;
   room_price: number;
   amenities: string[];
+  average_rating?: number;
 }
 
 interface RoomsResponse {

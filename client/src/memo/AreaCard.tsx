@@ -55,7 +55,7 @@ const AreaCard = memo(
                 <MemoizedImage
                     src={areaImageProps.src}
                     alt={areaImageProps.alt}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-40 object-cover"
                 />
                 <div className="p-4 flex flex-col h-full">
                     <div className="flex justify-between items-center mb-2">

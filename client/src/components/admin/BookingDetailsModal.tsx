@@ -190,6 +190,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => setPaymentAmount(e.target.value);
 
     const getLoadingText = () => {
+        if (booking.status === "reserved" && isUpdating && onCancel) return "Cancelling booking...";
         switch (booking.status) {
             case "pending":
                 return "Reserving booking...";
@@ -209,6 +210,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     };
 
     const getLoaderType = () => {
+        if (booking.status === "reserved" && isUpdating && onCancel) return "cancelled";
         switch (booking.status) {
             case "pending":
                 return "reserve";
@@ -217,8 +219,9 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             case "checked_in":
                 return "checkout";
             case "no_show":
-            case "cancelled":
                 return "noshow";
+            case "cancelled":
+                return 'cancelled';
             case "rejected":
                 return "rejected";
             default:

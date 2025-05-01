@@ -788,7 +788,8 @@ def record_payment(request, booking_id):
             user=booking.user,
             transaction_type=transaction_type,
             amount=amount,
-            status='completed'
+            status='completed',
+            transaction_date=booking.check_in_date
         )
         
         return Response({

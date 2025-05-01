@@ -15,12 +15,10 @@ const VenueDetails = () => {
     const { id } = useParams<{ id: string }>();
     const { isAuthenticated } = useUserContext();
     const [isImageLoaded, setIsImageLoaded] = useState(false);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const pageSize = 5;
 
-    const {
-        data: venueData,
-        isLoading: isLoadingVenue,
-        error: venueError,
-    } = useQuery<{ data: Area }>({
+    const { data: venueData, isLoading: isLoadingVenue, error: venueError } = useQuery<{ data: Area }>({
         queryKey: ["venue", id],
         queryFn: () => fetchAreaDetail(Number(id)),
         enabled: !!id,
@@ -31,13 +29,9 @@ const VenueDetails = () => {
         queryFn: fetchAreas,
     });
 
-    const {
-        data: reviewsData,
-        isLoading: isLoadingReviews,
-        error: reviewsError
-    } = useQuery({
+    const { data: reviewsData, isLoading: isLoadingReviews, error: reviewsError } = useQuery({
         queryKey: ["areaReviews", id],
-        queryFn: () => fetchAreaReviews(id as string),
+        queryFn: () => fetchAreaReviews(id, currentPage, pageSize),
         enabled: !!id,
     });
 
@@ -57,6 +51,7 @@ const VenueDetails = () => {
     const nextVenue = currentIndex < allVenues.length - 1 ? allVenues[currentIndex + 1] : null;
 
     const reviews = reviewsData?.data || [];
+    const totalReviews = reviewsData?.total || 0;
 
     const formattedPrice = typeof venueDetail.price_per_hour === 'string'
         ? venueDetail.price_per_hour.startsWith('₱')
@@ -289,7 +284,10 @@ const VenueDetails = () => {
                             <ReviewList
                                 reviews={reviews}
                                 isLoading={isLoadingReviews}
-                                error={reviewsError as Error | null}
+                                error={reviewsError}
+                                currentPage={currentPage}
+                                totalPages={Math.ceil(totalReviews / pageSize)}
+                                onPageChange={setCurrentPage}
                             />
                         </motion.div>
                     </motion.div>

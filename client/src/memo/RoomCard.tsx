@@ -54,7 +54,7 @@ export const RoomCard = memo(
                 <MemoizedImage
                     src={roomImageProps.src}
                     alt={roomImageProps.alt}
-                    className="w-full h-48 object-cover"
+                    className="w-full h-40 object-cover"
                 />
                 <div className="p-4 flex flex-col h-full">
                     <div className="flex justify-between items-center mb-2">

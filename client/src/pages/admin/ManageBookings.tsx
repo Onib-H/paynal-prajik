@@ -55,13 +55,7 @@ const ManageBookings: FC = () => {
   })
 
   const updateBookingStatusMutation = useMutation({
-    mutationFn: async ({
-      bookingId,
-      status,
-      reason,
-      paymentAmount,
-      setRoomAvailable = false,
-    }: {
+    mutationFn: async ({ bookingId, status, reason, paymentAmount, setRoomAvailable = false }: {
       bookingId: number;
       status: string;
       reason?: string;
@@ -73,9 +67,7 @@ const ManageBookings: FC = () => {
         set_available: setRoomAvailable,
       };
 
-      if ((status === "cancelled" || status === "rejected") && reason) {
-        data.reason = reason;
-      }
+      if ((status === "cancelled" || status === "rejected") && reason) data.reason = reason;
 
       const result = await updateBookingStatus(bookingId, data);
 
@@ -95,27 +87,26 @@ const ManageBookings: FC = () => {
 
       const { status } = data;
 
-      if (status === "reserved") {
-        toast.success(
-          "Booking has been reserved successfully! A confirmation email has been sent to the guest."
-        );
-      } else if (status === "rejected") {
-        toast.success(
-          "Booking has been rejected. The guest has been notified with your reason."
-        );
-      } else if (status === "checked_in") {
-        toast.success(
-          "Guest has been checked in successfully and payment recorded."
-        );
-      } else if (status === "checked_out") {
-        toast.success("Guest has been checked out successfully.");
-      } else if (status === "no_show") {
-        toast.success(
-          "Booking has been marked as 'No Show' and the room/area has been made available again."
-        );
-      } else {
-        toast.success(`Booking status updated to ${status.replace("_", " ")}`);
-      }
+      switch (status) {
+        case 'reserved':
+          toast.success("Booking has been reserved successfully! A confirmation email has been sent to the guest.");
+          break;
+        case 'rejected':
+          toast.success("Booking has been rejected. The guest has been notified with your reason.");
+          break;
+        case 'checked_in':
+          toast.success("Guest has been checked in successfully and payment recorded.");
+          break;
+        case 'checked_out':
+          toast.success("Guest has been checked out successfully.");
+          break;
+        case 'no_show':
+          toast.success("Booking has been marked as 'No Show' and the room/area has been made available again.");
+          break;
+        default:
+          toast.success(`Booking status updated to ${status.replace("_", " ")}`);
+          break;
+      };
 
       setSelectedBooking(null);
       setShowRejectionModal(false);

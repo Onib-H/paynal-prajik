@@ -1,14 +1,16 @@
 import { area } from "./_axios";
-import { AreasResponse } from "../types/AreaClient";
 
-export const fetchAreas = async (): Promise<AreasResponse> => {
+export const fetchAreas = async () => {
   try {
     const response = await area.get("/areas", {
+      headers: {
+        "Content-Type": "application/json",
+      },
       withCredentials: true,
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching areas:", error);
+    console.error(`Error fetching areas: ${error}`);
     throw error;
   }
 };
@@ -16,6 +18,9 @@ export const fetchAreas = async (): Promise<AreasResponse> => {
 export const fetchAreaDetail = async (id: number) => {
   try {
     const response = await area.get(`/areas/${id}`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
       withCredentials: true,
     });
     return response.data;

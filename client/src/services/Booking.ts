@@ -404,9 +404,9 @@ export const deleteReview = async (reviewId: string) => {
   }
 };
 
-export const fetchRoomReviews = async (roomId: string) => {
+export const fetchRoomReviews = async (roomId: string, page: number, pageSize: number) => {
   try {
-    const response = await booking.get(`/rooms/${roomId}/reviews`, {
+    const response = await booking.get(`/rooms/${roomId}/reviews?page=${page}&page_size=${pageSize}`, {
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
     });
@@ -417,9 +417,9 @@ export const fetchRoomReviews = async (roomId: string) => {
   }
 };
 
-export const fetchAreaReviews = async (areaId: string) => {
+export const fetchAreaReviews = async (areaId: string, page: number, pageSize: number) => {
   try {
-    const response = await booking.get(`/areas/${areaId}/reviews`, {
+    const response = await booking.get(`/areas/${areaId}/reviews?page=${page}&page_size=${pageSize}`, {
       headers: { "Content-Type": "application/json" },
       withCredentials: true,
     });

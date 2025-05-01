@@ -16,33 +16,24 @@ const RoomDetails = () => {
   const { isAuthenticated } = useUserContext();
   const { id } = useParams<{ id: string }>();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
-  const {
-    data: roomData,
-    isLoading: isLoadingRoom,
-    error: roomError,
-  } = useQuery({
+  const pageSize: number = 5;
+
+  const { data: roomData, isLoading: isLoadingRoom, error: roomError } = useQuery({
     queryKey: ["room", id],
     queryFn: () => fetchRoomDetail(id as string),
     enabled: !!id,
   });
 
-  const {
-    data: allAmenitiesData,
-    isLoading: isLoadingAmenities,
-    error: amenitiesError,
-  } = useQuery({
+  const { data: allAmenitiesData, isLoading: isLoadingAmenities, error: amenitiesError } = useQuery({
     queryKey: ["allAmenitiesForRoomDetails", 1, 100],
     queryFn: fetchAmenities,
   });
 
-  const {
-    data: reviewsData,
-    isLoading: isLoadingReviews,
-    error: reviewsError
-  } = useQuery({
-    queryKey: ["roomReviews", id],
-    queryFn: () => fetchRoomReviews(id as string),
+  const { data: reviewsData, isLoading: isLoadingReviews, error: reviewsError } = useQuery({
+    queryKey: ["roomReviews", id, currentPage],
+    queryFn: () => fetchRoomReviews(id as string, currentPage, pageSize),
     enabled: !!id,
   });
 
@@ -267,10 +258,21 @@ const RoomDetails = () => {
                 Guest Reviews
               </h2>
 
+              <motion.div className="flex items-center justify-center gap-2">
+                <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                <span className="text-white text-2xl font-bold drop-shadow-md">
+                  {roomDetail.average_rating?.toFixed(1) || '0.0'}
+                </span>
+                <span className="text-gray-200 text-lg">({reviewsData?.total || 0} reviews)</span>
+              </motion.div>
+
               <ReviewList
                 reviews={reviews}
                 isLoading={isLoadingReviews}
-                error={reviewsError as Error | null}
+                error={reviewsError}
+                currentPage={currentPage}
+                totalPages={Math.ceil(reviewsData?.total / pageSize)}
+                onPageChange={setCurrentPage}
               />
             </motion.div>
           </motion.div>

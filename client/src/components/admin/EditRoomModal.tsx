@@ -114,7 +114,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
     };
 
     const checkboxVariants = {
-        hidden: { opacity: 0, x: -10 },
+        hidden: { opacity: 0 },
         visible: (custom: number) => ({
             opacity: 1,
             x: 0,
@@ -474,7 +474,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                             ) : isErrorAmenities ? (
                                                 <p className="text-red-500">Failed to load amenities</p>
                                             ) : (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                                                <div className="grid grid-cols-1 space-y-2 gap-2 max-h-72 overflow-y-auto">
                                                     {availableAmenities.map((amenity: any, index: number) => (
                                                         <motion.div
                                                             key={amenity.id}
@@ -483,18 +483,18 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                                             variants={checkboxVariants}
                                                         >
                                                             <motion.div
-                                                                className="flex items-center space-x-2"
+                                                                className="flex items-center space-x-1"
                                                             >
                                                                 <input
                                                                     type="checkbox"
                                                                     id={`amenity-${amenity.id}`}
                                                                     checked={watch("amenities").includes(amenity.id)}
                                                                     onChange={() => handleAmenityChange(amenity.id)}
-                                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                                                                    className="text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
                                                                 />
                                                                 <label
                                                                     htmlFor={`amenity-${amenity.id}`}
-                                                                    className="text-sm text-gray-700 cursor-pointer"
+                                                                    className="text-xs text-gray-700 cursor-pointer"
                                                                 >
                                                                     {amenity.description}
                                                                 </label>
