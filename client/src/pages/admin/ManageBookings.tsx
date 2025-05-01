@@ -310,7 +310,7 @@ const ManageBookings: FC = () => {
             <thead>
               <tr className="bg-gray-100">
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
+                  Booking Date
                 </th>
                 <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Guest

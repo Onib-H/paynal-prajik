@@ -68,7 +68,7 @@ const Hero = () => {
                     {slide.heading}
                   </motion.h1>
                   <motion.p
-                    className="font-montserrat text-2xl leading-relaxed sm:text-lg md:text-xl"
+                    className="font-montserrat text-xl leading-relaxed sm:text-lg md:text-xl"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
@@ -94,7 +94,7 @@ const Hero = () => {
         ))}
       </Swiper>
 
-      <div className="hidden absolute bottom-10 w-full sm:flex justify-center z-20">
+      <div className="hidden absolute bottom-1 w-full sm:flex justify-center z-20">
         <div className="lg:w-9/12 xl:w-8/12 2xl:w-7/12">
           <RoomAvailabilityCalendar />
         </div>

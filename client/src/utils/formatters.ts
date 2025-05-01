@@ -25,18 +25,15 @@ export const formatMonthYear = (month: number, year: number) => {
 /**
  * Get the number of days in a month
  */
-export const getDaysInMonth = (month: number, year: number, limitToCurrentDay: boolean = false) => {
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const currentDate = new Date();
-
-  const maxDay = limitToCurrentDay && 
-    month === currentDate.getMonth() && year === currentDate.getFullYear()
-      ? currentDate.getDate() : daysInMonth;
-    
-  return Array.from({ length: maxDay }, (_, i) => {
-    const day = i + 1;
-    return `${day}`;
-  });
+export const getDaysInMonth = (month: number, year: number, adjustForDisplay?: boolean) => {
+  const adjustedMonth = month - 1;
+  const date = new Date(year, adjustedMonth, 1);
+  const days = [];
+  while (date.getMonth() === adjustedMonth) {
+    days.push(adjustForDisplay ? date.getDate() : new Date(date));
+    date.setDate(date.getDate() + 1);
+  }
+  return days;
 };
 
 /**

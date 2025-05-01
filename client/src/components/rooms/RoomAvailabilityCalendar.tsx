@@ -192,9 +192,9 @@ const RoomAvailabilityCalendar = memo(({ onDatesChange }: RoomAvailabilityCalend
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 mb-8 sm:mb-15 w-full shadow-lg rounded-xl overflow-hidden border border-blue-100"
+        className="bg-gradient-to-r from-purple-50 to-indigo-50 p-6 mb-8 sm:mb-15 w-full shadow-lg rounded-xl overflow-hidden border border-blue-100"
       >
-        <motion.div variants={itemVariants} className="py-3 font-montserrat">
+        <motion.div variants={itemVariants} className="py-1 font-montserrat">
           <motion.div
             variants={itemVariants}
             className="flex flex-col justify-around gap-5"
@@ -206,11 +206,11 @@ const RoomAvailabilityCalendar = memo(({ onDatesChange }: RoomAvailabilityCalend
             >
               <motion.h1
                 variants={itemVariants}
-                className="text-lg md:text-2xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text"
+                className="text-md md:text-xl font-semibold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text"
               >
                 Find Your Perfect Stay
               </motion.h1>
-              <p className="text-gray-600 text-md mt-1">
+              <p className="text-gray-600 text-sm mt-1">
                 Search only shows rooms that are available (not reserved or
                 occupied)
               </p>

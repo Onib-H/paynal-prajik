@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
+import { ArcElement, Chart, Legend, Tooltip } from "chart.js";
 import { format, getDay, isAfter, isSameDay, parse, startOfWeek } from "date-fns";
 import { enUS } from "date-fns/locale";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import { Calendar, Views, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import { Doughnut } from "react-chartjs-2";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import MonthlyReportView from "../../components/admin/MonthlyReportView";
@@ -12,13 +15,9 @@ import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
 import { fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyNoShowsRejected, fetchDailyRevenue, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import "../../styles/print.css";
-import { formatMonthYear, getDaysInMonth } from "../../utils/formatters";
+import { formatCurrency, formatMonthYear, getDaysInMonth } from "../../utils/formatters";
 import { prepareReportData } from "../../utils/reports";
 import Error from "../_ErrorBoundary";
-import { formatCurrency } from "../../utils/formatters";
-import { motion } from "framer-motion";
-import { Doughnut } from "react-chartjs-2";
-import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
 
 Chart.register(ArcElement, Tooltip, Legend);
 
@@ -47,7 +46,7 @@ const AdminDashboard = () => {
     queryFn: () => fetchStats({
       month: selectedMonth,
       year: selectedYear,
-    })
+    }),
   });
 
   const { data: dailyRevenueData } = useQuery({
@@ -56,7 +55,7 @@ const AdminDashboard = () => {
       month: selectedMonth,
       year: selectedYear,
     }),
-    select: (data) => data.data || []
+    select: (data) => data.data || [],
   });
 
   const { data: bookingStatusData } = useQuery({
@@ -148,7 +147,7 @@ const AdminDashboard = () => {
             noShows: dailyNoShows[index] || 0,
             rejected: dailyRejected[index] || 0
           }
-        });
+        })
       });
 
       return events;
