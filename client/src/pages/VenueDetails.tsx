@@ -20,7 +20,7 @@ const VenueDetails = () => {
 
     const { data: venueData, isLoading: isLoadingVenue, error: venueError } = useQuery<{ data: Area }>({
         queryKey: ["venue", id],
-        queryFn: () => fetchAreaDetail(Number(id)),
+        queryFn: () => fetchAreaDetail(id as string),
         enabled: !!id,
     });
 
@@ -276,10 +276,20 @@ const VenueDetails = () => {
                             variants={itemVariants}
                             className="bg-white rounded-xl p-8 shadow-lg"
                         >
-                            <h2 className="text-2xl font-playfair font-bold text-gray-800 mb-6 flex items-center">
-                                <Star className="mr-3 text-yellow-500" />
-                                Guest Reviews
-                            </h2>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="flex items-center text-3xl font-playfair font-bold text-gray-800">
+                                    <Star className="mr-3 text-yellow-500" />
+                                    Guest Reviews
+                                </h2>
+
+                                <div className="flex gap-2 items-center">
+                                    <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                                    <span className="text-indigo-600 text-2xl font-bold drop-shadow-md">
+                                        {venueDetail.average_rating?.toFixed(1) || '0.0'}
+                                    </span>
+                                    <span className="text-gray-500 text-lg">({reviewsData?.total || 0} reviews)</span>
+                                </div>
+                            </div>
 
                             <ReviewList
                                 reviews={reviews}

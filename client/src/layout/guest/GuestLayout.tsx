@@ -10,7 +10,7 @@ const GuestLayout: FC = () => {
                 <div className="w-68 sticky top-0 z-50">
                     <GuestSidebar />
                 </div>
-                <main className="flex-grow p-2 min-h-screen overflow-y-auto bg-gray-50">
+                <main className="flex-grow min-h-screen overflow-y-auto">
                     <Outlet />
                 </main>
             </div>

@@ -15,7 +15,7 @@ export const fetchAreas = async () => {
   }
 };
 
-export const fetchAreaDetail = async (id: number) => {
+export const fetchAreaDetail = async (id: string) => {
   try {
     const response = await area.get(`/areas/${id}`, {
       headers: {

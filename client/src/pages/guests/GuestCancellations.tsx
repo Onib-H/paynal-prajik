@@ -6,12 +6,14 @@ import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { fetchUserBookings } from "../../services/Booking";
 import { formatDate, getStatusColor, formatStatus } from "../../utils/formatters";
 import { useUserContext } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import GuestBookingsSkeleton from "../../motions/skeletons/GuestBookingsSkeleton";
 import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
 import ViewBookingDetailsModal from "../../components/guests/ViewBookingDetailsModal";
 
 const GuestCancellations: FC = () => {
   const { userDetails } = useUserContext();
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -326,7 +328,7 @@ const GuestCancellations: FC = () => {
                 <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.2 }}
                   className="text-gray-500 max-w-md mb-6"
                 >
                   You don't have any cancelled bookings yet. When you cancel your booking, it will appear here.
@@ -337,7 +339,7 @@ const GuestCancellations: FC = () => {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
+                  transition={{ delay: 0.2 }}
                   className="flex flex-col sm:flex-row gap-3"
                 >
                   <div className="flex items-center bg-purple-50 text-purple-700 px-4 py-2 rounded-lg">
@@ -355,12 +357,13 @@ const GuestCancellations: FC = () => {
 
               {!searchTerm && (
                 <motion.button
+                  onClick={() => navigate("/")}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium shadow-md"
+                  className="bg-purple-600 hover:bg-purple-700 text-white p-3 cursor-pointer uppercase rounded-lg font-semibold shadow-md"
                 >
                   Book Now
                 </motion.button>

@@ -323,24 +323,24 @@ const GuestBookings = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-500">
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-lg text-gray-500">
                           {formatDate(reservationDate)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-500">
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-lg text-gray-500">
                           {formatDate(checkInDate)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-500">
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-lg text-gray-500">
                           {formatDate(checkOutDate)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-6 py-4 text-center whitespace-nowrap">
                           <span className={`p-2 text-sm font-semibold rounded-full ${getStatusColor(status)}`}>
                             {status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-lg font-semibold text-gray-900">
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-lg font-semibold text-gray-900">
                           {typeof totalAmount === 'number' ? totalAmount.toLocaleString() : totalAmount}
                         </td>
-                        <td className="p-2 whitespace-nowrap text-sm text-right font-semibold">
+                        <td className="p-2 whitespace-nowrap text-sm font-semibold">
                           <div className="flex justify-center space-x-2">
                             <button
                               className="bg-gray-600 hover:bg-gray-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"

@@ -15,7 +15,7 @@ export const fetchAllRooms = async () => {
   }
 };
 
-export const fetchRoomDetail = async (id: string | number) => {
+export const fetchRoomDetail = async (id: string) => {
   try {
     const response = await room.get(`/rooms/${id}`, {
       headers: {

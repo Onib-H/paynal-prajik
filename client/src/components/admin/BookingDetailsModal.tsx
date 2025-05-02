@@ -137,11 +137,11 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                     };
                 }
             } else {
-                const checkOutDateOnly = new Date(checkOutDate);
                 const currentDateOnly = new Date(currentDate);
+                const checkOutDateOnly = new Date(checkOutDate);
 
-                checkOutDateOnly.setHours(0, 0, 0, 0);
                 currentDateOnly.setHours(0, 0, 0, 0);
+                checkOutDateOnly.setHours(0, 0, 0, 0);
 
                 if (currentDateOnly >= checkOutDateOnly) {
                     return { isValid: true, message: "" }
