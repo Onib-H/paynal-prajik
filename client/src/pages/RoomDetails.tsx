@@ -2,16 +2,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowLeft, Bookmark, Check, Home, Info, PhilippinePeso, Star, Users, X } from "lucide-react";
-import { lazy, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
 import { useUserContext } from "../contexts/AuthContext";
 import { fetchAmenities } from "../services/Admin";
 import { fetchRoomReviews } from "../services/Booking";
 import { fetchRoomDetail } from "../services/Room";
-
-const LoadingDashboard = lazy(() => import("../motions/skeletons/AdminDashboardSkeleton"));
-const Error = lazy(() => import("./_ErrorBoundary"));
+import RoomAndAreaDetailsSkeleton from "../motions/skeletons/RoomAndAreaDetailsSkeleton";
+import Error from "./_ErrorBoundary";
 
 const RoomDetails = () => {
   const { isAuthenticated } = useUserContext();
@@ -51,7 +50,7 @@ const RoomDetails = () => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  if (isLoadingRoom) return <LoadingDashboard />;
+  if (isLoadingRoom) return <RoomAndAreaDetailsSkeleton />;
   if (roomError) return <Error />;
 
   const roomDetail = roomData?.data;

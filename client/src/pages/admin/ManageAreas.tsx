@@ -1,23 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 import EditAreaModal from "../../components/admin/EditAreaModal";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
 import ManageSkeleton from "../../motions/skeletons/ManageSkeleton";
-import {
-  addNewArea,
-  deleteArea,
-  editArea,
-  fetchAreas,
-} from "../../services/Admin";
+import { addNewArea, deleteArea, editArea, fetchAreas } from "../../services/Admin";
 import { IArea as IEditArea } from "../../types/AreaAdmin";
 import { AddAreaResponse, Area, PaginationData } from "../../types/AreaClient";
 import Error from "../_ErrorBoundary";

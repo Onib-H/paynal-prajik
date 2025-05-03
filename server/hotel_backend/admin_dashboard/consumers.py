@@ -5,12 +5,7 @@ import json
 
 class PendingBookingConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        user = self.scope['user']
-        if not user.is_authenticated or not user.is_staff:
-            await self.close()
-            return
-        
-        self.group_name = f'admin_notifications_{user}'
+        self.group_name = 'admin_notifications'
         
         await self.channel_layer.group_add(
             self.group_name,
@@ -18,9 +13,9 @@ class PendingBookingConsumer(AsyncWebsocketConsumer):
         )
         await self.accept()
         
-        count = await self.get_pending_count()
+        count = await self.get_active_count()
         await self.send(text_data=json.dumps({
-            'type': 'pending_count',
+            'type': 'active_count',
             'count': count
         }))
     
@@ -33,13 +28,14 @@ class PendingBookingConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         pass
 
-    async def pending_update(self, event):
-        count = event['count']
+    async def active_count(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'pending_count',
-            'count': count
+            'type': 'active_count',
+            'count': event['count']
         }))
     
     @database_sync_to_async
-    def get_pending_count(self):
-        return Bookings.objects.filter(status='pending').count()
+    def get_active_count(self):
+        return Bookings.objects.exclude(
+            status__in=['rejected', 'cancelled', 'no_show', 'checked_out']
+        ).count()

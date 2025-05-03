@@ -1,25 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Eye, Loader, Search, Calendar } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, Search, Calendar, SearchIcon } from "lucide-react";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import BookingData from "../../components/bookings/BookingData";
-import { BookingDetailsSkeleton } from "../../motions/skeletons/GuestDetailSkeleton";
-import { fetchBookingDetail, fetchUserBookings } from "../../services/Booking";
+import { fetchUserBookings } from "../../services/Booking";
 import { formatDate, getStatusColor, formatStatus } from "../../utils/formatters";
 import { useUserContext } from "../../contexts/AuthContext";
 import GuestBookingsSkeleton from "../../motions/skeletons/GuestBookingsSkeleton";
 import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
+import ViewBookingDetailsModal from "../../components/guests/ViewBookingDetailsModal";
 
 const GuestCancellations: FC = () => {
   const { userDetails } = useUserContext();
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const bookingId = searchParams.get('bookingId');
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [changingPage, setChangingPage] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<number>(null);
+  const [showBookingDetailModal, setShowBookingDetailModal] = useState<boolean>(false);
+
   const pageSize = 5;
 
   const userBookingsQuery = useQuery({
@@ -52,12 +51,6 @@ const GuestCancellations: FC = () => {
     enabled: !!userDetails?.id
   });
 
-  const bookingDetailsQuery = useQuery({
-    queryKey: ['bookingDetails', bookingId],
-    queryFn: () => fetchBookingDetail(bookingId || ''),
-    enabled: !!bookingId,
-  });
-
   useEffect(() => {
     if (changingPage && !userBookingsQuery.isPending) {
       setChangingPage(false);
@@ -68,17 +61,12 @@ const GuestCancellations: FC = () => {
     return {
       bookings: userBookingsQuery.data?.data || [],
       totalPages: userBookingsQuery.data?.pagination?.total_pages || 1,
-      isLoading: userBookingsQuery.isPending ||
-        (bookingDetailsQuery.isPending && !!bookingId) ||
-        changingPage,
+      isLoading: userBookingsQuery.isPending || changingPage,
       errorMessage: userBookingsQuery.isError
         ? <GuestBookingsError error={userBookingsQuery.error} />
-        : (bookingDetailsQuery.isError && !!bookingId)
-          ? <GuestBookingsError error={bookingDetailsQuery.error} />
-          : null
+        : null
     };
-  }, [userBookingsQuery.data, userBookingsQuery.isPending, userBookingsQuery.isError,
-  bookingDetailsQuery.isPending, bookingDetailsQuery.isError, bookingId, changingPage, userBookingsQuery.error, bookingDetailsQuery.error]);
+  }, [userBookingsQuery, changingPage]);
 
   const filteredBookings = useMemo(() => {
     return bookings.filter((booking: any) => {
@@ -100,18 +88,6 @@ const GuestCancellations: FC = () => {
     });
   }, [bookings, searchTerm]);
 
-  const viewBookingDetails = useCallback((id: string) => {
-    searchParams.delete('cancelled');
-    searchParams.delete('success');
-    searchParams.set('bookingId', id);
-    setSearchParams(searchParams);
-  }, [searchParams, setSearchParams]);
-
-  const backToBookingsList = useCallback(() => {
-    searchParams.delete('bookingId');
-    setSearchParams(searchParams);
-  }, [searchParams, setSearchParams]);
-
   const handlePageChange = useCallback((newPage: number) => {
     setChangingPage(true);
     setCurrentPage(newPage);
@@ -123,31 +99,8 @@ const GuestCancellations: FC = () => {
     setCurrentPage(1);
   }, []);
 
-  if (isLoading) {
-    return (
-      bookingId ? <BookingDetailsSkeleton /> : <GuestBookingsSkeleton />
-    )
-  }
-
+  if (isLoading) return <GuestBookingsSkeleton />;
   if (errorMessage) return <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">{errorMessage}</div>;
-
-  if (bookingId) {
-    return (
-      <div className="max-w-7xl mx-auto space-y-6 overflow-y-auto h-[calc(100vh-3rem)] pr-2">
-        <div className="flex justify-between items-center mb-6 sticky top-0 bg-gray-50 py-3 z-10">
-          <h1 className="text-2xl font-bold text-gray-800">Booking Details</h1>
-          <button
-            onClick={backToBookingsList}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md flex items-center"
-          >
-            <span className="mr-2">&larr;</span> Back to Cancellations
-          </button>
-        </div>
-
-        {bookingDetailsQuery.isPending ? <BookingDetailsSkeleton /> : <BookingData bookingId={bookingId} />}
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 container mx-auto py-4">
@@ -173,14 +126,7 @@ const GuestCancellations: FC = () => {
       {/* Bookings Table */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="p-6">
-          {changingPage && (
-            <div className="flex justify-center items-center py-10">
-              <Loader size={40} className="animate-spin text-blue-500" />
-              <span className="ml-3 text-lg text-gray-600">Loading cancelled bookings...</span>
-            </div>
-          )}
-
-          {!changingPage && filteredBookings.length > 0 ? (
+          {filteredBookings.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 table-fixed">
                 <thead>
@@ -214,7 +160,7 @@ const GuestCancellations: FC = () => {
                           const diffTime = Math.abs(end.getTime() - start.getTime());
                           duration = Math.ceil(diffTime / (1000 * 60 * 60)) || 1;
                         } catch (e) {
-                          console.error("Error calculating venue duration:", e);
+                          console.error(`"Error calculating venue duration: ${e}`);
                         }
                       }
 
@@ -239,7 +185,7 @@ const GuestCancellations: FC = () => {
                           const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
                           nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
                         } catch (e) {
-                          console.error("Error calculating room nights:", e);
+                          console.error(`Error calculating room nights: ${e}`);
                         }
                       }
 
@@ -270,7 +216,7 @@ const GuestCancellations: FC = () => {
                               />
                             </div>
                             <div className="ml-4">
-                              <div className="text-md font-semibold text-gray-900">{itemName}</div>
+                              <div className="text-lg font-semibold text-gray-900">{itemName}</div>
                               {isVenueBooking ? (
                                 <div className="text-md bg-blue-100 text-blue-800 px-2 py-0.5 rounded inline-block mt-1">Venue</div>
                               ) : (
@@ -300,7 +246,10 @@ const GuestCancellations: FC = () => {
                           <div className="flex justify-center space-x-2">
                             <button
                               className="bg-gray-600 hover:bg-gray-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
-                              onClick={() => viewBookingDetails(id.toString())}
+                              onClick={() => {
+                                setSelectedBookingId(booking.id);
+                                setShowBookingDetailModal(true);
+                              }}
                             >
                               <Eye size={30} className="mr-1" /> View
                             </button>
@@ -311,7 +260,7 @@ const GuestCancellations: FC = () => {
                   })}
                 </tbody>
               </table>
-              {totalPages > 1 && !changingPage && (
+              {totalPages > 1 && (
                 <div className="flex justify-center mt-6">
                   <nav className="flex items-center space-x-1">
                     <button
@@ -343,88 +292,93 @@ const GuestCancellations: FC = () => {
                 </div>
               )}
             </div>
-          ) : !changingPage && filteredBookings.length === 0 && (
+          ) : (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="py-12 flex flex-col items-center justify-center text-center"
+              className="py-16 flex flex-col items-center justify-center text-center"
             >
               <motion.div
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
                 transition={{
+                  duration: 0.5,
+                  delay: 0.2,
                   type: "spring",
-                  stiffness: 260,
-                  damping: 20
+                  stiffness: 200
                 }}
-                className="relative mb-6"
+                className="bg-gray-100 p-4 rounded-full mb-4"
               >
-                <motion.div
-                  animate={{
-                    rotate: [0, 10, -10, 10, 0],
-                    scale: [1, 1.05, 1]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 3
-                  }}
-                  className="bg-purple-100 p-6 rounded-full"
-                >
-                  <Calendar size={64} className="text-purple-600" />
-                </motion.div>
-                <motion.div
-                  animate={{
-                    y: [0, -10, 0],
-                    opacity: [0.8, 1, 0.8]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 1
-                  }}
-                  className="absolute -top-3 -right-3 bg-gray-100 p-2 rounded-full"
-                >
-                  <Search size={24} className="text-gray-500" />
-                </motion.div>
+                <Calendar size={50} className="text-purple-500" />
               </motion.div>
 
               <motion.h3
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-2xl font-semibold text-gray-800 mb-3"
+                className="text-xl font-bold text-gray-800 mb-2"
               >
-                No cancelled bookings found
+                No Cancelled Bookings Found
               </motion.h3>
 
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="text-gray-500 max-w-md mb-8"
-              >
-                You don't have any cancelled bookings at the moment. All your future cancellations will appear here.
-              </motion.p>
-
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center justify-center"
-              >
-                <a
-                  href="/bookings"
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium flex items-center hover:bg-purple-700 transition-colors"
+              {searchTerm && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-gray-500 max-w-md mb-6"
                 >
-                  <ArrowLeft size={18} className="mr-2" />
-                  Go to active bookings
-                </a>
-              </motion.div>
+                  You don't have any cancelled bookings yet. When you cancel your booking, it will appear here.
+                </motion.p>
+              )}
+
+              {searchTerm && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  className="flex flex-col sm:flex-row gap-3"
+                >
+                  <div className="flex items-center bg-purple-50 text-purple-700 px-4 py-2 rounded-lg">
+                    <SearchIcon size={18} className="mr-2" />
+                    <span>Search: <strong>"{searchTerm}"</strong></span>
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="ml-2 text-purple-500 hover:text-purple-700"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {!searchTerm && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium shadow-md"
+                >
+                  Book Now
+                </motion.button>
+              )}
             </motion.div>
           )}
         </div>
       </div>
+
+      {showBookingDetailModal && (
+        <ViewBookingDetailsModal
+          bookingId={selectedBookingId}
+          onClose={() => {
+            setShowBookingDetailModal(false);
+            setSelectedBookingId(null);
+          }}
+        />
+      )}
     </div>
   );
 };

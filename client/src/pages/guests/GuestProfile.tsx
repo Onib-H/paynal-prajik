@@ -397,7 +397,7 @@ const GuestProfile = () => {
             variants={fadeInVariants}
           >
             <form onSubmit={handleSubmit(handleSaveProfile)} className="p-6">
-              <h3 className="text-lg font-semibold flex items-center border-b border-gray-200 pb-3 mb-6">
+              <h3 className="text-xl font-semibold flex items-center border-b border-gray-200 pb-3 mb-6">
                 <User className="h-5 w-5 mr-2 text-purple-500" />
                 Personal Information
               </h3>
@@ -508,7 +508,7 @@ const GuestProfile = () => {
                     whileTap={{ scale: 0.98 }}
                     type="button"
                     onClick={handleCancelEdit}
-                    className="mr-3 px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="mr-3 px-4 py-2 cursor-pointer text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
                     disabled={updateProfileMutation.isPending}
                   >
                     Cancel
@@ -517,7 +517,7 @@ const GuestProfile = () => {
                     whileHover={{ scale: 1.02, boxShadow: "0 4px 6px -1px rgba(147, 51, 234, 0.2)" }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-70"
+                    className="px-4 py-2 bg-purple-600 cursor-pointer text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-70"
                     disabled={updateProfileMutation.isPending}
                   >
                     {updateProfileMutation.isPending ? (

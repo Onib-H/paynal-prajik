@@ -4,13 +4,14 @@ import { AtSign, PencilIcon, TrashIcon, UserRound } from "lucide-react";
 import { FC, useCallback, useState } from "react";
 import { toast } from "react-toastify";
 import DefaultProfilePic from "../../assets/Default_pfp.jpg";
-import EditUserModal, { IUser } from "../../components/admin/EditUserModal";
+import EditUserModal from "../../components/admin/EditUserModal";
+import { IUser } from "../../types/UsersAdmin";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
-import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
 import { archiveUser, fetchAllUsers, manageUser } from "../../services/Admin";
 import { CreateUserFormData } from "../../types/UsersAdmin";
 import Error from "../_ErrorBoundary";
+import ManageAmenitiesSkeleton from "../../motions/skeletons/ManageAmenitiesSkeleton";
 
 const VALID_EMAIL_PROVIDERS = [
   "gmail.com", "yahoo.com", "yahoo.com.ph", "outlook.com", "hotmail.com",
@@ -116,7 +117,7 @@ const ManageUsers: FC = () => {
     try {
       await deleteMutation.mutateAsync(selectedUser.id);
     } catch (error) {
-      console.error("Error archiving user:", error);
+      console.error(`Error archiving user: ${error}`);
       setIsSubmitting(false);
     }
   }, [deleteMutation, selectedUser]);
@@ -227,7 +228,7 @@ const ManageUsers: FC = () => {
     }
   }, [formErrors]);
 
-  if (isLoading) return <DashboardSkeleton />;
+  if (isLoading) return <ManageAmenitiesSkeleton />;
   if (isError) return <Error />;
 
   return (

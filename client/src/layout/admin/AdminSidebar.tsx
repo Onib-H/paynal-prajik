@@ -9,13 +9,13 @@ import { menuItems } from "../../constants/AdminMenuSidebar";
 import { useUserContext } from "../../contexts/AuthContext";
 import { logout } from "../../services/Auth";
 import hotelLogo from "../../assets/hotel_logo.png";
-import { webSocketService } from "../../services/websockets";
+import { webSocketAdminActives } from "../../services/websockets";
 
 const AdminSidebar: FC = () => {
   const navigate = useNavigate();
   const { setIsAuthenticated, role, setRole, userDetails } = useUserContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [pendingCount, setPendingCount] = useState<number>(0);
+  const [activeBookingCount, setActiveBookingCount] = useState<number>(0);
 
   const modalCancel = () => setIsModalOpen(false);
 
@@ -38,20 +38,18 @@ const AdminSidebar: FC = () => {
   useEffect(() => {
     if (!userDetails?.id) return;
 
-    webSocketService.connect(userDetails.id.toString());
+    webSocketAdminActives.connect(userDetails?.id);
     
-    const handlePendingCount = (data: any) => {
-      if (data.type === "pending_count") {
-        setPendingCount(data.count);
-      }
+    const handleActiveCount = (data: any) => {
+      if (data.type === "active_count") setActiveBookingCount(data.count);
     };
 
-    webSocketService.on('pending_count', handlePendingCount);
-    webSocketService.send({ type: "get_pending_count" });
+    webSocketAdminActives.on('active_count', handleActiveCount);
+    webSocketAdminActives.send({ type: "get_active_count" });
 
     return () => {
-      webSocketService.disconnect();
-      webSocketService.off('pending_count');
+      webSocketAdminActives.disconnect();
+      webSocketAdminActives.off('active_count');
     }
   }, [userDetails?.id]);
 
@@ -60,11 +58,11 @@ const AdminSidebar: FC = () => {
       return {
         ...item,
         label: (
-          <div className="flex items-center justify-between w-full">
+          <div className="flex items-end justify-end w-full">
             <span>Manage Bookings</span>
-            {pendingCount > 0 && (
-              <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
-                {pendingCount}
+            {activeBookingCount > 0 && (
+              <span className="ml-14 bg-red-500 font-semibold text-white rounded-full px-2 py-1 text-xs">
+                {activeBookingCount}
               </span>
             )}
           </div>

@@ -82,14 +82,14 @@ const EditAmenityModal: FC<IEditAmenityModalProps> = ({ isOpen, amenityData, onS
                 <button
                   type="button"
                   onClick={cancel}
-                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors duration-200 uppercase font-semibold"
+                  className="px-4 py-2 cursor-pointer bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors duration-200 uppercase font-semibold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 uppercase font-semibold"
+                  className="px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 uppercase font-semibold"
                 >
                   {amenityData ? "Update" : "Save"}
                 </button>

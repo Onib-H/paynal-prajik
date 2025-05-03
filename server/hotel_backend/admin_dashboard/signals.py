@@ -5,15 +5,17 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
 @receiver(post_save, sender=Bookings)
-def send_pending_count_update(sender, instance, created, **kwargs):
-    if created or instance.status == 'pending':
+def send_active_count_update(sender, instance, created, **kwargs):
+    if instance._state.adding or instance.status == 'pending':
         channel_layer = get_channel_layer()
-        count = Bookings.objects.filter(status='pending').count()
+        count = Bookings.objects.exclude(
+            status__in=['rejected', 'cancelled', 'no_show', 'checked_out']
+        ).count()
         
         async_to_sync(channel_layer.group_send)(
-            f'admin_notifications_{instance.user.id}',
+            'admin_notifications',
             {
-                'type': 'pending_update',
+                'type': 'active_count',
                 'count': count
             }
         )

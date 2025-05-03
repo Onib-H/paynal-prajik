@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { memo, useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
 import deluxe_twin from "../../assets/deluxe_twin.jpg";
 import { fetchBookingDetail } from "../../services/Booking";
 import BookingCard from "./BookingCard";
@@ -104,12 +103,11 @@ const formatDate = (dateString: string): string => {
 };
 
 const BookingData = memo(({ bookingId }: BookingDataProps) => {
-  const [searchParams] = useSearchParams();
-  const effectiveBookingId = bookingId || searchParams.get('bookingId');
+  const effectiveBookingId = bookingId;
 
   const { data: bookingData, isLoading, error } = useQuery<BookingData>({
     queryKey: ['booking', effectiveBookingId],
-    queryFn: () => fetchBookingDetail(effectiveBookingId || ''),
+    queryFn: () => fetchBookingDetail(effectiveBookingId),
     enabled: !!effectiveBookingId,
   });
 

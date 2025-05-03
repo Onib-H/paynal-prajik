@@ -9,6 +9,14 @@ export interface Area {
     status?: "available" | "maintenance";
 }
 
+export interface AreaCardProps {
+  id: number;
+  title: string;
+  priceRange: string;
+  image: string;
+  description: string;
+}
+
 export interface AreasResponse {
     data: Area[];
 }

@@ -510,8 +510,7 @@ const ConfirmBooking = () => {
                     {...register("firstName", {
                       required: "First name is required",
                     })}
-                    className={`w-full px-3 py-2 border ${errors.firstName ? "border-red-500" : "border-gray-300"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.firstName ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.firstName && (
                     <motion.p
@@ -537,8 +536,7 @@ const ConfirmBooking = () => {
                     {...register("lastName", {
                       required: "Last name is required",
                     })}
-                    className={`w-full px-3 py-2 border ${errors.lastName ? "border-red-500" : "border-gray-300"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.lastName ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.lastName && (
                     <motion.p
@@ -574,8 +572,7 @@ const ConfirmBooking = () => {
                         return true;
                       }
                     })}
-                    className={`w-full px-3 py-2 border ${errors.phoneNumber ? "border-red-500" : "border-gray-300"
-                      } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
+                    className={`w-full px-3 py-2 border ${errors.phoneNumber ? "border-red-500" : "border-gray-300"} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300`}
                   />
                   {errors.phoneNumber && (
                     <motion.p
@@ -642,7 +639,7 @@ const ConfirmBooking = () => {
               </div>
 
               {/* Address and Valid ID */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 gap-4 mb-4">
                 <div>
                   <label
                     htmlFor="validId"
@@ -658,8 +655,7 @@ const ConfirmBooking = () => {
                       required: "Please upload a valid ID",
                       onChange: onFileChange,
                     })}
-                    className={`w-full py-2 border pl-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300 ${errors.validId ? "border-red-500" : "border-gray-300"
-                      }`}
+                    className={`w-full py-2 border pl-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300 ${errors.validId ? "border-red-500" : "border-gray-300"}`}
                   />
 
                   {errors.validId && (
