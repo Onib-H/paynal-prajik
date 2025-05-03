@@ -590,10 +590,7 @@ const ConfirmVenueBooking = () => {
                   {/* Valid ID Preview Container */}
                   {validIdPreview && (
                     <div className="mt-2 relative">
-                      <div
-                        className="relative overflow-hidden"
-                      // style={{ height: "120px" }}
-                      >
+                      <div className="relative overflow-hidden">
                         <img
                           loading="lazy"
                           src={validIdPreview}

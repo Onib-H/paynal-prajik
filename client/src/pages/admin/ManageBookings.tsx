@@ -300,19 +300,19 @@ const ManageBookings: FC = () => {
           <table className="min-w-full bg-white border border-gray-200">
             <thead>
               <tr className="bg-gray-100">
-                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Booking Date
                 </th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Guest
                 </th>
-                <th className="p-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Property
                 </th>
-                <th className="hidden md:table-cell py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="hidden md:table-cell py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Check-in
                 </th>
-                <th className="hidden md:table-cell py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="hidden md:table-cell py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Check-out
                 </th>
                 <th className="p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -336,33 +336,40 @@ const ManageBookings: FC = () => {
 
                   return (
                     <tr key={booking.id} className="hover:bg-gray-50">
-                      <td className="p-3 text-sm md:text-base text-gray-700 whitespace-nowrap">
+                      <td className="p-3 text-sm text-center md:text-base text-gray-700 whitespace-nowrap">
                         {formatDate(booking.created_at)}
                       </td>
-                      <td className="p-3 text-sm md:text-base text-gray-700 whitespace-nowrap">
+                      <td className="p-3 text-sm text-left md:text-base text-gray-700 whitespace-nowrap">
                         {`${booking.user?.first_name || ""} ${booking.user?.last_name || ""
                           }`}
                       </td>
                       <td className="p-3 text-sm md:text-base text-gray-700 whitespace-nowrap">
-                        <div className="flex flex-col items-start">
-                          <span className="max-w-[120px] md:max-w-full font-semibold">
-                            {propertyName}{" "}
+                        <div className="flex items-center">
+                          <div className="h-12 w-12 flex-shrink-0">
+                            <img
+                              src={isVenueBooking ? booking.area_details?.area_image : booking.room_details?.room_image}
+                              alt={propertyName}
+                              className="h-12 w-12 rounded-md object-cover"
+                            />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-md font-semibold text-gray-900">{propertyName}</div>
                             {isVenueBooking ? (
-                              <span className="px-2 py-0.5 mt-1 items-end text-sm uppercase font-semibold bg-blue-100 text-blue-800 rounded-full">
+                              <span className="px-2 py-0.5 mt-1 text-xs uppercase font-semibold bg-blue-100 text-blue-800 rounded-full">
                                 Area
                               </span>
                             ) : (
-                              <span className="px-2 py-0.5 mt-1 items-end text-sm uppercase font-semibold bg-green-100 text-green-800 rounded-full">
+                              <span className="px-2 py-0.5 mt-1 text-xs uppercase font-semibold bg-green-100 text-green-800 rounded-full">
                                 Room
                               </span>
                             )}
-                          </span>
+                          </div>
                         </div>
                       </td>
-                      <td className="hidden md:table-cell py-3 px-4 text-base text-gray-700 whitespace-nowrap">
+                      <td className="hidden md:table-cell text-center py-3 px-4 text-base text-gray-700 whitespace-nowrap">
                         {formatDate(booking.check_in_date)}
                       </td>
-                      <td className="hidden md:table-cell py-3 px-4 text-base text-gray-700 whitespace-nowrap">
+                      <td className="hidden md:table-cell text-center py-3 px-4 text-base text-gray-700 whitespace-nowrap">
                         {formatDate(booking.check_out_date)}
                       </td>
                       <td className="p-3 text-center text-sm md:text-base text-gray-700 whitespace-nowrap">
@@ -379,7 +386,7 @@ const ManageBookings: FC = () => {
                         <div className="flex items-center justify-center">
                           <button
                             onClick={() => handleViewBooking(booking)}
-                            className="p-1 md:p-1.5 bg-blue-100 cursor-pointer text-blue-600 rounded-md hover:bg-blue-200"
+                            className="p-2 cursor-pointer bg-gray-600 hover:bg-gray-700 rounded-full text-white"
                             title="View Details"
                           >
                             <Eye size={20} className="md:w-6 md:h-6" />

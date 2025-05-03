@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, BookOpen, ArrowLeft as LeftArrow, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
+import { ArrowLeft, BookOpen, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
 import { useUserContext } from "../contexts/AuthContext";
-import { fetchAreaDetail, fetchAreas } from "../services/Area";
+import { fetchAreaDetail } from "../services/Area";
 import { fetchAreaReviews } from "../services/Booking";
 import { Area } from "../types/AreaClient";
 import RoomAndAreaDetailsSkeleton from "../motions/skeletons/RoomAndAreaDetailsSkeleton";
@@ -24,11 +24,6 @@ const VenueDetails = () => {
         enabled: !!id,
     });
 
-    const { data: allVenuesData } = useQuery<{ data: Area[] }>({
-        queryKey: ["venues"],
-        queryFn: fetchAreas,
-    });
-
     const { data: reviewsData, isLoading: isLoadingReviews, error: reviewsError } = useQuery({
         queryKey: ["areaReviews", id],
         queryFn: () => fetchAreaReviews(id, currentPage, pageSize),
@@ -44,11 +39,6 @@ const VenueDetails = () => {
 
     const venueDetail = venueData?.data;
     if (!venueDetail) return <div className="text-center mt-4">No venue details available</div>;
-
-    const allVenues = allVenuesData?.data || [];
-    const currentIndex = allVenues.findIndex((venue) => venue.id === Number(id));
-    const prevVenue = currentIndex > 0 ? allVenues[currentIndex - 1] : null;
-    const nextVenue = currentIndex < allVenues.length - 1 ? allVenues[currentIndex + 1] : null;
 
     const reviews = reviewsData?.data || [];
     const totalReviews = reviewsData?.total || 0;
@@ -95,12 +85,6 @@ const VenueDetails = () => {
                 duration: 0.6
             }
         }
-    };
-
-    const navButtonVariants = {
-        initial: { opacity: 0.7, scale: 1 },
-        hover: { opacity: 1, scale: 1.05, y: -2 },
-        tap: { scale: 0.95 }
     };
 
     return (
@@ -214,60 +198,6 @@ const VenueDetails = () => {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </motion.div>
-
-                        {/* Venue Navigation */}
-                        <motion.div
-                            variants={itemVariants}
-                            className="bg-white rounded-xl p-6 shadow-lg"
-                        >
-                            <div className="flex justify-between items-center">
-                                {prevVenue ? (
-                                    <Link to={`/areas/${prevVenue.id}`}>
-                                        <motion.div
-                                            initial="initial"
-                                            whileHover="hover"
-                                            whileTap="tap"
-                                            variants={navButtonVariants}
-                                            className="flex items-center gap-3 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg"
-                                        >
-                                            <LeftArrow className="w-4 h-4" />
-                                            <span>Previous Area</span>
-                                        </motion.div>
-                                    </Link>
-                                ) : (
-                                    <div className="w-[120px]"></div>
-                                )}
-
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.6 }}
-                                    className="flex flex-col items-center"
-                                >
-                                    <span className="text-gray-500 text-sm">Area</span>
-                                    <span className="font-medium text-gray-800">
-                                        {currentIndex + 1} of {allVenues.length}
-                                    </span>
-                                </motion.div>
-
-                                {nextVenue ? (
-                                    <Link to={`/areas/${nextVenue.id}`}>
-                                        <motion.div
-                                            initial="initial"
-                                            whileHover="hover"
-                                            whileTap="tap"
-                                            variants={navButtonVariants}
-                                            className="flex items-center gap-3 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg"
-                                        >
-                                            <span>Next Area</span>
-                                            <ArrowRight className="w-4 h-4" />
-                                        </motion.div>
-                                    </Link>
-                                ) : (
-                                    <div className="w-[120px]"></div>
-                                )}
                             </div>
                         </motion.div>
 
