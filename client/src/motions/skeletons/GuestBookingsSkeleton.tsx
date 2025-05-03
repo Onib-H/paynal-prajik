@@ -31,7 +31,7 @@ const GuestBookingsSkeleton = () => {
                 <div className="p-6">
                     {/* Table Header */}
                     <div className="hidden md:grid grid-cols-7 gap-4 mb-4">
-                        {[...Array(7)].map((_, i) => (
+                        {[...Array(5)].map((_, i) => (
                             <Skeleton key={`header-${i}`} height={20} className="rounded" />
                         ))}
                     </div>

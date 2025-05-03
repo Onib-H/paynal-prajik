@@ -10,12 +10,12 @@ export const fetchAllRooms = async () => {
     });
     return response.data;
   } catch (error) {
-    console.error("Error fetching rooms:", error);
+    console.error(`Error fetching rooms: ${error}`);
     throw error;
   }
 };
 
-export const fetchRoomDetail = async (id: string | number) => {
+export const fetchRoomDetail = async (id: string) => {
   try {
     const response = await room.get(`/rooms/${id}`, {
       headers: {

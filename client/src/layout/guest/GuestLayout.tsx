@@ -6,9 +6,11 @@ const GuestLayout: FC = () => {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <div className="flex flex-1">
-                <GuestSidebar />
-                <main className="flex-grow p-2 bg-gray-50">
+            <div className="flex">
+                <div className="w-68 sticky top-0 z-50">
+                    <GuestSidebar />
+                </div>
+                <main className="flex-grow min-h-screen overflow-y-auto">
                     <Outlet />
                 </main>
             </div>

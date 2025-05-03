@@ -667,10 +667,7 @@ const ConfirmBooking = () => {
                   {/* Valid ID Preview Container */}
                   {validIdPreview && (
                     <div className="mt-2 relative">
-                      <div
-                        className="relative border rounded-md overflow-hidden"
-                        style={{ height: "120px" }}
-                      >
+                      <div className="relative overflow-hidden">
                         <img
                           loading="lazy"
                           src={validIdPreview}
@@ -680,9 +677,7 @@ const ConfirmBooking = () => {
                       </div>
                       <button
                         type="button"
-                        onClick={() => {
-                          setValidIdPreview(null);
-                        }}
+                        onClick={() => setValidIdPreview(null)}
                         className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
                         aria-label="Remove image"
                       >

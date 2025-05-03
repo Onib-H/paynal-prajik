@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, BookOpen, ArrowLeft as LeftArrow, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
+import { ArrowLeft, BookOpen, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
 import { useUserContext } from "../contexts/AuthContext";
-import { fetchAreaDetail, fetchAreas } from "../services/Area";
+import { fetchAreaDetail } from "../services/Area";
 import { fetchAreaReviews } from "../services/Booking";
 import { Area } from "../types/AreaClient";
 import RoomAndAreaDetailsSkeleton from "../motions/skeletons/RoomAndAreaDetailsSkeleton";
@@ -15,29 +15,18 @@ const VenueDetails = () => {
     const { id } = useParams<{ id: string }>();
     const { isAuthenticated } = useUserContext();
     const [isImageLoaded, setIsImageLoaded] = useState(false);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const pageSize = 5;
 
-    const {
-        data: venueData,
-        isLoading: isLoadingVenue,
-        error: venueError,
-    } = useQuery<{ data: Area }>({
+    const { data: venueData, isLoading: isLoadingVenue, error: venueError } = useQuery<{ data: Area }>({
         queryKey: ["venue", id],
-        queryFn: () => fetchAreaDetail(Number(id)),
+        queryFn: () => fetchAreaDetail(id as string),
         enabled: !!id,
     });
 
-    const { data: allVenuesData } = useQuery<{ data: Area[] }>({
-        queryKey: ["venues"],
-        queryFn: fetchAreas,
-    });
-
-    const {
-        data: reviewsData,
-        isLoading: isLoadingReviews,
-        error: reviewsError
-    } = useQuery({
+    const { data: reviewsData, isLoading: isLoadingReviews, error: reviewsError } = useQuery({
         queryKey: ["areaReviews", id],
-        queryFn: () => fetchAreaReviews(id as string),
+        queryFn: () => fetchAreaReviews(id, currentPage, pageSize),
         enabled: !!id,
     });
 
@@ -51,12 +40,8 @@ const VenueDetails = () => {
     const venueDetail = venueData?.data;
     if (!venueDetail) return <div className="text-center mt-4">No venue details available</div>;
 
-    const allVenues = allVenuesData?.data || [];
-    const currentIndex = allVenues.findIndex((venue) => venue.id === Number(id));
-    const prevVenue = currentIndex > 0 ? allVenues[currentIndex - 1] : null;
-    const nextVenue = currentIndex < allVenues.length - 1 ? allVenues[currentIndex + 1] : null;
-
     const reviews = reviewsData?.data || [];
+    const totalReviews = reviewsData?.total || 0;
 
     const formattedPrice = typeof venueDetail.price_per_hour === 'string'
         ? venueDetail.price_per_hour.startsWith('₱')
@@ -100,12 +85,6 @@ const VenueDetails = () => {
                 duration: 0.6
             }
         }
-    };
-
-    const navButtonVariants = {
-        initial: { opacity: 0.7, scale: 1 },
-        hover: { opacity: 1, scale: 1.05, y: -2 },
-        tap: { scale: 0.95 }
     };
 
     return (
@@ -222,74 +201,33 @@ const VenueDetails = () => {
                             </div>
                         </motion.div>
 
-                        {/* Venue Navigation */}
-                        <motion.div
-                            variants={itemVariants}
-                            className="bg-white rounded-xl p-6 shadow-lg"
-                        >
-                            <div className="flex justify-between items-center">
-                                {prevVenue ? (
-                                    <Link to={`/areas/${prevVenue.id}`}>
-                                        <motion.div
-                                            initial="initial"
-                                            whileHover="hover"
-                                            whileTap="tap"
-                                            variants={navButtonVariants}
-                                            className="flex items-center gap-3 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg"
-                                        >
-                                            <LeftArrow className="w-4 h-4" />
-                                            <span>Previous Area</span>
-                                        </motion.div>
-                                    </Link>
-                                ) : (
-                                    <div className="w-[120px]"></div>
-                                )}
-
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.6 }}
-                                    className="flex flex-col items-center"
-                                >
-                                    <span className="text-gray-500 text-sm">Area</span>
-                                    <span className="font-medium text-gray-800">
-                                        {currentIndex + 1} of {allVenues.length}
-                                    </span>
-                                </motion.div>
-
-                                {nextVenue ? (
-                                    <Link to={`/areas/${nextVenue.id}`}>
-                                        <motion.div
-                                            initial="initial"
-                                            whileHover="hover"
-                                            whileTap="tap"
-                                            variants={navButtonVariants}
-                                            className="flex items-center gap-3 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg"
-                                        >
-                                            <span>Next Area</span>
-                                            <ArrowRight className="w-4 h-4" />
-                                        </motion.div>
-                                    </Link>
-                                ) : (
-                                    <div className="w-[120px]"></div>
-                                )}
-                            </div>
-                        </motion.div>
-
                         {/* Reviews Card */}
                         <motion.div
                             variants={itemVariants}
                             className="bg-white rounded-xl p-8 shadow-lg"
                         >
-                            <h2 className="text-2xl font-playfair font-bold text-gray-800 mb-6 flex items-center">
-                                <Star className="mr-3 text-yellow-500" />
-                                Guest Reviews
-                            </h2>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="flex items-center text-3xl font-playfair font-bold text-gray-800">
+                                    <Star className="mr-3 text-yellow-500" />
+                                    Guest Reviews
+                                </h2>
+
+                                <div className="flex gap-2 items-center">
+                                    <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                                    <span className="text-indigo-600 text-2xl font-bold drop-shadow-md">
+                                        {venueDetail.average_rating?.toFixed(1) || '0.0'}
+                                    </span>
+                                    <span className="text-gray-500 text-lg">({reviewsData?.total || 0} reviews)</span>
+                                </div>
+                            </div>
 
                             <ReviewList
                                 reviews={reviews}
                                 isLoading={isLoadingReviews}
-                                error={reviewsError as Error | null}
+                                error={reviewsError}
+                                currentPage={currentPage}
+                                totalPages={Math.ceil(totalReviews / pageSize)}
+                                onPageChange={setCurrentPage}
                             />
                         </motion.div>
                     </motion.div>

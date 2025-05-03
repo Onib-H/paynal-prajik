@@ -16,33 +16,24 @@ const RoomDetails = () => {
   const { isAuthenticated } = useUserContext();
   const { id } = useParams<{ id: string }>();
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
-  const {
-    data: roomData,
-    isLoading: isLoadingRoom,
-    error: roomError,
-  } = useQuery({
+  const pageSize: number = 5;
+
+  const { data: roomData, isLoading: isLoadingRoom, error: roomError } = useQuery({
     queryKey: ["room", id],
     queryFn: () => fetchRoomDetail(id as string),
     enabled: !!id,
   });
 
-  const {
-    data: allAmenitiesData,
-    isLoading: isLoadingAmenities,
-    error: amenitiesError,
-  } = useQuery({
+  const { data: allAmenitiesData, isLoading: isLoadingAmenities, error: amenitiesError } = useQuery({
     queryKey: ["allAmenitiesForRoomDetails", 1, 100],
     queryFn: fetchAmenities,
   });
 
-  const {
-    data: reviewsData,
-    isLoading: isLoadingReviews,
-    error: reviewsError
-  } = useQuery({
-    queryKey: ["roomReviews", id],
-    queryFn: () => fetchRoomReviews(id as string),
+  const { data: reviewsData, isLoading: isLoadingReviews, error: reviewsError } = useQuery({
+    queryKey: ["roomReviews", id, currentPage],
+    queryFn: () => fetchRoomReviews(id as string, currentPage, pageSize),
     enabled: !!id,
   });
 
@@ -262,15 +253,28 @@ const RoomDetails = () => {
               variants={itemVariants}
               className="bg-white rounded-xl p-8 shadow-lg"
             >
-              <h2 className="text-2xl font-playfair font-bold text-gray-800 mb-6 flex items-center">
-                <Star className="mr-3 text-yellow-500" />
-                Guest Reviews
-              </h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-3xl font-playfair font-bold text-gray-800 flex items-center">
+                  <Star className="mr-3 text-yellow-500" />
+                  Guest Reviews
+                </h2>
+
+                <div className="flex items-center gap-2">
+                  <Star className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                  <span className="text-indigo-600 text-2xl font-bold drop-shadow-md">
+                    {roomDetail.average_rating?.toFixed(1) || '0.0'}
+                  </span>
+                  <span className="text-gray-500 text-lg">({reviewsData?.total || 0} reviews)</span>
+                </div>
+              </div>
 
               <ReviewList
                 reviews={reviews}
                 isLoading={isLoadingReviews}
-                error={reviewsError as Error | null}
+                error={reviewsError}
+                currentPage={currentPage}
+                totalPages={Math.ceil(reviewsData?.total / pageSize)}
+                onPageChange={setCurrentPage}
               />
             </motion.div>
           </motion.div>

@@ -307,9 +307,8 @@ class ReviewSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Reviews
-        fields = ['id', 'booking', 'user', 'review_text', 'rating', 'created_at', 
-                'user_name', 'booking_details', 'user_profile_image', 'formatted_date']
-        read_only_fields = ['user', 'created_at']
+        fields = ['id', 'rating', 'user', 'booking', 'review_text', 'created_at', 'room', 'area', 'user_profile_image', 'formatted_date', 'user_name', 'booking_details']
+        read_only_fields = ['user', 'room', 'area', 'booking']
     
     def get_user_name(self, obj):
         if obj.user:
@@ -353,18 +352,14 @@ class ReviewSerializer(serializers.ModelSerializer):
         return value
     
     def create(self, validated_data):
-        request = self.context.get('request')
-        if request and hasattr(request, 'user') and request.user.is_authenticated:
-            validated_data['user'] = request.user
+        # Auto-set relationships from context
+        validated_data['user'] = self.context['request'].user
+        validated_data['booking'] = self.context['booking']
         
-        booking_id = validated_data.get('booking').id
-        try:
-            booking = Bookings.objects.get(id=booking_id)
-            if booking.status != 'checked_out':
-                raise serializers.ValidationError(
-                    "Reviews can only be submitted for checked-out bookings"
-                )
-        except Bookings.DoesNotExist:
-            raise serializers.ValidationError("Booking not found")
+        # Set room/area based on booking type
+        if validated_data['booking'].is_venue_booking:
+            validated_data['area'] = validated_data['booking'].area
+        else:
+            validated_data['room'] = validated_data['booking'].room
             
         return super().create(validated_data)

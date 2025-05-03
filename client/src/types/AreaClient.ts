@@ -7,14 +7,15 @@ export interface Area {
     capacity: number;
     price_per_hour: number | string;
     status?: "available" | "maintenance";
+    average_rating?: number;
 }
 
 export interface AreaCardProps {
-  id: number;
-  title: string;
-  priceRange: string;
-  image: string;
-  description: string;
+    id: number;
+    title: string;
+    priceRange: string;
+    image: string;
+    description: string;
 }
 
 export interface AreasResponse {

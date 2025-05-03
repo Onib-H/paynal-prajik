@@ -8,7 +8,7 @@ import { Area } from "../../../types/AreaClient";
 const VenueList = () => {
   const { data: areasData, isLoading, isError } = useQuery<{ data: Area[] }>({
     queryKey: ["venues"],
-    queryFn: fetchAreas as any,
+    queryFn: fetchAreas,
   });
 
   const [selectedArea, setSelectedArea] = useState<number | null>(null);
@@ -63,7 +63,6 @@ const VenueList = () => {
                 id={area.id}
                 title={area.area_name}
                 priceRange={area.price_per_hour.toString()}
-                capacity={area.capacity}
                 image={area.area_image}
                 description={area.description}
               />

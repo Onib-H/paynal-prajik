@@ -15,6 +15,7 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q, Count, Sum
 from datetime import datetime, date, timedelta
 from .email.booking import send_booking_confirmation_email, send_booking_rejection_email
+import traceback
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -170,6 +171,7 @@ def area_reservations(request):
 
 # Rooms
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def fetch_rooms(request):
     try:
         rooms = Rooms.objects.all().order_by('id')
@@ -332,6 +334,7 @@ def delete_room(request, room_id):
 
 # Areas
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def fetch_areas(request):
     try:
         areas = Areas.objects.all().order_by('id')
@@ -614,7 +617,6 @@ def admin_bookings(request):
         
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)
-        
         paginator = Paginator(bookings, page_size)
         
         try:
@@ -636,7 +638,6 @@ def admin_bookings(request):
             }
         }, status=status.HTTP_200_OK)
     except Exception as e:
-        import traceback
         traceback.print_exc()
         return Response({"error": str(e), "traceback": traceback.format_exc()}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -787,7 +788,8 @@ def record_payment(request, booking_id):
             user=booking.user,
             transaction_type=transaction_type,
             amount=amount,
-            status='completed'
+            status='completed',
+            transaction_date=booking.check_in_date
         )
         
         return Response({
@@ -806,13 +808,28 @@ def record_payment(request, booking_id):
 @permission_classes([IsAuthenticated])
 def booking_status_counts(request):
     try:
-        pending_count = Bookings.objects.filter(status='pending').count()
-        reserved_count = Bookings.objects.filter(status='reserved').count()
-        checked_in_count = Bookings.objects.filter(status='checked_in').count()
-        checked_out_count = Bookings.objects.filter(status='checked_out').count()
-        cancelled_count = Bookings.objects.filter(status='cancelled').count()
-        no_show_count = Bookings.objects.filter(status='no_show').count() 
-        rejected_count = Bookings.objects.filter(status='rejected').count()
+        month = int(request.query_params.get('month'))
+        year = int(request.query_params.get('year'))
+        
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        filters = {
+            'created_at__gte': start_date,
+            'created_at__lte': end_date,
+        }
+        
+        pending_count = Bookings.objects.filter(status='pending', **filters).count()
+        reserved_count = Bookings.objects.filter(status='reserved', **filters).count()
+        checked_in_count = Bookings.objects.filter(status='checked_in', **filters).count()
+        checked_out_count = Bookings.objects.filter(status='checked_out', **filters).count()
+        cancelled_count = Bookings.objects.filter(status='cancelled', **filters).count()
+        no_show_count = Bookings.objects.filter(status='no_show', **filters).count() 
+        rejected_count = Bookings.objects.filter(status='rejected', **filters).count()
         
         return Response({
             "pending": pending_count,
@@ -832,9 +849,27 @@ def booking_status_counts(request):
 def fetch_all_users(request):
     try:
         users = CustomUsers.objects.filter(role="guest")
-        serializer = CustomUserSerializer(users, many=True)
+        
+        page = request.query_params.get('page')
+        page_size = request.query_params.get('page_size')
+        paginator = Paginator(users, page_size)
+        
+        try:
+            paginated_users = paginator.page(page)
+        except PageNotAnInteger:
+            paginated_users = paginator.page(1)
+        except EmptyPage:
+            paginated_users = paginator.page(paginator.num_pages)
+        
+        serializer = CustomUserSerializer(paginated_users, many=True)
         return Response({
-            "data": serializer.data
+            "users": serializer.data,
+            "pagination": {
+                "total_pages": paginator.num_pages,
+                "current_page": int(page),
+                "total_items": paginator.count,
+                "page_size": int(page_size)
+            }
         }, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -860,7 +895,6 @@ def manage_user(request, user_id):
         try:
             if user_id == 0:
                 data = request.POST
-                files = request.FILES
                 
                 email = data.get('email')
                 password = data.get('password')
@@ -1042,7 +1076,6 @@ def daily_occupancy(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))        
-        start_date = datetime(year, month, 1).date()
         
         if month == 12:
             end_date = datetime(year + 1, 1, 1).date() - timedelta(days=1)
@@ -1092,7 +1125,6 @@ def daily_checkins_checkouts(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
         year = int(request.query_params.get('year', timezone.now().year))
-        start_date = datetime(year, month, 1)
         
         if month == 12:
             end_date = datetime(year + 1, 1, 1) - timedelta(days=1)

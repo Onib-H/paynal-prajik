@@ -12,6 +12,10 @@
 
 /* Add some custom styles here */
 @layer base {
+  html {
+    overflow-y: auto;
+  }
+
   html,
   body {
     overflow-x: hidden;

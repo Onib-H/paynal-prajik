@@ -35,7 +35,8 @@ const ManageAreas = () => {
     pagination: PaginationData;
   }>({
     queryKey: ["areas", currentPage, pageSize],
-    queryFn: fetchAreas,
+    queryFn: () => fetchAreas(currentPage, pageSize),
+    staleTime: 1000 * 60 * 5,
   });
 
   const areas = areasResponse?.data || [];
@@ -95,7 +96,7 @@ const ManageAreas = () => {
     },
     onError: (error: any) => {
       toast.error(`Failed to update area: ${error.message || "Unknown error"}`);
-      console.error("Error updating area:", error);
+      console.error(`Error updating area: ${error}`);
     },
     onSettled: () => {
       setLoading(false);
@@ -179,7 +180,7 @@ const ManageAreas = () => {
       if (!areaData.id) await addAreaMutation.mutateAsync(formData);
       else await editAreaMutation.mutateAsync({ areaId: areaData.id, formData });
     } catch (error) {
-      console.error("Error saving area:", error);
+      console.error(`Error saving area: ${error}`);
       throw error;
     }
   };
@@ -188,7 +189,7 @@ const ManageAreas = () => {
   if (isError) return <Error />;
 
   return (
-    <div className="overflow-y-auto h-[calc(100vh-25px)]">
+    <div className="overflow-y-hidden h-full">
       <div className="p-3 container mx-auto">
         {loading && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-900/80 z-[500]">

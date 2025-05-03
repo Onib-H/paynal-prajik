@@ -9,11 +9,13 @@ import { menuItems } from "../../constants/AdminMenuSidebar";
 import { useUserContext } from "../../contexts/AuthContext";
 import { logout } from "../../services/Auth";
 import hotelLogo from "../../assets/hotel_logo.png";
-import { webSocketAdminActives } from "../../services/websockets";
+import { webSocketAdminActives, WebSocketEvent } from "../../services/websockets";
+import useWebSockets from "../../hooks/useWebSockets";
+import { useQuery } from "@tanstack/react-query";
 
 const AdminSidebar: FC = () => {
   const navigate = useNavigate();
-  const { setIsAuthenticated, role, setRole, userDetails } = useUserContext();
+  const { setIsAuthenticated, setRole, userDetails } = useUserContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeBookingCount, setActiveBookingCount] = useState<number>(0);
 
@@ -35,23 +37,33 @@ const AdminSidebar: FC = () => {
 
   const handleLogout = () => logoutMutation();
 
-  useEffect(() => {
-    if (!userDetails?.id) return;
-
-    webSocketAdminActives.connect(userDetails?.id);
-    
-    const handleActiveCount = (data: any) => {
-      if (data.type === "active_count") setActiveBookingCount(data.count);
-    };
-
-    webSocketAdminActives.on('active_count', handleActiveCount);
-    webSocketAdminActives.send({ type: "get_active_count" });
-
-    return () => {
-      webSocketAdminActives.disconnect();
-      webSocketAdminActives.off('active_count');
+  const { send } = useWebSockets(webSocketAdminActives, userDetails?.id, {
+    active_count_update: (data: WebSocketEvent) => {
+      if (data.type === "active_count_update") {
+        setActiveBookingCount(data.count);
+      }
     }
-  }, [userDetails?.id]);
+  });
+
+  const fetchActiveBookings = async (send: (message: any) => void): Promise<number> => {
+    return new Promise((resolve) => {
+      send({ type: "get_active_count" });
+      resolve(activeBookingCount);
+    });
+  };
+
+  const { refetch } = useQuery({
+    queryKey: ["activeBookings"],
+    queryFn: () => fetchActiveBookings(send),
+    enabled: !!userDetails?.id,
+    refetchInterval: 10000, 
+    refetchIntervalInBackground: true,
+    initialData: activeBookingCount,
+  });
+
+  useEffect(() => {
+    if (userDetails?.id) refetch();
+  }, [userDetails?.id, refetch]);
 
   const updatedMenuItems = menuItems.map(item => {
     if (item.label === "Manage Bookings") {
@@ -69,21 +81,7 @@ const AdminSidebar: FC = () => {
         )
       }
     }
-
     return item;
-  });
-
-  const filteredMenuItems = updatedMenuItems.filter((item) => {
-    if (role.toLowerCase() === "staff") {
-      if (
-        item.label === "Dashboard" ||
-        item.label === "Manage Staff" ||
-        item.label === "Reports"
-      ) {
-        return false;
-      }
-    }
-    return true;
   });
 
   return (
@@ -102,7 +100,7 @@ const AdminSidebar: FC = () => {
         {/* Menu items */}
         <div className="flex-grow overflow-y-auto p-2 w-full">
           <ul className="space-y-4">
-            {filteredMenuItems.map((item, index) => (
+            {updatedMenuItems.map((item, index) => (
               <li key={index}>
                 <NavLink
                   to={item.link}
@@ -129,10 +127,10 @@ const AdminSidebar: FC = () => {
         <div className="px-3 py-4 w-full">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full flex items-center space-x-3 py-2 px-3 rounded-md transition-all duration-300 text-red-600 hover:bg-black/15 cursor-pointer"
+            className="w-full flex justify-center items-center space-x-2 p-3 rounded-md transition-all duration-300 text-red-600 hover:bg-black/15 cursor-pointer"
           >
             <i className="fa fa-sign-out-alt font-light"></i>
-            <span className="font-bold uppercase">Log Out</span>
+            <span className="font-semibold text-xl uppercase">Log Out</span>
           </button>
         </div>
       </aside>
@@ -146,7 +144,7 @@ const AdminSidebar: FC = () => {
         cancel={modalCancel}
         onConfirm={handleLogout}
         loading={logoutLoading}
-        className={`bg-red-600 text-whitehover:bg-red-700 font-bold uppercase text-white text-sm px-6 py-3 rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-300 cursor-pointer ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+        className={`bg-red-600 hover:bg-red-700 font-bold uppercase text-white px-4 py-2 rounded-md shadow hover:shadow-lg outline-none focus:outline-none ease-linear transition-all duration-300 cursor-pointer ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""}`}
         confirmText={
           logoutLoading ? (
             <>

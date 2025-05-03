@@ -483,7 +483,7 @@ def booking_reviews(request, booking_id):
     
     if booking.user.id != request.user.id and not request.user.is_staff:
         return Response({"error": "You don't have permission to access these reviews"}, 
-                       status=status.HTTP_403_FORBIDDEN)
+                    status=status.HTTP_403_FORBIDDEN)
     
     if request.method == 'GET':
         reviews = Reviews.objects.filter(booking=booking)
@@ -502,14 +502,19 @@ def booking_reviews(request, booking_id):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         data = request.data.copy()
-        data['booking'] = booking_id
+        data['booking'] = booking.id 
         
-        serializer = ReviewSerializer(data=data, context={'request': request})
+        serializer = ReviewSerializer(data=data, context={'request': request, 'booking': booking})
         if serializer.is_valid():
-            serializer.save()
+            review = serializer.save(user=request.user)
+            if booking.is_venue_booking:
+                review.area = booking.area
+            else:
+                review.room = booking.room
+            review.save()
             return Response({
                 "message": "Review submitted successfully",
-                "data": serializer.data
+                "data": ReviewSerializer(review).data
             }, status=status.HTTP_201_CREATED)
         
         return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
@@ -553,16 +558,25 @@ def review_detail(request, review_id):
 @api_view(['GET'])
 def room_reviews(request, room_id):
     try:
-        room = Rooms.objects.get(id=room_id)
+        page = int(request.query_params.get('page'))
+        page_size = int(request.query_params.get('page_size'))
         
-        bookings = Bookings.objects.filter(room=room, is_venue_booking=False)
-        booking_ids = [booking.id for booking in bookings]
+        reviews = Reviews.objects.filter(room_id=room_id).order_by('-created_at')
+        paginator = Paginator(reviews, page_size)
         
-        reviews = Reviews.objects.filter(booking_id__in=booking_ids).order_by('-created_at')
-        
-        serializer = ReviewSerializer(reviews, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
-    
+        try:
+            page_obj = paginator.page(page)
+        except EmptyPage:
+            return Response({"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ReviewSerializer(page_obj, many=True)
+        return Response({
+            "data": serializer.data,
+            "total": paginator.count,
+            "page": page_obj.number,
+            "page_size": page_size,
+            "total_pages": paginator.num_pages
+        }, status=status.HTTP_200_OK)
     except Rooms.DoesNotExist:
         return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
@@ -571,15 +585,25 @@ def room_reviews(request, room_id):
 @api_view(['GET'])
 def area_reviews(request, area_id):
     try:
-        area = Areas.objects.get(id=area_id)
+        page = int(request.query_params.get('page'))
+        page_size = int(request.query_params.get('page_size'))
         
-        bookings = Bookings.objects.filter(area=area, is_venue_booking=True)
-        booking_ids = [booking.id for booking in bookings]
+        reviews = Reviews.objects.filter(area_id=area_id).order_by('-created_at')
+        paginator = Paginator(reviews, page_size)
+        
+        try:
+            page_obj = paginator.page(page)
+        except EmptyPage:
+            return Response({"error": "Page not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        reviews = Reviews.objects.filter(booking_id__in=booking_ids).order_by('-created_at')
-        
-        serializer = ReviewSerializer(reviews, many=True)
-        return Response({"data": serializer.data}, status=status.HTTP_200_OK)
+        serializer = ReviewSerializer(page_obj, many=True)
+        return Response({
+            "data": serializer.data,
+            "total": paginator.count,
+            "page": page_obj.number,
+            "page_size": page_size,
+            "total_pages": paginator.num_pages
+        }, status=status.HTTP_200_OK)
     
     except Areas.DoesNotExist:
         return Response({"error": "Area not found"}, status=status.HTTP_404_NOT_FOUND)

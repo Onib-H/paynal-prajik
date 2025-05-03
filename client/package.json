@@ -27,7 +27,12 @@
     "jwt-decode": "4.0.0",
     "lucide-react": "^0.482.0",
     "motion": "^12.5.0",
+<<<<<<< HEAD
     "react": "^18.3.1",
+=======
+    "react": "19.0.0",
+    "react-big-calendar": "^1.18.0",
+>>>>>>> 66c1229038e2f23722325f7917ba40a27972f630
     "react-chartjs-2": "^5.3.0",
     "react-datepicker": "^8.2.1",
     "react-dom": "^18.3.1",
@@ -48,6 +53,7 @@
     "@types/aos": "^3.0.7",
     "@types/locomotive-scroll": "^4.1.4",
     "@types/react": "19.0.10",
+    "@types/react-big-calendar": "^1.16.1",
     "@types/react-dom": "19.0.4",
     "@vitejs/plugin-react": "^1.3.2",
     "eslint": "^9.17.0",
@@ -56,7 +62,7 @@
     "globals": "^15.14.0",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.28.0",
-    "vite": "^6.2.6",
+    "vite": "^6.3.4",
     "vite-tsconfig-paths": "^5.1.4"
   }
 }

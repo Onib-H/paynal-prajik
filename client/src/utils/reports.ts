@@ -242,11 +242,10 @@ export const generateMonthlyReport = async (
     y += 70;
   }
 
-  const revenueInsights = `Total monthly revenue: ${
-    reportData.stats.formattedRevenue
-  }. Room revenue accounts for ${Math.round(
-    ((reportData.stats.revenue * 0.75) / reportData.stats.revenue) * 100
-  )}% of total revenue, with the remainder coming from venue bookings and additional services.`;
+  const revenueInsights = `Total monthly revenue: ${reportData.stats.formattedRevenue
+    }. Room revenue accounts for ${Math.round(
+      ((reportData.stats.revenue * 0.75) / reportData.stats.revenue) * 100
+    )}% of total revenue, with the remainder coming from venue bookings and additional services.`;
   y = drawDescriptionText(doc, revenueInsights, y);
   y += 3;
 
@@ -303,7 +302,7 @@ export const generateMonthlyReport = async (
   const tableData = statusLabels.map((status) => {
     const count =
       reportData.bookingStatusCounts[
-        status.key as keyof typeof reportData.bookingStatusCounts
+      status.key as keyof typeof reportData.bookingStatusCounts
       ];
     const percentage =
       totalBookings > 0
@@ -317,28 +316,27 @@ export const generateMonthlyReport = async (
   const pendingPercent =
     totalBookings > 0
       ? (
-          (reportData.bookingStatusCounts.pending / totalBookings) *
-          100
-        ).toFixed(1)
+        (reportData.bookingStatusCounts.pending / totalBookings) *
+        100
+      ).toFixed(1)
       : "0";
   const cancelledPercent =
     totalBookings > 0
       ? (
-          (reportData.bookingStatusCounts.cancelled / totalBookings) *
-          100
-        ).toFixed(1)
+        (reportData.bookingStatusCounts.cancelled / totalBookings) *
+        100
+      ).toFixed(1)
       : "0";
 
-  const bookingInsights = `Currently, ${pendingPercent}% of all bookings are pending confirmation, while ${cancelledPercent}% have been cancelled. Active revenue-generating bookings (reserved and checked-in) account for ${
-    totalBookings > 0
-      ? (
-          ((reportData.bookingStatusCounts.reserved +
-            reportData.bookingStatusCounts.checked_in) /
-            totalBookings) *
-          100
-        ).toFixed(1)
-      : "0"
-  }% of all bookings.`;
+  const bookingInsights = `Currently, ${pendingPercent}% of all bookings are pending confirmation, while ${cancelledPercent}% have been cancelled. Active revenue-generating bookings (reserved and checked-in) account for ${totalBookings > 0
+    ? (
+      ((reportData.bookingStatusCounts.reserved +
+        reportData.bookingStatusCounts.checked_in) /
+        totalBookings) *
+      100
+    ).toFixed(1)
+    : "0"
+    }% of all bookings.`;
   y = drawDescriptionText(doc, bookingInsights, y);
 
   if (y > 250) {
@@ -395,46 +393,32 @@ export const generateMonthlyReport = async (
 };
 
 export const prepareReportData = (
-  dashboardData: any,
-  bookingStatusData: any,
-  month?: number,
-  year?: number
-): ReportData => {
-  let periodText = getCurrentMonthYear();
-  if (month !== undefined && year !== undefined) {
-    periodText = format(new Date(year, month), "MMMM yyyy");
+  data: {
+    period: string;
+    stats: any;
+    bookingStatusCounts: any;
+    roomData?: {
+      names: string[];
+      bookings: number[];
+      revenue: number[];
+    };
   }
-
-  const occupancyRate =
-    dashboardData.total_rooms > 0
-      ? Math.round(
-          (dashboardData.occupied_rooms / dashboardData.total_rooms) * 100
-        )
-      : 0;
-
+): ReportData => {
   return {
     title: "Monthly Performance Report",
-    period: periodText,
+    period: data.period,
     stats: {
-      totalBookings: dashboardData.total_bookings || 0,
-      activeBookings: dashboardData.active_bookings || 0,
-      revenue: dashboardData.revenue || 0,
-      formattedRevenue: dashboardData.formatted_revenue || "₱0.00",
-      occupancyRate: `${occupancyRate}%`,
-      pendingBookings: dashboardData.pending_bookings || 0,
-      checkedInCount: dashboardData.checked_in_count || 0,
-      availableRooms: dashboardData.available_rooms || 0,
-      totalRooms: dashboardData.total_rooms || 0,
+      totalBookings: data.stats.totalBookings || 0,
+      activeBookings: data.stats.activeBookings || 0,
+      revenue: data.stats.revenue || 0,
+      formattedRevenue: data.stats.formattedRevenue || "₱0.00",
+      occupancyRate: data.stats.occupancyRate || "0%",
+      pendingBookings: data.stats.pendingBookings || 0,
+      checkedInCount: data.stats.checkedInCount || 0,
+      availableRooms: data.stats.availableRooms || 0,
+      totalRooms: data.stats.totalRooms || 0,
     },
-    bookingStatusCounts: {
-      pending: bookingStatusData?.pending || 0,
-      reserved: bookingStatusData?.reserved || 0,
-      checked_in: bookingStatusData?.checked_in || 0,
-      checked_out: bookingStatusData?.checked_out || 0,
-      cancelled: bookingStatusData?.cancelled || 0,
-      no_show: bookingStatusData?.no_show || 0,
-      rejected: bookingStatusData?.rejected || 0,
-    },
+    bookingStatusCounts: data.bookingStatusCounts,
     charts: {
       revenueData: {
         type: "line",

@@ -112,7 +112,7 @@ class Transactions(models.Model):
         choices=TRANSACTION_TYPE_CHOICES,
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    transaction_date = models.DateTimeField(auto_now_add=True)
+    transaction_date = models.DateTimeField()
     status = models.CharField(
         max_length=20,
         choices=TRANSACTION_STATUS_CHOICES,
@@ -123,17 +123,20 @@ class Transactions(models.Model):
         db_table = 'transactions'
 
 class Reviews(models.Model):
-    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE, related_name='reviews')
+    RATING_CHOICES = [
+        (1, '1'),
+        (2, '2'),
+        (3, '3'),
+        (4, '4'),
+        (5, '5'),
+    ]
     user = models.ForeignKey(CustomUsers, on_delete=models.CASCADE, related_name='reviews')
-    review_text = models.TextField(blank=True)
-    rating = models.PositiveSmallIntegerField()
+    booking = models.ForeignKey(Bookings, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True)
+    room = models.ForeignKey(Rooms, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True)
+    area = models.ForeignKey(Areas, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True)
+    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+    review_text = models.TextField(blank=True) 
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(rating__gte=1) & models.Q(rating__lte=5),
-                name="valid_rating"
-            )
-        ]
         db_table = 'reviews'

@@ -28,23 +28,10 @@ export const fetchStaffProfile = async () => {
 export const fetchStats = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/stats", {
-      params: {
-        month,
-        year,
-      },
+      params: { month, year },
       withCredentials: true,
     });
-
-    try {
-      const revenueData = await fetchDailyRevenue({ month, year });
-      return {
-        ...response.data,
-        daily_revenue: revenueData.data || []
-      };
-    } catch (revenueError) {
-      console.error("Failed to fetch daily revenue:", revenueError);
-      return response.data;
-    }
+    return response.data;
   } catch (error) {
     console.error(`Failed to fetch stats: ${error}`);
     throw error;
@@ -54,10 +41,7 @@ export const fetchStats = async ({ month, year }: { month?: number; year?: numbe
 export const fetchDailyRevenue = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/daily_revenue", {
-      params: {
-        month: month || new Date().getMonth() + 1,
-        year: year || new Date().getFullYear()
-      },
+      params: { month, year },
       withCredentials: true,
     });
     return response.data;
@@ -208,12 +192,16 @@ export const areaReservations = async () => {
 };
 
 // CRUD Users
-export const fetchAllUsers = async () => {
+export const fetchAllUsers = async (page: number, pageSize: number) => {
   try {
     const response = await ADMIN.get("/users", {
+      params: {
+        page,
+        page_size: pageSize,
+      },
       withCredentials: true,
     });
-    return response.data.data;
+    return response.data;
   } catch (error) {
     console.error(`Failed to fetch users: ${error}`);
     throw error;
@@ -260,9 +248,8 @@ export const archiveUser = async (userId: number) => {
 };
 
 // CRUD Rooms
-export const fetchRooms = async ({ queryKey }: any) => {
+export const fetchRooms = async (page: number, pageSize: number) => {
   try {
-    const [, page = 1, pageSize = 9] = queryKey;
     const response = await ADMIN.get("/rooms", {
       params: {
         page,
@@ -332,9 +319,8 @@ export const deleteRoom = async (roomId: number) => {
 };
 
 // CRUD Areas
-export const fetchAreas = async ({ queryKey }: any) => {
+export const fetchAreas = async (page: number, pageSize: number) => {
   try {
-    const [, page = 1, pageSize = 9] = queryKey;
     const response = await ADMIN.get("/areas", {
       params: {
         page,

@@ -17,9 +17,6 @@ const ViewBookingDetailsModal: FC<ViewBookingDetailsModalProps> = ({ bookingId, 
         queryFn: () => fetchBookingDetail(bookingId),
     });
 
-    if (isLoading) return <BookingDetailsSkeleton />;
-    if (isError) return <div className="text-red-500 p-4">Failed to load booking details</div>;
-
     return (
         <AnimatePresence>
             {bookingId && (
@@ -48,7 +45,13 @@ const ViewBookingDetailsModal: FC<ViewBookingDetailsModalProps> = ({ bookingId, 
                         </div>
 
                         <div className="max-h-[70vh] overflow-y-auto p-6">
-                            <BookingData bookingId={data.id} />
+                            {isLoading ? (
+                                <BookingDetailsSkeleton />
+                            ) : isError ? (
+                                <div className="text-red-500 p-4">Failed to load booking details</div>
+                            ) : (
+                                <BookingData bookingId={data.id} />
+                            )}
                         </div>
                     </motion.div>
                 </motion.div>

@@ -116,7 +116,7 @@ const MonthlyReportView: FC<MonthlyReportViewProps> = ({ reportData, onClose, ch
             </div>
 
             {/* Report content - directly scrollable */}
-            <div className="overflow-y-auto h-full">
+            <div className="overflow-y-hidden h-full">
                 <div ref={printRef} className="p-8 max-w-4xl mx-auto bg-white">
                     {/* Header with logo - visible in print */}
                     <div className="text-center mb-8">

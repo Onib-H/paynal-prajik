@@ -5,9 +5,12 @@ import { ChangeEvent, FC, useEffect, useState } from "react";
 import { fetchAmenities } from "../../services/Admin";
 import { IRoom, IRoomFormModalProps } from "../../types/RoomAdmin";
 import { useForm } from "react-hook-form";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSave, faPlus } from "@fortawesome/free-solid-svg-icons"
 
 const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomData, loading = false }) => {
     const [previewUrl, setPreviewUrl] = useState<string>("");
+    const [isHovered, setIsHovered] = useState<boolean>(false);
 
     const { register, handleSubmit, formState: { errors }, reset, watch, setError, setValue, getValues } = useForm<IRoom>({
         mode: "onBlur",
@@ -111,7 +114,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
     };
 
     const checkboxVariants = {
-        hidden: { opacity: 0, x: -10 },
+        hidden: { opacity: 0 },
         visible: (custom: number) => ({
             opacity: 1,
             x: 0,
@@ -122,6 +125,16 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                 damping: 24
             }
         })
+    };
+
+    const contentVariants = {
+        rest: { x: "0%", opacity: 1, transition: { duration: 0.3, ease: "easeOut" } },
+        hover: { x: "125%", opacity: 0, transition: { duration: 0.3, ease: "easeOut" } }
+    };
+
+    const iconVariants = {
+        rest: { x: "-125%", opacity: 0, transition: { duration: 0.3, ease: "easeOut" } },
+        hover: { x: "0%", opacity: 1, transition: { duration: 0.3, ease: "easeOut" } }
     };
 
     return (
@@ -360,7 +373,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                         <textarea
                                             name="description"
                                             {...register("description")}
-                                            rows={5}
+                                            rows={4}
                                             placeholder="Enter room description"
                                             className="border border-gray-300 rounded-md w-full p-2 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                                         />
@@ -461,7 +474,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                             ) : isErrorAmenities ? (
                                                 <p className="text-red-500">Failed to load amenities</p>
                                             ) : (
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+                                                <div className="grid grid-cols-1 space-y-2 gap-2 max-h-72 overflow-y-auto">
                                                     {availableAmenities.map((amenity: any, index: number) => (
                                                         <motion.div
                                                             key={amenity.id}
@@ -470,18 +483,18 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                                             variants={checkboxVariants}
                                                         >
                                                             <motion.div
-                                                                className="flex items-center space-x-2"
+                                                                className="flex items-center space-x-1"
                                                             >
                                                                 <input
                                                                     type="checkbox"
                                                                     id={`amenity-${amenity.id}`}
                                                                     checked={watch("amenities").includes(amenity.id)}
                                                                     onChange={() => handleAmenityChange(amenity.id)}
-                                                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                                                                    className="text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
                                                                 />
                                                                 <label
                                                                     htmlFor={`amenity-${amenity.id}`}
-                                                                    className="text-sm text-gray-700 cursor-pointer"
+                                                                    className="text-xs text-gray-700 cursor-pointer"
                                                                 >
                                                                     {amenity.description}
                                                                 </label>
@@ -511,19 +524,27 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                         <motion.button
                                             type="submit"
                                             disabled={loading}
-                                            className={`px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300 font-medium ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                                            whileHover={loading ? {} : { scale: 1.05 }}
-                                            whileTap={loading ? {} : { scale: 0.95 }}
+                                            className={`relative overflow-hidden px-4 py-2 bg-blue-600 text-white rounded-md transition-colors duration-300 font-medium ${loading ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:bg-blue-700'}`}
+                                            onMouseEnter={() => setIsHovered(true)}
+                                            onMouseLeave={() => setIsHovered(false)}
                                         >
-                                            {loading ? (
-                                                <span className="flex items-center">
-                                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
-                                                    Processing...
-                                                </span>
-                                            ) : roomData ? "Update Room" : "Create Room"}
+                                            <motion.span
+                                                className="block uppercase font-semibold"
+                                                variants={contentVariants}
+                                                initial="rest"
+                                                animate={isHovered ? "hover" : "rest"}
+                                            >
+                                                {loading ? 'Saving...' : roomData ? 'Update Area' : 'Create Area'}
+                                            </motion.span>
+
+                                            <motion.span
+                                                className="absolute inset-0 flex items-center justify-center"
+                                                variants={iconVariants}
+                                                initial="rest"
+                                                animate={isHovered ? "hover" : "rest"}
+                                            >
+                                                <FontAwesomeIcon size="xl" icon={roomData ? faSave : faPlus} />
+                                            </motion.span>
                                         </motion.button>
                                     </motion.div>
                                 </div>

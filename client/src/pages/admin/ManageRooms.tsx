@@ -29,16 +29,13 @@ const ManageRooms: FC = () => {
 
   const queryClient = useQueryClient();
 
-  const {
-    data: roomsResponse,
-    isLoading,
-    isError,
-  } = useQuery<{
+  const { data: roomsResponse, isLoading, isError } = useQuery<{
     data: Room[];
     pagination: PaginationData;
   }>({
     queryKey: ["rooms", currentPage, pageSize],
-    queryFn: fetchRooms,
+    queryFn: () => fetchRooms(currentPage, pageSize),
+    staleTime: 1000 * 60 * 5
   });
 
   const { data: allAmenitiesData } = useQuery<{ data: Amenity[] }>({
@@ -195,7 +192,7 @@ const ManageRooms: FC = () => {
         await editRoomMutation.mutateAsync({ roomId: roomData.id, formData });
       }
     } catch (error) {
-      console.error("Error saving room:", error);
+      console.error(`Error saving room ${error}`);
       throw error;
     }
   };
@@ -223,7 +220,7 @@ const ManageRooms: FC = () => {
   const pagination = roomsResponse?.pagination;
 
   return (
-    <div className="overflow-y-auto h-[calc(100vh-25px)]">
+    <div className="overflow-y-hidden h-full">
       <div className="p-3 container mx-auto">
         {/* Loader Overlay */}
         {loading && (

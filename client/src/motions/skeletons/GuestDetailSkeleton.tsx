@@ -1,5 +1,6 @@
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { motion } from 'framer-motion';
 
 export const GuestReservationSkeleton = () => {
   return (
@@ -93,52 +94,80 @@ export const BookingsTableSkeleton = () => {
 
 export const BookingDetailsSkeleton = () => {
   return (
-    <div className="max-w-7xl mx-auto space-y-6 overflow-y-auto h-[calc(100vh-3rem)] pr-2">
-      <div className="flex justify-between items-center mb-6 sticky top-0 bg-gray-50 py-3 z-10">
-        <Skeleton width={200} height={32} />
-        <Skeleton width={150} height={40} className="rounded-md" />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6 p-4"
+    >
+      {/* Header */}
+      <div className="flex justify-between items-center pb-4 border-b border-gray-200">
+        <Skeleton className="h-8 w-48 rounded-lg" />
+        <Skeleton className="h-8 w-8 rounded-full" />
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <Skeleton height={240} className="rounded-lg" />
-            <Skeleton height={24} width="70%" />
-            <Skeleton height={16} count={3} />
+      {/* Main Content */}
+      <div className="space-y-8">
+        {/* Dates Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-32 mb-2 rounded" />
+            <Skeleton className="h-10 w-full rounded-lg" />
           </div>
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-32 mb-2 rounded" />
+            <Skeleton className="h-10 w-full rounded-lg" />
+          </div>
+        </div>
 
-          <div className="space-y-6">
-            <div>
-              <Skeleton height={32} width="60%" className="mb-2" />
-              <Skeleton height={16} count={4} />
-            </div>
+        {/* Guest Info */}
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-48 mb-2 rounded" />
+          <div className="grid grid-cols-2 gap-4">
+            <Skeleton className="h-10 rounded-lg" />
+            <Skeleton className="h-10 rounded-lg" />
+          </div>
+        </div>
 
-            <div>
-              <Skeleton height={32} width="50%" className="mb-2" />
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Skeleton height={16} width="80%" className="mb-1" />
-                  <Skeleton height={20} width="50%" />
-                </div>
-                <div>
-                  <Skeleton height={16} width="80%" className="mb-1" />
-                  <Skeleton height={20} width="50%" />
-                </div>
-                <div>
-                  <Skeleton height={16} width="80%" className="mb-1" />
-                  <Skeleton height={20} width="50%" />
-                </div>
-                <div>
-                  <Skeleton height={16} width="80%" className="mb-1" />
-                  <Skeleton height={20} width="50%" />
-                </div>
-              </div>
-            </div>
+        {/* Price Summary */}
+        <div className="space-y-4">
+          <Skeleton className="h-5 w-56 mb-2 rounded" />
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="flex justify-between items-center"
+              >
+                <Skeleton className="h-4 w-32 rounded" />
+                <Skeleton className="h-4 w-20 rounded" />
+              </motion.div>
+            ))}
+          </div>
+        </div>
 
-            <Skeleton height={50} className="rounded-lg" />
+        {/* Total Price */}
+        <div className="pt-4 border-t border-gray-200">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-6 w-32 rounded-lg" />
+            <Skeleton className="h-8 w-36 rounded-lg" />
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Loading Animation Bar */}
+      <motion.div
+        initial={{ opacity: 0.5 }}
+        animate={{ opacity: 1 }}
+        transition={{
+          duration: 1.5,
+          repeat: Infinity,
+          repeatType: "mirror",
+        }}
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-100 to-transparent w-1/2 skew-x-[-20deg]"
+      />
+    </motion.div>
   );
 };

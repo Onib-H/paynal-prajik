@@ -181,7 +181,7 @@ const GuestBookings = () => {
   if (errorMessage) return <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded">{errorMessage}</div>;
 
   return (
-    <div className="space-y-6 container mx-auto py-4">
+    <div className="space-y-3 container mx-auto p-3">
       <div>
         <h1 className="text-2xl font-bold text-gray-800">My Bookings</h1>
         <p className="text-gray-600 text-lg">Manage all your hotel bookings</p>
@@ -200,7 +200,7 @@ const GuestBookings = () => {
           <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
         </div>
         <div className="flex items-center">
-          <label htmlFor="statusFilter" className="text-sm font-medium text-gray-700 mr-2">
+          <label htmlFor="statusFilter" className="text-md font-medium text-gray-700 mr-2">
             Filter by Status:
           </label>
           <select
@@ -225,7 +225,7 @@ const GuestBookings = () => {
         <div className="p-6">
           {filteredBookings.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 table-fixed">
+              <table className="min-w-full divide-y divide-gray-200">
                 <thead>
                   <tr>
                     <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Property</th>
@@ -283,7 +283,7 @@ const GuestBookings = () => {
                           const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
                           nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
                         } catch (e) {
-                          console.error(`Error calculating room nights:`, e);
+                          console.error(`Error calculating room duration: ${e}`);
                         }
                       }
 
@@ -303,7 +303,7 @@ const GuestBookings = () => {
 
                     return (
                       <tr key={id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-2 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="h-10 w-10 flex-shrink-0">
                               <img
@@ -323,24 +323,24 @@ const GuestBookings = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-500">
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-lg text-gray-500">
                           {formatDate(reservationDate)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-500">
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-lg text-gray-500">
                           {formatDate(checkInDate)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-500">
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-lg text-gray-500">
                           {formatDate(checkOutDate)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-3 py-1 text-md leading-5 font-semibold rounded-full ${getStatusColor(status)}`}>
+                        <td className="px-6 py-4 text-center whitespace-nowrap">
+                          <span className={`p-2 text-sm font-semibold rounded-full ${getStatusColor(status)}`}>
                             {status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-lg font-semibold text-gray-900">
+                        <td className="px-6 py-4 text-center whitespace-nowrap text-lg font-semibold text-gray-900">
                           {typeof totalAmount === 'number' ? totalAmount.toLocaleString() : totalAmount}
                         </td>
-                        <td className="p-2 whitespace-nowrap text-sm text-right font-semibold">
+                        <td className="p-2 whitespace-nowrap text-sm font-semibold">
                           <div className="flex justify-center space-x-2">
                             <button
                               className="bg-gray-600 hover:bg-gray-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
@@ -349,14 +349,14 @@ const GuestBookings = () => {
                                 setShowBookingDetailModal(true);
                               }}
                             >
-                              <Eye size={24} className="pr-1" /> View
+                              <Eye size={24} />
                             </button>
                             {booking.status.toLowerCase() === 'pending' && (
                               <button
                                 className="bg-red-600 hover:bg-red-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
                                 onClick={() => openCancelModal(id.toString())}
                               >
-                                <XCircle size={24} className="mr-1" /> Cancel
+                                <XCircle size={24} />
                               </button>
                             )}
                             {booking.status.toLowerCase() === 'checked_out' && (
@@ -364,8 +364,7 @@ const GuestBookings = () => {
                                 disabled={alreadyReviewed}
                                 onClick={() => !alreadyReviewed && openReviewModal(booking)}
                                 className={`bg-blue-600 text-white p-2 rounded-full flex items-center transition-all duration-300 uppercase ${alreadyReviewed ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700 cursor-pointer'}`}>
-                                <MessageSquare size={24} className="mr-1" />
-                                {alreadyReviewed ? 'Reviewed' : 'Review'}
+                                <MessageSquare size={24} />
                               </button>
                             )}
                           </div>

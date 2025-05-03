@@ -98,4 +98,22 @@
   button, .print-controls, .sticky-header {
     display: none !important;
   }
+
+  @page {
+    size: A4 portrait;
+    margin: 20mm;
+  }
+
+  .print-hide {
+    display: none !important;
+  }
+
+  .print-content {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .break-after {
+    page-break-after: always;
+  }
 }

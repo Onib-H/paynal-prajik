@@ -18,6 +18,7 @@ import SlotNavButton from "../motions/CustomNavbar";
 import { logout } from "../services/Auth";
 import { getGuestDetails, getGuestNotifications, markAllNotificationsAsRead, markNotificationAsRead } from "../services/Guest";
 import { NotificationMessage, webSocketService } from "../services/websockets";
+import useWebSockets from "../hooks/useWebSockets";
 
 interface NotificationType {
   id: string;
@@ -57,93 +58,63 @@ const Navbar: FC = () => {
     clearAuthState,
   } = useUserContext();
 
-  const { data: notificationsData, refetch: refetchNotifications } = useQuery({
+  const { data: notificationsData } = useQuery({
     queryKey: ["guestNotifications"],
     queryFn: getGuestNotifications,
     enabled: isAuthenticated,
     staleTime: 15000
   });
 
-  useEffect(() => {
-    if (!isAuthenticated || !userDetails?.id) return;
-
-    const handleAuthResponse = ({ success, message }: { success: boolean; message?: string }) => {
-      if (!success) {
-        console.error(`WebSocket auth failed: ${message}`);
-        webSocketService.disconnect();
-      }
-    }
-
-    const handleNewNotification = ({ notification, unread_count }: WebSocketNotification) => {
-      queryClient.setQueryData(['guestNotifications'], (old: any) => {
-        if (!old) return { notifications: [notification], unread_count };
-
-        const currentNotifications = old.notifications || [];
-
-        const notificationExists = currentNotifications.some(
-          (existingNotif: NotificationType) =>
-            existingNotif.id === notification.id ||
-            (existingNotif.booking_id === notification.booking_id &&
-              existingNotif.notification_type === notification.notification_type &&
-              Math.abs(new Date(existingNotif.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
-        );
-
-        if (notificationExists) {
-          return old;
-        }
-
-        return {
-          notifications: [notification, ...currentNotifications],
-          unread_count
-        };
-      });
-
-      setUnreadCount(unread_count);
-    };
-
-    const handleCountUpdate = ({ count }: { count: number }) => {
-      queryClient.setQueryData(['guestNotifications'], (old: any) => ({
-        ...old,
-        unread_count: count
-      }));
-
-      setUnreadCount(count);
-    };
-
-    const setupWebSocket = () => {
-      webSocketService.connect(userDetails?.id.toString());
-
-      webSocketService.on('auth_response', handleAuthResponse);
-      webSocketService.on('new_notification', handleNewNotification);
-      webSocketService.on('unread_update', handleCountUpdate);
-      webSocketService.on('initial_count', handleCountUpdate);
-    };
-
-    setupWebSocket();
-
-    const reconnectInterval = setInterval(() => {
-      if (!webSocketService.isConnected && isAuthenticated) {
-        setupWebSocket();
-      }
-    }, 5000);
-
-    const refetchInterval = setInterval(() => {
-      if (isAuthenticated) {
-        refetchNotifications();
-      }
-    }, 30000);
-
-    return () => {
+  const handleAuthResponse = ({ success, message }: { success: boolean; message?: string }) => {
+    if (!success) {
+      console.error(`WebSocket auth failed: ${message}`);
       webSocketService.disconnect();
-      webSocketService.off('auth_response');
-      webSocketService.off('new_notification');
-      webSocketService.off('unread_update');
-      webSocketService.off('initial_count');
-      clearInterval(reconnectInterval);
-      clearInterval(refetchInterval);
     }
-  }, [isAuthenticated, userDetails?.id, queryClient, refetchNotifications]);
+  };
 
+  const handleNewNotification = ({ notification, unread_count }: WebSocketNotification) => {
+    queryClient.setQueryData(['guestNotifications'], (old: any) => {
+      if (!old) return { notifications: [notification], unread_count };
+
+      const currentNotifications = old.notifications || [];
+
+      const notificationExists = currentNotifications.some(
+        (existingNotif: NotificationType) =>
+          existingNotif.id === notification.id ||
+          (existingNotif.booking_id === notification.booking_id &&
+            existingNotif.notification_type === notification.notification_type &&
+            Math.abs(new Date(existingNotif.created_at).getTime() - new Date(notification.created_at).getTime()) < 1000)
+      );
+
+      if (notificationExists) {
+        return old;
+      }
+
+      return {
+        notifications: [notification, ...currentNotifications],
+        unread_count
+      };
+    });
+
+    setUnreadCount(unread_count);
+  };
+
+  const handleCountUpdate = ({ count }: { count: number }) => {
+    queryClient.setQueryData(['guestNotifications'], (old: any) => ({
+      ...old,
+      unread_count: count
+    }));
+
+    setUnreadCount(count);
+  };
+
+  useWebSockets(webSocketService, userDetails?.id, {
+    auth_response: handleAuthResponse,
+    new_notification: handleNewNotification,
+    unread_update: handleCountUpdate,
+    initial_count: handleCountUpdate,
+  });
+  
   useEffect(() => {
     if (notificationsData) {
       setUnreadCount(notificationsData.unread_count);
@@ -186,11 +157,9 @@ const Navbar: FC = () => {
   });
 
   const handleNotificationClick = useCallback((notification: NotificationType) => {
-    if (!notification.is_read) {
-      markAsReadMutation.mutate(notification.id.toString());
-    }
+    if (!notification.is_read) markAsReadMutation.mutate(notification.id.toString());
 
-    navigate(`/guest/bookings?bookingId=${notification.booking_id}`);
+    navigate('/guest/bookings/');
     setIsNotificationsOpen(false);
   }, [navigate, markAsReadMutation]);
 
@@ -755,7 +724,7 @@ const Navbar: FC = () => {
         description="Are you sure you want to log out?"
         cancel={() => setIsModalOpen(!isModalOpen)}
         onConfirm={handleLogout}
-        className={`bg-red-600 text-white active:bg-red-700 font-bold uppercase px-4 py-2 cursor-pointer rounded-md shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 transition-all duration-150 ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""
+        className={`bg-red-600 text-white active:bg-red-700 font-bold uppercase px-4 py-2 cursor-pointer rounded-md shadow hover:shadow-lg outline-none focus:outline-none transition-all duration-150 ${logoutLoading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         loading={logoutLoading}
         confirmText={

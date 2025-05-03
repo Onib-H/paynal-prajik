@@ -6,9 +6,12 @@ interface ReviewListProps {
     reviews: ReviewData[];
     isLoading: boolean;
     error: Error | null;
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
 }
 
-const ReviewList = ({ reviews, isLoading, error }: ReviewListProps) => {
+const ReviewList = ({ reviews, isLoading, error, currentPage, totalPages, onPageChange }: ReviewListProps) => {
     if (isLoading) {
         return (
             <div className="flex justify-center py-8">
@@ -119,6 +122,27 @@ const ReviewList = ({ reviews, isLoading, error }: ReviewListProps) => {
                                     {new Date(review.booking_details.check_in_date).toLocaleDateString()} -{" "}
                                     {new Date(review.booking_details.check_out_date).toLocaleDateString()}
                                 </p>
+                            </div>
+                        )}
+                        {totalPages > 1 && (
+                            <div className="flex justify-center items-center gap-4 mt-8">
+                                <button
+                                    onClick={() => onPageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-indigo-700 transition-colors"
+                                >
+                                    Previous
+                                </button>
+                                <span className="text-gray-600">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => onPageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-indigo-700 transition-colors"
+                                >
+                                    Next
+                                </button>
                             </div>
                         )}
                     </div>

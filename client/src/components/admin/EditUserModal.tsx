@@ -269,7 +269,7 @@ const EditUserModal: FC<IUserFormModalProps> = ({ isOpen, cancel, onSave, userDa
                                 <motion.button
                                     type="button"
                                     onClick={cancel}
-                                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                                    className="px-4 py-2 cursor-pointer text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
                                     disabled={loading}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}
@@ -278,7 +278,7 @@ const EditUserModal: FC<IUserFormModalProps> = ({ isOpen, cancel, onSave, userDa
                                 </motion.button>
                                 <motion.button
                                     type="submit"
-                                    className="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+                                    className="px-4 py-2 cursor-pointer text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
                                     disabled={loading}
                                     whileHover={{ scale: 1.05 }}
                                     whileTap={{ scale: 0.95 }}

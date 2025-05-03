@@ -3,11 +3,9 @@ import "aos/dist/aos.css";
 import { Suspense, lazy, useEffect, useMemo } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import "./App.css";
-import GuestChangePassword from "./components/guests/GuestChangePassword";
 import ScrollToTop from "./components/ScrollToTop";
 import { useUserContext } from "./contexts/AuthContext";
 import ProtectedRoute from "./contexts/ProtectedRoutes";
-import AdminLayout from "./layout/admin/AdminLayout";
 import Footer from "./layout/Footer";
 import Navbar from "./layout/Navbar";
 
@@ -30,6 +28,7 @@ const VenueBookingCalendar = lazy(() => import("./pages/VenueBookingCalendar"));
 const CancelReservation = lazy(() => import("./pages/CancelReservation"));
 const VenueDetails = lazy(() => import("./pages/VenueDetails"));
 
+const AdminLayout = lazy(() => import("./layout/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const ManageAmenities = lazy(() => import("./pages/admin/ManageAmenities"));
 const ManageAreas = lazy(() => import("./pages/admin/ManageAreas"));
@@ -104,7 +103,6 @@ const App = () => {
               <Route path=":id" element={<GuestProfile />} />
               <Route path="bookings" element={<GuestBookings />} />
               <Route path="cancellations" element={<GuestCancellations />} />
-              <Route path="change-password" element={<GuestChangePassword />} />
             </Route>
           </Route>
 
