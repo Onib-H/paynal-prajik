@@ -103,9 +103,8 @@ const ManageUsers: FC = () => {
       setShowDeleteModal(false);
       setIsSubmitting(false);
     },
-    onError: (error: Error | { response?: { data?: { error?: string } } }) => {
-      const errorResponse = error as { response?: { data?: { error?: string } } };
-      toast.error(errorResponse.response?.data?.error || "Failed to archive user");
+    onError: () => {
+      toast.error("Failed to archive user");
       setIsSubmitting(false);
     }
   });
@@ -494,7 +493,7 @@ const ManageUsers: FC = () => {
             isOpen={showDeleteModal}
             icon="fas fa-exclamation-triangle"
             title="Archive User"
-            description={`Are you sure you want to archive this guest account? This action cannot be undone.`}
+            description={`Are you sure you want to archive ${selectedUser?.first_name} ${selectedUser?.last_name}? This action cannot be undone.`}
             cancel={() => {
               setShowDeleteModal(false);
               setSelectedUser(null);

@@ -73,7 +73,7 @@ const AdminSidebar: FC = () => {
           <div className="flex items-end justify-end w-full">
             <span>Manage Bookings</span>
             {activeBookingCount > 0 && (
-              <span className="ml-14 bg-red-500 font-semibold text-white rounded-full px-2 py-1 text-xs">
+              <span className="ml-14 bg-purple-600 font-semibold text-white rounded-full px-2 py-1 text-xs">
                 {activeBookingCount}
               </span>
             )}

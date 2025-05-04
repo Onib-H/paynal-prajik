@@ -12,8 +12,10 @@ import SignupModal from "../components/SignupModal";
 import { useUserContext } from "../contexts/AuthContext";
 import EventLoader from "../motions/loaders/EventLoader";
 import { checkCanBookToday, createBooking, fetchRoomById } from "../services/Booking";
-import { BookingFormData, RoomData, ConfirmBookingFormValues } from "../types/BookingClient";
+import { BookingFormData, ConfirmBookingFormValues, RoomData } from "../types/BookingClient";
 import { formatTime } from "../utils/formatters";
+import GCashPaymentModal from "../components/bookings/GCashPaymentModal";
+import GCashLogo from "../assets/GCash-Logo.png"
 
 const ConfirmBooking = () => {
   const navigate = useNavigate();
@@ -32,16 +34,19 @@ const ConfirmBooking = () => {
   const [dateSelectionCompleted, setDateSelectionCompleted] = useState(!!arrival && !!departure);
   const [dateError, setDateError] = useState<string | null>(null);
   const [calculatedTotalPrice, setCalculatedTotalPrice] = useState<number>(priceParam ? parseInt(priceParam) : 0);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignupModal, setShowSignupModal] = useState(false);
-  const [canBookToday, setCanBookToday] = useState(true);
+  const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
+  const [canBookToday, setCanBookToday] = useState<boolean>(true);
   const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [success, setSuccess] = useState<boolean>(false);
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [pendingFormData, setPendingFormData] = useState<BookingFormData | null>(null);
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'physical' | 'gcash'>('physical');
+  const [showGCashModal, setShowGCashModal] = useState<boolean>(false);
+  const [gcashProofSubmitted, setGcashProofSubmitted] = useState<boolean>(false);
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -182,7 +187,6 @@ const ConfirmBooking = () => {
   };
 
   const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
-    console.table(`Submitting booking data: ${data}`);
     setGeneralError(null);
     if (!roomData || isSubmitting) return;
 
@@ -351,6 +355,12 @@ const ConfirmBooking = () => {
         cancelText="Cancel"
         isOpen={showConfirmModal}
         className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-md uppercase font-bold hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 cursor-pointer flex items-center"
+      />
+
+      <GCashPaymentModal
+        isOpen={showGCashModal}
+        onClose={() => setShowGCashModal(false)}
+        onProofSubmit={() => setGcashProofSubmitted(true)}
       />
 
       <motion.div
@@ -900,6 +910,61 @@ const ConfirmBooking = () => {
                   <p className="text-sm text-gray-500">No amenities listed</p>
                 )}
               </motion.div>
+            </motion.div>
+
+            <motion.div
+              className="rounded-lg shadow-md p-6 mb-6 backdrop-blur-sm bg-white/90 border border-gray-100"
+              variants={itemVariants}
+            >
+              <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-800 bg-clip-text text-transparent">Payment Method</h3>
+              <div className="space-y-3">
+                <div
+                  className={`flex items-center p-3 rounded-md cursor-pointer transition-colors ${paymentMethod === 'physical'
+                      ? 'border-2 border-blue-500 bg-blue-50'
+                      : 'border border-gray-200 hover:border-gray-300'
+                    }`}
+                  onClick={() => setPaymentMethod('physical')}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${paymentMethod === 'physical'
+                      ? 'border-blue-500 bg-blue-500'
+                      : 'border-gray-400'
+                    }`}>
+                    {paymentMethod === 'physical' && (
+                      <div className="w-2 h-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span className="font-medium">Physical Payment</span>
+                  {paymentMethod === 'physical' && (
+                    <BookCheck className="w-5 h-5 ml-2 text-green-500" />
+                  )}
+                </div>
+
+                <div
+                  className={`flex items-center p-3 rounded-md cursor-pointer transition-colors ${paymentMethod === 'gcash'
+                      ? 'border-2 border-blue-500 bg-blue-50'
+                      : 'border border-gray-200 hover:border-gray-300'
+                    }`}
+                  onClick={() => {
+                    setPaymentMethod('gcash');
+                    if (!gcashProofSubmitted) setShowGCashModal(true);
+                  }}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${paymentMethod === 'gcash'
+                      ? 'border-blue-500 bg-blue-500'
+                      : 'border-gray-400'
+                    }`}>
+                    {paymentMethod === 'gcash' && (
+                      <div className="w-2 h-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span className="font-medium">
+                    <img src={GCashLogo} alt="" width={100} height={100} />
+                  </span>
+                  {gcashProofSubmitted && paymentMethod === 'gcash' && (
+                    <BookCheck className="w-5 h-5 ml-2 text-green-500" />
+                  )}
+                </div>
+              </div>
             </motion.div>
 
             {/* Booking Details */}

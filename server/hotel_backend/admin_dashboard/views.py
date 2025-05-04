@@ -979,17 +979,64 @@ def manage_user(request, user_id):
     
     return Response({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-@api_view(['DELETE'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def archive_user(request, user_id):
     try:
         users = CustomUsers.objects.get(id=user_id)
-        users.delete()
+        users.is_archived = True
+        users.save()
         return Response({'message': 'User archived successfully'}, status=status.HTTP_200_OK)
     except CustomUsers.DoesNotExist:
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Archive Users
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def fetch_archived_users(request):
+    try:
+        users = CustomUsers.objects.filter(role='guest', is_archived=True)
+        page = request.query_params.get('page')
+        page_size = request.query_params.get('page_size')
+        paginator = Paginator(users, page_size)
+        
+        try:
+            paginated_users = paginator.page(page)
+        except PageNotAnInteger:
+            paginated_users = paginator.page(1)
+        except EmptyPage:
+            paginated_users = paginator.page(paginator.num_pages)
+            
+        serializer = CustomUserSerializer(paginated_users, many=True)
+        return Response({
+            "users": serializer.data,
+            "pagination": {
+                "total_pages": paginator.num_pages,
+                "current_page": int(page),
+                "total_items": paginator.count,
+                "page_size": int(page_size)
+            }
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def restore_user(request, user_id):
+    try:
+        user = CustomUsers.objects.get(id=user_id)
+        user.is_archived = False
+        user.save()
+        return Response({
+            "message": "User restored successfully"
+        }, status=status.HTTP_200_OK)
+    except CustomUsers.DoesNotExist:
+        return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

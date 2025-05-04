@@ -15,6 +15,7 @@ class CustomUsers(AbstractUser):
         choices=ROLE_CHOICES,
         default='guest',
     )
+    is_archived = models.BooleanField(default=False)
     profile_image = CloudinaryField('profile_image', null=True, blank=True)
     phone_number = models.CharField(max_length=15, null=True, blank=True)
     last_booking_date = models.DateField(null=True, blank=True)

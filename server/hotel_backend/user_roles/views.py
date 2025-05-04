@@ -628,10 +628,13 @@ def user_login(request):
         if not email or not password:
             return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        user = CustomUsers.objects.filter(email=email)
+        user = CustomUsers.objects.filter(email=email).first()
         if not user:
             return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
             
+        if user.is_archived:
+            return Response({'error': 'User account is archived'}, status=status.HTTP_403_FORBIDDEN)
+        
         auth_user = authenticate(request, username=email, password=password)
         
         if auth_user is None:

@@ -5,6 +5,7 @@ import {
   faUsers,
   faConciergeBell,
   faCalendarCheck,
+  faUsersSlash,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const menuItems = [
@@ -38,4 +39,9 @@ export const menuItems = [
     label: "Manage Users",
     link: '/admin/users'
   },
+  {
+    icon: faUsersSlash,
+    label: "Archived Users",
+    link: '/admin/archive'
+  }
 ];

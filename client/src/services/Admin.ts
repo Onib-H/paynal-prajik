@@ -192,9 +192,9 @@ export const areaReservations = async () => {
 };
 
 // CRUD Users
-export const fetchAllUsers = async (page: number, pageSize: number) => {
+export const fetchAllUsers = async (page: number, pageSize: number, archived: boolean = false) => {
   try {
-    const response = await ADMIN.get("/users", {
+    const response = await ADMIN.get(archived ? "/archived_users" : "/users", {
       params: {
         page,
         page_size: pageSize,
@@ -237,12 +237,24 @@ export const manageUser = async (userId: number, payload: FormData) => {
 
 export const archiveUser = async (userId: number) => {
   try {
-    const response = await ADMIN.delete(`/archive_user/${userId}`, {
+    const response = await ADMIN.put(`/archived_user/${userId}`, {
       withCredentials: true,
     });
     return response.data;
   } catch (error) {
     console.error(`Failed to archive user: ${error}`);
+    throw error;
+  }
+};
+
+export const restoreUser = async (userId: number) => {
+  try {
+    const response = await ADMIN.post(`/restore_user/${userId}`, {}, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to restore user: ${error}`);
     throw error;
   }
 };
