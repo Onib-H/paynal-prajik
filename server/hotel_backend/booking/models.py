@@ -20,6 +20,10 @@ class Bookings(models.Model):
         ('rejected', 'Rejected'),
         ('missed_reservation', 'Missed Reservation'),
     ]
+    PAYMENT_METHOD_CHOICES = [
+        ('physical', 'Physical Payment'),
+        ('gcash', 'GCash'),
+    ]
     user = models.ForeignKey(CustomUsers, on_delete=models.CASCADE, related_name='bookings')
     room = models.ForeignKey(Rooms, on_delete=models.CASCADE, related_name='bookings', null=True, blank=True)
     area = models.ForeignKey(Areas, on_delete=models.CASCADE, related_name='area_bookings', null=True, blank=True)
@@ -42,6 +46,9 @@ class Bookings(models.Model):
     start_time = models.TimeField(null=True, blank=True)
     end_time = models.TimeField(null=True, blank=True)
     payment_status = models.CharField(max_length=20, default='unpaid')
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='physical')
+    payment_proof = CloudinaryField('payment_proof', null=True, blank=True)
+    payment_date = models.DateTimeField(null=True, blank=True)
     number_of_guests = models.PositiveIntegerField(default=1)
     
     class Meta:

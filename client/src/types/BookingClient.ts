@@ -57,6 +57,8 @@ export interface BookingFormData {
     totalPrice?: number;
     arrivalTime: string;
     numberOfGuests?: number;
+    paymentMethod?: 'physical' | 'gcash';
+    paymentProof?: File | null;
 }
 
 export interface ReservationFormData {
@@ -74,6 +76,8 @@ export interface ReservationFormData {
     status?: "pending" | "confirmed" | "cancelled";
     isVenueBooking?: boolean;
     numberOfGuests?: number;
+    paymentMethod?: 'physical' | 'gcash';
+    paymentProof?: File | null;
 }
 
 export interface AreaData {
@@ -94,6 +98,7 @@ export interface FormData {
     validId: FileList;
     specialRequests: string;
     numberOfGuests: number;
+    paymentMethod: 'physical' | 'gcash';
 }
 
 export interface AmenityObject {
@@ -167,4 +172,6 @@ export interface ConfirmBookingFormValues {
     validId: FileList;
     arrivalTime: string;
     specialRequests: string;
+    paymentMethod: 'physical' | 'gcash';
+    paymentProof?: File | null;
 }

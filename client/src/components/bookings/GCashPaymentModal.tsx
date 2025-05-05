@@ -1,17 +1,29 @@
 import { AnimatePresence, motion } from "framer-motion"
-import { ChangeEvent, FC, useState } from "react"
+import { ChangeEvent, FC, useEffect, useState } from "react"
 import GCashMOP1 from "../../assets/GCash_MOP1.jpg";
 import GCashMOP2 from "../../assets/GCash_MOP2.jpg";
 
 interface GCashPaymentModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onProofSubmit: (file: File) => void;
+    onProofSubmit: (file: File, preview: string) => void;
+    initialPreview?: string | null;
 }
 
-const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProofSubmit }) => {
+const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProofSubmit, initialPreview }) => {
     const [preview, setPreview] = useState<string | null>(null);
     const [file, setFile] = useState<File | null>(null);
+
+    useEffect(() => {
+        if (initialPreview) setPreview(initialPreview);
+    }, [initialPreview]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setPreview(null);
+            setFile(null);
+        }
+    }, [isOpen]);
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -24,8 +36,8 @@ const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProo
     };
 
     const handleSubmit = () => {
-        if (file) {
-            onProofSubmit(file);
+        if (file && preview) {
+            onProofSubmit(file, preview);
             onClose();
         }
     };
@@ -45,7 +57,7 @@ const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProo
                         animate={{ scale: 1, y: 0 }}
                         exit={{ scale: 0.95, y: -20 }}
                     >
-                        <div className="flex flex-col h-full min-h-[200px]">
+                        <div className="flex flex-col h-full min-h-[300px]">
                             <h2 className="text-3xl font-bold mb-6 text-blue-800">GCash Payment</h2>
 
                             <div className="flex-grow overflow-y-auto">
@@ -58,14 +70,14 @@ const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProo
                                         <img
                                             src={GCashMOP1}
                                             alt="GCash QR Code 1"
-                                            className="max-w-full max-h-48 object-contain"
+                                            className="max-w-full h-28 object-contain"
                                         />
                                     </div>
                                     <div className="rounded-xl bg-gray-100 p-4 flex items-center justify-center">
                                         <img
                                             src={GCashMOP2}
                                             alt="GCash QR Code 2"
-                                            className="max-w-full max-h-48 object-contain"
+                                            className="max-w-full h-28 object-contain"
                                         />
                                     </div>
                                 </div>
@@ -76,6 +88,7 @@ const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProo
                                     </label>
                                     <input
                                         type="file"
+                                        name="payment_proof"
                                         accept="image/*"
                                         onChange={handleFileChange}
                                         className="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-base file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"

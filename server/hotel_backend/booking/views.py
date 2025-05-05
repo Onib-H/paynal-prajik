@@ -115,8 +115,8 @@ def bookings_list(request):
             
         elif request.method == 'POST':
             request_data = request.data.copy()
-            request_data['_request'] = request
-            
+            if 'payment_proof' in request.FILES:
+                request_data['payment_proof'] = request.FILES['payment_proof']
             unauthenticated = not (request.user and request.user.is_authenticated)
             
             try:

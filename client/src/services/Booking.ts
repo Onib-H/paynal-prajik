@@ -106,6 +106,12 @@ export const createBooking = async (bookingData: BookingFormData) => {
       formData.append("numberOfGuests", bookingData.numberOfGuests.toString());
     }
 
+    formData.append("paymentMethod", bookingData.paymentMethod);
+
+    if (bookingData.paymentMethod === 'gcash' && bookingData.paymentProof) {
+      formData.append("paymentProof", bookingData.paymentProof);
+    }
+
     const bookingLimitCheck = await checkMaxDailyBookings();
     if (!bookingLimitCheck.can_book) {
       throw new Error(`You have reached the maximum limit of ${bookingLimitCheck.max_limit} bookings per day.`);
@@ -132,10 +138,6 @@ export const createReservation = async (reservationData: ReservationFormData) =>
     formData.append("firstName", reservationData.firstName);
     formData.append("lastName", reservationData.lastName);
     formData.append("phoneNumber", reservationData.phoneNumber);
-
-    if (reservationData.emailAddress) {
-      formData.append("emailAddress", reservationData.emailAddress);
-    }
     formData.append("specialRequests", reservationData.specialRequests || "");
 
     if (reservationData.validId) {
@@ -181,6 +183,13 @@ export const createReservation = async (reservationData: ReservationFormData) =>
       formData.append("numberOfGuests", reservationData.numberOfGuests.toString());
     }
 
+    formData.append('paymentMethod', reservationData.paymentMethod)
+
+    if (reservationData.paymentMethod === 'gcash' && reservationData.paymentProof) {
+      formData.append("paymentProof", reservationData.paymentProof);
+
+    }
+    
     const bookingLimitCheck = await checkMaxDailyBookings();
     if (!bookingLimitCheck.can_book) {
       throw new Error(`You have reached the maximum limit of ${bookingLimitCheck.max_limit} bookings per day.`);
@@ -195,7 +204,7 @@ export const createReservation = async (reservationData: ReservationFormData) =>
 
     return response.data;
   } catch (error) {
-    console.error(`Failed to create venue booking:`, error);
+    console.error(`Failed to create venue booking: ${error}`);
     throw error;
   }
 };

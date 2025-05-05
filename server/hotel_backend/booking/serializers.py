@@ -1,3 +1,4 @@
+import cloudinary.uploader
 from rest_framework import serializers
 from .models import Bookings, Reservations, Transactions, Reviews
 from user_roles.models import CustomUsers
@@ -8,6 +9,7 @@ from property.serializers import AreaSerializer
 from .validations.booking import validate_booking_request
 from django.utils import timezone
 from datetime import datetime
+from django.core.files.uploadedfile import InMemoryUploadedFile, UploadedFile
 import uuid
 
 class AmenitySerializer(serializers.ModelSerializer):
@@ -53,6 +55,8 @@ class BookingSerializer(serializers.ModelSerializer):
     room_details = RoomSerializer(source='room', read_only=True)
     area_details = AreaSerializer(source='area', read_only=True)
     valid_id = serializers.SerializerMethodField()
+    payment_proof = serializers.SerializerMethodField()
+    payment_method = serializers.CharField(source='get_payment_method_display')
     
     class Meta:
         model = Bookings
@@ -75,8 +79,18 @@ class BookingSerializer(serializers.ModelSerializer):
             'total_price',
             'number_of_guests',
             'created_at',
-            'updated_at'
+            'updated_at',
+            'payment_method',
+            'payment_proof',
+            'payment_date',
         ]
+        
+    def get_payment_proof(self, obj):
+        if obj.payment_proof:
+            if isinstance(obj.payment_proof, str):
+                return obj.payment_proof
+            return obj.payment_proof.url
+        return None
     
     def get_user(self, obj):
         if obj.user:
@@ -120,6 +134,8 @@ class BookingRequestSerializer(serializers.Serializer):
     totalPrice = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
     arrivalTime = serializers.CharField(required=False, allow_blank=True)
     numberOfGuests = serializers.IntegerField(required=False, default=1)
+    paymentMethod = serializers.ChoiceField(choices=Bookings.PAYMENT_METHOD_CHOICES, default='physical')
+    paymentProof = serializers.FileField(required=False, allow_null=True, write_only=True)
 
     def validate(self, data):
         """
@@ -127,6 +143,19 @@ class BookingRequestSerializer(serializers.Serializer):
         """
         errors = {}
         room = None
+        
+        payment_method = data.get('payment_method')
+        payment_proof = data.get('payment_proof')
+        
+        if payment_method == 'gcash':
+            if not payment_proof:
+                raise serializers.ValidationError({{
+                    'payment_proof': "Payment proof is required for GCash payments."
+                }})
+            if not isinstance(payment_proof, (InMemoryUploadedFile, UploadedFile)) and not isinstance(payment_proof, str):
+                raise serializers.ValidationError({
+                    'payment_proof': "Please upload a valid file."
+                })
         
         try:
             if not data.get('isVenueBooking', False):
@@ -144,6 +173,17 @@ class BookingRequestSerializer(serializers.Serializer):
     def create(self, validated_data):
         request = self.context.get('request')
         
+        payment_proof_file = request.FILES.get('paymentProof')
+        payment_method = validated_data.get('paymentMethod', 'physical')
+        payment_proof_url = None
+        
+        if payment_method == 'gcash':
+            try:
+                upload_result = cloudinary.uploader.upload(payment_proof_file)
+                payment_proof_url = upload_result['secure_url']
+            except Exception as e:
+                raise serializers.ValidationError(f"Error uploading payment proof: {str(e)}")
+        
         if request and hasattr(request, 'user') and request.user.is_authenticated:
             user = request.user
             if user.first_name != validated_data['firstName'] or user.last_name != validated_data['lastName']:
@@ -158,10 +198,8 @@ class BookingRequestSerializer(serializers.Serializer):
                 else:
                     unique_id = str(uuid.uuid4())[:8]
                     username = f"guest_{unique_id}"
-                    email = f"{username}@example.com"
                     user = CustomUsers.objects.create(
                         username=username,
-                        email=email,
                         first_name=validated_data['firstName'],
                         last_name=validated_data['lastName'],
                         phone_number=validated_data['phoneNumber'],
@@ -236,7 +274,10 @@ class BookingRequestSerializer(serializers.Serializer):
                     time_of_arrival=validated_data.get('arrivalTime'),
                     start_time=start_time,
                     end_time=end_time,
-                    number_of_guests=validated_data.get('numberOfGuests', 1)
+                    number_of_guests=validated_data.get('numberOfGuests', 1),
+                    payment_method=payment_method,
+                    payment_proof=payment_proof_url,
+                    payment_date=timezone.now() if payment_method == 'gcash' else None,
                 )
                 
                 return booking                
@@ -258,7 +299,10 @@ class BookingRequestSerializer(serializers.Serializer):
                     is_venue_booking=False,
                     total_price=validated_data.get('totalPrice'),
                     time_of_arrival=validated_data.get('arrivalTime'),
-                    number_of_guests=validated_data.get('numberOfGuests', 1)
+                    number_of_guests=validated_data.get('numberOfGuests', 1),
+                    payment_method=payment_method,
+                    payment_proof=payment_proof_url,
+                    payment_date=timezone.now() if payment_method == 'gcash' else None,
                 )
                 
                 return booking
