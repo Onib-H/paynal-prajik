@@ -32,6 +32,7 @@ export interface BookingResponse {
         status?: string;
     };
     is_venue_booking?: boolean;
+    number_of_guests: number;
     total_price?: string | number;
     check_in_date: string;
     check_out_date: string;
@@ -41,6 +42,8 @@ export interface BookingResponse {
     cancellation_reason?: string;
     valid_id?: string;
     time_of_arrival?: string;
+    payment_method: 'physical' | 'gcash';
+    payment_proof: string;
 }
 
 export interface BookingFormData {

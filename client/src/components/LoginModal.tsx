@@ -126,7 +126,18 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
     },
     onError: (error: any) => {
       console.error(`Failed to login: ${error}`);
+      
       const errData = error.response?.data;
+      const statusCode = error.response?.status;
+
+      if (statusCode === 403) {
+        setError('email', {
+          message: errData,
+          type: "403"
+        });
+        return;
+      }
+
       if (errData && errData.error) {
         const message = errData.error;
         if (message.toLowerCase().includes("user does not exist")) {
@@ -142,9 +153,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
     }
   });
 
-  const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {
-    loginMutation(data);
-  }
+  const onSubmit: SubmitHandler<LoginFormInputs> = (data) => loginMutation(data);
 
   return (
     <>
@@ -233,9 +242,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
                           message: "Invalid email address"
                         }
                       })}
-                      // value={email}
                       placeholder="email@gmail.com"
-                      // onChange={handleEmailChange}
                       className="bg-gray-50 border border-gray-300 text-sm text-gray-900 rounded-sm mt-1 focus:ring-blue-600 block w-full p-2.5 pl-9"
                     />
                     {errors.email && (

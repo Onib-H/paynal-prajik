@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { AlertCircle, Calendar, Check, CheckCircle2, Clock, IdCard, X } from "lucide-react";
+import { AlertCircle, Calendar, Check, CheckCircle2, Clock, IdCard, Image, X } from "lucide-react";
 import { FC, useState } from "react";
 import EventLoader from "../../motions/loaders/EventLoader";
 import { BookingResponse } from "../../types/BookingClient";
@@ -315,8 +315,8 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 <motion.div
                                     className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
                                 >
-                                    <span className="font-semibold text-gray-700">Capacity:</span>
-                                    <span>{booking.area_details.capacity} people</span>
+                                    <span className="font-semibold text-gray-700">{isVenueBooking ? "Area" : "Room"} Capacity:</span>
+                                    <span>{booking.number_of_guests} / {booking.area_details.capacity} people</span>
                                 </motion.div>
                             )}
 
@@ -477,6 +477,19 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 Valid ID:
                             </h3>
                             {renderValidId()}
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                            className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200"
+                        >
+                            <h3 className="font-semibold mb-2 text-gray-700 flex items-center">
+                                <Image className="w-4 h-4 mr-2" />
+                                GCash Payment Proof:
+                            </h3>
+                            <img src={booking.payment_proof} alt="GCash Payment Proof" className="w-full h-auto rounded-lg" />
                         </motion.div>
 
                         {isVenueBooking && (

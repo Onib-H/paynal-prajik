@@ -15,7 +15,6 @@ import { checkCanBookToday, createBooking, fetchRoomById } from "../services/Boo
 import { BookingFormData, ConfirmBookingFormValues, RoomData } from "../types/BookingClient";
 import { formatTime } from "../utils/formatters";
 import GCashPaymentModal from "../components/bookings/GCashPaymentModal";
-import GCashLogo from "../assets/GCash-Logo.png"
 
 const ConfirmBooking = () => {
   const navigate = useNavigate();
@@ -95,7 +94,7 @@ const ConfirmBooking = () => {
       numberOfGuests: 1,
       arrivalTime: "",
       specialRequests: "",
-      paymentMethod: 'physical',
+      paymentMethod: 'gcash',
     },
   });
 
@@ -198,6 +197,11 @@ const ConfirmBooking = () => {
     if (isSubmitting) return;
     if (isAuthenticated && !canBookToday) {
       setGeneralError(bookingLimitMessage || "Booking limit reached");
+      return;
+    }
+
+    if (!gcashProof) {
+      setGeneralError("Please upload your GCash payment proof");
       return;
     }
 
@@ -388,6 +392,7 @@ const ConfirmBooking = () => {
           setGcashProof(file);
           setGcashPreview(preview);
           setValue('paymentMethod', 'gcash', { shouldValidate: true });
+          setShowGCashModal(false);
         }}
         initialPreview={gcashPreview}
       />
@@ -677,8 +682,8 @@ const ConfirmBooking = () => {
                 </motion.div>
               </div>
 
-              {/* Address and Valid ID */}
-              <div className="grid grid-cols-1 gap-4 mb-4">
+              {/* Valid ID and GCash Payment Proof */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label
                     htmlFor="validId"
@@ -718,6 +723,42 @@ const ConfirmBooking = () => {
                         type="button"
                         onClick={() => setValidIdPreview(null)}
                         className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
+                        aria-label="Remove image"
+                      >
+                        <svg
+                          className="w-4 h-4 text-red-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-md font-medium text-gray-700 mb-1">
+                    GCash Payment Proof <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowGCashModal(true)}
+                    className="w-full py-2 px-3 border border-gray-300 rounded-md bg-gray-50 hover:bg-gray-100 cursor-pointer"
+                  >
+                    Upload Payment Proof
+                  </button>
+                  {gcashPreview && (
+                    <div className="mt-2 relative">
+                      <img src={gcashPreview} className="w-full h-full object-contain border rounded-lg" />
+                      <button
+                        onClick={() => setGcashPreview(null)}
+                        className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 cursor-pointer"
                         aria-label="Remove image"
                       >
                         <svg
@@ -939,96 +980,6 @@ const ConfirmBooking = () => {
                   <p className="text-sm text-gray-500">No amenities listed</p>
                 )}
               </motion.div>
-            </motion.div>
-
-            {/* Payment Method */}
-            <motion.div
-              className="rounded-lg shadow-md p-6 mb-6 backdrop-blur-sm bg-white/90 border border-gray-100"
-              variants={itemVariants}
-            >
-              <h3 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-indigo-800 bg-clip-text text-transparent">Payment Method</h3>
-              <div className="space-y-3">
-                {/* Physical Payment Option */}
-                <div
-                  className={`flex items-center p-3 rounded-md cursor-pointer transition-colors ${paymentMethod === 'physical'
-                    ? 'border-2 border-blue-500 bg-blue-50'
-                    : 'border border-gray-200 hover:border-gray-300'
-                    }`}
-                  onClick={() => {
-                    setValue('paymentMethod', 'physical');
-                    setGcashProof(null);
-                    setGcashPreview(null);
-                    trigger('paymentMethod');
-                  }}
-                >
-                  <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${paymentMethod === 'physical'
-                    ? 'border-blue-500 bg-blue-500'
-                    : 'border-gray-400'
-                    }`}>
-                    {paymentMethod === 'physical' && (
-                      <div className="w-2 h-2 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <span className="font-medium">Physical Payment</span>
-                  {paymentMethod === 'physical' && (
-                    <BookCheck className="w-5 h-5 ml-2 text-green-500" />
-                  )}
-                </div>
-
-                {/* GCash Payment Option */}
-                <div
-                  className={`flex items-center p-3 rounded-md cursor-pointer transition-colors ${paymentMethod === 'gcash'
-                    ? 'border-2 border-blue-500 bg-blue-50'
-                    : 'border border-gray-200 hover:border-gray-300'
-                    }`}
-                  onClick={() => {
-                    if (!gcashProof) setShowGCashModal(true);
-                    else {
-                      setValue('paymentMethod', 'gcash');
-                      trigger('paymentMethod');
-                    }
-                  }}
-                >
-                  <div className={`w-5 h-5 rounded-full border-2 mr-3 flex items-center justify-center ${paymentMethod === 'gcash'
-                    ? 'border-blue-500 bg-blue-500'
-                    : 'border-gray-400'
-                    }`}>
-                    {paymentMethod === 'gcash' && (
-                      <div className="w-2 h-2 rounded-full bg-white" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <span className="font-medium">
-                      <img src={GCashLogo} alt={GCashLogo} width={100} height={100} />
-                    </span>
-                  </div>
-                  {gcashPreview && paymentMethod === 'gcash' && (
-                    <BookCheck className="w-5 h-5 ml-2 text-green-500" />
-                  )}
-                  {gcashProof && (
-                    <button
-                      type="button"
-                      className="text-blue-600 cursor-pointer hover:text-blue-800 text-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setGcashProof(null);
-                        setGcashPreview(null);
-                        setValue('paymentMethod', 'physical');
-                        trigger('paymentMethod');
-                      }}
-                    >
-                      Remove proof
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <input
-                type="hidden"
-                {...register('paymentMethod', {
-                  required: 'Payment method is required',
-                })}
-              />
             </motion.div>
 
             {/* Booking Details */}

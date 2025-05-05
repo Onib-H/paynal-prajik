@@ -38,7 +38,6 @@ const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProo
     const handleSubmit = () => {
         if (file && preview) {
             onProofSubmit(file, preview);
-            onClose();
         }
     };
 
@@ -91,7 +90,7 @@ const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProo
                                         name="payment_proof"
                                         accept="image/*"
                                         onChange={handleFileChange}
-                                        className="w-full p-4 border-2 border-dashed border-gray-300 rounded-xl file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-base file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                        className="w-full cursor-pointer p-4 border-2 border-dashed border-gray-300 rounded-xl file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:text-base file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                     />
                                     {preview && (
                                         <div className="mt-6 relative">
@@ -105,7 +104,7 @@ const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProo
                                                     setPreview(null);
                                                     setFile(null);
                                                 }}
-                                                className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
+                                                className="absolute cursor-pointer top-3 right-3 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100 transition-colors"
                                             >
                                                 ✕
                                             </button>
@@ -117,15 +116,14 @@ const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProo
                             <div className="flex gap-4 mt-2 border-t border-gray-200">
                                 <button
                                     onClick={onClose}
-                                    className="flex-1 px-6 py-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors text-lg"
+                                    className="flex-1 cursor-pointer px-6 py-3 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors text-lg"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleSubmit}
                                     disabled={!file}
-                                    className={`flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl transition-colors text-lg ${!file ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
-                                        }`}
+                                    className={`flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl transition-colors text-lg ${!file ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-blue-700"}`}
                                 >
                                     Submit Proof
                                 </button>

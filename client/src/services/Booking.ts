@@ -27,7 +27,7 @@ export const fetchBookings = async ({
     });
     return response.data;
   } catch (error) {
-    console.error(`Failed to fetch bookings:`, error);
+    console.error(`Failed to fetch bookings: ${error}`);
     throw error;
   }
 };
@@ -243,7 +243,7 @@ export const fetchBookingDetail = async (bookingId: number | string) => {
     });
     return response.data.data;
   } catch (error) {
-    console.error(`Failed to fetch booking details:`, error);
+    console.error(`Failed to fetch booking details: ${error}`);
     throw error;
   }
 };
@@ -446,7 +446,7 @@ export const checkMaxDailyBookings = async () => {
     });
     return response.data;
   } catch (error) {
-    console.error("Failed to check booking limits:", error);
+    console.error(`Failed to check max bookings: ${error}`);
     throw error;
   }
 };

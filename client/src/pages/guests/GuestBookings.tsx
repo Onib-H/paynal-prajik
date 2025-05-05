@@ -41,7 +41,7 @@ const GuestBookings = () => {
       total_items: number;
       page_size: number;
     }
-  }, Error>({
+  }>({
     queryKey: ["guest-bookings", userDetails?.id, currentPage, pageSize, filterStatus],
     queryFn: () => fetchGuestBookings({ page: currentPage, page_size: pageSize, status: filterStatus }),
     enabled: !!userDetails?.id,
@@ -61,7 +61,7 @@ const GuestBookings = () => {
       setShowCancelModal(false);
       setCancellationBookingId(null);
 
-      queryClient.invalidateQueries({ queryKey: ['guest-bookings', currentPage, pageSize] });
+      queryClient.invalidateQueries({ queryKey: ['guest-bookings', userDetails?.id] });
       toast.success("Booking cancelled successfully!");
     },
     onError: (error: any) => {
@@ -244,7 +244,7 @@ const GuestBookings = () => {
                     let itemName, itemImage, totalAmount;
 
                     if (isVenueBooking) {
-                      itemName = booking.area_name || booking.area_details?.area_name || "Venue";
+                      itemName = booking.area_name || booking.area_details?.area_name;
                       itemImage = booking.area_image || booking.area_details?.area_image;
 
                       const startTime = booking.start_time || booking.check_in_date;
@@ -316,7 +316,7 @@ const GuestBookings = () => {
                             <div className="ml-4">
                               <div className="text-lg font-semibold text-gray-900">{itemName}</div>
                               {isVenueBooking ? (
-                                <div className="text-md bg-blue-100 text-blue-800 px-2 py-0.5 rounded inline-block mt-1">Venue</div>
+                                <div className="text-md bg-blue-100 text-blue-800 px-2 py-0.5 rounded inline-block mt-1">Area</div>
                               ) : (
                                 <div className="text-md bg-green-100 text-green-800 px-2 py-0.5 rounded inline-block mt-1">Room</div>
                               )}
