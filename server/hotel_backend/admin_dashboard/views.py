@@ -848,7 +848,7 @@ def booking_status_counts(request):
 @permission_classes([IsAuthenticated])
 def fetch_all_users(request):
     try:
-        users = CustomUsers.objects.filter(role="guest")
+        users = CustomUsers.objects.filter(role="guest", is_archived=False)
         
         page = request.query_params.get('page')
         page_size = request.query_params.get('page_size')
@@ -979,7 +979,7 @@ def manage_user(request, user_id):
     
     return Response({'error': 'Invalid request method'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-@api_view(['POST'])
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def archive_user(request, user_id):
     try:

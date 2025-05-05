@@ -43,7 +43,7 @@ urlpatterns = [
     path('users', views.fetch_all_users, name='fetch_all_users'),
     path('show_user/<int:user_id>', views.show_user_details, name='show_user_details'),
     path('edit_user/<int:user_id>', views.manage_user, name='manage_user'),
-    path('archive_user/<int:user_id>', views.archive_user, name='archive_user'),
+    path('archived_user/<int:user_id>', views.archive_user, name='archive_user'),
 
     # Archived Users Management
     path('archived_users', views.fetch_archived_users, name='fetch_archived_users'),
