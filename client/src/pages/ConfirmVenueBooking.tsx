@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { BookCheck } from "lucide-react";
+import { ArrowLeft, BookCheck } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import GCashPaymentModal from "../components/bookings/GCashPaymentModal";
 import LoginModal from "../components/LoginModal";
 import Modal from "../components/Modal";
 import SignupModal from "../components/SignupModal";
@@ -12,7 +13,6 @@ import { useUserContext } from "../contexts/AuthContext";
 import EventLoader from "../motions/loaders/EventLoader";
 import { createReservation, fetchAreaById } from "../services/Booking";
 import { AreaData, FormData, ReservationFormData } from "../types/BookingClient";
-import GCashPaymentModal from "../components/bookings/GCashPaymentModal";
 
 const ConfirmVenueBooking = () => {
   const navigate = useNavigate();
@@ -290,12 +290,23 @@ const ConfirmVenueBooking = () => {
         animate="visible"
         exit="exit"
       >
-        <motion.h1
-          className="text-2xl md:text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-indigo-800 bg-clip-text text-transparent"
-          variants={itemVariants}
-        >
-          Confirm Booking
-        </motion.h1>
+        <div className="flex justify-between items-center mb-8">
+          <motion.button
+            variants={itemVariants}
+            onClick={() => navigate(-1)}
+            className="flex items-center cursor-pointer gap-2 px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors duration-300"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span>Go Back</span>
+          </motion.button>
+          <motion.h1
+            className="text-2xl md:text-3xl font-bold text-center bg-gradient-to-r from-blue-600 to-indigo-800 bg-clip-text text-transparent"
+            variants={itemVariants}
+          >
+            Confirm Booking
+          </motion.h1>
+          <div className="w-[100px]"></div>
+        </div>
 
         <AnimatePresence>
           {!isAuthenticated && (

@@ -1268,6 +1268,90 @@ def daily_cancellations(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+def area_revenue(request):
+    try:
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))
+        start_date = datetime(year, month, 1)
+        
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+            
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        response_data = {
+            "area_names": [],
+            "revenue_data": [],
+            "month": month,
+            "year": year
+        }
+        
+        areas = Areas.objects.all()
+        
+        for area in areas:
+            area_revenue = Transactions.objects.filter(
+                booking__area=area,
+                transaction_date__gte=start_date,
+                transaction_date__lte=end_date,
+                status='completed',
+                booking__is_venue_booking=True
+            ).aggregate(Sum('amount'))['amount__sum'] or 0
+            
+            response_data["area_names"].append(area.area_name)
+            response_data["revenue_data"].append(float(area_revenue))
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({
+            'error': str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def area_bookings(request):
+    try:
+        month = int(request.query_params.get('month', timezone.now().month))
+        year = int(request.query_params.get('year', timezone.now().year))        
+        start_date = datetime(year, month, 1)
+        
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+        
+        end_date = end_date.replace(hour=23, minute=59, second=59)
+        
+        response_data = {
+            "area_names": [],
+            "booking_counts": [],
+            "month": month,
+            "year": year
+        }
+        
+        areas = Areas.objects.all()
+        
+        for area in areas:
+            area_bookings = Bookings.objects.filter(
+                area=area,
+                created_at__gte=start_date,
+                created_at__lte=end_date,
+                is_venue_booking=True
+            ).count()
+            
+            response_data["area_names"].append(area.area_name)
+            response_data["booking_counts"].append(area_bookings)
+        
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        return Response({
+            "error": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def room_revenue(request):
     try:
         month = int(request.query_params.get('month', timezone.now().month))
@@ -1303,7 +1387,6 @@ def room_revenue(request):
             response_data["revenue_data"].append(float(room_revenue))
         
         return Response(response_data, status=status.HTTP_200_OK)
-        
     except Exception as e:
         return Response({
             "error": str(e)

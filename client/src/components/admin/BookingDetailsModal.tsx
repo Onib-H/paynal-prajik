@@ -83,41 +83,19 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             }
 
             if (booking.time_of_arrival) {
-                const arrivalTimeParts = booking.time_of_arrival.split(':');
-                if (arrivalTimeParts.length >= 2) {
-                    const arrivalHour = parseInt(arrivalTimeParts[0]);
-                    const arrivalMinute = parseInt(arrivalTimeParts[1]);
+                const [hourStr, minStr] = booking.time_of_arrival.split(':');
+                
+                const arrivalHour = parseInt(hourStr, 10);
+                const arrivalMinute = parseInt(minStr, 10);
 
-                    const currentHour = currentDate.getHours();
-                    const currentMinute = currentDate.getMinutes();
+                const currentMinutes = currentDate.getHours() * 60 + currentDate.getMinutes();
+                const arrivalMinutes = arrivalHour * 60 + arrivalMinute;
 
-                    const currentTimeInMinutes = (currentHour * 60) + currentMinute;
-                    const arrivalTimeInMinutes = (arrivalHour * 60) + arrivalMinute;
-
-                    const standardCheckInTime = 14 * 60;
-
-                    if (arrivalTimeInMinutes < standardCheckInTime) {
-                        if (currentTimeInMinutes < arrivalTimeInMinutes) {
-                            const formattedArrivalTime = `${arrivalHour % 12 || 12}:${arrivalMinute.toString().padStart(2, '0')} ${arrivalHour >= 12 ? 'PM' : 'AM'}`;
-
-                            return {
-                                isValid: false,
-                                message: `Guest is expected to arrive in ${formattedArrivalTime}`
-                            };
-                        }
-                        return { isValid: true, message: "" };
-                    }
-
-                    if (currentTimeInMinutes < arrivalTimeInMinutes) {
-                        const formattedArrivalTime = `${arrivalHour % 12 || 12}:${arrivalMinute.toString().padStart(2, '0')} ${arrivalHour >= 12 ? "PM" : "AM"}`;
-
-                        return {
-                            isValid: false,
-                            message: `Guest is expected to arrive at ${formattedArrivalTime}`,
-                        };
-                    }
-
-                    return { isValid: true, message: "" };
+                if (currentMinutes < arrivalMinutes) {
+                    return {
+                        isValid: false,
+                        message: `Check-in is not available yet. Guest is arriving earlier than the scheduled time of ${booking.time_of_arrival}.`
+                    };
                 }
             }
             return { isValid: true, message: "" };

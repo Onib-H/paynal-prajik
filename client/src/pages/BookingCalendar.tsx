@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isEqual, isSameDay, isWithinInterval, parseISO, startOfDay, startOfMonth } from 'date-fns';
+import { ArrowLeft, CircleAlert } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchRoomBookings, fetchRoomById } from '../services/Booking';
-import { AmenityObject, BookingsByDate, RoomData, BookingData } from '../types/BookingClient';
-import { CircleAlert } from 'lucide-react';
+import { AmenityObject, BookingData, BookingsByDate, RoomData } from '../types/BookingClient';
 
 const isAmenityObject = (amenity: any): amenity is AmenityObject => {
     return amenity && typeof amenity === 'object' && 'description' in amenity;
@@ -308,7 +308,17 @@ const BookingCalendar = () => {
 
     return (
         <div className="container mx-auto px-4 py-10 mt-16">
-            <h2 className="text-4xl font-semibold mb-6 text-center">Book Your Room</h2>
+            <div className="flex justify-between items-center mb-6">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center cursor-pointer gap-2 px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors duration-300"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                    <span>Go Back</span>
+                </button>
+                <h2 className="text-4xl font-semibold text-center">Book Your Room</h2>
+                <div className="w-[100px]"></div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">

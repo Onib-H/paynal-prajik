@@ -163,6 +163,38 @@ export const fetchRoomBookings = async ({ month, year }: { month?: number; year?
   }
 };
 
+export const fetchAreaRevenue = async ({ month, year }: { month?: number; year?: number } = {}) => {
+  try {
+    const response = await ADMIN.get("/area_revenue", {
+      params: {
+        month: month || new Date().getMonth() + 1,
+        year: year || new Date().getFullYear()
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch area revenue: ${error}`);
+    throw error;
+  }
+};
+
+export const fetchAreaBookings = async ({ month, year }: { month?: number; year?: number } = {}) => {
+  try {
+    const response = await ADMIN.get("/area_bookings", {
+      params: {
+        month: month || new Date().getMonth() + 1,
+        year: year || new Date().getFullYear()
+      },
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch area bookings: ${error}`);
+    throw error;
+  }
+}
+
 export const fetchBookingStatusCounts = async ({ month, year }: { month?: number; year?: number } = {}) => {
   try {
     const response = await ADMIN.get("/booking_status_counts", {

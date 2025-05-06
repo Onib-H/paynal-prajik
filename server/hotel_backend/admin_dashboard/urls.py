@@ -17,6 +17,8 @@ urlpatterns = [
     path('daily_no_shows_rejected', views.daily_no_shows_rejected, name='daily_no_shows_rejected'),
     path('room_revenue', views.room_revenue, name='room_revenue'),
     path('room_bookings', views.room_bookings, name='room_bookings'),
+    path('area_revenue', views.area_revenue, name='area_revenue'),
+    path('area_bookings', views.area_bookings, name='area_bookings'),
     
     # CRUD Rooms
     path('rooms', views.fetch_rooms, name='fetch_rooms'),
@@ -47,7 +49,7 @@ urlpatterns = [
 
     # Archived Users Management
     path('archived_users', views.fetch_archived_users, name='fetch_archived_users'),
-    path('restore_users/<int:user_id>', views.restore_user, name='restore_user'),
+    path('restore_user/<int:user_id>', views.restore_user, name='restore_user'),
 
     # Add booking management endpoints
     path('bookings', views.admin_bookings, name='admin_bookings'),

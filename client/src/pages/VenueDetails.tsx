@@ -2,13 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowLeft, BookOpen, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
 import { useUserContext } from "../contexts/AuthContext";
+import RoomAndAreaDetailsSkeleton from "../motions/skeletons/RoomAndAreaDetailsSkeleton";
 import { fetchAreaDetail } from "../services/Area";
 import { fetchAreaReviews } from "../services/Booking";
 import { Area } from "../types/AreaClient";
-import RoomAndAreaDetailsSkeleton from "../motions/skeletons/RoomAndAreaDetailsSkeleton";
 import Error from "./_ErrorBoundary";
 
 const VenueDetails = () => {
@@ -16,6 +16,7 @@ const VenueDetails = () => {
     const { isAuthenticated } = useUserContext();
     const [isImageLoaded, setIsImageLoaded] = useState(false);
     const [currentPage, setCurrentPage] = useState<number>(1);
+    const navigate = useNavigate();
     const pageSize = 5;
 
     const { data: venueData, isLoading: isLoadingVenue, error: venueError } = useQuery<{ data: Area }>({
@@ -94,6 +95,19 @@ const VenueDetails = () => {
             variants={containerVariants}
             className="min-h-screen bg-gradient-to-b from-gray-50 to-white"
         >
+            {/* Top Back Button (History based) */}
+            <div className="bg-white shadow-md py-3 px-4 sticky top-0 z-30">
+                <div className="container mx-auto">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors duration-300"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                        <span>Go Back</span>
+                    </button>
+                </div>
+            </div>
+
             {/* Hero Banner */}
             <div className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden">
                 <motion.div
@@ -120,28 +134,29 @@ const VenueDetails = () => {
                 <div className="relative z-20 h-full w-full flex flex-col justify-between">
                     {/* Back Button */}
                     <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
                         transition={{ delay: 0.4, duration: 0.5 }}
                         className="p-6"
                     >
-                        <Link
-                            to="/areas"
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300"
+                        <motion.button
+                            variants={itemVariants}
+                            onClick={() => navigate(-1)}
+                            className="inline-flex cursor-pointer items-center gap-2 mt-2 px-4 py-2 rounded-full bg-indigo-600/80 backdrop-blur-md text-white hover:bg-indigo-700/90 transition-all duration-300 shadow-lg"
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            <span>Back to Areas</span>
-                        </Link>
+                            <span>Back to Rooms</span>
+                        </motion.button>
                     </motion.div>
 
-                    {/* Venue Name */}
+                    {/* Area Name */}
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5, duration: 0.7 }}
                         className="p-10 md:p-16 text-center"
                     >
-                        <h1 className="font-playfair text-4xl md:text-6xl lg:text-7xl font-bold text-white drop-shadow-lg mb-4">
+                        <h1 className="font-playfair text-4xl md:text-6xl lg:text-7xl font-bold text-white drop-shadow-lg -mt-28">
                             {venueDetail.area_name}
                         </h1>
                     </motion.div>
@@ -151,7 +166,7 @@ const VenueDetails = () => {
             {/* Content Section */}
             <motion.div
                 variants={containerVariants}
-                className="container mx-auto py-12 px-4 sm:px-6 relative z-10 -mt-20"
+                className="container mx-auto py-6 px-4 sm:px-6 relative z-10 -mt-20"
             >
                 <motion.div
                     variants={itemVariants}
