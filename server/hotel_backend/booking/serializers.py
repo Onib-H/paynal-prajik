@@ -83,6 +83,7 @@ class BookingSerializer(serializers.ModelSerializer):
             'payment_method',
             'payment_proof',
             'payment_date',
+            'down_payment',
         ]
         
     def get_payment_proof(self, obj):

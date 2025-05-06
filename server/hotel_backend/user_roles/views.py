@@ -18,7 +18,6 @@ from property.serializers import AreaSerializer
 from .google.oauth import google_auth as google_oauth_util
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from django.db.models import Q
 from io import BytesIO
 import os
 import uuid

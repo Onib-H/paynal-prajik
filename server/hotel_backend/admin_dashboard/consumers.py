@@ -60,7 +60,7 @@ class PendingBookingConsumer(AsyncWebsocketConsumer):
                     'bookings': bookings
                 }))
         except json.JSONDecodeError:
-            print(f"Error decoding JSON: {text_data}")
+            return f"Error decoding JSON: {text_data}"
     
     @database_sync_to_async
     def get_active_count(self):

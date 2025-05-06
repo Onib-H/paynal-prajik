@@ -4,113 +4,13 @@ import { memo, useCallback, useMemo } from "react";
 import deluxe_twin from "../../assets/deluxe_twin.jpg";
 import { fetchBookingDetail } from "../../services/Booking";
 import BookingCard from "./BookingCard";
-
-interface BookingDataProps {
-  bookingId?: string | null;
-}
-
-interface FormattedBooking {
-  roomType: string;
-  imageUrl: string;
-  dates: string;
-  guests: number;
-  price: number;
-  status: string;
-  bookingId: string | number;
-  isVenueBooking?: boolean;
-  roomDetails?: {
-    room_image?: string;
-    capacity?: number;
-  };
-  areaDetails?: {
-    area_image?: string;
-    area_name?: string;
-    price_per_hour?: string;
-    capacity?: number;
-  };
-  userDetails?: {
-    fullName: string;
-    email: string;
-    phoneNumber?: string;
-  };
-  specialRequest?: string;
-  validId?: string;
-  bookingDate?: string;
-  cancellationReason?: string;
-  cancellationDate?: string;
-  totalPrice?: number;
-  numberOfGuests?: number;
-  arrivalTime?: string;
-  paymentMethod?: string;
-  paymentProof?: string;
-}
-
-interface RoomData {
-  id: string;
-  room_name: string;
-  room_image?: string;
-  room_price: number;
-  max_guests: number;
-}
-
-interface AreaData {
-  id: string;
-  area_name: string;
-  area_image?: string;
-  price_per_hour: string;
-  capacity: number;
-}
-
-interface BookingData {
-  id: string | number;
-  check_in_date: string;
-  check_out_date: string;
-  status: string;
-  room?: RoomData;
-  area?: AreaData;
-  room_details?: RoomData;
-  area_details?: AreaData;
-  is_venue_booking?: boolean;
-  total_price?: number;
-  user?: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    phone_number?: string;
-  };
-  special_request?: string;
-  valid_id?: string;
-  created_at: string;
-  cancellation_reason?: string;
-  cancellation_date?: string;
-  number_of_guests?: number;
-  time_of_arrival?: string;
-  payment_method?: string;
-  payment_proof?: string;
-}
-
-const formatDate = (dateString: string): string => {
-  if (!dateString) return 'N/A';
-
-  try {
-    const options: Intl.DateTimeFormatOptions = {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  } catch (e) {
-    console.error(`Error formatting date: ${e}`);
-    return dateString;
-  }
-};
+import { formatDate } from "../../utils/formatters";
+import { BookingDataProps, BookingDataTypes, FormattedBooking } from "../../types/BookingGuest";
 
 const BookingData = memo(({ bookingId }: BookingDataProps) => {
   const effectiveBookingId = bookingId;
 
-  const { data: bookingData, isLoading, error } = useQuery<BookingData>({
+  const { data: bookingData, isLoading, error } = useQuery<BookingDataTypes>({
     queryKey: ['booking', effectiveBookingId],
     queryFn: () => fetchBookingDetail(effectiveBookingId),
     enabled: !!effectiveBookingId,
@@ -135,7 +35,8 @@ const BookingData = memo(({ bookingId }: BookingDataProps) => {
       guests: 0,
       price: 0,
       numberOfGuests: bookingData?.number_of_guests || 1,
-      arrivalTime: bookingData?.time_of_arrival
+      arrivalTime: bookingData?.time_of_arrival,
+      downPayment: bookingData?.down_payment,
     };
 
     if (bookingData?.user) {

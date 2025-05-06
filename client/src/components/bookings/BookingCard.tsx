@@ -1,26 +1,8 @@
 import { motion } from "framer-motion";
 import { AlertCircle, Calendar, CheckCircle2, Clock, CreditCard, IdCard, User, Watch, XCircle } from "lucide-react";
 import { FC, ReactNode, memo, useMemo } from "react";
-
-const formatStatus = (status: string): string => {
-  return status.toUpperCase().replace(/_/g, ' ');
-};
-
-const formatTime = (time: string): string => {
-  if (!time) return 'N/A';
-
-  try {
-    const [hours, minutes] = time.split(':').map(Number);
-
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-
-    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
-  } catch (error) {
-    console.error(`Error parsing time: ${error}`);
-    return time;
-  }
-};
+import { formatTime, formatStatus } from "../../utils/formatters";
+import { BookingCardProps } from "../../types/BookingGuest";
 
 const getStatusInfo = (status: string): { color: string; icon: ReactNode } => {
   const normalizedStatus = status.toLowerCase();
@@ -70,39 +52,6 @@ const getStatusInfo = (status: string): { color: string; icon: ReactNode } => {
       };
   }
 };
-
-interface BookingCardProps {
-  roomType: string;
-  imageUrl: string;
-  dates: string;
-  guests: number;
-  price: number;
-  status: string;
-  roomDetails?: {
-    room_image?: string;
-    capacity?: number;
-  };
-  areaDetails?: {
-    area_image?: string;
-    area_name?: string;
-    price_per_hour?: string;
-    capacity?: number;
-  };
-  userDetails?: {
-    fullName: string;
-    email: string;
-    phoneNumber?: string;
-  };
-  specialRequest?: string;
-  validId?: string;
-  bookingDate?: string;
-  cancellationReason?: string;
-  cancellationDate?: string;
-  totalPrice?: number;
-  numberOfGuests?: number;
-  arrivalTime?: string;
-  paymentProof?: string;
-}
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -154,7 +103,8 @@ const BookingCard: FC<BookingCardProps> = memo(({
   cancellationDate,
   totalPrice,
   numberOfGuests,
-  arrivalTime
+  arrivalTime,
+  downPayment
 }) => {
   const statusInfo = useMemo(() => getStatusInfo(status), [status]);
   const displayPrice = totalPrice || price;
@@ -214,7 +164,7 @@ const BookingCard: FC<BookingCardProps> = memo(({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center">
               <User className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
               <div>
@@ -230,19 +180,27 @@ const BookingCard: FC<BookingCardProps> = memo(({
                 <span className="block font-semibold">{bookingDate || 'N/A'}</span>
               </div>
             </div>
-          </div>
 
-          {arrivalTime && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            {arrivalTime && (
               <div className="flex items-center">
                 <Watch className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
                 <div>
-                  <span className="block text-lg text-gray-500">Expected Arrival Time</span>
+                  <span className="block text-md text-gray-500">Expected Arrival Time</span>
                   <span className="block font-semibold">{formatTime(arrivalTime)}</span>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {downPayment && (
+              <div className="flex items-center">
+                <Watch className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
+                <div>
+                  <span className="block text-md text-gray-500">Down Payment</span>
+                  <span className="block font-semibold">{downPayment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+              </div>
+            )}
+          </div>
         </motion.div>
 
         {/* User Information - only render when available */}

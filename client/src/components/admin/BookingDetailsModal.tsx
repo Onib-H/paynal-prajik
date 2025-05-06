@@ -7,7 +7,7 @@ import { formatDate, getBookingPrice } from "../../utils/formatters";
 import BookingStatusBadge from "./BookingStatusBadge";
 
 interface BookingDetailProps {
-    booking: BookingResponse | null;
+    booking: BookingResponse;
     onClose: () => void;
     onConfirm: (downPaymentAmount?: number) => void;
     onReject: () => void;
@@ -27,7 +27,10 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     const bookingPrice = getBookingPrice(booking);
     const currentPayment = parseFloat(paymentAmount) || 0;
     const currentDownPayment = parseFloat(downPayment) || 0;
+    const downPaymentAmount = booking?.down_payment;
+    const remainingBalance = bookingPrice - downPaymentAmount;
     const isPaymentComplete = currentPayment === bookingPrice;
+    const isRemainingPaymentComplete = currentPayment === remainingBalance;
     const isDownPaymentValid = currentDownPayment > 0 && currentDownPayment <= bookingPrice;
     const isReservedStatus = booking.status === "reserved";
     const isPendingStatus = booking.status === "pending";
@@ -164,7 +167,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     };
 
     const checkInValidation = isCheckInDateValid();
-    const canCheckIn = isPaymentComplete && checkInValidation.isValid;
+    const canCheckIn = (isPaymentComplete || isRemainingPaymentComplete) && checkInValidation.isValid;
 
     const checkOutValidation = isCheckOutDateValid();
     const canCheckOut = checkOutValidation.isValid;
@@ -193,21 +196,16 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     };
 
     const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => setPaymentAmount(e.target.value);
+
     const handleDownPaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         const numValue = parseFloat(value) || 0;
-
-        // Allow clearing the field
         if (value === "") {
             setDownPayment("");
             return;
         }
 
-        // Don't update if the value is greater than the booking price
-        if (numValue > bookingPrice) {
-            return;
-        }
-
+        if (numValue > bookingPrice) return;
         setDownPayment(value);
     };
 
@@ -447,6 +445,20 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                     <Calendar className="w-4 h-4 mr-2" />
                                     Payment Details
                                 </h3>
+
+                                {booking.down_payment > 0 && (
+                                    <div className="mb-3 p-2 bg-white rounded border border-blue-100">
+                                        <p className="text-gray-700 flex justify-between">
+                                            <span className="font-medium">Down Payment:</span>
+                                            <span className="text-green-600 font-semibold">₱ {(downPaymentAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </p>
+                                        <p className="text-gray-700 flex justify-between">
+                                            <span className="font-medium">Remaining Balance:</span>
+                                            <span className="text-amber-600 font-semibold">₱ {(bookingPrice - booking.down_payment).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                        </p>
+                                    </div>
+                                )}
+
                                 <div className="flex flex-col sm:flex-row items-center gap-2">
                                     <div className="relative flex-1 w-full">
                                         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -458,7 +470,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                             min="0"
                                             value={paymentAmount}
                                             onChange={handlePaymentChange}
-                                            placeholder={`Enter amount (${bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
+                                            placeholder={`Enter amount (${(bookingPrice - booking.down_payment).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
                                             className="w-full pl-10 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                                         />
                                     </div>
@@ -470,10 +482,19 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                     className="mt-2 text-sm"
                                 >
                                     {currentPayment > 0 && (
-                                        <p className={isPaymentComplete ? "text-green-600 flex items-center" : "text-red-600 flex items-center"}>
-                                            {isPaymentComplete
-                                                ? <><CheckCircle2 className="w-4 h-4 mr-1" /> Payment amount matches the required total.</>
-                                                : <><AlertCircle className="w-4 h-4 mr-1" /> Payment must be exactly ₱{bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} to check in the guest.</>}
+                                        <p className={(isPaymentComplete || isRemainingPaymentComplete) ? "text-green-600 flex items-center" : "text-red-600 flex items-center"}>
+                                            {isPaymentComplete ? (
+                                                <><CheckCircle2 className="w-4 h-4 mr-1" /> Payment amount matches the full booking total.</>
+                                            ) : isRemainingPaymentComplete ? (
+                                                <><CheckCircle2 className="w-4 h-4 mr-1" /> Payment amount matches the remaining balance.</>
+                                            ) : (
+                                                <><AlertCircle className="w-4 h-4 mr-1" />
+                                                    {downPaymentAmount > 0
+                                                        ? `Payment must be ₱${remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (remaining balance) or ₱${bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (full amount).`
+                                                        : `Payment must be exactly ₱${bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} to check in the guest.`
+                                                    }
+                                                </>
+                                            )}
                                         </p>
                                     )}
                                 </motion.div>
@@ -552,8 +573,8 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 whileTap={isDownPaymentValid ? { scale: 0.98 } : {}}
                                 onClick={() => isDownPaymentValid && onConfirm(currentDownPayment)}
                                 className={`px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm ${isDownPaymentValid
-                                        ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
-                                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                    ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
+                                    : 'bg-gray-400 text-gray-200 cursor-not-allowed'
                                     }`}
                                 disabled={!isDownPaymentValid}
                             >

@@ -638,7 +638,6 @@ def admin_bookings(request):
             }
         }, status=status.HTTP_200_OK)
     except Exception as e:
-        traceback.print_exc()
         return Response({"error": str(e), "traceback": traceback.format_exc()}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -798,13 +797,15 @@ def record_payment(request, booking_id):
         booking.payment_status = 'paid'
         booking.save()
         
+        current_datetime = timezone.now()
+        
         transaction = Transactions.objects.create(
             booking=booking,
             user=booking.user,
             transaction_type=transaction_type,
             amount=amount,
             status='completed',
-            transaction_date=booking.check_in_date
+            transaction_date=current_datetime
         )
         
         return Response({

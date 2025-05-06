@@ -44,6 +44,7 @@ export interface BookingResponse {
     time_of_arrival?: string;
     payment_method: 'physical' | 'gcash';
     payment_proof: string;
+    down_payment?: number;
 }
 
 export interface BookingFormData {
