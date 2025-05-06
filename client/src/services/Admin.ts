@@ -474,6 +474,7 @@ export const updateBookingStatus = async (bookingId: number, data: Record<string
         ? { set_available: data.set_available }
         : {}),
       ...(data.reason ? { reason: data.reason } : {}),
+      ...(data.down_payment ? { down_payment: data.down_payment } : {}),
     };
 
     const response = await ADMIN.put(`/booking/${bookingId}/status`, payload, {

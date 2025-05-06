@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { BookingFormData, BookingResponse, ReservationFormData } from "../types/BookingClient";
 import { booking } from "./_axios";
-import { BookingResponse, BookingFormData, ReservationFormData } from "../types/BookingClient";
 
 export const fetchBookings = async ({
   page = 1,
@@ -106,15 +106,10 @@ export const createBooking = async (bookingData: BookingFormData) => {
       formData.append("numberOfGuests", bookingData.numberOfGuests.toString());
     }
 
-    formData.append("paymentMethod", bookingData.paymentMethod);
+    formData.append('paymentMethod', bookingData.paymentMethod || 'gcash');
 
     if (bookingData.paymentMethod === 'gcash' && bookingData.paymentProof) {
       formData.append("paymentProof", bookingData.paymentProof);
-    }
-
-    const bookingLimitCheck = await checkMaxDailyBookings();
-    if (!bookingLimitCheck.can_book) {
-      throw new Error(`You have reached the maximum limit of ${bookingLimitCheck.max_limit} bookings per day.`);
     }
 
     const response = await booking.post("/bookings", formData, {
@@ -187,12 +182,6 @@ export const createReservation = async (reservationData: ReservationFormData) =>
 
     if (reservationData.paymentMethod === 'gcash' && reservationData.paymentProof) {
       formData.append("paymentProof", reservationData.paymentProof);
-
-    }
-    
-    const bookingLimitCheck = await checkMaxDailyBookings();
-    if (!bookingLimitCheck.can_book) {
-      throw new Error(`You have reached the maximum limit of ${bookingLimitCheck.max_limit} bookings per day.`);
     }
 
     const response = await booking.post("/bookings", formData, {

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { AlertCircle, Calendar, Check, CheckCircle2, Clock, IdCard, Image, X } from "lucide-react";
+import { AlertCircle, Calendar, Check, CheckCircle2, Clock, CreditCard, IdCard, Image, X } from "lucide-react";
 import { FC, useState } from "react";
 import EventLoader from "../../motions/loaders/EventLoader";
 import { BookingResponse } from "../../types/BookingClient";
@@ -9,7 +9,7 @@ import BookingStatusBadge from "./BookingStatusBadge";
 interface BookingDetailProps {
     booking: BookingResponse | null;
     onClose: () => void;
-    onConfirm: () => void;
+    onConfirm: (downPaymentAmount?: number) => void;
     onReject: () => void;
     onCheckIn?: (paymentAmount: number) => void;
     onCheckOut?: () => void;
@@ -21,12 +21,17 @@ interface BookingDetailProps {
 
 const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, onCancel, canManage, isUpdating }) => {
     const [paymentAmount, setPaymentAmount] = useState<string>("");
+    const [downPayment, setDownPayment] = useState<string>("");
 
     const isVenueBooking = booking?.is_venue_booking;
     const bookingPrice = getBookingPrice(booking);
     const currentPayment = parseFloat(paymentAmount) || 0;
+    const currentDownPayment = parseFloat(downPayment) || 0;
     const isPaymentComplete = currentPayment === bookingPrice;
+    const isDownPaymentValid = currentDownPayment > 0 && currentDownPayment <= bookingPrice;
     const isReservedStatus = booking.status === "reserved";
+    const isPendingStatus = booking.status === "pending";
+    const hasDownPayment = parseFloat(downPayment) > 0;
 
     const isNoShowEligible = (): boolean => {
         const currentDate = new Date();
@@ -181,13 +186,30 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                     src={booking.valid_id}
                     alt="Valid ID"
                     loading="lazy"
-                    className="w-full h-auto"
+                    className="w-full h-auto rounded-lg"
                 />
             </div>
         );
     };
 
     const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => setPaymentAmount(e.target.value);
+    const handleDownPaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        const numValue = parseFloat(value) || 0;
+
+        // Allow clearing the field
+        if (value === "") {
+            setDownPayment("");
+            return;
+        }
+
+        // Don't update if the value is greater than the booking price
+        if (numValue > bookingPrice) {
+            return;
+        }
+
+        setDownPayment(value);
+    };
 
     const getLoadingText = () => {
         if (booking.status === "reserved" && isUpdating && onCancel) return "Cancelling booking...";
@@ -311,21 +333,14 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 </span>
                             </motion.div>
 
-                            {isVenueBooking && booking.area_details?.capacity && (
+                            {(isVenueBooking ? booking.area_details?.capacity : booking.room_details?.max_guests) && (
                                 <motion.div
                                     className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
                                 >
-                                    <span className="font-semibold text-gray-700">{isVenueBooking ? "Area" : "Room"} Capacity:</span>
-                                    <span>{booking.number_of_guests} / {booking.area_details.capacity} people</span>
+                                    <span className="font-semibold text-gray-700">No. of Guests:</span>
+                                    <span>{booking.number_of_guests} / {isVenueBooking ? booking.area_details.capacity : booking.room_details.max_guests} people</span>
                                 </motion.div>
                             )}
-
-                            <motion.div
-                                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-                            >
-                                <span className="font-semibold text-gray-700">Date of Reservation:</span>
-                                <span>{formatDate(booking.created_at)}</span>
-                            </motion.div>
 
                             <motion.div
                                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
@@ -334,24 +349,13 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 <span>
                                     {isVenueBooking
                                         ? `${formatDate(booking.check_in_date)} 8:00 AM`
-                                        : formatDate(booking.check_in_date)}
-                                </span>
-                            </motion.div>
-
-                            {!isVenueBooking && booking.time_of_arrival && (
-                                <motion.div
-                                    className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-                                >
-                                    <span className="font-semibold text-gray-700">Expected Arrival Time:</span>
-                                    <span className="font-medium">
-                                        {new Date(`2000-01-01T${booking.time_of_arrival}`).toLocaleTimeString([], {
+                                        : `${formatDate(booking.check_in_date)} at ${new Date(`2000-01-01T${booking.time_of_arrival}`).toLocaleTimeString([], {
                                             hour: '2-digit',
                                             minute: '2-digit',
                                             hour12: true
-                                        })}
-                                    </span>
-                                </motion.div>
-                            )}
+                                        })}`}
+                                </span>
+                            </motion.div>
 
                             <motion.div
                                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
@@ -361,46 +365,6 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                     {isVenueBooking
                                         ? `${formatDate(booking.check_out_date)} 5:00 PM`
                                         : formatDate(booking.check_out_date)}
-                                </span>
-                            </motion.div>
-
-                            <motion.div
-                                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-                            >
-                                <span className="font-semibold text-gray-700">{isVenueBooking ? "Area Price:" : "Room Price:"}</span>
-                                <span className="font-medium">
-                                    {isVenueBooking
-                                        ? booking.area_details?.price_per_hour
-                                        : booking.room_details?.room_price}
-                                </span>
-                            </motion.div>
-
-                            <motion.div
-                                className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
-                            >
-                                <span className="font-semibold text-gray-700">Duration:</span>
-                                <span className="font-medium">
-                                    {(() => {
-                                        try {
-                                            const checkIn = new Date(booking.check_in_date);
-                                            const checkOut = new Date(booking.check_out_date);
-                                            const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
-
-                                            if (isVenueBooking) {
-                                                if (checkIn.toDateString() === checkOut.toDateString()) {
-                                                    return "9 hours (8AM - 5PM)";
-                                                }
-                                                const hours = Math.max(Math.ceil(diffTime / (1000 * 60 * 60)), 1);
-                                                return `${hours} hour${hours !== 1 ? 's' : ''}`;
-                                            } else {
-                                                const nights = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
-                                                return `${nights} night${nights !== 1 ? 's' : ''}`;
-                                            }
-                                        } catch (error) {
-                                            console.error('Error calculating duration:', error);
-                                            return isVenueBooking ? '9 hours (8AM - 5PM)' : '1 night';
-                                        }
-                                    })()}
                                 </span>
                             </motion.div>
 
@@ -420,6 +384,57 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 <BookingStatusBadge status={booking.status} />
                             </motion.div>
                         </div>
+
+                        {/* Down Payment section for pending bookings */}
+                        {isPendingStatus && canManage && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                transition={{ duration: 0.3 }}
+                                className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200 shadow-sm"
+                            >
+                                <h3 className="font-semibold mb-2 text-indigo-800 flex items-center">
+                                    <CreditCard className="w-4 h-4 mr-2" />
+                                    Down Payment
+                                </h3>
+                                <div className="flex flex-col sm:flex-row items-center gap-2">
+                                    <div className="relative flex-1 w-full">
+                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                            <span className="text-gray-500 text-xl">₱</span>
+                                        </div>
+                                        <motion.input
+                                            whileFocus={{ boxShadow: "0 0 0 3px rgba(79, 70, 229, 0.3)" }}
+                                            type="number"
+                                            min="0"
+                                            max={bookingPrice}
+                                            value={downPayment}
+                                            onChange={handleDownPaymentChange}
+                                            placeholder={`Enter down payment amount (max: ${bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
+                                            className="w-full pl-10 py-2 border border-indigo-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                        />
+                                    </div>
+                                </div>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="mt-2 text-sm"
+                                >
+                                    {!hasDownPayment && (
+                                        <p className="text-amber-600 flex items-center">
+                                            <AlertCircle className="w-4 h-4 mr-1" />
+                                            Please enter a down payment amount to reserve this booking.
+                                        </p>
+                                    )}
+                                    {currentDownPayment > bookingPrice && (
+                                        <p className="text-red-600 flex items-center">
+                                            <AlertCircle className="w-4 h-4 mr-1" />
+                                            Down payment cannot exceed total amount of ₱{bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.
+                                        </p>
+                                    )}
+                                </motion.div>
+                            </motion.div>
+                        )}
 
                         {isReservedStatus && (
                             <motion.div
@@ -489,7 +504,12 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 <Image className="w-4 h-4 mr-2" />
                                 GCash Payment Proof:
                             </h3>
-                            <img src={booking.payment_proof} alt="GCash Payment Proof" className="w-full h-auto rounded-lg" />
+                            <img
+                                src={booking.payment_proof}
+                                alt="GCash Payment Proof"
+                                className="w-full h-auto rounded-lg"
+                                loading="lazy"
+                            />
                         </motion.div>
 
                         {isVenueBooking && (
@@ -529,9 +549,13 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 Reject Booking
                             </motion.button>
                             <motion.button
-                                whileTap={{ scale: 0.98 }}
-                                onClick={onConfirm}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                whileTap={isDownPaymentValid ? { scale: 0.98 } : {}}
+                                onClick={() => isDownPaymentValid && onConfirm(currentDownPayment)}
+                                className={`px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm ${isDownPaymentValid
+                                        ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
+                                        : 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                                    }`}
+                                disabled={!isDownPaymentValid}
                             >
                                 <Check size={18} />
                                 Reserve Booking

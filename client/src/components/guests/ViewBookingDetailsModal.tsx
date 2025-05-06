@@ -38,13 +38,13 @@ const ViewBookingDetailsModal: FC<ViewBookingDetailsModalProps> = ({ bookingId, 
                                 whileHover={{ scale: 1.1 }}
                                 whileTap={{ scale: 0.9 }}
                                 onClick={onClose}
-                                className="p-2 hover:bg-gray-100 curp hover:text-red-600 rounded-full text-gray-500"
+                                className="p-2 hover:bg-gray-100 cursor-pointer hover:text-red-600 rounded-full text-gray-500"
                             >
                                 <X size={24} />
                             </motion.button>
                         </div>
 
-                        <div className="max-h-[70vh] overflow-y-auto p-6">
+                        <div className="max-h-[70vh] overflow-y-auto p-3">
                             {isLoading ? (
                                 <BookingDetailsSkeleton />
                             ) : isError ? (

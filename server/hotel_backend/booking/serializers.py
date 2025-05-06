@@ -396,11 +396,9 @@ class ReviewSerializer(serializers.ModelSerializer):
         return value
     
     def create(self, validated_data):
-        # Auto-set relationships from context
         validated_data['user'] = self.context['request'].user
         validated_data['booking'] = self.context['booking']
         
-        # Set room/area based on booking type
         if validated_data['booking'].is_venue_booking:
             validated_data['area'] = validated_data['booking'].area
         else:

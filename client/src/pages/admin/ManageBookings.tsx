@@ -1,23 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Eye, Filter, Search, FolderX } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Eye, Filter, FolderX, Search } from "lucide-react";
 import { FC, useState } from "react";
 import { toast } from "react-toastify";
+import BookingDetailsModal from "../../components/admin/BookingDetailsModal";
+import BookingStatusBadge from "../../components/admin/BookingStatusBadge";
 import CancellationModal from "../../components/bookings/CancellationModal";
 import Modal from "../../components/Modal";
-import { getAllBookings, recordPayment, updateBookingStatus } from "../../services/Admin";
-import { BookingResponse } from "../../types/BookingClient";
-import { formatDate } from "../../utils/formatters";
-import BookingStatusBadge from "../../components/admin/BookingStatusBadge";
-import BookingDetailsModal from "../../components/admin/BookingDetailsModal";
-import { getBookingPrice } from "../../utils/formatters";
-import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
-import ManageBookingSkeleton from "../../motions/skeletons/ManageBookingSkeleton";
-import { BookingQuery } from "../../types/BookingsAdmin";
-import { AnimatePresence, motion } from "framer-motion";
-import { webSocketAdminActives, WebSocketEvent } from "../../services/websockets";
 import { useUserContext } from "../../contexts/AuthContext";
 import useWebSockets from "../../hooks/useWebSockets";
+import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
+import ManageBookingSkeleton from "../../motions/skeletons/ManageBookingSkeleton";
+import { getAllBookings, recordPayment, updateBookingStatus } from "../../services/Admin";
+import { webSocketAdminActives, WebSocketEvent } from "../../services/websockets";
+import { BookingResponse } from "../../types/BookingClient";
+import { BookingQuery } from "../../types/BookingsAdmin";
+import { formatDate, getBookingPrice } from "../../utils/formatters";
 
 const ManageBookings: FC = () => {
   const { userDetails } = useUserContext();
@@ -55,12 +54,13 @@ const ManageBookings: FC = () => {
   })
 
   const updateBookingStatusMutation = useMutation({
-    mutationFn: async ({ bookingId, status, reason, paymentAmount, setRoomAvailable = false }: {
+    mutationFn: async ({ bookingId, status, reason, paymentAmount, setRoomAvailable = false, downPaymentAmount }: {
       bookingId: number;
       status: string;
       reason?: string;
       paymentAmount?: number;
       setRoomAvailable?: boolean;
+      downPaymentAmount?: number;
     }) => {
       const data: Record<string, any> = {
         status,
@@ -68,6 +68,7 @@ const ManageBookings: FC = () => {
       };
 
       if ((status === "cancelled" || status === "rejected") && reason) data.reason = reason;
+      if (status === "reserved" && downPaymentAmount) data.down_payment = downPaymentAmount;
 
       const result = await updateBookingStatus(bookingId, data);
 
@@ -75,7 +76,7 @@ const ManageBookings: FC = () => {
         try {
           await recordPayment(bookingId, paymentAmount);
         } catch (error) {
-          console.error("Failed to record payment:", error);
+          console.error(`Failed to record payment: ${error}`);
         }
       }
 
@@ -89,7 +90,7 @@ const ManageBookings: FC = () => {
 
       switch (status) {
         case 'reserved':
-          toast.success("Booking has been reserved successfully! A confirmation email has been sent to the guest.");
+          toast.success("Booking has been reserved successfully with down payment recorded! A confirmation email has been sent to the guest.");
           break;
         case 'rejected':
           toast.success("Booking has been rejected. The guest has been notified with your reason.");
@@ -129,12 +130,13 @@ const ManageBookings: FC = () => {
     }
   };
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = (downPaymentAmount?: number) => {
     if (selectedBooking) {
       updateBookingStatusMutation.mutate({
         bookingId: selectedBooking.id,
         status: "reserved",
         setRoomAvailable: false,
+        downPaymentAmount
       });
     }
   };

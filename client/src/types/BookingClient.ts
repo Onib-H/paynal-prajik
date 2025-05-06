@@ -16,7 +16,7 @@ export interface BookingResponse {
         room_price: string;
         room_image?: string;
         description?: string;
-        capacity?: number;
+        max_guests?: number;
         amenities?: Array<{
             id: number;
             description: string;
@@ -176,5 +176,5 @@ export interface ConfirmBookingFormValues {
     arrivalTime: string;
     specialRequests: string;
     paymentMethod: 'physical' | 'gcash';
-    paymentProof?: File | null;
+    paymentProof: File | null;
 }

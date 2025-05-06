@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { AlertCircle, Calendar, CheckCircle2, Clock, IdCard, User, Users, Watch, XCircle } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle2, Clock, CreditCard, IdCard, User, Watch, XCircle } from "lucide-react";
 import { FC, ReactNode, memo, useMemo } from "react";
 
 const formatStatus = (status: string): string => {
@@ -80,6 +80,7 @@ interface BookingCardProps {
   status: string;
   roomDetails?: {
     room_image?: string;
+    capacity?: number;
   };
   areaDetails?: {
     area_image?: string;
@@ -100,6 +101,7 @@ interface BookingCardProps {
   totalPrice?: number;
   numberOfGuests?: number;
   arrivalTime?: string;
+  paymentProof?: string;
 }
 
 const cardVariants = {
@@ -146,6 +148,7 @@ const BookingCard: FC<BookingCardProps> = memo(({
   userDetails,
   specialRequest,
   validId,
+  paymentProof,
   bookingDate,
   cancellationReason,
   cancellationDate,
@@ -213,18 +216,10 @@ const BookingCard: FC<BookingCardProps> = memo(({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center">
-              <Users className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
-              <div>
-                <span className="block text-lg text-gray-500">Room Capacity</span>
-                <span className="block font-semibold">{guests} {guests > 1 ? 'people' : 'person'}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center">
               <User className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
               <div>
                 <span className="block text-lg text-gray-500">Number of Guests</span>
-                <span className="block font-semibold">{numberOfGuests || 1} {(numberOfGuests || 1) > 1 ? 'guests' : 'guest'}</span>
+                <span className="block font-semibold">{numberOfGuests || 1} / {guests} {(numberOfGuests || 1) > 1 ? 'guests' : 'guest'}</span>
               </div>
             </div>
 
@@ -324,6 +319,27 @@ const BookingCard: FC<BookingCardProps> = memo(({
               <img
                 src={validId}
                 alt="Valid ID"
+                className="w-full h-auto object-contain cursor-pointer transition-transform hover:scale-[1.01]"
+                loading="lazy"
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {/* GCash Payment Modal */}
+        {paymentProof && (
+          <motion.div
+            variants={itemVariants}
+            className="mt-6"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+              <CreditCard className="w-5 h-5 mr-2 text-gray-600" />
+              GCash Payment Proof
+            </h3>
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <img
+                src={paymentProof}
+                alt="Payment Proof"
                 className="w-full h-auto object-contain cursor-pointer transition-transform hover:scale-[1.01]"
                 loading="lazy"
               />

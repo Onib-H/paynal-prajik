@@ -676,10 +676,25 @@ def update_booking_status(request, booking_id):
     if status_value not in valid_statuses:
         return Response({"error": f"Invalid status value. Valid values are: {', '.join(valid_statuses)}"}, 
                             status=status.HTTP_400_BAD_REQUEST)
+    
+    # Handle down payment for reserved bookings
+    if status_value == 'reserved' and 'down_payment' in request.data:
+        try:
+            down_payment = float(request.data.get('down_payment', 0))
+            booking.down_payment = down_payment
+        except (ValueError, TypeError):
+            return Response({"error": "Invalid down payment amount"}, status=status.HTTP_400_BAD_REQUEST)
         
     set_available = request.data.get('set_available')
     prevent_maintenance = set_available is False
-
+    
+    # Save the previous status for notification handling
+    previous_status = booking.status
+    
+    # Update the booking status
+    booking.status = status_value
+    
+    # Handle room/area availability
     if status_value in ['reserved', 'confirmed', 'checked_in'] and not prevent_maintenance:
         if booking.is_venue_booking and booking.area:
             area = booking.area
@@ -709,12 +724,12 @@ def update_booking_status(request, booking_id):
             room.status = 'available'
             room.save()
     
-    if status_value == 'rejected':
+    # Handle cancellation reason
+    if status_value in ['cancelled', 'rejected'] and 'reason' in request.data:
+        booking.cancellation_reason = request.data.get('reason')
         booking.cancellation_date = timezone.now()
-        booking.cancellation_reason = request.data.get('reason', 'Rejected by admin/staff')
     
-    previous_status = booking.status
-    booking.status = status_value
+    # Save the booking changes
     booking.save()
     
     serializer = BookingSerializer(booking)
@@ -733,7 +748,7 @@ def update_booking_status(request, booking_id):
     
     booking.property_name = property_name
     
-    if status_value != previous_status:
+    if status_value != booking.status:
         try:
             create_booking_notification(booking, status_value)
             if status_value == 'reserved':

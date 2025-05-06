@@ -20,6 +20,7 @@ interface FormattedBooking {
   isVenueBooking?: boolean;
   roomDetails?: {
     room_image?: string;
+    capacity?: number;
   };
   areaDetails?: {
     area_image?: string;
@@ -40,6 +41,8 @@ interface FormattedBooking {
   totalPrice?: number;
   numberOfGuests?: number;
   arrivalTime?: string;
+  paymentMethod?: string;
+  paymentProof?: string;
 }
 
 interface RoomData {
@@ -47,7 +50,7 @@ interface RoomData {
   room_name: string;
   room_image?: string;
   room_price: number;
-  pax: number;
+  max_guests: number;
 }
 
 interface AreaData {
@@ -82,6 +85,8 @@ interface BookingData {
   cancellation_date?: string;
   number_of_guests?: number;
   time_of_arrival?: string;
+  payment_method?: string;
+  payment_proof?: string;
 }
 
 const formatDate = (dateString: string): string => {
@@ -157,16 +162,20 @@ const BookingData = memo(({ bookingId }: BookingDataProps) => {
         };
       }
     } else {
-      const roomData = bookingData?.room_details || bookingData?.room;
+      const roomData = bookingData?.room || bookingData?.room_details;
       if (roomData) {
         const roomType = roomData.room_name || "Unknown Room";
         result.roomType = roomType;
         result.imageUrl = roomData.room_image || deluxe_twin;
-        result.guests = roomData.pax || 2;
+        result.guests = roomData?.max_guests;
         result.price = bookingData?.total_price || 0;
         result.totalPrice = bookingData?.total_price;
         result.roomDetails = roomData;
       }
+    }
+
+    if (bookingData?.payment_method) {
+      result.paymentProof = bookingData?.payment_proof;
     }
 
     return result;

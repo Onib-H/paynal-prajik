@@ -6,15 +6,15 @@ import { BookCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import GCashPaymentModal from "../components/bookings/GCashPaymentModal";
 import LoginModal from "../components/LoginModal";
 import Modal from "../components/Modal";
 import SignupModal from "../components/SignupModal";
 import { useUserContext } from "../contexts/AuthContext";
 import EventLoader from "../motions/loaders/EventLoader";
-import { checkCanBookToday, createBooking, fetchRoomById } from "../services/Booking";
+import { createBooking, fetchRoomById } from "../services/Booking";
 import { BookingFormData, ConfirmBookingFormValues, RoomData } from "../types/BookingClient";
 import { formatTime } from "../utils/formatters";
-import GCashPaymentModal from "../components/bookings/GCashPaymentModal";
 
 const ConfirmBooking = () => {
   const navigate = useNavigate();
@@ -35,8 +35,6 @@ const ConfirmBooking = () => {
   const [calculatedTotalPrice, setCalculatedTotalPrice] = useState<number>(priceParam ? parseInt(priceParam) : 0);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
-  const [canBookToday, setCanBookToday] = useState<boolean>(true);
-  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
@@ -141,22 +139,6 @@ const ConfirmBooking = () => {
     }
   }, [roomData, selectedArrival, selectedDeparture, priceParam]);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      const checkBookingEligibility = async () => {
-        try {
-          const eligibility = await checkCanBookToday();
-          setCanBookToday(eligibility.canBook);
-          setBookingLimitMessage(eligibility.message || null);
-        } catch (error) {
-          console.error(`Error checking booking eligibility: ${error}`);
-        }
-      };
-
-      checkBookingEligibility();
-    }
-  }, [isAuthenticated]);
-
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file) {
@@ -190,17 +172,10 @@ const ConfirmBooking = () => {
   };
 
   const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
-    console.table({
-      ...data
-    });
     setGeneralError(null);
     if (isSubmitting) return;
-    if (isAuthenticated && !canBookToday) {
-      setGeneralError(bookingLimitMessage || "Booking limit reached");
-      return;
-    }
 
-    if (!gcashProof) {
+    if (paymentMethod === 'gcash' && !gcashProof) {
       setGeneralError("Please upload your GCash payment proof");
       return;
     }
@@ -243,29 +218,14 @@ const ConfirmBooking = () => {
     setGeneralError(null);
 
     try {
-      const arrDate = new Date(pendingFormData.checkIn);
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-
-      if (isAuthenticated && arrDate.getTime() === todayStart.getTime()) {
-        const res = await checkCanBookToday();
-        if (!res.canBook) {
-          setGeneralError(res.message || "Booking limit reached.");
-          setCanBookToday(false);
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      if (!isAuthenticated) {
-        setShowLoginModal(true);
-        setIsSubmitting(false);
-        return;
-      }
       const response = await createBooking(pendingFormData);
       setSuccess(true);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=false`);
     } catch (err: any) {
-      setGeneralError(err?.response?.data?.message);
+      console.error(`Error creating booking: ${err}`);
+      setGeneralError(
+        err?.response?.data?.error || err?.message || "Failed to create booking"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -410,44 +370,6 @@ const ConfirmBooking = () => {
         >
           Confirm Booking
         </motion.h1>
-
-        <AnimatePresence>
-          {isAuthenticated && !canBookToday && (
-            <motion.div
-              className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg shadow-md"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            >
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-0.5">
-                  <svg
-                    className="h-5 w-5 text-yellow-600"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
-                    Booking Limit Reached
-                  </h3>
-                  <p className="text-sm mt-1">
-                    {bookingLimitMessage ||
-                      "You have already made a booking today. You can make another booking tomorrow."}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <AnimatePresence>
           {!isAuthenticated && (
@@ -757,7 +679,10 @@ const ConfirmBooking = () => {
                     <div className="mt-2 relative">
                       <img src={gcashPreview} className="w-full h-full object-contain border rounded-lg" />
                       <button
-                        onClick={() => setGcashPreview(null)}
+                        onClick={() => {
+                          setGcashPreview(null);
+                          setGcashProof(null);
+                        }}
                         className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 cursor-pointer"
                         aria-label="Remove image"
                       >

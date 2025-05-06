@@ -10,7 +10,7 @@ import Modal from "../components/Modal";
 import SignupModal from "../components/SignupModal";
 import { useUserContext } from "../contexts/AuthContext";
 import EventLoader from "../motions/loaders/EventLoader";
-import { checkCanBookToday, createReservation, fetchAreaById } from "../services/Booking";
+import { createReservation, fetchAreaById } from "../services/Booking";
 import { AreaData, FormData, ReservationFormData } from "../types/BookingClient";
 import GCashPaymentModal from "../components/bookings/GCashPaymentModal";
 
@@ -31,8 +31,6 @@ const ConfirmVenueBooking = () => {
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [canBookToday, setCanBookToday] = useState<boolean>(true);
-  const [bookingLimitMessage, setBookingLimitMessage] = useState<string | null>(null);
   const [gcashProof, setGcashProof] = useState<File | null>(null);
   const [gcashPreview, setGcashPreview] = useState<string | null>(null);
   const [showGCashModal, setShowGCashModal] = useState<boolean>(false);
@@ -80,29 +78,8 @@ const ConfirmVenueBooking = () => {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
-      const checkBookingLimit = async () => {
-        try {
-          const response = await checkCanBookToday();
-          setCanBookToday(response.canBook);
-          setBookingLimitMessage(response.message || null);
-        } catch (error) {
-          console.error(`Failed to check booking limit: ${error}`);
-        }
-      };
-      checkBookingLimit();
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
     if (!areaId || !startTime || !endTime) navigate("/areas");
   }, [areaId, startTime, endTime, navigate]);
-
-  useEffect(() => {
-    if (!isLoading && !areaData) {
-      setError("Area not found");
-    }
-  }, [isLoading, areaData]);
 
   const formatDateTime = (dateTimeString: string | null) => {
     if (!dateTimeString) return "";
@@ -135,15 +112,8 @@ const ConfirmVenueBooking = () => {
   const formattedEndTime = formatDateTime(endTime);
 
   const onSubmit: SubmitHandler<FormData> = (data) => {
-    console.table({
-      ...data,
-    })
     setError(null);
     if (isSubmitting) return;
-    if (isAuthenticated && !canBookToday) {
-      setError("You have reached your booking limit for today.");
-      return;
-    }
 
     if (!gcashProof) {
       setError("Please upload your GCash payment proof");
@@ -201,23 +171,6 @@ const ConfirmVenueBooking = () => {
     setError(null);
 
     try {
-      const bookDate = new Date(pendingFormData.startTime);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (isAuthenticated && bookDate.getTime() === today.getTime()) {
-        const response = await checkCanBookToday();
-        if (!response.canBook) {
-          setError(response.message);
-          setCanBookToday(false);
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      if (!isAuthenticated) {
-        setShowLoginModal(true);
-        setIsSubmitting(false);
-        return;
-      }
       const response = await createReservation(pendingFormData);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=true`);
     } catch (error: any) {
@@ -343,44 +296,6 @@ const ConfirmVenueBooking = () => {
         >
           Confirm Booking
         </motion.h1>
-
-        <AnimatePresence>
-          {isAuthenticated && !canBookToday && (
-            <motion.div
-              className="mb-6 p-4 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-lg shadow-md"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            >
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-0.5">
-                  <svg
-                    className="h-5 w-5 text-yellow-600"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
-                    Booking Limit Reached
-                  </h3>
-                  <p className="text-sm mt-1">
-                    {bookingLimitMessage ||
-                      "You have already made a booking today. You can make another booking tomorrow."}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <AnimatePresence>
           {!isAuthenticated && (
