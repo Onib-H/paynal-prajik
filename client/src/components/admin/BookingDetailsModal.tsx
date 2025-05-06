@@ -145,7 +145,9 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     };
 
     const checkInValidation = isCheckInDateValid();
-    const canCheckIn = (isPaymentComplete || isRemainingPaymentComplete) && checkInValidation.isValid;
+    const canCheckIn = (
+        (downPaymentAmount ? isRemainingPaymentComplete : isPaymentComplete)
+    ) && checkInValidation.isValid;
 
     const checkOutValidation = isCheckOutDateValid();
     const canCheckOut = checkOutValidation.isValid;
@@ -173,7 +175,16 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
         );
     };
 
-    const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => setPaymentAmount(e.target.value);
+    const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const raw = e.target.value;
+        if (raw === '') {
+            setPaymentAmount("");
+            return;
+        }
+        const num = parseFloat(raw);
+        const remaining = bookingPrice - booking.down_payment;
+        if (num <= remaining) setPaymentAmount(raw);
+    }
 
     const handleDownPaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -446,6 +457,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                             whileFocus={{ boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.3)" }}
                                             type="number"
                                             min="0"
+                                            max={remainingBalance}
                                             value={paymentAmount}
                                             onChange={handlePaymentChange}
                                             placeholder={`Enter amount (${(bookingPrice - booking.down_payment).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
@@ -468,7 +480,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                             ) : (
                                                 <><AlertCircle className="w-4 h-4 mr-1" />
                                                     {downPaymentAmount > 0
-                                                        ? `Payment must be ₱${remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (remaining balance) or ₱${bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (full amount).`
+                                                        ? `Payment must be ₱${remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (remaining balance)`
                                                         : `Payment must be exactly ₱${bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} to check in the guest.`
                                                     }
                                                 </>
@@ -623,7 +635,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                             {!isPaymentComplete && (
                                                 <p className="flex items-center text-amber-300 mb-1">
                                                     <AlertCircle className="w-3 h-3 mr-1 flex-shrink-0" />
-                                                    Payment must match the required total.
+                                                    Remaining payment must match the required balance.
                                                 </p>
                                             )}
                                             {!checkInValidation.isValid && (
