@@ -86,9 +86,10 @@ export const updateProfileImage = async (formData: FormData) => {
   }
 };
 
-export const getGuestNotifications = async () => {
+export const getGuestNotifications = async (offset: number, limit: number) => {
   try {
     const response = await guest.get("/notifications", {
+      params: { offset, limit },
       withCredentials: true,
     })
     return response.data;

@@ -41,6 +41,10 @@ const Navbar: FC = () => {
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [offset, setOffset] = useState<number>(0);
+
+  const limit = 10;
+
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error" | "info" | "warning";
@@ -58,11 +62,12 @@ const Navbar: FC = () => {
     clearAuthState,
   } = useUserContext();
 
-  const { data: notificationsData } = useQuery({
-    queryKey: ["guestNotifications"],
-    queryFn: getGuestNotifications,
+  const { data: notificationsData, isFetching } = useQuery({
+    queryKey: ["guestNotifications", offset],
+    queryFn: () => getGuestNotifications(offset, limit),
     enabled: isAuthenticated,
-    staleTime: 15000
+    staleTime: 15000,
+    placeholderData: (previousData) => previousData,
   });
 
   const handleAuthResponse = ({ success, message }: { success: boolean; message?: string }) => {
@@ -114,12 +119,16 @@ const Navbar: FC = () => {
     unread_update: handleCountUpdate,
     initial_count: handleCountUpdate,
   });
-  
+
   useEffect(() => {
     if (notificationsData) {
       setUnreadCount(notificationsData.unread_count);
     }
   }, [notificationsData]);
+
+  const loadMoreNotifications = useCallback(() => {
+    setOffset(prev => prev + limit);
+  }, []);
 
   const handleMarkAllRead = useCallback(async () => {
     try {
@@ -375,52 +384,74 @@ const Navbar: FC = () => {
                           transition={{ delay: 0.2 }}
                         >
                           {notifications && notifications.length > 0 ? (
-                            <AnimatePresence>
-                              {notifications.map((notif: NotificationType, index: number) => (
+                            <>
+                              <AnimatePresence>
+                                {notifications.map((notif: NotificationType, index: number) => (
+                                  <motion.div
+                                    key={notif.id || index}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.05 * index }}
+                                    whileHover={{ backgroundColor: "rgba(243, 244, 246, 0.8)" }}
+                                    className={`px-4 py-3 cursor-pointer transition-colors ${!notif.is_read ? 'bg-blue-50 border-l-4 border-blue-600' : 'hover:bg-gray-50'}`}
+                                    onClick={() => handleNotificationClick(notif)}
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <div className={`shrink-0 mt-1 rounded-full p-2.5 shadow-sm ${notif.notification_type === 'reserved' ? 'bg-green-100 text-green-800' :
+                                        notif.notification_type === 'no_show' ? 'bg-purple-100 text-purple-800' :
+                                          notif.notification_type === 'rejected' ? 'bg-red-100 text-red-800' :
+                                            notif.notification_type === 'checked_in' ? 'bg-blue-100 text-blue-800' :
+                                              notif.notification_type === 'checked_out' ? 'bg-teal-100 text-teal-800' :
+                                                notif.notification_type === 'cancelled' ? 'bg-amber-100 text-amber-800' :
+                                                  'bg-blue-100 text-blue-800'
+                                        }`}>
+                                        <FontAwesomeIcon icon={
+                                          notif.notification_type === 'reserved' ? faCircleUser :
+                                            notif.notification_type === 'no_show' ? faCircleUser :
+                                              notif.notification_type === 'rejected' ? faCircleUser :
+                                                notif.notification_type === 'checked_in' ? faCircleUser :
+                                                  notif.notification_type === 'checked_out' ? faCircleUser :
+                                                    notif.notification_type === 'cancelled' ? faCircleUser :
+                                                      faBell
+                                        } />
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium text-gray-800 mb-0.5">{notif.message}</p>
+                                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                                          <span className="inline-block w-2 h-2 rounded-full bg-gray-300"></span>
+                                          {new Date(notif.created_at).toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                          })}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                ))}
+                              </AnimatePresence>
+
+                              {notificationsData?.has_more && (
                                 <motion.div
-                                  key={notif.id || index}
-                                  initial={{ opacity: 0, y: 20 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: 0.05 * index }}
-                                  whileHover={{ backgroundColor: "rgba(243, 244, 246, 0.8)" }}
-                                  className={`px-4 py-3 cursor-pointer transition-colors ${!notif.is_read ? 'bg-blue-50 border-l-4 border-blue-600' : 'hover:bg-gray-50'}`}
-                                  onClick={() => handleNotificationClick(notif)}
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  className="p-2 border-t border-gray-100"
                                 >
-                                  <div className="flex items-start gap-3">
-                                    <div className={`shrink-0 mt-1 rounded-full p-2.5 shadow-sm ${notif.notification_type === 'reserved' ? 'bg-green-100 text-green-800' :
-                                      notif.notification_type === 'no_show' ? 'bg-purple-100 text-purple-800' :
-                                        notif.notification_type === 'rejected' ? 'bg-red-100 text-red-800' :
-                                          notif.notification_type === 'checked_in' ? 'bg-blue-100 text-blue-800' :
-                                            notif.notification_type === 'checked_out' ? 'bg-teal-100 text-teal-800' :
-                                              notif.notification_type === 'cancelled' ? 'bg-amber-100 text-amber-800' :
-                                                'bg-blue-100 text-blue-800'
-                                      }`}>
-                                      <FontAwesomeIcon icon={
-                                        notif.notification_type === 'reserved' ? faCircleUser :
-                                          notif.notification_type === 'no_show' ? faCircleUser :
-                                            notif.notification_type === 'rejected' ? faCircleUser :
-                                              notif.notification_type === 'checked_in' ? faCircleUser :
-                                                notif.notification_type === 'checked_out' ? faCircleUser :
-                                                  notif.notification_type === 'cancelled' ? faCircleUser :
-                                                    faBell
-                                      } />
-                                    </div>
-                                    <div className="flex-1">
-                                      <p className="text-sm font-medium text-gray-800 mb-0.5">{notif.message}</p>
-                                      <p className="text-xs text-gray-500 flex items-center gap-1">
-                                        <span className="inline-block w-2 h-2 rounded-full bg-gray-300"></span>
-                                        {new Date(notif.created_at).toLocaleDateString('en-US', {
-                                          month: 'short',
-                                          day: 'numeric',
-                                          hour: '2-digit',
-                                          minute: '2-digit'
-                                        })}
-                                      </p>
-                                    </div>
-                                  </div>
+                                  <button
+                                    onClick={loadMoreNotifications}
+                                    disabled={isFetching}
+                                    className="w-full py-2 text-sm cursor-pointer text-purple-600 hover:bg-purple-50 rounded-md flex items-center justify-center gap-2"
+                                  >
+                                    {isFetching ? (
+                                      <FontAwesomeIcon icon={faSpinner} spin />
+                                    ) : (
+                                      'Load More Notifications'
+                                    )}
+                                  </button>
                                 </motion.div>
-                              ))}
-                            </AnimatePresence>
+                              )}
+                            </>
                           ) : (
                             <motion.div
                               initial={{ opacity: 0 }}

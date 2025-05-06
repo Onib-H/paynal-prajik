@@ -843,11 +843,17 @@ def get_guest_bookings(request):
 @permission_classes([IsAuthenticated])
 def get_notifications(request):
     try:
-        notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+        limit = int(request.query_params.get('limit', 10))
+        offset = int(request.query_params.get('offset', 0))
+        
+        all_notifications = Notification.objects.filter(user=request.user).order_by('-created_at')
+        notifications = all_notifications[offset:offset + limit]
+        
         serializer = NotificationSerializer(notifications, many=True)
         return Response({
             'notifications': serializer.data,
-            'unread_count': notifications.filter(is_read=False).count()
+            'unread_count': all_notifications.filter(is_read=False).count(),
+            'has_more': all_notifications.count() > (offset + limit)
         }, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({
