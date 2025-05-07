@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, BookCheck } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import GCashPaymentModal from "../components/bookings/GCashPaymentModal";
@@ -36,8 +36,6 @@ const ConfirmBooking = () => {
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [generalError, setGeneralError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<boolean>(false);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [pendingFormData, setPendingFormData] = useState<BookingFormData | null>(null);
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
@@ -109,17 +107,13 @@ const ConfirmBooking = () => {
     enabled: !!roomId,
   });
 
-  useEffect(() => {
-    if (!isLoading && !roomData) setGeneralError("Failed to load room details");
-  }, [isLoading, roomData]);
-
-  useEffect(() => {
+  useMemo(() => {
     if (!roomId) {
       navigate("/");
     }
   }, [roomId, navigate]);
 
-  useEffect(() => {
+  useMemo(() => {
     if (priceParam) {
       setCalculatedTotalPrice(parseInt(priceParam));
     } else if (roomData && selectedArrival && selectedDeparture) {
@@ -172,13 +166,8 @@ const ConfirmBooking = () => {
   };
 
   const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
-    setGeneralError(null);
     if (isSubmitting) return;
-
-    if (paymentMethod === 'gcash' && !gcashProof) {
-      setGeneralError("Please upload your GCash payment proof");
-      return;
-    }
+    if (paymentMethod === 'gcash' && !gcashProof) return;
 
     const booking: BookingFormData = {
       firstName: data.firstName,
@@ -203,29 +192,19 @@ const ConfirmBooking = () => {
     if (!pendingFormData) return;
 
     if (paymentMethod === 'gcash') {
-      if (!gcashProof) {
-        setGeneralError('Please upload your GCash payment proof');
-        return;
-      }
-      if (typeof gcashProof === 'string') {
-        setGeneralError('Please upload a valid file.');
-        return;
-      }
+      if (!gcashProof) return;
+      if (typeof gcashProof === 'string') return;
     }
 
     setShowConfirmModal(false);
     setIsSubmitting(true);
-    setGeneralError(null);
 
     try {
       const response = await createBooking(pendingFormData);
-      setSuccess(true);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=false`);
     } catch (err: any) {
       console.error(`Error creating booking: ${err}`);
-      setGeneralError(
-        err?.response?.data?.error || err?.message || "Failed to create booking"
-      );
+      throw err;
     } finally {
       setIsSubmitting(false);
     }
@@ -247,7 +226,11 @@ const ConfirmBooking = () => {
     : "";
 
   useEffect(() => {
+    const originalStyle = document.body.style.overflow;
     document.body.style.overflow = isSubmitting ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
   }, [isSubmitting]);
 
   if (isLoading) {
@@ -381,76 +364,6 @@ const ConfirmBooking = () => {
           </motion.h1>
           <div className="w-[100px]"></div>
         </div>
-
-        <AnimatePresence>
-          {!isAuthenticated && (
-            <motion.div
-              className="mb-6 p-4 bg-blue-50 border border-blue-300 text-blue-800 rounded-lg shadow-md"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            >
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-0.5">
-                  <svg
-                    className="h-5 w-5 text-blue-600"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">
-                    Login Required
-                  </h3>
-                  <p className="text-sm mt-1">
-                    You'll need to log in or create an account to complete your
-                    booking. Don't worry - your booking information will be
-                    saved during the process.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {success && (
-            <motion.div
-              className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg shadow-md"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              <p>
-                Booking successfully created! You will be redirected to your
-                booking details.
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {generalError && (
-            <motion.div
-              className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg shadow-md"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              <p>{generalError}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Section - Takes 2/3 width on large screens */}
@@ -688,7 +601,12 @@ const ConfirmBooking = () => {
                   </button>
                   {gcashPreview && (
                     <div className="mt-2 relative">
-                      <img src={gcashPreview} className="w-full h-full object-contain border rounded-lg" />
+                      <img
+                        src={gcashPreview}
+                        alt="Payment Proof via GCash"
+                        loading="lazy"
+                        className="w-full h-full object-contain"
+                      />
                       <button
                         onClick={() => {
                           setGcashPreview(null);

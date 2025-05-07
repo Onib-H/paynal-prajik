@@ -527,14 +527,12 @@ export const recordPayment = async (bookingId: number, amount: number, transacti
     const response = await ADMIN.post(`/booking/${bookingId}/payment`, {
       amount,
       transaction_type: transactionType,
-    },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-        withCredentials: true,
-      }
-    );
+    }, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      withCredentials: true,
+    });
     return response.data;
   } catch (error) {
     console.error(`Failed to record payment: ${error}`);

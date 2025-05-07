@@ -14,11 +14,11 @@ import Notification from "../components/Notification";
 import SignupModal from "../components/SignupModal";
 import { navLinks } from "../constants/Navbar";
 import { useUserContext } from "../contexts/AuthContext";
+import useWebSockets from "../hooks/useWebSockets";
 import SlotNavButton from "../motions/CustomNavbar";
 import { logout } from "../services/Auth";
 import { getGuestDetails, getGuestNotifications, markAllNotificationsAsRead, markNotificationAsRead } from "../services/Guest";
 import { NotificationMessage, webSocketService } from "../services/websockets";
-import useWebSockets from "../hooks/useWebSockets";
 
 interface NotificationType {
   id: string;
@@ -112,6 +112,42 @@ const Navbar: FC = () => {
 
     setUnreadCount(count);
   };
+
+  const { isSuccess: isWebSocketConnected } = useQuery<boolean, Error>({
+    queryKey: ['wsConnection', userDetails?.id],
+    queryFn: async (): Promise<boolean> => {
+      try {
+        if (!isAuthenticated || !userDetails?.id) return false;
+        webSocketService.connect(userDetails.id.toString());
+        return true;
+      } catch (error) {
+        console.error('WebSocket connection error:', error);
+        webSocketService.disconnect();
+        return false;
+      }
+    },
+    enabled: isAuthenticated && !!userDetails?.id,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    retry: 3
+  });
+
+  useQuery<null, Error>({
+    queryKey: ['wsVisibilityCheck'],
+    queryFn: async (): Promise<null> => {
+      if (isAuthenticated && userDetails?.id && document.visibilityState === 'visible') {
+        if (!isWebSocketConnected || !webSocketService.isConnected) {
+          webSocketService.connect(userDetails.id.toString());
+        }
+        await queryClient.invalidateQueries({ queryKey: ["guestNotifications"] });
+      }
+      return null;
+    },
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    enabled: isAuthenticated && !!userDetails?.id
+  });
 
   useWebSockets(webSocketService, userDetails?.id, {
     auth_response: handleAuthResponse,
@@ -240,19 +276,18 @@ const Navbar: FC = () => {
   }, [isAuthenticated, userDetails?.id, fetchGuestDetails]);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    let reconnectionTimer: NodeJS.Timeout | null = null;
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        queryClient.invalidateQueries({ queryKey: ["guestNotifications"] });
-      }
-    };
+    if (isAuthenticated && userDetails?.id && !isWebSocketConnected && !webSocketService.isConnected) {
+      reconnectionTimer = setTimeout(() => {
+        webSocketService.connect(userDetails.id.toString());
+      }, 5000);
+    }
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (reconnectionTimer) clearTimeout(reconnectionTimer);
     };
-  }, [isAuthenticated, queryClient]);
+  }, [isAuthenticated, userDetails?.id, isWebSocketConnected]);
 
   return (
     <>

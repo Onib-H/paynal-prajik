@@ -676,7 +676,6 @@ def update_booking_status(request, booking_id):
         return Response({"error": f"Invalid status value. Valid values are: {', '.join(valid_statuses)}"}, 
                             status=status.HTTP_400_BAD_REQUEST)
     
-    # Handle down payment for reserved bookings
     if status_value == 'reserved' and 'down_payment' in request.data:
         try:
             down_payment = float(request.data.get('down_payment', 0))
@@ -687,13 +686,11 @@ def update_booking_status(request, booking_id):
     set_available = request.data.get('set_available')
     prevent_maintenance = set_available is False
     
-    # Save the previous status for notification handling
-    previous_status = booking.status
+    # Save the old status to compare later
+    old_status = booking.status
     
-    # Update the booking status
     booking.status = status_value
     
-    # Handle room/area availability
     if status_value in ['reserved', 'confirmed', 'checked_in'] and not prevent_maintenance:
         if booking.is_venue_booking and booking.area:
             area = booking.area
@@ -723,18 +720,12 @@ def update_booking_status(request, booking_id):
             room.status = 'available'
             room.save()
     
-    # Handle cancellation reason
     if status_value in ['cancelled', 'rejected'] and 'reason' in request.data:
         booking.cancellation_reason = request.data.get('reason')
         booking.cancellation_date = timezone.now()
-    
-    # Save the booking changes
-    booking.save()
-    
-    serializer = BookingSerializer(booking)
-    
-    property_name = ""
 
+    # Determine property name before saving the booking
+    property_name = ""
     try:
         if booking.is_venue_booking and booking.area:
             property_name = booking.area.area_name
@@ -742,14 +733,24 @@ def update_booking_status(request, booking_id):
             property_name = booking.room.room_name
         else:
             property_name = "your reservation"
-    except Exception as e:
+    except Exception:
         property_name = "your reservation"
     
+    # Save the property_name as a temporary attribute (not in database)
     booking.property_name = property_name
     
-    if status_value != booking.status:
+    # Save the booking with new status and other changes
+    booking.save()
+    
+    serializer = BookingSerializer(booking)
+    
+    # Only send notifications and emails if the status actually changed
+    if old_status != status_value:
         try:
-            create_booking_notification(booking, status_value)
+            # Create notification first to ensure it's stored in the database
+            notification = create_booking_notification(booking, status_value)
+            
+            # Then send emails if needed
             if status_value == 'reserved':
                 user_email = booking.user.email
                 send_booking_confirmation_email(user_email, serializer.data)
@@ -757,10 +758,10 @@ def update_booking_status(request, booking_id):
                 user_email = booking.user.email
                 send_booking_rejection_email(user_email, serializer.data)
         except Exception as e:
-            return Response({
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+            # Log the error but don't fail the request
+            print(f"Error creating notification or sending email: {str(e)}")
+            # Continue processing as the status was updated successfully
+    
     if booking.status not in ['reserved', 'checked_in'] and (status_value == 'cancelled' or status_value == 'rejected'):
         if booking.is_venue_booking and booking.area:
             area = booking.area
@@ -770,6 +771,24 @@ def update_booking_status(request, booking_id):
             room = booking.room
             room.status = 'available'
             room.save()
+    
+    # Update active booking counts for admin dashboard via WebSocket
+    try:
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            'admin_notifications',
+            {
+                'type': 'active_count_update',
+                'count': Bookings.objects.exclude(
+                    status__in=['rejected', 'cancelled', 'no_show', 'checked_out']
+                ).count()
+            }
+        )
+    except Exception as e:
+        print(f"WebSocket notification error: {str(e)}")
     
     return Response({
         "message": f"Booking status updated to {status_value}",

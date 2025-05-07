@@ -100,8 +100,21 @@ def create_booking_notification(booking, new_status):
             }
         }
         
+        # Ensure property_name is set
+        if not hasattr(booking, 'property_name') or not booking.property_name:
+            try:
+                if booking.is_venue_booking and booking.area:
+                    booking.property_name = booking.area.area_name
+                elif booking.room:
+                    booking.property_name = booking.room.room_name
+                else:
+                    booking.property_name = "your reservation"
+            except Exception:
+                booking.property_name = "your reservation"
+        
         notification_config = notification_types.get(new_status)
         if notification_config:
+            # Create notification in database
             notification = Notification.objects.create(
                 user=booking.user,
                 message=notification_config['message'](booking),
@@ -109,10 +122,15 @@ def create_booking_notification(booking, new_status):
                 booking=booking
             )
             
+            # Try to send real-time notification via WebSocket
             try:
+                from channels.layers import get_channel_layer
+                from asgiref.sync import async_to_sync
+                
                 channel_layer = get_channel_layer()
                 notification_data = NotificationSerializer(notification).data
                 
+                # Send to user's notification group
                 async_to_sync(channel_layer.group_send)(
                     f"notifications_{booking.user.id}",
                     {
@@ -124,11 +142,29 @@ def create_booking_notification(booking, new_status):
                         ).count()
                     }
                 )
-            except Exception:
-                return None
+                
+                # Also update unread count to ensure it's consistent
+                async_to_sync(channel_layer.group_send)(
+                    f"notifications_{booking.user.id}",
+                    {
+                        "type": "update_unread_count",
+                        "count": Notification.objects.filter(
+                            user=booking.user,
+                            is_read=False
+                        ).count()
+                    }
+                )
+                
+                print(f"Successfully sent notification to user {booking.user.id} for booking {booking.id}")
+            except Exception as e:
+                print(f"WebSocket notification error: {str(e)}")
+                # Continue as the notification is saved in database even if WebSocket fails
+            
             return notification
-    except Exception:
-        return None
+    except Exception as e:
+        print(f"Error creating notification: {str(e)}")
+        import traceback
+        traceback.print_exc()
     
     return None
 

@@ -84,7 +84,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
 
             if (booking.time_of_arrival) {
                 const [hourStr, minStr] = booking.time_of_arrival.split(':');
-                
+
                 const arrivalHour = parseInt(hourStr, 10);
                 const arrivalMinute = parseInt(minStr, 10);
 

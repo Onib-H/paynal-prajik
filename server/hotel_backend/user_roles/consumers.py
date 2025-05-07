@@ -3,6 +3,10 @@ from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from .models import Notification
 import json
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     def __init__(self, *args, **kwargs):
@@ -36,9 +40,10 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             elif message_type == 'heartbeat':
                 await self.send(text_data=json.dumps({'type': 'heartbeat_ack'}))
         except json.JSONDecodeError:
-            return f"WS: Invalid JSON received: {text_data}"
+            logger.error(f"WS: Invalid JSON recieved: {text_data}")
         except Exception as e:
-            return f"WS: Error processing message: {str(e)}"
+            logger.error(f"WS: Error in receive: {str(e)}")
+            logger.error(traceback.format_exc())
 
     async def authenticate_user(self, user_id):
         try:
@@ -83,7 +88,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 'count': count
             }))
         except Exception as e:
-            return f"WS: Error sending initial count: {str(e)}"
+            logger.error(f"WS: Error sending initial count: {str(e)}")
 
     async def disconnect(self, close_code):
         try:
@@ -93,7 +98,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                     self.channel_name
                 )
         except Exception as e:
-            return f"WS: Error during disconnect: {str(e)}"
+            logger.error(f"WS: Error during disconnect: {str(e)}")
 
     async def send_notification(self, event):
         try:
@@ -103,7 +108,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 'unread_count': event['unread_count']
             }))
         except Exception as e:
-            return f"WS: Error sending notification: {str(e)}"
+            logger.error(f"WS: Error sending notification: {str(e)}")
 
     async def update_unread_count(self, event):
         try:
@@ -112,7 +117,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 'count': event['count']
             }))
         except Exception as e:
-            return f"WS: Error updating unread count: {str(e)}"
+            logger.error(f"WS: Error updating unread count: {str(e)}")
 
     @database_sync_to_async
     def get_user(self, user_id):

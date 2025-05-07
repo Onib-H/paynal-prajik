@@ -29,6 +29,7 @@ export class WebSocketService {
     private currentUserId: string = '';
     private connecting: boolean = false;
     private reconnectTimer?: NodeJS.Timeout;
+    private lastConnectTime: number = 0;
 
     constructor(private socketPath: string) {
         this.reconnect = this.reconnect.bind(this);
@@ -38,8 +39,25 @@ export class WebSocketService {
 
     connect(userId: string) {
         if (!userId) return;
-        if (this.socket?.readyState === WebSocket.OPEN) return;
-        if (this.connecting) return;
+        
+        const now = Date.now();
+        if (now - this.lastConnectTime < 2000) {
+            return;
+        }
+        this.lastConnectTime = now;
+        
+        if (this.socket?.readyState === WebSocket.OPEN) {
+            if (this.currentUserId === userId) {
+                return;
+            } else {
+                this.disconnect();
+            }
+        }
+        
+        if (this.connecting) {
+            console.log(`WebSocket: Connection already in progress for user ${userId}`);
+            return;
+        }
 
         this.connecting = true;
         this.currentUserId = userId;
@@ -48,14 +66,14 @@ export class WebSocketService {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const host = window.location.hostname === 'localhost' ? 'localhost:8000' : window.location.host;
             const url = `${protocol}//${host}/${this.socketPath}`;
-
+            
             this.socket = new WebSocket(url);
             this.socket.onopen = this.handleOpen.bind(this);
             this.socket.onmessage = this.handleMessage.bind(this);
             this.socket.onclose = this.handleClose.bind(this);
             this.socket.onerror = this.handleConnectionError;
 
-        } catch {
+        } catch (error) {
             this.handleConnectionError();
         }
     }
@@ -79,15 +97,18 @@ export class WebSocketService {
     private handleClose(event: CloseEvent) {
         this.connecting = false;
         this.stopHeartbeat();
-        
-        if (!event.wasClean) this.handleConnectionError();
+                
+        if (!event.wasClean) {
+            this.handleConnectionError();
+        }
     }
 
     private handleConnectionError() {
         this.connecting = false;
+        console.error(`WebSocket: Connection error, retry count: ${this.retries}/${this.maxRetries}`);
 
         if (this.retries < this.maxRetries) {
-            const delay = this.retryDelay * Math.pow(2, this.retries);
+            const delay = this.retryDelay * Math.pow(1.5, this.retries);
             
             if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
             this.reconnectTimer = setTimeout(this.reconnect, delay);
@@ -99,6 +120,7 @@ export class WebSocketService {
     private reconnect() {
         this.retries++;
         if (this.retries <= this.maxRetries) {
+            console.log(`WebSocket: Reconnecting (attempt ${this.retries}/${this.maxRetries})`);
             this.connect(this.currentUserId);
         }
     }
@@ -106,8 +128,11 @@ export class WebSocketService {
     private startHeartbeat() {
         this.stopHeartbeat();
         this.heartbeatTimer = setInterval(() => {
-            if (this.isConnected) this.send({ type: 'heartbeat' });
-            else this.stopHeartbeat();
+            if (this.isConnected) {
+                this.send({ type: 'heartbeat' });
+            } else {
+                this.stopHeartbeat();
+            }
         }, this.heartbeatInterval);
     }
 
@@ -131,12 +156,22 @@ export class WebSocketService {
 
     private triggerEvent(event: string, data: any) {
         const callback = this.callbacks.get(event);
-        if (callback) callback(data);
+        if (callback) {
+            try {
+                callback(data);
+            } catch (error) {
+                console.error(`WebSocket: Error in ${event} callback:`, error);
+            }
+        }
     }
 
     send(data: object) {
         if (this.socket?.readyState === WebSocket.OPEN) {
-            this.socket.send(JSON.stringify(data));
+            try {
+                this.socket.send(JSON.stringify(data));
+            } catch (error) {
+                console.error(`WebSocket: Error sending message:`, error);
+            }
         } else {
             if (!this.connecting && this.currentUserId) {
                 this.connect(this.currentUserId);
@@ -160,6 +195,10 @@ export class WebSocketService {
         this.callbacks.clear();
         this.connecting = false;
         this.retries = 0;
+    }
+
+    getCurrentUserId(): string {
+        return this.currentUserId;
     }
 
     get isConnected() {

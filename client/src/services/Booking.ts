@@ -1,14 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookingFormData, BookingResponse, ReservationFormData } from "../types/BookingClient";
+import { createBookingFormData } from "../utils/booking";
 import { booking } from "./_axios";
 
-export const fetchBookings = async ({
-  page = 1,
-  pageSize = 9,
-}: {
-  page?: number;
-  pageSize?: number;
-} = {}): Promise<{
+export const fetchBookings = async (page: number, pageSize: number): Promise<{
   data: BookingResponse[];
   pagination?: {
     total_pages: number;
@@ -30,7 +25,7 @@ export const fetchBookings = async ({
     console.error(`Failed to fetch bookings: ${error}`);
     throw error;
   }
-};
+};    
 
 export const fetchReservations = async () => {
   try {
@@ -79,38 +74,7 @@ export const fetchAvailability = async (arrival: string, departure: string) => {
 
 export const createBooking = async (bookingData: BookingFormData) => {
   try {
-    const formData = new FormData();
-
-    formData.append("firstName", bookingData.firstName);
-    formData.append("lastName", bookingData.lastName);
-    formData.append("phoneNumber", bookingData.phoneNumber);
-    formData.append("address", bookingData.address || "");
-    formData.append("specialRequests", bookingData.specialRequests || "");
-
-    if (bookingData.validId) {
-      formData.append("validId", bookingData.validId);
-    }
-
-    formData.append("roomId", bookingData.roomId || "");
-    formData.append("checkIn", bookingData.checkIn || "");
-    formData.append("checkOut", bookingData.checkOut || "");
-    formData.append("status", bookingData.status || "pending");
-
-    formData.append("arrivalTime", bookingData.arrivalTime);
-
-    if (bookingData.totalPrice !== undefined) {
-      formData.append("totalPrice", bookingData.totalPrice.toString());
-    }
-
-    if (bookingData.numberOfGuests !== undefined) {
-      formData.append("numberOfGuests", bookingData.numberOfGuests.toString());
-    }
-
-    formData.append('paymentMethod', bookingData.paymentMethod || 'gcash');
-
-    if (bookingData.paymentMethod === 'gcash' && bookingData.paymentProof) {
-      formData.append("paymentProof", bookingData.paymentProof);
-    }
+    const formData = createBookingFormData(bookingData);
 
     const response = await booking.post("/bookings", formData, {
       headers: {

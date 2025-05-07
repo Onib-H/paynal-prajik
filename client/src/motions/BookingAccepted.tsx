@@ -13,7 +13,7 @@ const BookingAccepted = () => {
     if (!bookingId) navigate('/');
   }, [bookingId, navigate]);
 
-  const viewBookingDetails = () => navigate(`/guest/bookings?bookingId=${bookingId}&success=true`);
+  const viewBookingDetails = () => navigate(`/guest/bookings`);
   const goToHome = () => navigate('/');
 
   return (

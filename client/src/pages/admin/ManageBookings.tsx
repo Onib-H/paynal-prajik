@@ -70,23 +70,31 @@ const ManageBookings: FC = () => {
       if ((status === "cancelled" || status === "rejected") && reason) data.reason = reason;
       if (status === "reserved" && downPaymentAmount) data.down_payment = downPaymentAmount;
 
-      const result = await updateBookingStatus(bookingId, data);
+      try {
+        const result = await updateBookingStatus(bookingId, data);
 
-      if (status === "checked_in" && paymentAmount) {
-        try {
-          await recordPayment(bookingId, paymentAmount);
-        } catch (error) {
-          console.error(`Failed to record payment: ${error}`);
+        if (status === "checked_in" && paymentAmount) {
+          try {
+            const paymentResult = await recordPayment(bookingId, paymentAmount);
+            console.log(`Successfully recorded payment of ${paymentAmount}`, paymentResult);
+          } catch (error) {
+            console.error(`Failed to record payment: ${error}`);
+            throw new Error(`Booking status updated but payment recording failed: ${error}`);
+          }
         }
-      }
 
-      return { result, status };
+        return { result, status };
+      } catch (error) {
+        console.error(`Failed to update booking status to ${status}:`, error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["adminBookings"] });
       queryClient.invalidateQueries({ queryKey: ["stats"] });
 
       const { status } = data;
+      console.log(`Booking status updated successfully to: ${status}`);
 
       switch (status) {
         case 'reserved':
@@ -112,8 +120,10 @@ const ManageBookings: FC = () => {
       setSelectedBooking(null);
       setShowRejectionModal(false);
     },
-    onError: (error) => {
-      toast.error(`Failed to update booking: ${error}`);
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.error || error.message || "Unknown error";
+      console.error("Booking status update failed:", errorMessage);
+      toast.error(`Failed to update booking: ${errorMessage}`);
       setShowRejectionModal(false);
     },
   });

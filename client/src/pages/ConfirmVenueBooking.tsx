@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, BookCheck } from "lucide-react";
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import GCashPaymentModal from "../components/bookings/GCashPaymentModal";
@@ -30,7 +30,6 @@ const ConfirmVenueBooking = () => {
   const [pendingFormData, setPendingFormData] = useState<ReservationFormData | null>(null);
   const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [gcashProof, setGcashProof] = useState<File | null>(null);
   const [gcashPreview, setGcashPreview] = useState<string | null>(null);
   const [showGCashModal, setShowGCashModal] = useState<boolean>(false);
@@ -77,7 +76,7 @@ const ConfirmVenueBooking = () => {
     }
   };
 
-  useEffect(() => {
+  useMemo(() => {
     if (!areaId || !startTime || !endTime) navigate("/areas");
   }, [areaId, startTime, endTime, navigate]);
 
@@ -112,24 +111,12 @@ const ConfirmVenueBooking = () => {
   const formattedEndTime = formatDateTime(endTime);
 
   const onSubmit: SubmitHandler<FormData> = (data) => {
-    setError(null);
     if (isSubmitting) return;
-
-    if (!gcashProof) {
-      setError("Please upload your GCash payment proof");
-      return;
-    }
-
-    if (!areaId || !startTime || !endTime || !totalPrice) {
-      setError("Missing required booking information.");
-      return;
-    }
+    if (!gcashProof) return;
+    if (!areaId || !startTime || !endTime || !totalPrice) return;
 
     const validIdFile = (data.validId as FileList)[0];
-    if (!validIdFile) {
-      setError("Please upload a valid ID");
-      return;
-    }
+    if (!validIdFile) return;
 
     const reservationData: ReservationFormData = {
       firstName: data.firstName,
@@ -156,35 +143,30 @@ const ConfirmVenueBooking = () => {
     if (!pendingFormData) return;
 
     if (paymentMethod === 'gcash') {
-      if (!gcashProof) {
-        setError("Please upload your GCash payment proof.");
-        return;
-      }
-      if (typeof gcashProof === 'string') {
-        setError("Please upload a valid file.");
-        return;
-      }
+      if (!gcashProof) return;
+      if (typeof gcashProof === 'string') return;
     }
 
     setShowConfirmModal(false);
     setIsSubmitting(true);
-    setError(null);
 
     try {
       const response = await createReservation(pendingFormData);
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=true`);
     } catch (error: any) {
       console.error(`Error creating reservation: ${error}`);
-      setError(
-        error.response?.data?.error
-      );
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
   };
 
   useEffect(() => {
+    const originalStyle = document.body.style.overflow;
     document.body.style.overflow = isSubmitting ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
   }, [isSubmitting]);
 
   const containerVariants = {
@@ -307,59 +289,6 @@ const ConfirmVenueBooking = () => {
           </motion.h1>
           <div className="w-[100px]"></div>
         </div>
-
-        <AnimatePresence>
-          {!isAuthenticated && (
-            <motion.div
-              className="mb-6 p-4 bg-blue-50 border border-blue-300 text-blue-800 rounded-lg shadow-md"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            >
-              <div className="flex items-start">
-                <div className="flex-shrink-0 mt-0.5">
-                  <svg
-                    className="h-5 w-5 text-blue-600"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">
-                    Login Required
-                  </h3>
-                  <p className="text-sm mt-1">
-                    You'll need to log in or create an account to complete your
-                    booking. Don't worry - your booking information will be
-                    saved during the process.
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg shadow-md"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            >
-              <p>{error}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Section - Takes 2/3 width on large screens */}
@@ -607,7 +536,12 @@ const ConfirmVenueBooking = () => {
                   </button>
                   {gcashPreview && (
                     <div className="mt-2 relative">
-                      <img src={gcashPreview} className="w-full h-full object-contain border rounded-lg" />
+                      <img
+                        src={gcashPreview}
+                        alt="Payment Proof for GCash"
+                        className="w-full h-full object-contain"
+                        loading="lazy"
+                      />
                       <button
                         onClick={() => setGcashPreview(null)}
                         className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 cursor-pointer"

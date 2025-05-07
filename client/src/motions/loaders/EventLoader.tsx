@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Ban, BookCheck, BookOpen, Calendar, CheckCircle, Clock, CreditCard, LogOut, Receipt, Send, Star, XCircle } from "lucide-react";
-import { FC, useEffect, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 
 interface LoaderProps {
   text?: string;
@@ -15,38 +15,45 @@ const EventLoader: FC<LoaderProps> = ({
   const [step, setStep] = useState(0);
   const [flare, setFlare] = useState({ x: 0, y: 0, show: false });
 
+  // Use useCallback for animation functions
+  const updateProgress = useCallback(() => {
+    setProgress(prev => {
+      const newProgress = prev + (1 - prev / 100) * 2;
+      return newProgress >= 95 ? 95 : newProgress;
+    });
+  }, []);
+
+  const updateStep = useCallback(() => {
+    setStep(prev => (prev + 1) % 4);
+  }, []);
+
+  const showFlare = useCallback(() => {
+    setFlare({
+      x: Math.random() * 80 + 10,
+      y: Math.random() * 80 + 10,
+      show: true
+    });
+
+    setTimeout(() => {
+      setFlare(prev => ({ ...prev, show: false }));
+    }, 700);
+  }, []);
+
+  // Setup and cleanup intervals with a single useEffect
   useEffect(() => {
-    const progressTimer = setInterval(() => {
-      setProgress(prev => {
-        const newProgress = prev + (1 - prev / 100) * 2;
-        return newProgress >= 95 ? 95 : newProgress;
-      });
-    }, 100);
-
-    const stepTimer = setInterval(() => {
-      setStep(prev => (prev + 1) % 4);
-    }, 2500);
-
-    const flareTimer = setInterval(() => {
-      setFlare({
-        x: Math.random() * 80 + 10,
-        y: Math.random() * 80 + 10,
-        show: true
-      });
-
-      setTimeout(() => {
-        setFlare(prev => ({ ...prev, show: false }));
-      }, 700);
-    }, 3000);
+    const progressTimer = setInterval(updateProgress, 100);
+    const stepTimer = setInterval(updateStep, 2500);
+    const flareTimer = setInterval(showFlare, 3000);
 
     return () => {
       clearInterval(progressTimer);
       clearInterval(stepTimer);
       clearInterval(flareTimer);
     };
-  }, []);
+  }, [updateProgress, updateStep, showFlare]);
 
-  const getColors = () => {
+  // Memoize the colors to prevent recalculation
+  const colors = useMemo(() => {
     switch (type) {
       case "reserve":
         return {
@@ -140,11 +147,12 @@ const EventLoader: FC<LoaderProps> = ({
           iconColor: "text-indigo-600"
         };
     }
-  };
+  }, [type]);
 
-  const { primary, gradient, lightGradient, accentLight, textColor, icon, iconBg, iconColor } = getColors();
+  const { primary, gradient, lightGradient, accentLight, textColor, icon, iconBg, iconColor } = colors;
 
-  const bookingSteps = [
+  // Memoize booking steps to prevent recreation on each render
+  const bookingSteps = useMemo(() => [
     {
       icon: <BookOpen className="w-5 h-5" />,
       text: "Preparing reservation...",
@@ -165,7 +173,7 @@ const EventLoader: FC<LoaderProps> = ({
       text: "Finalizing reservation...",
       detail: "Creating your booking"
     }
-  ];
+  ], []);
 
   const containerVariants = {
     initial: { opacity: 0 },
