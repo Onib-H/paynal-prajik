@@ -4,17 +4,19 @@ import { ArcElement, Chart, Legend, Tooltip } from "chart.js";
 import { format, getDay, isAfter, isSameDay, parse, startOfWeek } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Calendar, Views, dateFnsLocalizer } from "react-big-calendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Doughnut } from "react-chartjs-2";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import MonthlyReportModal from "../../components/admin/MonthlyReportModal";
 import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
-import { fetchAreaRevenue, fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyNoShowsRejected, fetchDailyRevenue, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats, fetchAreaBookings } from "../../services/Admin";
+import { fetchAreaBookings, fetchAreaRevenue, fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyNoShowsRejected, fetchDailyRevenue, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import "../../styles/print.css";
 import { formatCurrency, formatMonthYear, getDaysInMonth } from "../../utils/formatters";
+import { prepareMonthlyReportData } from "../../utils/monthlyReportGenerator";
 import Error from "../_ErrorBoundary";
 
 Chart.register(ArcElement, Tooltip, Legend);
@@ -31,6 +33,12 @@ const localizer = dateFnsLocalizer({
 const AdminDashboard = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>("month");
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  // Refs for charts to capture their DOM elements
+  const bookingStatusChartRef = useRef<HTMLCanvasElement>(null);
+  const areaRevenueChartRef = useRef<HTMLDivElement>(null);
+  const roomRevenueChartRef = useRef<HTMLDivElement>(null);
 
   const today = new Date();
   const selectedMonth = selectedDate.getMonth() + 1;
@@ -228,6 +236,43 @@ const AdminDashboard = () => {
     setSelectedDate(date);
   };
 
+  const handleGenerateReport = () => {
+    // Set up chart elements for the report
+    const reportData = prepareMonthlyReportData({
+      formattedMonthYear,
+      stats,
+      bookingStatusCounts,
+      areaNames,
+      areaRevenueValues,
+      areaBookingValues,
+      roomNames,
+      roomRevenueValues,
+      roomBookingValues,
+    });
+
+    // Add chart references if they exist
+    if (bookingStatusChartRef.current) {
+      reportData.charts.bookingStatusChart = bookingStatusChartRef.current;
+    }
+
+    if (areaRevenueChartRef.current) {
+      const areaChartCanvas = areaRevenueChartRef.current.querySelector('canvas');
+      if (areaChartCanvas) {
+        reportData.charts.areaRevenueChart = areaChartCanvas;
+      }
+    }
+
+    if (roomRevenueChartRef.current) {
+      const roomChartCanvas = roomRevenueChartRef.current.querySelector('canvas');
+      if (roomChartCanvas) {
+        reportData.charts.roomRevenueChart = roomChartCanvas;
+      }
+    }
+
+    // Show the report modal
+    setShowReportModal(true);
+  };
+
   const EventComponent = ({ event }: { event: any }) => {
     const resource = event.resource;
 
@@ -306,6 +351,7 @@ const AdminDashboard = () => {
           </div>
 
           <button
+            onClick={handleGenerateReport}
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center cursor-pointer transition-colors duration-300"
             title="Generate a monthly report using HTML/CSS"
           >
@@ -401,6 +447,7 @@ const AdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="bg-white shadow-lg rounded-lg p-4 hover:shadow-xl transition-shadow"
+          ref={areaRevenueChartRef}
         >
           <h3 className="text-xl font-semibold mb-4 text-center">
             Area Revenue - {formattedMonthYear}
@@ -443,6 +490,7 @@ const AdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
           className="bg-white shadow-lg rounded-lg p-4 hover:shadow-xl transition-shadow"
+          ref={roomRevenueChartRef}
         >
           <h3 className="text-xl font-semibold mb-4 text-center">
             Room Revenue - {formattedMonthYear}
@@ -492,6 +540,7 @@ const AdminDashboard = () => {
         </h3>
         <div className="h-80 relative">
           <Doughnut
+            ref={bookingStatusChartRef}
             data={{
               labels: [
                 'Reserved',
@@ -548,6 +597,30 @@ const AdminDashboard = () => {
           />
         </div>
       </motion.div>
+
+      {/* Monthly Report Modal */}
+      {showReportModal && (
+        <MonthlyReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          reportData={prepareMonthlyReportData({
+            formattedMonthYear,
+            stats,
+            bookingStatusCounts,
+            areaNames,
+            areaRevenueValues,
+            areaBookingValues,
+            roomNames,
+            roomRevenueValues,
+            roomBookingValues,
+            charts: {
+              bookingStatusChart: bookingStatusChartRef.current,
+              areaRevenueChart: areaRevenueChartRef.current?.querySelector('canvas') || null,
+              roomRevenueChart: roomRevenueChartRef.current?.querySelector('canvas') || null,
+            },
+          })}
+        />
+      )}
     </div>
   );
 };
