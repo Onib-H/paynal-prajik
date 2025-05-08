@@ -37,6 +37,7 @@ export interface BookingResponse {
     check_in_date: string;
     check_out_date: string;
     status: string;
+    special_request?: string;
     created_at: string;
     updated_at: string;
     cancellation_reason?: string;

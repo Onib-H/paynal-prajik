@@ -540,7 +540,6 @@ const AdminDashboard = () => {
         </h3>
         <div className="h-80 relative">
           <Doughnut
-            ref={bookingStatusChartRef}
             data={{
               labels: [
                 'Reserved',

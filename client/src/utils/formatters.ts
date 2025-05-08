@@ -18,14 +18,18 @@ export const formatCurrency = (amount: number): string => {
 export const formatMonthYear = (month: number, year: number) => {
   return new Date(year, month).toLocaleString("en-US", {
     month: "long",
-    year: "numeric"
+    year: "numeric",
   });
 };
 
 /**
  * Get the number of days in a month
  */
-export const getDaysInMonth = (month: number, year: number, adjustForDisplay?: boolean) => {
+export const getDaysInMonth = (
+  month: number,
+  year: number,
+  adjustForDisplay?: boolean
+) => {
   const adjustedMonth = month - 1;
   const date = new Date(year, adjustedMonth, 1);
   const days = [];
@@ -86,47 +90,9 @@ export const formatDateTime = (dateString: string): string => {
  * Format a time string to a readable format
  */
 export const getBookingPrice = (booking: BookingResponse): number => {
-  try {
-    if (booking.total_price) {
-      const totalPrice =
-        typeof booking.total_price === "string"
-          ? parseFloat(booking.total_price.replace(/[^\d.]/g, ""))
-          : booking.total_price;
-      return totalPrice || 0;
-    }
-
-    let basePrice = 0;
-
-    if (booking.is_venue_booking && booking.area_details) {
-      if (booking.area_details.price_per_hour) {
-        const priceString = booking.area_details.price_per_hour;
-        basePrice = parseFloat(priceString.replace(/[^\d.]/g, "")) || 0;
-      }
-      return basePrice;
-    } else if (!booking.is_venue_booking && booking.room_details) {
-      const checkIn = booking.check_in_date;
-      const checkOut = booking.check_out_date;
-      let nights = 1;
-      if (checkIn && checkOut) {
-        const start = new Date(checkIn);
-        const end = new Date(checkOut);
-        const diffTime = Math.abs(end.getTime() - start.getTime());
-        nights = Math.max(Math.ceil(diffTime / (1000 * 60 * 60 * 24)), 1);
-      }
-
-      if (booking.room_details.room_price) {
-        const priceString = booking.room_details.room_price;
-        basePrice = parseFloat(priceString.replace(/[^\d.]/g, "")) || 0;
-      }
-
-      return basePrice * nights;
-    }
-
-    return basePrice;
-  } catch (error) {
-    console.error(`Error parsing booking price: ${error}`);
-    return 0;
-  }
+  const priceString = booking.total_price?.toString() || "0";
+  const numericString = priceString.replace(/[^0-9.]/g, "");
+  return parseFloat(numericString) || 0;
 };
 
 /**
@@ -166,7 +132,9 @@ export const getStatusColor = (status: string): string => {
 /**
  * Calculate the number of days until the next stay
  */
-export const calculateDaysUntilNextStay = (bookings: any[]): number | string => {
+export const calculateDaysUntilNextStay = (
+  bookings: any[]
+): number | string => {
   if (!bookings || bookings.length === 0) return "N/A";
 
   const today = new Date();
@@ -186,7 +154,7 @@ export const calculateDaysUntilNextStay = (bookings: any[]): number | string => 
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
   return diffDays;
-}
+};
 
 /**
  * Format time into 12-hour format
@@ -201,4 +169,4 @@ export const formatTime = (time: string): string => {
   const formattedHour = hour % 12 || 12;
 
   return `${formattedHour}:${minutes} ${period}`;
-}
+};

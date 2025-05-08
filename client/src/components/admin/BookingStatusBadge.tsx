@@ -2,7 +2,6 @@ import { FC } from "react";
 
 const BookingStatusBadge: FC<{ status: string }> = ({ status }) => {
     let bgColor = "";
-    const formattedStatus = status.toUpperCase();
 
     switch (status.toLowerCase()) {
         case "pending":
@@ -34,8 +33,8 @@ const BookingStatusBadge: FC<{ status: string }> = ({ status }) => {
     }
 
     return (
-        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${bgColor}`}>
-            {formattedStatus.replace("_", " ")}
+        <span className={`px-2 py-1 rounded-full text-md font-semibold uppercase ${bgColor}`}>
+            {status.replace("_", " ")}
         </span>
     );
 };

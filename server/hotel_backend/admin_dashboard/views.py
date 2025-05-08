@@ -828,7 +828,7 @@ def record_payment(request, booking_id):
         )
         
         return Response({
-            "message": "Payment recorded successfully",
+            "message": "Full payment recorded successfully",
             "transaction_id": transaction.id,
             "booking_id": booking.id,
             "amount": amount

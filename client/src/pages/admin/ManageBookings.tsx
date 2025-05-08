@@ -151,12 +151,13 @@ const ManageBookings: FC = () => {
     }
   };
 
-  const handleCheckIn = (paymentAmount: number) => {
+  const handleCheckIn = () => {
     if (selectedBooking) {
+      const bookingTotalPrice = getBookingPrice(selectedBooking);
       updateBookingStatusMutation.mutate({
         bookingId: selectedBooking.id,
         status: "checked_in",
-        paymentAmount: paymentAmount,
+        paymentAmount: bookingTotalPrice,
       });
     }
   };

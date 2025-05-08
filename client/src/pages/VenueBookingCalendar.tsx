@@ -114,7 +114,15 @@ const VenueBookingCalendar = () => {
 
     const isDateUnavailable = (date: Date) => {
         const todayStart = startOfDay(new Date());
+        const now = new Date();
+
         if (isBefore(date, todayStart)) return true;
+
+        if (isSameDay(date, now)) {
+            const currentHour = now.getHours();
+            if (currentHour >= 17) return true;
+        }
+
         return isDateBooked(date);
     };
 
@@ -153,6 +161,11 @@ const VenueBookingCalendar = () => {
         if (isUnavailable) return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
         return `${className} bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer`;
     };
+
+    const isTodayUnavailable = () => {
+        const now = new Date();
+        return now.getHours() >= 17 && isSameDay(now, new Date());
+    }
 
     const getDateContent = (date: Date) => {
         return format(date, 'd');
@@ -215,6 +228,13 @@ const VenueBookingCalendar = () => {
                         {errorMessage && (
                             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
                                 <p>{errorMessage}</p>
+                            </div>
+                        )}
+
+                        {!arrivalParam && isTodayUnavailable() && (
+                            <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-md">
+                                <p>⚠️ Note: Today's date is unavailable for new bookings after 5:00 PM.
+                                    Please select a future date for your reservation.</p>
                             </div>
                         )}
 

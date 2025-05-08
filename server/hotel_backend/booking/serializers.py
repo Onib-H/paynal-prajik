@@ -117,6 +117,7 @@ class BookingSerializer(serializers.ModelSerializer):
         if instance.total_price is not None:
             try:
                 representation['total_price'] = f"₱{float(instance.total_price):,.2f}"
+                representation['down_payment'] = f"₱{float(instance.down_payment):,.2f}"
             except (ValueError, TypeError):
                 pass 
         return representation
@@ -139,9 +140,6 @@ class BookingRequestSerializer(serializers.Serializer):
     paymentProof = serializers.FileField(required=False, allow_null=True, write_only=True)
 
     def validate(self, data):
-        """
-        Validate the entire booking request using our validation module
-        """
         errors = {}
         room = None
         

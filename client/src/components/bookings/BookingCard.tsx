@@ -196,7 +196,7 @@ const BookingCard: FC<BookingCardProps> = memo(({
                 <Watch className="w-5 h-5 text-indigo-600 mr-2 flex-shrink-0" />
                 <div>
                   <span className="block text-md text-gray-500">Down Payment</span>
-                  <span className="block font-semibold">{downPayment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="block font-semibold">{downPayment}</span>
                 </div>
               </div>
             )}

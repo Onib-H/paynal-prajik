@@ -3,7 +3,7 @@ import { AlertCircle, Calendar, Check, CheckCircle2, Clock, CreditCard, IdCard, 
 import { FC, useState } from "react";
 import EventLoader from "../../motions/loaders/EventLoader";
 import { BookingResponse } from "../../types/BookingClient";
-import { formatDate, getBookingPrice } from "../../utils/formatters";
+import { formatDate, formatTime, getBookingPrice } from "../../utils/formatters";
 import BookingStatusBadge from "./BookingStatusBadge";
 
 interface BookingDetailProps {
@@ -22,19 +22,31 @@ interface BookingDetailProps {
 const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfirm, onReject, onCheckIn, onCheckOut, onNoShow, onCancel, canManage, isUpdating }) => {
     const [paymentAmount, setPaymentAmount] = useState<string>("");
     const [downPayment, setDownPayment] = useState<string>("");
+    const [expandedImage, setExpandedImage] = useState<'validId' | 'paymentProof' | null>(null);
 
-    const isVenueBooking = booking?.is_venue_booking;
-    const bookingPrice = getBookingPrice(booking);
-    const currentPayment = parseFloat(paymentAmount) || 0;
-    const currentDownPayment = parseFloat(downPayment) || 0;
-    const downPaymentAmount = booking?.down_payment;
-    const remainingBalance = bookingPrice - downPaymentAmount;
-    const isPaymentComplete = currentPayment === bookingPrice;
-    const isRemainingPaymentComplete = currentPayment === remainingBalance;
-    const isDownPaymentValid = currentDownPayment > 0 && currentDownPayment <= bookingPrice;
-    const isReservedStatus = booking.status === "reserved";
-    const isPendingStatus = booking.status === "pending";
-    const hasDownPayment = parseFloat(downPayment) > 0;
+    const isVenueBooking: boolean = booking?.is_venue_booking;
+    const bookingPrice: number = getBookingPrice(booking);
+
+    const parseCurrencyAmount = (amount: any): number => {
+        if (amount === null || amount === undefined) return 0;
+        if (typeof amount === 'number') return amount;
+        if (typeof amount === 'string') {
+            const numericString = amount.replace(/[₱,]/g, '');
+            return parseFloat(numericString) || 0;
+        }
+        return 0;
+    };
+
+    const currentPayment: number = parseFloat(paymentAmount) || 0;
+    const currentDownPayment: number = parseFloat(downPayment) || 0;
+    const downPaymentAmount: number = parseCurrencyAmount(booking?.down_payment);
+    const remainingBalance: number = bookingPrice - downPaymentAmount;
+    const isPaymentComplete: boolean = Math.abs(currentPayment - bookingPrice) < Number.EPSILON;
+    const isRemainingPaymentComplete: boolean = Math.abs(currentPayment - remainingBalance) < Number.EPSILON;
+    const isDownPaymentValid: boolean = currentDownPayment > 0 && currentDownPayment <= bookingPrice;
+    const isReservedStatus: boolean = booking.status === "reserved";
+    const isPendingStatus: boolean = booking.status === "pending";
+    const hasDownPayment: boolean = parseFloat(downPayment) > 0;
 
     const isNoShowEligible = (): boolean => {
         const currentDate = new Date();
@@ -94,7 +106,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                 if (currentMinutes < arrivalMinutes) {
                     return {
                         isValid: false,
-                        message: `Check-in is not available yet. Guest is arriving earlier than the scheduled time of ${booking.time_of_arrival}.`
+                        message: `Check-in is not available yet. Guest is arriving earlier than the scheduled time of ${formatTime(booking.time_of_arrival)}.`
                     };
                 }
             }
@@ -145,9 +157,8 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     };
 
     const checkInValidation = isCheckInDateValid();
-    const canCheckIn = (
-        (downPaymentAmount ? isRemainingPaymentComplete : isPaymentComplete)
-    ) && checkInValidation.isValid;
+    const canCheckIn = checkInValidation.isValid &&
+        (downPaymentAmount === bookingPrice || currentPayment > 0 || downPaymentAmount > 0);
 
     const checkOutValidation = isCheckOutDateValid();
     const canCheckOut = checkOutValidation.isValid;
@@ -169,7 +180,8 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                     src={booking.valid_id}
                     alt="Valid ID"
                     loading="lazy"
-                    className="w-full h-auto rounded-lg"
+                    className="w-full h-auto rounded-lg cursor-zoom-in hover:opacity-90 transition-opacity"
+                    onClick={() => setExpandedImage('validId')}
                 />
             </div>
         );
@@ -181,9 +193,18 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             setPaymentAmount("");
             return;
         }
+
+        // Ensure we're working with a valid number
         const num = parseFloat(raw);
-        const remaining = bookingPrice - booking.down_payment;
-        if (num <= remaining) setPaymentAmount(raw);
+        if (isNaN(num)) return;
+
+        // Calculate remaining balance based on the parsed down payment amount
+        const remaining = bookingPrice - downPaymentAmount;
+
+        // Only allow valid payment amounts (positive and not exceeding remaining balance)
+        if (num >= 0 && num <= remaining) {
+            setPaymentAmount(raw);
+        }
     }
 
     const handleDownPaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -288,15 +309,6 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 <span className="sm:text-right">{booking.user?.first_name} {booking.user?.last_name}</span>
                             </motion.div>
 
-                            {booking.user?.address && (
-                                <motion.div
-                                    className="flex flex-col sm:flex-row justify-between sm:col-span-2 p-2 rounded-md"
-                                >
-                                    <span className="font-semibold text-gray-700">Address:</span>
-                                    <span className="sm:text-right">{booking.user?.address}</span>
-                                </motion.div>
-                            )}
-
                             <motion.div
                                 className="flex flex-col sm:flex-row justify-between p-2 rounded-md"
                             >
@@ -315,8 +327,8 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                             >
                                 <span className="font-semibold text-gray-700">{isVenueBooking ? "Area:" : "Room:"}</span>
                                 <span className="sm:text-right font-medium">{isVenueBooking
-                                    ? (booking.area_details?.area_name || "Unknown Area")
-                                    : (booking.room_details?.room_name || "Unknown Room")}
+                                    ? (booking.area_details?.area_name)
+                                    : (booking.room_details?.room_name)}
                                 </span>
                             </motion.div>
 
@@ -371,6 +383,23 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 <BookingStatusBadge status={booking.status} />
                             </motion.div>
                         </div>
+
+                        {/* Special Request of Guest Users to their booking */}
+                        {booking.special_request && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                transition={{ duration: 0.3 }}
+                                className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200 shadow-sm"
+                            >
+                                <h3 className="font-semibold text-xl mb-2 text-purple-800 flex items-center">
+                                    Special Requests:
+                                </h3>
+                                <p className="text-sm text-purple-700 whitespace-pre-wrap">
+                                    {booking.special_request}
+                                </p>
+                            </motion.div>
+                        )}
 
                         {/* Down Payment section for pending bookings */}
                         {isPendingStatus && canManage && (
@@ -430,48 +459,60 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 transition={{ duration: 0.3 }}
                                 className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-sm"
                             >
-                                <h3 className="font-semibold mb-2 text-blue-800 flex items-center">
+                                <h3 className="font-semibold mb-2 text-xl text-blue-800 flex items-center">
                                     <Calendar className="w-4 h-4 mr-2" />
                                     Payment Details
                                 </h3>
 
-                                {booking.down_payment > 0 && (
-                                    <div className="mb-3 p-2 bg-white rounded border border-blue-100">
-                                        <p className="text-gray-700 flex justify-between">
-                                            <span className="font-medium">Down Payment:</span>
-                                            <span className="text-green-600 font-semibold">₱ {(downPaymentAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        </p>
-                                        <p className="text-gray-700 flex justify-between">
-                                            <span className="font-medium">Remaining Balance:</span>
-                                            <span className="text-amber-600 font-semibold">₱ {(bookingPrice - booking.down_payment).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                                        </p>
+                                <div className="mb-3 p-2 bg-white rounded border border-blue-100">
+                                    {downPaymentAmount > 0 && (
+                                        <>
+                                            <p className="text-gray-700 flex justify-between">
+                                                <span className="font-medium">Down Payment:</span>
+                                                <span className="text-green-600 font-semibold">
+                                                    ₱ {downPaymentAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </span>
+                                            </p>
+                                            <p className="text-gray-700 flex justify-between">
+                                                <span className="font-medium">Remaining Balance:</span>
+                                                <span className="text-amber-600 font-semibold">
+                                                    ₱ {remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </span>
+                                            </p>
+                                        </>
+                                    )}
+                                    <p className="text-gray-700 flex justify-between font-bold">
+                                        <span className="font-medium">Total Booking Amount:</span>
+                                        <span className="text-blue-600">
+                                            ₱ {bookingPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </span>
+                                    </p>
+                                </div>
+
+                                {/* Payment input field for reservations with remaining balance */}
+                                {downPaymentAmount !== bookingPrice && (
+                                    <div className="flex flex-col sm:flex-row items-center gap-2 mb-4">
+                                        <div className="relative flex-1 w-full">
+                                            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                                <span className="text-gray-500 text-xl">₱</span>
+                                            </div>
+                                            <motion.input
+                                                whileFocus={{ boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.3)" }}
+                                                type="number"
+                                                min={0}
+                                                max={remainingBalance}
+                                                value={paymentAmount}
+                                                onChange={handlePaymentChange}
+                                                placeholder={`Enter amount (${remainingBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
+                                                className="w-full pl-10 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                                            />
+                                        </div>
                                     </div>
                                 )}
 
-                                <div className="flex flex-col sm:flex-row items-center gap-2">
-                                    <div className="relative flex-1 w-full">
-                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                            <span className="text-gray-500 text-xl">₱</span>
-                                        </div>
-                                        <motion.input
-                                            whileFocus={{ boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.3)" }}
-                                            type="number"
-                                            min="0"
-                                            max={remainingBalance}
-                                            value={paymentAmount}
-                                            onChange={handlePaymentChange}
-                                            placeholder={`Enter amount (${(bookingPrice - booking.down_payment).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`}
-                                            className="w-full pl-10 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                                        />
-                                    </div>
-                                </div>
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="mt-2 text-sm"
-                                >
-                                    {currentPayment > 0 && (
+                                {/* Payment validation message */}
+                                {currentPayment > 0 && downPaymentAmount !== bookingPrice && (
+                                    <div className="mt-2 mb-4 text-sm">
                                         <p className={(isPaymentComplete || isRemainingPaymentComplete) ? "text-green-600 flex items-center" : "text-red-600 flex items-center"}>
                                             {isPaymentComplete ? (
                                                 <><CheckCircle2 className="w-4 h-4 mr-1" /> Payment amount matches the full booking total.</>
@@ -486,41 +527,50 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                                 </>
                                             )}
                                         </p>
-                                    )}
-                                </motion.div>
+                                    </div>
+                                )}
                             </motion.div>
                         )}
 
-                        {/* Valid ID Section */}
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.3 }}
-                            className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200"
+                            className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"
                         >
-                            <h3 className="font-semibold mb-2 text-gray-700 flex items-center">
-                                <IdCard className="w-4 h-4 mr-2" />
-                                Valid ID:
-                            </h3>
-                            {renderValidId()}
-                        </motion.div>
+                            {/* Valid ID Section */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200"
+                            >
+                                <h3 className="font-semibold mb-2 text-gray-700 flex items-center">
+                                    <IdCard className="w-4 h-4 mr-2" />
+                                    Valid ID:
+                                </h3>
+                                {renderValidId()}
+                            </motion.div>
 
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200"
-                        >
-                            <h3 className="font-semibold mb-2 text-gray-700 flex items-center">
-                                <Image className="w-4 h-4 mr-2" />
-                                GCash Payment Proof:
-                            </h3>
-                            <img
-                                src={booking.payment_proof}
-                                alt="GCash Payment Proof"
-                                className="w-full h-auto rounded-lg"
-                                loading="lazy"
-                            />
+                            {/* GCash Payment Proof */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.3 }}
+                                className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200"
+                            >
+                                <h3 className="font-semibold mb-2 text-gray-700 flex items-center">
+                                    <Image className="w-4 h-4 mr-2" />
+                                    GCash Payment Proof:
+                                </h3>
+                                <img
+                                    src={booking.payment_proof}
+                                    alt="GCash Payment Proof"
+                                    className="w-full h-auto rounded-lg cursor-zoom-in hover:opacity-90 transition-opacity"
+                                    loading="lazy"
+                                    onClick={() => setExpandedImage("paymentProof")}
+                                />
+                            </motion.div>
                         </motion.div>
 
                         {isVenueBooking && (
@@ -528,13 +578,13 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: "auto" }}
                                 transition={{ duration: 0.3 }}
-                                className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200 shadow-sm"
+                                className="mt-4 p-4 bg-blue-100 rounded-lg border border-blue-300 shadow-sm"
                             >
-                                <h3 className="font-semibold mb-2 text-blue-800 flex items-center">
-                                    <Calendar className="w-4 h-4 mr-2" />
+                                <h3 className="font-semibold text-lg mb-2 text-blue-800 flex items-center">
+                                    <Calendar className="w-5 h-5 mr-2" />
                                     Area Booking Note
                                 </h3>
-                                <p className="text-sm text-blue-700">
+                                <p className="text-md text-blue-700 font-medium">
                                     Standard area bookings are scheduled from 8:00 AM to 5:00 PM (9 hours) on the selected date.
                                     {booking.check_in_date !== booking.check_out_date && " This booking spans multiple days."}
                                 </p>
@@ -618,7 +668,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                             <div className="relative group">
                                 <motion.button
                                     whileTap={canCheckIn ? { scale: 0.98 } : {}}
-                                    onClick={() => onCheckIn && canCheckIn && onCheckIn(currentPayment)}
+                                    onClick={() => onCheckIn && canCheckIn && onCheckIn(bookingPrice)}
                                     className={`px-4 py-2 text-white rounded-lg flex items-center justify-center gap-2 shadow-sm ${canCheckIn
                                         ? 'bg-blue-600 cursor-pointer hover:bg-blue-700'
                                         : 'bg-gray-400 cursor-not-allowed'
@@ -632,12 +682,6 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                 {!canCheckIn && (
                                     <div className="absolute bottom-full left-0 mb-2 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                         <div className="bg-gray-900 text-white text-xs rounded py-1 px-2 w-full">
-                                            {!isPaymentComplete && (
-                                                <p className="flex items-center text-amber-300 mb-1">
-                                                    <AlertCircle className="w-3 h-3 mr-1 flex-shrink-0" />
-                                                    Remaining payment must match the required balance.
-                                                </p>
-                                            )}
                                             {!checkInValidation.isValid && (
                                                 <p className="flex items-start text-amber-300">
                                                     <Clock className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
@@ -687,6 +731,28 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                         </motion.div>
                     )}
                 </motion.div>
+            )}
+            {expandedImage && (
+                <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4"
+                    onClick={() => setExpandedImage(null)}>
+                    <div className="relative max-w-4xl w-full max-h-[90vh]">
+                        <button
+                            onClick={() => setExpandedImage(null)}
+                            className="absolute -top-8 right-0 cursor-pointer text-white hover:text-gray-200 transition-colors z-50"
+                        >
+                            <X size={24} />
+                        </button>
+                        <motion.img
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.2, ease: "easeIn" }}
+                            loading="lazy"
+                            src={expandedImage === "validId" ? booking.valid_id : booking.payment_proof}
+                            alt={expandedImage === "validId" ? booking.valid_id : booking.payment_proof}
+                            className="w-full max-h-[90vh] object-contain rounded-lg"
+                        />
+                    </div>
+                </div>
             )}
         </div>
     );
