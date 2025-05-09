@@ -8,7 +8,7 @@
 }
 
 .print-container {
-  max-width: 210mm; /* A4 width */
+  max-width: 210mm;
   margin: 0 auto;
   padding: 20px;
   background: white;
@@ -23,7 +23,7 @@
 }
 
 .print-title {
-  font-size: 24px;
+  font-size: 1.5rem;
   color: #2b6cb0;
   font-weight: bold;
   margin-bottom: 5px;

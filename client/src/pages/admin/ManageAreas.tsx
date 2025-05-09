@@ -12,7 +12,7 @@ import { addNewArea, deleteArea, editArea, fetchAreas } from "../../services/Adm
 import { IArea as IEditArea } from "../../types/AreaAdmin";
 import { AddAreaResponse, Area, PaginationData } from "../../types/AreaClient";
 import Error from "../_ErrorBoundary";
-import ViewAreaModal from "../../components/admin/ViewAreaModal";
+import AreaDetailsModal from "../../components/admin/AreaDetailsModal";
 import AreaCard from "../../memo/AreaCard";
 
 const ManageAreas = () => {
@@ -344,7 +344,7 @@ const ManageAreas = () => {
         )}
 
         {/* View Area Modal */}
-        <ViewAreaModal
+        <AreaDetailsModal
           isOpen={showViewModal}
           onClose={() => setShowViewModal(false)}
           areaData={viewAreaData}

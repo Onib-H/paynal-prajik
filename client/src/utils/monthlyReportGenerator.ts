@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { format } from "date-fns";
 import html2canvas from "html2canvas";
+import '../styles/report-modal.css';
 import jsPDF from "jspdf";
 import { formatCurrency } from "./formatters";
 
@@ -167,82 +168,38 @@ const drawDataTable = (
   return y + 5;
 };
 
-// Generate HTML for preview
 export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
-  console.log("generateReportPreviewHTML called with data:", {
-    period: data.period,
-    stats: {
-      totalBookings: data.stats.totalBookings,
-      revenue: data.stats.formattedRevenue,
-    },
-    chartsAvailable: {
-      bookingStatusChart: !!data.charts.bookingStatusChart,
-      areaRevenueChart: !!data.charts.areaRevenueChart,
-      roomRevenueChart: !!data.charts.roomRevenueChart,
-    },
-  });
-
-  const occupancyRate =
-    ((data.stats.occupiedRooms / data.stats.totalRooms) * 100).toFixed(1) + "%";
-
-  // Create simple placeholders for charts if they're not available
-  let bookingStatusChartHTML =
-    '<div class="flex items-center justify-center h-48 bg-gray-100 rounded-lg"><p class="text-gray-500">Booking status chart data not available</p></div>';
-  let areaRevenueChartHTML =
-    '<div class="flex items-center justify-center h-48 bg-gray-100 rounded-lg"><p class="text-gray-500">Area revenue chart data not available</p></div>';
-  let roomRevenueChartHTML =
-    '<div class="flex items-center justify-center h-48 bg-gray-100 rounded-lg"><p class="text-gray-500">Room revenue chart data not available</p></div>';
+  const occupancyRate = ((data.stats.occupiedRooms / data.stats.totalRooms) * 100).toFixed(1) + "%";
+  let bookingStatusChartHTML = '<div class="flex items-center justify-center h-48 bg-gray-100 rounded-lg"><p class="text-gray-500">Booking status chart data not available</p></div>';
 
   try {
     if (data.charts.bookingStatusChart) {
-      console.log("Attempting to convert booking status chart to image");
       try {
         bookingStatusChartHTML = `<img src="${data.charts.bookingStatusChart.toDataURL()}" style="max-width: 100%; max-height: 300px; margin: 0 auto;" />`;
-        console.log("Booking status chart successfully converted to image");
       } catch (err) {
-        console.error("Failed to convert booking status chart:", err);
-      }
-    }
-
-    if (data.charts.areaRevenueChart) {
-      console.log("Attempting to convert area revenue chart to image");
-      try {
-        areaRevenueChartHTML = `<img src="${data.charts.areaRevenueChart.toDataURL()}" style="max-width: 100%; max-height: 200px; margin: 0 auto;" />`;
-        console.log("Area revenue chart successfully converted to image");
-      } catch (err) {
-        console.error("Failed to convert area revenue chart:", err);
-      }
-    }
-
-    if (data.charts.roomRevenueChart) {
-      console.log("Attempting to convert room revenue chart to image");
-      try {
-        roomRevenueChartHTML = `<img src="${data.charts.roomRevenueChart.toDataURL()}" style="max-width: 100%; max-height: 200px; margin: 0 auto;" />`;
-        console.log("Room revenue chart successfully converted to image");
-      } catch (err) {
-        console.error("Failed to convert room revenue chart:", err);
+        console.error(`Failed to convert booking status chart: ${err}`);
+        throw err;
       }
     }
   } catch (error) {
-    console.error("Error processing charts:", error);
+    console.error(`Error processing charts: ${error}`);
+    throw error;
   }
 
-  console.log("Generating final HTML report");
   const html = `
-    <div class="print-container">
-      <div class="print-header">
-        <div class="print-title">Azurea Hotel Management System</div>
-        <div class="print-subtitle">Monthly Performance Report</div>
-        <div class="print-period">${data.period}</div>
-        <div class="print-date">Generated on: ${format(
+    <div class="max-w-[297mm] border-2 rounded-lg border-purple-700 mx-auto p-5 shadow-lg bg-white">
+      <div class="border-b text-center border-gray-200 pb-4 mb-6">
+        <h1 class="text-4xl bg-gradient-to-r from-purple-500 to-blue-500 text-transparent bg-clip-text font-semibold pb-2">Azurea Hotel Management System</h1>
+        <h2 class="text-gray-700 font-semibold text-lg">Monthly Performance Report - ${data.period}</h2>
+        <h3 class="text-gray-600 text-sm">Generated on: ${format(
           new Date(),
           "PPpp"
-        )}</div>
+        )}</h3>
       </div>
       
-      <div class="print-section">
-        <div class="print-section-header">Executive Summary</div>
-        <div class="print-description">
+      <div class="my-6 break-inside-avoid">
+        <h1 class="text-2xl text-purple-600 font-semibold mb-3 pb-2 border-b-2 border-gray-200">Executive Summary</h1>
+        <p class="text-gray-700 text-xl leading-snug mb-4">
           This monthly performance report provides a comprehensive overview of the hotel's operational and financial metrics for ${
             data.period
           }. 
@@ -252,77 +209,73 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
           current occupancy rate (${occupancyRate}), and total revenue (${
     data.stats.formattedRevenue
   }). 
-          Review the detailed sections below for deeper insights into booking trends, revenue patterns, and room occupancy statistics.
-        </div>
+        </p>
       </div>
       
-      <div class="print-divider"></div>
+      <div class="border-b border-gray-200 pb-4 mb-6"></div>
       
-      <div class="print-section">
-        <div class="print-section-header">Key Performance Indicators</div>
-        <div class="print-description">
+      <div class="my-6 break-inside-avoid">
+        <h1 class="text-2xl text-purple-600 font-semibold mb-3 pb-2 border-b-2 border-gray-200">Key Performance Indicators</h1>
+        <p class="text-gray-700 text-xl leading-snug mb-4">
           These key metrics provide a snapshot of the hotel's current operational status and financial performance for the current month.
+        </p>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 my-5">
+          <div class="bg-gray-200 border-2 border-gray-300 p-3 text-center rounded-lg">
+            <h1 class="text-lg font-semibold text-black mb-2">Total Bookings</h1>
+            <h4 class="text-md font-semibold text-blue-500">${data.stats.totalBookings}</h4>
+          </div>
+          <div class="bg-gray-200 border-2 border-gray-300 p-3 text-center rounded-lg">
+            <h1 class="text-lg font-semibold text-black mb-2">Active Bookings</h1>
+            <h4 class="text-md font-semibold text-blue-500">${data.stats.activeBookings}</h4>
+          </div>
+          <div class="bg-gray-200 border-2 border-gray-300 p-3 text-center rounded-lg">
+            <h1 class="text-lg font-semibold text-black mb-2">Total Revenue</h1>
+            <h4 class="text-md font-semibold text-blue-500">${data.stats.formattedRevenue}</h4>
+          </div>
+          <div class="bg-gray-200 border-2 border-gray-300 p-3 text-center rounded-lg">
+            <h1 class="text-lg font-semibold text-black mb-2">Occupancy Rate</h1>
+            <h4 class="text-md font-semibold text-blue-500">${occupancyRate}</h4>
+          </div>
         </div>
         
-        <div class="print-kpi-grid">
-          <div class="print-kpi-card">
-            <div class="print-kpi-title">Total Bookings</div>
-            <div class="print-kpi-value">${data.stats.totalBookings}</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 my-5">
+          <div class="bg-gray-200 border-2 border-gray-300 p-3 text-center rounded-lg">
+            <h1 class="text-lg font-semibold text-black mb-2">Pending Bookings</h1>
+            <h4 class="text-md font-semibold text-blue-500">${data.stats.pendingBookings}</h4>
           </div>
-          <div class="print-kpi-card">
-            <div class="print-kpi-title">Active Bookings</div>
-            <div class="print-kpi-value">${data.stats.activeBookings}</div>
+          <div class="bg-gray-200 border-2 border-gray-300 p-3 text-center rounded-lg">
+            <h1 class="text-lg font-semibold text-black mb-2">Checked-in Guests</h1>
+            <h4 class="text-md font-semibold text-blue-500">${data.stats.checkedInCount}</h4>
           </div>
-          <div class="print-kpi-card">
-            <div class="print-kpi-title">Total Revenue</div>
-            <div class="print-kpi-value">${data.stats.formattedRevenue}</div>
+          <div class="bg-gray-200 border-2 border-gray-300 p-3 text-center rounded-lg">
+            <h1 class="text-lg font-semibold text-black mb-2">Available Rooms</h1>
+            <h4 class="text-md font-semibold text-blue-500">${data.stats.availableRooms}</h4>
           </div>
-          <div class="print-kpi-card">
-            <div class="print-kpi-title">Occupancy Rate</div>
-            <div class="print-kpi-value">${occupancyRate}</div>
-          </div>
-        </div>
-        
-        <div class="print-kpi-grid">
-          <div class="print-kpi-card">
-            <div class="print-kpi-title">Pending Bookings</div>
-            <div class="print-kpi-value">${data.stats.pendingBookings}</div>
-          </div>
-          <div class="print-kpi-card">
-            <div class="print-kpi-title">Checked-in Guests</div>
-            <div class="print-kpi-value">${data.stats.checkedInCount}</div>
-          </div>
-          <div class="print-kpi-card">
-            <div class="print-kpi-title">Available Rooms</div>
-            <div class="print-kpi-value">${data.stats.availableRooms}</div>
-          </div>
-          <div class="print-kpi-card">
-            <div class="print-kpi-title">Total Rooms</div>
-            <div class="print-kpi-value">${data.stats.totalRooms}</div>
+          <div class="bg-gray-200 border-2 border-gray-300 p-3 text-center rounded-lg">
+            <h1 class="text-lg font-semibold text-black mb-2">Total Rooms</h1>
+            <h4 class="text-md font-semibold text-blue-500">${data.stats.totalRooms}</h4>
           </div>
         </div>
       </div>
       
-      <div class="print-divider"></div>
+      <div class="border-b border-gray-200 pb-4 mb-6"></div>
       
-      <div class="print-section">
-        <div class="print-section-header">Booking Status Distribution</div>
+      <div class="my-6 break-inside-avoid">
+        <h1 class="text-2xl text-purple-600 font-semibold mb-3 pb-2 border-b-2 border-gray-200">Booking Status Distribution</h1>
         <div id="booking-status-chart" class="print-chart-container">
           ${bookingStatusChartHTML}
         </div>
       </div>
       
-      <div class="print-divider"></div>
+      <div class="border-b border-gray-200 pb-4 mb-6"></div>
       
-      <div class="print-section">
-        <div class="print-section-header">Revenue Analysis</div>
+      <div class="my-6 break-inside-avoid">
+        <h1 class="text-2xl text-purple-600 font-semibold mb-3 pb-2 border-b-2 border-gray-200">Revenue Analysis</h1>
         
-        <div class="print-grid">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4 my-5">
           <div>
-            <h4>Area Revenue</h4>
-            <div id="area-revenue-chart" class="print-chart-container">
-              ${areaRevenueChartHTML}
-            </div>
+            <h4 class="text-xl font-semibold text-black mb-2">Area Revenue</h4>
             <table class="print-table">
               <thead>
                 <tr>
@@ -332,9 +285,7 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
                 </tr>
               </thead>
               <tbody>
-                ${data.areaNames
-                  .map(
-                    (area, index) => `
+                ${data.areaNames.map((area, index) => `
                   <tr>
                     <td>${area}</td>
                     <td>${data.areaBookingValues[index] || 0}</td>
@@ -342,18 +293,13 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
                       data.areaRevenueValues[index] || 0
                     )}</td>
                   </tr>
-                `
-                  )
-                  .join("")}
+                `).join("")}
               </tbody>
             </table>
           </div>
           
           <div>
-            <h4>Room Revenue</h4>
-            <div id="room-revenue-chart" class="print-chart-container">
-              ${roomRevenueChartHTML}
-            </div>
+            <h4 class="text-xl font-semibold text-black mb-2">Room Revenue</h4>
             <table class="print-table">
               <thead>
                 <tr>
@@ -363,9 +309,7 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
                 </tr>
               </thead>
               <tbody>
-                ${data.roomNames
-                  .map(
-                    (room, index) => `
+                ${data.roomNames.map((room, index) => `
                   <tr>
                     <td>${room}</td>
                     <td>${data.roomBookingValues[index] || 0}</td>
@@ -373,9 +317,7 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
                       data.roomRevenueValues[index] || 0
                     )}</td>
                   </tr>
-                `
-                  )
-                  .join("")}
+                `).join("")}
               </tbody>
             </table>
           </div>
@@ -385,8 +327,8 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
       <div class="print-divider"></div>
       
       <div class="print-section">
-        <div class="print-section-header">Summary</div>
-        <div class="print-description">
+        <h1 class="text-xl text-purple-600 font-semibold mb-3 pb-2 border-b-2 border-gray-200">Summary</h1>
+        <p class="text-gray-700 text-sm leading-snug mb-4">
           This report summarizes the hotel's performance for ${
             data.period
           }. The total revenue for this period was ${
@@ -401,19 +343,15 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
     data.stats.activeBookings
   } currently active and ${data.stats.pendingBookings} pending.
           The hotel's occupancy rate stands at ${occupancyRate}.
-        </div>
+        </p>
       </div>
     </div>
   `;
 
-  console.log("HTML generation complete, length:", html.length);
   return html;
 };
 
-// Generate PDF
-export const generateMonthlyReportPDF = async (
-  data: MonthlyReportData
-): Promise<jsPDF> => {
+export const generateMonthlyReportPDF = async (data: MonthlyReportData): Promise<jsPDF> => {
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",

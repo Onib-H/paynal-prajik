@@ -3,13 +3,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Area } from "../../types/AreaClient";
 import { MemoizedImage } from "../../memo/MemoizedImage";
 
-interface ViewAreaModalProps {
+interface AreaDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     areaData: Area | null;
 }
 
-const ViewAreaModal: FC<ViewAreaModalProps> = ({ isOpen, onClose, areaData }) => {
+const AreaDetailsModal: FC<AreaDetailsModalProps> = ({ isOpen, onClose, areaData }) => {
     const areaImage = useMemo(() => {
         if (!areaData) return { src: "", alt: "" };
         return {
@@ -239,4 +239,4 @@ const ViewAreaModal: FC<ViewAreaModalProps> = ({ isOpen, onClose, areaData }) =>
     );
 };
 
-export default ViewAreaModal;
+export default AreaDetailsModal;

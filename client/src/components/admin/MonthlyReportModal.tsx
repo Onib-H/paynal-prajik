@@ -49,31 +49,35 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
         }
     }, [isOpen, reportData, renderReport]);
 
-    const handlePrintReport = () => {
+    const handlePrintReport = async () => {
         if (isLoading || !reportContainerRef.current) return;
 
         try {
-            const printWindow = window.open('', '_blank');
-            if (printWindow) {
-                printWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>${reportData.period} Report</title>
-                            <link rel="stylesheet" href="/report-modal.css">
-                        </head>
-                        <body>
-                            ${reportContainerRef.current.innerHTML}
-                            <script>
-                                setTimeout(() => {
-                                    window.print();
-                                    window.close();
-                                }, 500);
-                            </script>
-                        </body>
-                    </html>
-                `);
-                printWindow.document.close();
-            }
+            const printContent = reportContainerRef.current.innerHTML;
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.left = '-9999px';
+
+            document.body.appendChild(iframe);
+
+            iframe.contentDocument?.write(`
+                <html>
+                  <head>
+                    <title>${reportData.period} Report</title>
+                    <link rel="stylesheet" href="/styles/report-modal.css">
+                  </head>
+                  <body>
+                    ${printContent}
+                  </body>
+                </html>
+            `);
+
+            iframe.contentDocument?.close();
+
+            iframe.contentWindow?.addEventListener('load', () => {
+                iframe.contentWindow?.print();
+                document.body.removeChild(iframe);
+            }, { once: true });
         } catch (err) {
             setError(`Failed to print report: ${err instanceof Error ? err.message : String(err)}`);
         }
@@ -82,11 +86,11 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
     if (!isOpen) return null;
 
     return (
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
             >
@@ -95,10 +99,10 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
                     initial={{ y: 20 }}
                     animate={{ y: 0 }}
                     exit={{ y: -20 }}
-                    className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col"
+                    className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[95vh] flex flex-col"
                 >
                     {/* Header */}
-                    <div className="flex justify-between items-center p-6 border-b border-gray-200">
+                    <div className="flex justify-between items-center p-6 border-gray-200">
                         <h2 className="text-2xl font-bold text-gray-800">
                             Monthly Report - {reportData.period}
                         </h2>
@@ -138,7 +142,7 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
                                         setError(null);
                                         renderReport();
                                     }}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="px-4 py-2 cursor-pointer bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                                 >
                                     Try Again
                                 </button>
@@ -164,15 +168,9 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
                     >
                         <div className="flex justify-end gap-3">
                             <button
-                                onClick={onClose}
-                                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                            >
-                                Close
-                            </button>
-                            <button
                                 onClick={handlePrintReport}
                                 disabled={isLoading || !!error}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-4 py-2 cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isLoading ? 'Preparing...' : 'Print Report'}
                             </button>
