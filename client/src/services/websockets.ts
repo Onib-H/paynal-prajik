@@ -73,7 +73,7 @@ export class WebSocketService {
             this.socket.onclose = this.handleClose.bind(this);
             this.socket.onerror = this.handleConnectionError;
 
-        } catch (error) {
+        } catch {
             this.handleConnectionError();
         }
     }

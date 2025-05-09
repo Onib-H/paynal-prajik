@@ -4,7 +4,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { formatCurrency } from "./formatters";
 
-interface MonthlyReportData {
+export interface MonthlyReportData {
   period: string;
   stats: {
     activeBookings: number;
@@ -111,33 +111,6 @@ const drawKPI = (
   return y + 30;
 };
 
-const addChartImage = async (
-  doc: jsPDF,
-  chartElement: HTMLElement | null,
-  x: number,
-  y: number,
-  width: number,
-  height: number
-): Promise<number> => {
-  if (!chartElement) {
-    return y + 5;
-  }
-
-  try {
-    const canvas = await html2canvas(chartElement, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-    });
-    const imgData = canvas.toDataURL("image/png");
-    doc.addImage(imgData, "PNG", x, y, width, height);
-    return y + height + 10;
-  } catch (error) {
-    console.error("Error converting chart to image:", error);
-    return y + 5;
-  }
-};
-
 const drawDataTable = (
   doc: jsPDF,
   headers: string[],
@@ -196,10 +169,66 @@ const drawDataTable = (
 
 // Generate HTML for preview
 export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
+  console.log("generateReportPreviewHTML called with data:", {
+    period: data.period,
+    stats: {
+      totalBookings: data.stats.totalBookings,
+      revenue: data.stats.formattedRevenue,
+    },
+    chartsAvailable: {
+      bookingStatusChart: !!data.charts.bookingStatusChart,
+      areaRevenueChart: !!data.charts.areaRevenueChart,
+      roomRevenueChart: !!data.charts.roomRevenueChart,
+    },
+  });
+
   const occupancyRate =
     ((data.stats.occupiedRooms / data.stats.totalRooms) * 100).toFixed(1) + "%";
 
-  return `
+  // Create simple placeholders for charts if they're not available
+  let bookingStatusChartHTML =
+    '<div class="flex items-center justify-center h-48 bg-gray-100 rounded-lg"><p class="text-gray-500">Booking status chart data not available</p></div>';
+  let areaRevenueChartHTML =
+    '<div class="flex items-center justify-center h-48 bg-gray-100 rounded-lg"><p class="text-gray-500">Area revenue chart data not available</p></div>';
+  let roomRevenueChartHTML =
+    '<div class="flex items-center justify-center h-48 bg-gray-100 rounded-lg"><p class="text-gray-500">Room revenue chart data not available</p></div>';
+
+  try {
+    if (data.charts.bookingStatusChart) {
+      console.log("Attempting to convert booking status chart to image");
+      try {
+        bookingStatusChartHTML = `<img src="${data.charts.bookingStatusChart.toDataURL()}" style="max-width: 100%; max-height: 300px; margin: 0 auto;" />`;
+        console.log("Booking status chart successfully converted to image");
+      } catch (err) {
+        console.error("Failed to convert booking status chart:", err);
+      }
+    }
+
+    if (data.charts.areaRevenueChart) {
+      console.log("Attempting to convert area revenue chart to image");
+      try {
+        areaRevenueChartHTML = `<img src="${data.charts.areaRevenueChart.toDataURL()}" style="max-width: 100%; max-height: 200px; margin: 0 auto;" />`;
+        console.log("Area revenue chart successfully converted to image");
+      } catch (err) {
+        console.error("Failed to convert area revenue chart:", err);
+      }
+    }
+
+    if (data.charts.roomRevenueChart) {
+      console.log("Attempting to convert room revenue chart to image");
+      try {
+        roomRevenueChartHTML = `<img src="${data.charts.roomRevenueChart.toDataURL()}" style="max-width: 100%; max-height: 200px; margin: 0 auto;" />`;
+        console.log("Room revenue chart successfully converted to image");
+      } catch (err) {
+        console.error("Failed to convert room revenue chart:", err);
+      }
+    }
+  } catch (error) {
+    console.error("Error processing charts:", error);
+  }
+
+  console.log("Generating final HTML report");
+  const html = `
     <div class="print-container">
       <div class="print-header">
         <div class="print-title">Azurea Hotel Management System</div>
@@ -278,7 +307,9 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
       
       <div class="print-section">
         <div class="print-section-header">Booking Status Distribution</div>
-        <div id="bookingStatusChart" class="print-chart-container"></div>
+        <div id="booking-status-chart" class="print-chart-container">
+          ${bookingStatusChartHTML}
+        </div>
       </div>
       
       <div class="print-divider"></div>
@@ -289,7 +320,9 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
         <div class="print-grid">
           <div>
             <h4>Area Revenue</h4>
-            <div id="areaRevenueChart" class="print-chart-container"></div>
+            <div id="area-revenue-chart" class="print-chart-container">
+              ${areaRevenueChartHTML}
+            </div>
             <table class="print-table">
               <thead>
                 <tr>
@@ -318,7 +351,9 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
           
           <div>
             <h4>Room Revenue</h4>
-            <div id="roomRevenueChart" class="print-chart-container"></div>
+            <div id="room-revenue-chart" class="print-chart-container">
+              ${roomRevenueChartHTML}
+            </div>
             <table class="print-table">
               <thead>
                 <tr>
@@ -370,6 +405,9 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
       </div>
     </div>
   `;
+
+  console.log("HTML generation complete, length:", html.length);
+  return html;
 };
 
 // Generate PDF

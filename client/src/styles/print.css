@@ -1,15 +1,40 @@
-/* print.css */
 @media print {
   @page {
     size: A4 portrait;
     margin: 15mm;
   }
 
-  body {
-    background-color: white !important;
-    font-family: "Helvetica", "Arial", sans-serif !important;
-    color: #333 !important;
-    font-size: 12pt !important;
+  body * {
+    visibility: hidden;
+  }
+
+  .report-preview,
+  .report-preview * {
+    visibility: visible;
+  }
+
+  .report-preview {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  .print-container {
+    padding: 20px;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
   }
 
   .print-container {
@@ -154,7 +179,6 @@
   }
 }
 
-/* Preview styling for the report in the browser */
 .report-preview {
   width: 210mm;
   margin: 0 auto;

@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { motion } from "framer-motion";
 import { AlertCircle, Calendar, Check, CheckCircle2, Clock, CreditCard, IdCard, Image, X } from "lucide-react";
 import { FC, useState } from "react";
 import EventLoader from "../../motions/loaders/EventLoader";
 import { BookingResponse } from "../../types/BookingClient";
-import { formatDate, formatTime, getBookingPrice } from "../../utils/formatters";
+import { formatCurrency, formatDate, formatTime, getBookingPrice } from "../../utils/formatters";
 import BookingStatusBadge from "./BookingStatusBadge";
 
 interface BookingDetailProps {
@@ -158,7 +159,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
 
     const checkInValidation = isCheckInDateValid();
     const canCheckIn = checkInValidation.isValid &&
-        (downPaymentAmount === bookingPrice || currentPayment > 0 || downPaymentAmount > 0);
+        (downPaymentAmount === bookingPrice || (currentPayment > 0 && currentPayment === remainingBalance));
 
     const checkOutValidation = isCheckOutDateValid();
     const canCheckOut = checkOutValidation.isValid;
@@ -194,17 +195,12 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             return;
         }
 
-        // Ensure we're working with a valid number
         const num = parseFloat(raw);
         if (isNaN(num)) return;
 
-        // Calculate remaining balance based on the parsed down payment amount
         const remaining = bookingPrice - downPaymentAmount;
 
-        // Only allow valid payment amounts (positive and not exceeding remaining balance)
-        if (num >= 0 && num <= remaining) {
-            setPaymentAmount(raw);
-        }
+        if (num >= 0 && num <= remaining) setPaymentAmount(raw);
     }
 
     const handleDownPaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -686,6 +682,14 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                                                 <p className="flex items-start text-amber-300">
                                                     <Clock className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
                                                     {checkInValidation.message}
+                                                </p>
+                                            )}
+                                            {checkInValidation.isValid && currentPayment !== remainingBalance && (
+                                                <p className="flex items-start text-amber-300">
+                                                    <AlertCircle className="w-3 h-3 mr-1 mt-0.5 flex-shrink-0" />
+                                                    {downPaymentAmount > 0
+                                                        ? `Payment must be exactly ${formatCurrency(remainingBalance)} (remaining balance) to check in.`
+                                                        : `Full payment of ${formatCurrency(remainingBalance)} required to check in.`}
                                                 </p>
                                             )}
                                         </div>

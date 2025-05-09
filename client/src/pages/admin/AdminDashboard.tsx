@@ -16,7 +16,7 @@ import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
 import { fetchAreaBookings, fetchAreaRevenue, fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyNoShowsRejected, fetchDailyRevenue, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import "../../styles/print.css";
 import { formatCurrency, formatMonthYear, getDaysInMonth } from "../../utils/formatters";
-import { prepareMonthlyReportData } from "../../utils/monthlyReportGenerator";
+import { MonthlyReportData, prepareMonthlyReportData } from "../../utils/monthlyReportGenerator";
 import Error from "../_ErrorBoundary";
 
 Chart.register(ArcElement, Tooltip, Legend);
@@ -34,9 +34,9 @@ const AdminDashboard = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>("month");
   const [showReportModal, setShowReportModal] = useState(false);
+  const [reportDataState, setReportDataState] = useState<MonthlyReportData | null>(null);
 
-  // Refs for charts to capture their DOM elements
-  const bookingStatusChartRef = useRef<HTMLCanvasElement>(null);
+  const bookingStatusChartRef = useRef<HTMLDivElement>(null);
   const areaRevenueChartRef = useRef<HTMLDivElement>(null);
   const roomRevenueChartRef = useRef<HTMLDivElement>(null);
 
@@ -237,7 +237,9 @@ const AdminDashboard = () => {
   };
 
   const handleGenerateReport = () => {
-    // Set up chart elements for the report
+    console.log("Generate Report button clicked");
+
+    // Prepare the report data structure
     const reportData = prepareMonthlyReportData({
       formattedMonthYear,
       stats,
@@ -250,26 +252,38 @@ const AdminDashboard = () => {
       roomBookingValues,
     });
 
-    // Add chart references if they exist
-    if (bookingStatusChartRef.current) {
-      reportData.charts.bookingStatusChart = bookingStatusChartRef.current;
+    // Capture canvas elements from chart refs
+    const getCanvasFromRef = (ref: React.RefObject<HTMLDivElement>) => {
+      if (!ref.current) return null;
+      const canvas = ref.current.querySelector('canvas');
+      return canvas || null;
+    };
+
+    // Get canvas elements for each chart
+    const bookingStatusCanvas = getCanvasFromRef(bookingStatusChartRef);
+    const areaRevenueCanvas = getCanvasFromRef(areaRevenueChartRef);
+    const roomRevenueCanvas = getCanvasFromRef(roomRevenueChartRef);
+
+    // Log chart capture results for debugging
+    console.log("Booking status chart canvas found:", !!bookingStatusCanvas);
+    console.log("Area revenue chart canvas found:", !!areaRevenueCanvas);
+    console.log("Room revenue chart canvas found:", !!roomRevenueCanvas);
+
+    // Add chart references to the report data
+    if (bookingStatusCanvas) {
+      reportData.charts.bookingStatusChart = bookingStatusCanvas;
     }
 
-    if (areaRevenueChartRef.current) {
-      const areaChartCanvas = areaRevenueChartRef.current.querySelector('canvas');
-      if (areaChartCanvas) {
-        reportData.charts.areaRevenueChart = areaChartCanvas;
-      }
+    if (areaRevenueCanvas) {
+      reportData.charts.areaRevenueChart = areaRevenueCanvas;
     }
 
-    if (roomRevenueChartRef.current) {
-      const roomChartCanvas = roomRevenueChartRef.current.querySelector('canvas');
-      if (roomChartCanvas) {
-        reportData.charts.roomRevenueChart = roomChartCanvas;
-      }
+    if (roomRevenueCanvas) {
+      reportData.charts.roomRevenueChart = roomRevenueCanvas;
     }
 
-    // Show the report modal
+    console.log("Report data prepared and ready to render");
+    setReportDataState(reportData);
     setShowReportModal(true);
   };
 
@@ -534,6 +548,7 @@ const AdminDashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
         className="bg-white shadow-lg rounded-lg p-4 hover:shadow-xl transition-shadow"
+        ref={bookingStatusChartRef}
       >
         <h3 className="text-xl font-semibold mb-4 text-center">
           Booking Status Distribution - {formattedMonthYear}
@@ -598,26 +613,14 @@ const AdminDashboard = () => {
       </motion.div>
 
       {/* Monthly Report Modal */}
-      {showReportModal && (
+      {showReportModal && reportDataState && (
         <MonthlyReportModal
           isOpen={showReportModal}
-          onClose={() => setShowReportModal(false)}
-          reportData={prepareMonthlyReportData({
-            formattedMonthYear,
-            stats,
-            bookingStatusCounts,
-            areaNames,
-            areaRevenueValues,
-            areaBookingValues,
-            roomNames,
-            roomRevenueValues,
-            roomBookingValues,
-            charts: {
-              bookingStatusChart: bookingStatusChartRef.current,
-              areaRevenueChart: areaRevenueChartRef.current?.querySelector('canvas') || null,
-              roomRevenueChart: roomRevenueChartRef.current?.querySelector('canvas') || null,
-            },
-          })}
+          onClose={() => {
+            setShowReportModal(false);
+            setReportDataState(null);
+          }}
+          reportData={reportDataState}
         />
       )}
     </div>

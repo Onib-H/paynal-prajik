@@ -646,7 +646,6 @@ def check_can_book_today(request):
             'can_book': True
         })
     
-    # Check if the user already made a booking today
     can_book = True
     if user.last_booking_date and user.last_booking_date == today:
         can_book = False

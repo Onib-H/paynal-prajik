@@ -117,11 +117,7 @@ const VenueBookingCalendar = () => {
         const now = new Date();
 
         if (isBefore(date, todayStart)) return true;
-
-        if (isSameDay(date, now)) {
-            const currentHour = now.getHours();
-            if (currentHour >= 17) return true;
-        }
+        if (isSameDay(date, now) && now.getHours() >= 17) return true;
 
         return isDateBooked(date);
     };

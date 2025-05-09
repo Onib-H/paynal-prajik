@@ -51,7 +51,7 @@ urlpatterns = [
     path('archived_users', views.fetch_archived_users, name='fetch_archived_users'),
     path('restore_user/<int:user_id>', views.restore_user, name='restore_user'),
 
-    # Add booking management endpoints
+    # Booking Management
     path('bookings', views.admin_bookings, name='admin_bookings'),
     path('booking/<int:booking_id>', views.booking_detail, name='admin_booking_detail'),
     path('booking/<int:booking_id>/status', views.update_booking_status, name='update_booking_status'),
