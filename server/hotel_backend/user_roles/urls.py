@@ -25,6 +25,7 @@ urlpatterns = [
     path('guest/<int:id>', views.user_details, name='user_details'),
     path('guest/update/<int:id>', views.update_user_details, name='update_user_details'),
     path('guest/bookings', views.get_guest_bookings, name='get_guest_bookings'),
+    path('guest/upload_valid_id', views.upload_valid_id, name='upload_valid_id'),
     
     # Notifications using /guest
     path('guest/notifications', views.get_notifications, name='get_notifications'),

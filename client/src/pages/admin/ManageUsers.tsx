@@ -257,7 +257,7 @@ const ManageUsers: FC = () => {
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">First Name</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Last Name</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">Verified</th>
                   <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -275,25 +275,24 @@ const ManageUsers: FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-700">{user.last_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-700">{user.email}</td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
-                      <span className={`p-2 inline-flex text-md leading-5 font-semibold rounded-full 
-                      ${user.role.toUpperCase() === 'admin' ? 'bg-purple-100 text-purple-800' :
-                          user.role.toUpperCase() === 'staff' ? 'bg-blue-100 text-blue-800' :
-                            'bg-green-100 text-green-800'}`}>
-                        {user.role.toUpperCase() || 'guest'}
-                      </span>
+                      {user.is_verified ? (
+                        <span className="text-green-500 font-semibold text-sm uppercase bg-green-100 rounded-full px-2 py-1">Verified</span>
+                      ) : (
+                        <span className="text-red-500 font-semibold text-sm uppercase bg-red-100 rounded-full px-2 py-1">Not Verified</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-center">
                       <div className="flex items-center justify-center space-x-2">
                         <button
                           onClick={() => handleEdit(user)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white p-3 cursor-pointer rounded-md mr-2 transition-colors duration-300"
+                          className="bg-blue-600 hover:bg-blue-700 text-white p-2 cursor-pointer rounded-md mr-2 transition-colors duration-300"
                           title="Edit User"
                         >
                           <PencilIcon className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => handleDelete(user)}
-                          className="bg-red-600 hover:bg-red-700 text-white p-3 cursor-pointer rounded-md transition-colors duration-300"
+                          className="bg-red-600 hover:bg-red-700 text-white p-2 cursor-pointer rounded-md transition-colors duration-300"
                           title="Archive User"
                         >
                           <TrashIcon className="h-5 w-5" />

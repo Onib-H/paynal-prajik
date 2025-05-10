@@ -3,6 +3,9 @@ from rest_framework import serializers
 
 class CustomUserSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField()
+    valid_id_type_display = serializers.SerializerMethodField()
+    valid_id_front = serializers.SerializerMethodField()
+    valid_id_back = serializers.SerializerMethodField()
     
     class Meta:
         model = CustomUsers
@@ -14,7 +17,11 @@ class CustomUserSerializer(serializers.ModelSerializer):
             'last_name',
             'role',
             'profile_image',
-            'phone_number',
+            'valid_id_type',
+            'valid_id_type_display',
+            'valid_id_front',
+            'valid_id_back',
+            'is_verified',
         ]
         extra_kwargs = { 'password': { 'write_only': True } }
         
@@ -22,6 +29,19 @@ class CustomUserSerializer(serializers.ModelSerializer):
         if obj.profile_image and hasattr(obj.profile_image, 'url'):
             return obj.profile_image.url
         return None
+    
+    def get_valid_id_front(self, obj):
+        if obj.valid_id_front and hasattr(obj.valid_id_front, 'url'):
+            return obj.valid_id_front.url
+        return None
+    
+    def get_valid_id_back(self, obj):
+        if obj.valid_id_back and hasattr(obj.valid_id_back, 'url'):
+            return obj.valid_id_back.url
+        return None
+    
+    def get_valid_id_type_display(self, obj):
+        return obj.get_valid_id_type_display()
 
     def create(self, validated_data):
         if not validated_data.get('username'):

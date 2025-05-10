@@ -54,10 +54,7 @@ export class WebSocketService {
             }
         }
         
-        if (this.connecting) {
-            console.log(`WebSocket: Connection already in progress for user ${userId}`);
-            return;
-        }
+        if (this.connecting) return;
 
         this.connecting = true;
         this.currentUserId = userId;
@@ -120,7 +117,6 @@ export class WebSocketService {
     private reconnect() {
         this.retries++;
         if (this.retries <= this.maxRetries) {
-            console.log(`WebSocket: Reconnecting (attempt ${this.retries}/${this.maxRetries})`);
             this.connect(this.currentUserId);
         }
     }

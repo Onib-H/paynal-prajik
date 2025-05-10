@@ -1,14 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, CheckCircle, Eye, EyeOff, ImageUp, Key, Mail, Save, User, X } from "lucide-react";
+import { AlertCircle, CheckCircle, Eye, EyeOff, IdCard, ImageUp, Key, Mail, Save, ShieldCheck, User, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
+import ValidIDUploadModal from "../../components/guests/ValidIDUploadModal";
 import { useUserContext } from "../../contexts/AuthContext";
 import { changePassword } from "../../services/Auth";
-import { getGuestDetails, updateGuestDetails, updateProfileImage } from "../../services/Guest";
+import { getGuestDetails, updateGuestDetails, updateProfileImage, uploadValidId } from "../../services/Guest";
 import { FormFields, PasswordFields } from "../../types/GuestProfileClient";
-import { useForm, Controller } from "react-hook-form";
 
 const GuestProfile = () => {
   const { id } = useParams();
@@ -23,6 +24,10 @@ const GuestProfile = () => {
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'personal' | 'verification'>("personal");
+  const [showIdModal, setShowIdModal] = useState<boolean>(false);
+  const [idUploadError, setIdUploadError] = useState<string | null>(null);
+  const [idUploadSuccess, setIdUploadSuccess] = useState<string | null>(null);
   const [passwordData, setPasswordData] = useState<PasswordFields>({
     oldPassword: '',
     newPassword: '',
@@ -102,6 +107,19 @@ const GuestProfile = () => {
     }
   });
 
+  const validIdUploadMutation = useMutation({
+    mutationFn: (formData: FormData) => uploadValidId(formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['guest', id] });
+      setIdUploadSuccess("Valid ID uploaded successfully!");
+      setShowIdModal(false);
+    },
+    onError: (error: any) => {
+      console.error(`Failed to upload valid ID: ${error}`);
+      setIdUploadError(error.response?.data?.error || "Failed to upload valid ID. Please try again.");
+    }
+  });
+
   useEffect(() => {
     if (userDetails && (!id || id !== userDetails.id.toString())) {
       navigate(`/guest/${userDetails.id}`);
@@ -117,6 +135,14 @@ const GuestProfile = () => {
       });
     }
   }, [userDetails, reset]);
+
+  const handleIdUpload = useCallback((idType: string, frontFile: File, backFile: File) => {
+    const formData = new FormData();
+    formData.append('id_type', idType);
+    formData.append("front_id", frontFile);
+    formData.append("back_id", backFile);
+    validIdUploadMutation.mutate(formData);
+  }, [validIdUploadMutation]);
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -341,7 +367,7 @@ const GuestProfile = () => {
                   variants={itemVariants}
                   className="text-2xl sm:text-3xl font-bold text-gray-900"
                 >
-                  {guestData?.first_name} {guestData?.last_name}
+                  {guestData?.first_name} {guestData?.last_name} {guestData?.is_verified ? <ShieldCheck className="text-green-500" /> : null}
                 </motion.h1>
                 <motion.div
                   variants={itemVariants}
@@ -384,159 +410,324 @@ const GuestProfile = () => {
       </motion.div>
 
       {/* Tab content */}
-      <motion.div
-        variants={itemVariants}
-        className="bg-white ring-3 ring-purple-600 rounded-xl shadow-md overflow-hidden"
-      >
-        <AnimatePresence mode="wait">
+      <div className="flex border-b border-gray-200 mb-6">
+        <button
+          onClick={() => setActiveTab('personal')}
+          className={`px-4 py-2 flex items-center text-sm font-medium ${activeTab === 'personal'
+            ? 'border-b-2 border-purple-600 text-purple-600'
+            : 'text-gray-500 hover:text-gray-700'
+            }`}
+        >
+          <User className="h-4 w-4 mr-2" />
+          Personal Information
+        </button>
+
+        <button
+          onClick={() => setActiveTab('verification')}
+          className={`px-4 py-2 flex items-center text-sm font-medium ${activeTab === 'verification'
+            ? 'border-b-2 border-purple-600 text-purple-600'
+            : 'text-gray-500 hover:text-gray-700'
+            }`}
+        >
+          <IdCard className="h-4 w-4 mr-2" />
+          ID Verification
+        </button>
+      </div>
+
+      {/* Tabs Content */}
+      <AnimatePresence mode="wait">
+        {activeTab === 'personal' ? (
           <motion.div
-            key="personal"
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            variants={fadeInVariants}
+            variants={itemVariants}
+            className="bg-white ring-3 ring-purple-600 rounded-xl shadow-md overflow-hidden"
           >
-            <form onSubmit={handleSubmit(handleSaveProfile)} className="p-6">
-              <h3 className="text-xl font-semibold flex items-center border-b border-gray-200 pb-3 mb-6">
-                <User className="h-5 w-5 mr-2 text-purple-500" />
-                Personal Information
-              </h3>
+            <motion.div
+              key="personal"
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={fadeInVariants}
+            >
+              <form onSubmit={handleSubmit(handleSaveProfile)} className="p-6">
+                <h3 className="text-xl font-semibold flex items-center border-b border-gray-200 pb-3 mb-6">
+                  <User className="h-5 w-5 mr-2 text-purple-500" />
+                  Personal Information
+                </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                  <Controller
-                    name="first_name"
-                    control={control}
-                    rules={{ required: "First name is required" }}
-                    render={({ field }) => (
-                      <motion.input
-                        {...field}
-                        whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
-                        type="text"
-                        disabled={!editMode}
-                        className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
-                          ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
-                          : "bg-gray-50 border-gray-200"
-                          }`}
-                      />
-                    )}
-                  />
-                  {errors.first_name && <p className="text-sm text-red-500 mt-1">{errors.first_name.message}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                  <Controller
-                    name="last_name"
-                    control={control}
-                    rules={{ required: "Last name is required" }}
-                    render={({ field }) => (
-                      <motion.input
-                        {...field}
-                        whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
-                        type="text"
-                        disabled={!editMode}
-                        className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
-                          ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
-                          : "bg-gray-50 border-gray-200"
-                          }`}
-                      />
-                    )}
-                  />
-                  {errors.last_name && <p className="text-sm text-red-500 mt-1">{errors.last_name.message}</p>}
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                  <Controller
-                    name="email"
-                    control={control}
-                    rules={{
-                      required: "Email is required",
-                      pattern: {
-                        value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-                        message: "Invalid email address"
-                      }
-                    }}
-                    render={({ field }) => (
-                      <motion.input
-                        {...field}
-                        whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
-                        type="email"
-                        disabled={!editMode}
-                        className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                    <Controller
+                      name="first_name"
+                      control={control}
+                      rules={{ required: "First name is required" }}
+                      render={({ field }) => (
+                        <motion.input
+                          {...field}
+                          whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
+                          type="text"
+                          disabled={!editMode}
+                          className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
                             ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
                             : "bg-gray-50 border-gray-200"
-                          }`}
-                      />
-                    )}
-                  />
-                  {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
-                </div>
+                            }`}
+                        />
+                      )}
+                    />
+                    {errors.first_name && <p className="text-sm text-red-500 mt-1">{errors.first_name.message}</p>}
+                  </div>
 
-                <div className="md:col-span-2">
-                  <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center">
-                      <Key className="h-5 w-5 text-gray-500 mr-3" />
-                      <div>
-                        <span className="block text-sm font-medium text-gray-700">Password</span>
-                        <span className="text-gray-600">••••••••</span>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                    <Controller
+                      name="last_name"
+                      control={control}
+                      rules={{ required: "Last name is required" }}
+                      render={({ field }) => (
+                        <motion.input
+                          {...field}
+                          whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
+                          type="text"
+                          disabled={!editMode}
+                          className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
+                            ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
+                            : "bg-gray-50 border-gray-200"
+                            }`}
+                        />
+                      )}
+                    />
+                    {errors.last_name && <p className="text-sm text-red-500 mt-1">{errors.last_name.message}</p>}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <Controller
+                      name="email"
+                      control={control}
+                      rules={{
+                        required: "Email is required",
+                        pattern: {
+                          value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                          message: "Invalid email address"
+                        }
+                      }}
+                      render={({ field }) => (
+                        <motion.input
+                          {...field}
+                          whileFocus={{ boxShadow: "0 0 0 2px rgba(147, 51, 234, 0.3)" }}
+                          type="email"
+                          disabled={!editMode}
+                          className={`w-full px-3 py-2 border rounded-lg transition-all ${editMode
+                            ? "bg-white border-purple-300 focus:border-purple-500 focus:outline-none"
+                            : "bg-gray-50 border-gray-200"
+                            }`}
+                        />
+                      )}
+                    />
+                    {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center">
+                        <Key className="h-5 w-5 text-gray-500 mr-3" />
+                        <div>
+                          <span className="block text-sm font-medium text-gray-700">Password</span>
+                          <span className="text-gray-600">{guestData.password}</span>
+                        </div>
                       </div>
+                      <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => setShowPasswordModal(true)}
+                        className="px-3 py-1.5 text-md cursor-pointer bg-purple-600 text-white rounded-md hover:bg-purple-700 transition shadow-sm"
+                        type="button"
+                      >
+                        Change Password
+                      </motion.button>
                     </div>
-                    <motion.button
-                      whileHover={{ scale: 1.03 }}
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => setShowPasswordModal(true)}
-                      className="px-3 py-1.5 text-md cursor-pointer bg-purple-600 text-white rounded-md hover:bg-purple-700 transition shadow-sm"
-                      type="button"
-                    >
-                      Change Password
-                    </motion.button>
                   </div>
                 </div>
-              </div>
 
-              {editMode && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="flex justify-end mt-6"
-                >
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={handleCancelEdit}
-                    className="mr-3 px-4 py-2 cursor-pointer text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                    disabled={updateProfileMutation.isPending}
+                {editMode && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex justify-end mt-6"
                   >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02, boxShadow: "0 4px 6px -1px rgba(147, 51, 234, 0.2)" }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    className="px-4 py-2 bg-purple-600 cursor-pointer text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-70"
-                    disabled={updateProfileMutation.isPending}
-                  >
-                    {updateProfileMutation.isPending ? (
-                      <span className="flex items-center">
-                        <motion.span
-                          animate={{ rotate: 360 }}
-                          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                          className="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full mr-2"
-                        />
-                        Saving...
-                      </span>
-                    ) : 'Save Changes'}
-                  </motion.button>
-                </motion.div>
-              )}
-            </form>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={handleCancelEdit}
+                      className="mr-3 px-4 py-2 cursor-pointer text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                      disabled={updateProfileMutation.isPending}
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02, boxShadow: "0 4px 6px -1px rgba(147, 51, 234, 0.2)" }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      className="px-4 py-2 bg-purple-600 cursor-pointer text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm disabled:opacity-70"
+                      disabled={updateProfileMutation.isPending}
+                    >
+                      {updateProfileMutation.isPending ? (
+                        <span className="flex items-center">
+                          <motion.span
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                            className="inline-block h-4 w-4 border-2 border-white/30 border-t-white rounded-full mr-2"
+                          />
+                          Saving...
+                        </span>
+                      ) : 'Save Changes'}
+                    </motion.button>
+                  </motion.div>
+                )}
+              </form>
+            </motion.div>
           </motion.div>
-        </AnimatePresence>
-      </motion.div>
+        ) : (
+          <motion.div
+            variants={itemVariants}
+            className="bg-white ring-3 ring-purple-600 rounded-xl shadow-md overflow-hidden"
+          >
+            <motion.div
+              key="verification"
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              variants={fadeInVariants}
+              className="bg-white ring-3 ring-purple-600 rounded-xl shadow-md overflow-hidden"
+            >
+              <div className="p-6">
+                <h3 className="text-xl font-semibold flex items-center border-b border-gray-200 pb-3 mb-6">
+                  <IdCard className="h-5 w-5 mr-2 text-purple-500" />
+                  ID Verification
+                </h3>
+
+                {/* Verification Status */}
+                <div className="mb-1">
+                  <div className="flex items-center p-1 bg-gray-50 rounded-lg">
+                    {guestData?.is_verified ? (
+                      <>
+                        <CheckCircle className="h-6 w-6 text-green-600 mr-3" />
+                        <div>
+                          <span className="block text-sm font-medium text-green-600">
+                            Verified Account
+                          </span>
+                          <span className="text-gray-600 text-sm">
+                            Your ID has been successfully verified
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-6 w-6 text-yellow-600 mr-3" />
+                        <div>
+                          <span className="block text-sm font-medium text-yellow-600">
+                            Pending Verification
+                          </span>
+                          <span className="text-gray-600 text-sm">
+                            Please upload both sides of your valid ID
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* ID Preview and Upload Section */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Front ID Preview */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Front of Valid ID
+                    </label>
+                    <div className="relative h-36 border-2 border-gray-200 rounded-lg overflow-hidden">
+                      {guestData?.valid_id_front ? (
+                        <img
+                          src={guestData.valid_id_front}
+                          alt="Front of ID"
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gray-50 flex items-center justify-center text-gray-400">
+                          No front ID uploaded
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Back ID Preview */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Back of Valid ID
+                    </label>
+                    <div className="relative h-36 border-2 border-gray-200 rounded-lg overflow-hidden">
+                      {guestData?.valid_id_back ? (
+                        <img
+                          src={guestData.valid_id_back}
+                          alt="Back of ID"
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gray-50 flex items-center justify-center text-gray-400">
+                          No back ID uploaded
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Upload Button */}
+                <div className="mt-6 flex justify-end">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowIdModal(true)}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Upload IDs
+                  </motion.button>
+                </div>
+
+                {/* Upload Messages */}
+                {idUploadError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 text-sm text-red-500 bg-red-50 p-2 rounded-md"
+                  >
+                    {idUploadError}
+                  </motion.div>
+                )}
+                {idUploadSuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 text-sm text-green-600 bg-green-50 p-2 rounded-md"
+                  >
+                    {idUploadSuccess}
+                  </motion.div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ValidIDUploadModal
+        isOpen={showIdModal}
+        onClose={() => {
+          setShowIdModal(false);
+          setIdUploadError(null);
+        }}
+        onUpload={handleIdUpload}
+        isLoading={validIdUploadMutation.isPending}
+        error={idUploadError}
+      />
 
       {/* Password Modal */}
       <AnimatePresence>

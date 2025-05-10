@@ -94,7 +94,6 @@ const ManageBookings: FC = () => {
       queryClient.invalidateQueries({ queryKey: ["stats"] });
 
       const { status } = data;
-      console.log(`Booking status updated successfully to: ${status}`);
 
       switch (status) {
         case 'reserved':

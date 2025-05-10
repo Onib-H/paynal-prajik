@@ -78,20 +78,14 @@ def create_booking_notification(user, notification_type, booking_id, message):
     try:
         booking = Bookings.objects.get(id=booking_id)
         
-        # Clean up the notification type to match model choices
         clean_type = notification_type
         if notification_type.startswith('booking_'):
             clean_type = notification_type.replace('booking_', '')
             
-        # Validate notification type
-        valid_types = ['reserved', 'no_show', 'rejected', 'checkin_reminder', 
-                      'checked_in', 'checked_out', 'cancelled']
+        valid_types = ['reserved', 'no_show', 'rejected', 'checkin_reminder', 'checked_in', 'checked_out', 'cancelled']
         if clean_type not in valid_types:
-            clean_type = 'reserved'  # Default fallback
-            
-        print(f"Creating notification: {clean_type} for user {user.id}, booking {booking_id}")
+            clean_type = 'reserved'
         
-        # Create the notification in the database
         notification = Notification.objects.create(
             user=user,
             message=message,
@@ -99,34 +93,24 @@ def create_booking_notification(user, notification_type, booking_id, message):
             booking=booking
         )
         
-        # Send WebSocket notification
         try:
             channel_layer = get_channel_layer()
             notification_data = NotificationSerializer(notification).data
             
-            # Send the primary notification
             async_to_sync(channel_layer.group_send)(
                 f"notifications_{user.id}",
                 {
-                    "type": "send_notification",  # This matches consumer method name
+                    "type": "send_notification",
                     "notification": notification_data,
                     "unread_count": Notification.objects.filter(user=user, is_read=False).count()
                 }
             )
             
-            print(f"✅ Sent notification to user {user.id} for booking {booking_id}")
             return notification
-            
         except Exception as e:
-            print(f"❌ WebSocket notification error: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            return notification  # Still return the notification even if WS fails
-            
+            print(f"Error sending notification via WebSocket: {str(e)}")
+            return notification
     except Exception as e:
-        print(f"❌ Error creating notification: {str(e)}")
-        import traceback
-        traceback.print_exc()
         return None
 
 # Create your views here.
@@ -835,6 +819,48 @@ def get_guest_bookings(request):
         }, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def upload_valid_id(request):
+    try:
+        user = request.user
+        front_id = request.FILES.get('valid_id_front')
+        back_id = request.FILES.get('valid_id_back')
+        id_type = request.data.get('valid_id_type')
+        
+        if not id_type:
+            return Response({
+                'error': 'Both front and back sides of the valid ID are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not front_id or not back_id:
+            return Response({
+                'error': 'Both front and back sides of the valid ID are required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        max_size = 5 * 1024 * 1024
+        if front_id.size > max_size or back_id.size > max_size:
+            return Response({
+                'error': 'File size exceeds the maximum limit of 5MB'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        user.valid_id_type = id_type
+        user.valid_id_front = front_id
+        user.valid_id_back = back_id
+        user.is_verified = False
+        user.save()
+        
+        return Response({
+            'message': "Valid ID uploaded successfully",
+            'id_type': user.valid_id_type,
+            'id_type_display': user.get_valid_id_type_display(),
+            'front_url': user.valid_id_front.url,
+            'back_url': user.valid_id_back.url,
+            'is_verified': user.is_verified
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

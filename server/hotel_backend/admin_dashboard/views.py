@@ -8,7 +8,7 @@ from property.models import Areas, Rooms, Amenities
 from property.serializers import AreaSerializer, RoomSerializer, AmenitySerializer
 from booking.models import Bookings, Reservations, Transactions
 from booking.serializers import BookingSerializer
-from user_roles.models import CustomUsers
+from user_roles.models import CustomUsers, Notification
 from user_roles.serializers import CustomUserSerializer
 from user_roles.views import create_booking_notification
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -18,6 +18,23 @@ from .email.booking import send_booking_confirmation_email, send_booking_rejecti
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import traceback
+
+def notify_user_for_verification(user, notification_type, message):
+    try:
+        notification = {
+            'user_id': user.id,
+            'notification_type': notification_type,
+            'message': message
+        }
+        async_to_sync(get_channel_layer().group_send)(
+            f"user_{user.id}",
+            {
+                "type": "send_notification",
+                "notification": notification
+            }
+        )
+    except Exception as e:
+        print(f"Error sending notification: {e}")
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -1035,6 +1052,45 @@ def archive_user(request, user_id):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def verify_guest_user(request, user_id):
+    try:
+        user = CustomUsers.objects.get(id=user_id)
+        is_verified = request.data.get('is_verified', None)
+        
+        if is_verified is None:
+            return Response({
+                'error': 'is_verified field is required'
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        user.is_verified = bool(is_verified)
+        user.save()
+        
+        if user.is_verified:
+            Notification.objects.create(
+                user=user,
+                message="Your account has been verified.",
+                notification_type="verified"
+            )
+        else:
+            Notification.objects.create(
+                user=user,
+                message="Your account has been unverified.",
+                notification_type="unverified"
+            )
+        return Response({
+            'message': 'User verification status updated successfully',
+            'user_id': user.id,
+            'is_verified': user.is_verified,
+            'valid_id_type': user.valid_id_type,
+            'valid_id_type_display': user.get_valid_id_type_display(),
+        }, status=status.HTTP_200_OK)
+    except CustomUsers.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 # Archive Users
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -1064,7 +1120,6 @@ def fetch_archived_users(request):
         }, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

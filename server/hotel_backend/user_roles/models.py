@@ -8,6 +8,17 @@ class CustomUsers(AbstractUser):
         ('admin', 'Admin'),
         ('guest', 'Guest'),
     ]
+    VALID_ID_CHOICES = [
+        ('passport', 'Passport'),
+        ('driver_license', "Driver's License"),
+        ('national_id', 'National ID'),
+        ('sss_id', 'SSS ID'),
+        ('umid', 'Unified Multi-Purpose ID (UMID)'),
+        ('philhealth_id', 'PhilHealth ID'),
+        ('prc_id', 'PRC ID'),
+        ('student_id', 'Student ID'),
+        ('other', 'Other Government-Issued ID'),
+    ]
     email = models.EmailField(unique=True, max_length=200)
     password = models.CharField(max_length=200)
     role = models.CharField(
@@ -17,10 +28,13 @@ class CustomUsers(AbstractUser):
     )
     is_archived = models.BooleanField(default=False)
     profile_image = CloudinaryField('profile_image', null=True, blank=True)
-    phone_number = models.CharField(max_length=15, null=True, blank=True)
     last_booking_date = models.DateField(null=True, blank=True)
+    valid_id_type = models.CharField(max_length=60, null=True, blank=True, choices=VALID_ID_CHOICES)
+    valid_id_front = CloudinaryField('valid_id_front', null=True, blank=True)
+    valid_id_back = CloudinaryField('valid_id_back', null=True, blank=True)
+    is_verified = models.BooleanField(default=False)
     
-    class Meta:
+    class Meta: 
         db_table = 'users'
     
 class Notification(models.Model):

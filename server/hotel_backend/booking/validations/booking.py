@@ -146,7 +146,7 @@ def validate_arrival_time(arrival_time):
     try:
         arrival_time_obj = datetime.strptime(arrival_time, "%H:%M").time()
         
-        min_time = datetime.strptime("07:00", "%H:%M").time()
+        min_time = datetime.strptime("14:00", "%H:%M").time()
         max_time = datetime.strptime("23:00", "%H:%M").time()
         
         if arrival_time_obj < min_time:

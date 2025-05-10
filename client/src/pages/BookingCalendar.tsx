@@ -185,21 +185,12 @@ const BookingCalendar = () => {
             const dateString = format(date, 'yyyy-MM-dd');
             const booking = bookingsByDate[dateString];
 
-            if (booking && booking.status) {
-                const status = booking.status.toLowerCase();
-                if (['checked_in', 'reserved'].includes(status)) {
-                    const matchingBooking = bookingsData?.data.find(b => b.id === booking.bookingId);
-                    if (matchingBooking) {
-                        const bookingStartDate = parseISO(matchingBooking.check_in_date);
-                        return !isSameDay(date, bookingStartDate);
-                    }
-                }
-            }
+            if (booking && ['checked_in', 'reserved'].includes(booking.status.toLowerCase())) return true;
             return false;
         }
 
         return isDateBooked(date);
-    }, [isDateBooked, bookingsByDate, bookingsData?.data]);
+    }, [isDateBooked, bookingsByDate]);
 
     const handleDateClick = (date: Date) => {
         if (!checkInDate || (checkInDate && checkOutDate)) {
@@ -249,36 +240,19 @@ const BookingCalendar = () => {
     const getDateCellClass = (date: Date) => {
         const isCheckout = checkInDate !== null && checkOutDate === null;
         const isUnavailable = isDateUnavailable(date, isCheckout);
+        const dateStatus = getDateStatus(date);
+        const isBooked = dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase());
 
         const isToday = isEqual(date, startOfDay(new Date()));
         const isCheckinDate = checkInDate && isEqual(date, checkInDate);
         const isCheckoutDate = checkOutDate && isEqual(date, checkOutDate);
         const isInRange = !isDateUnavailable(date, true) && isDateInRange(date);
-        const isHovered = !isDateUnavailable(date, isCheckout) && hoveredDate && isEqual(date, hoveredDate);
-        const dateStatus = getDateStatus(date);
+        const isHovered = !isDateUnavailable(date, isCheckout) && hoveredDate && isEqual(date, hoveredDate) && !isBooked;
 
-        let className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
+        let className = "relative h-11 w-11 flex items-center justify-center text-lg font-semibold";
 
-        if (isCheckinDate || isCheckoutDate) return `${className} bg-blue-600 text-white font-medium`;
-        if (isInRange) return `${className} bg-blue-200 text-blue-800`;
-        if (isHovered && !isUnavailable) return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
-        if (isToday && !isUnavailable) className += " border-blue-500 border-2";
-
-        if (isCheckout && dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
-            const matchingBooking = bookingsData?.data.find(b =>
-                bookingsByDate[format(date, 'yyyy-MM-dd')]?.bookingId === b.id
-            );
-
-            if (matchingBooking) {
-                const bookingStartDate = parseISO(matchingBooking.check_in_date);
-                if (isSameDay(date, bookingStartDate)) {
-                    return `${className} bg-blue-100 border-2 border-blue-500 font-medium cursor-pointer`;
-                }
-            }
-        }
-
-        if (dateStatus && ['reserved', 'checked_in'].includes(dateStatus.toLowerCase())) {
-            switch (dateStatus.toLowerCase()) {
+        if (isBooked) {
+            switch (dateStatus?.toLowerCase()) {
                 case 'reserved':
                     return `${className} bg-green-200 text-green-800 border-2 border-green-600 font-medium cursor-not-allowed`;
                 case 'checked_in':
@@ -288,6 +262,10 @@ const BookingCalendar = () => {
             }
         }
 
+        if (isCheckinDate || isCheckoutDate) return `${className} bg-blue-600 text-white font-medium`;
+        if (isInRange) return `${className} bg-blue-200 text-blue-800`;
+        if (isHovered) return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
+        if (isToday && !isUnavailable) className += " border-blue-500 border-2";
         if (isUnavailable) return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
         return `${className} bg-white border border-gray-300 hover:bg-gray-100 cursor-pointer`;
     };
@@ -307,7 +285,7 @@ const BookingCalendar = () => {
     }
 
     return (
-        <div className="container mx-auto px-4 py-10 mt-16">
+        <div className="container mx-auto px-7 py-10 mt-16">
             <div className="flex justify-between items-center mb-6">
                 <button
                     onClick={() => navigate(-1)}
@@ -317,7 +295,7 @@ const BookingCalendar = () => {
                     <span>Go Back</span>
                 </button>
                 <h2 className="text-4xl font-semibold text-center">Book Your Room</h2>
-                <div className="w-[100px]"></div>
+                <div className="w-[100px]" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

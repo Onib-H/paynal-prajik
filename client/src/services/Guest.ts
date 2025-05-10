@@ -122,3 +122,16 @@ export const markAllNotificationsAsRead = async () => {
     throw error;
   }
 };
+
+export const uploadValidId = async (formData: FormData) => {
+  try {
+    const response = await guest.put('/upload_valid_id', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      withCredentials: true
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to upload valid ID: ${error}`);
+    throw error;
+  }
+}

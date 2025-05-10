@@ -748,20 +748,14 @@ export const fetchMonthlyRevenue = async ({
   month,
   year,
 }: { month?: number; year?: number } = {}) => {
-  console.log("fetchMonthlyRevenue called with:", { month, year });
   try {
     const currentMonth = month || new Date().getMonth() + 1;
     const currentYear = year || new Date().getFullYear();
 
-    console.log("Calculating date range for monthly revenue:", {
-      currentMonth,
-      currentYear,
-    });
     const startDate = new Date(currentYear, currentMonth - 1, 1);
     const endDate = new Date(currentYear, currentMonth, 0);
     endDate.setHours(23, 59, 59, 999);
 
-    console.log("Fetching bookings for revenue calculation");
     const response = await ADMIN.get("/bookings", {
       params: {
         page_size: 500,
@@ -771,13 +765,8 @@ export const fetchMonthlyRevenue = async ({
       withCredentials: true,
     });
 
-    console.log(
-      "Bookings API response received, count:",
-      response.data?.data?.length || 0
-    );
     const allBookings = response.data.data || [];
 
-    console.log("Filtering relevant bookings");
     const relevantBookings = allBookings.filter((booking: any) => {
       if (!booking.check_in_date || !booking.check_out_date) return false;
 
@@ -791,7 +780,6 @@ export const fetchMonthlyRevenue = async ({
       );
     });
 
-    console.log("Relevant bookings count:", relevantBookings.length);
     let totalRevenue = 0;
 
     relevantBookings.forEach((booking: any) => {
@@ -802,7 +790,6 @@ export const fetchMonthlyRevenue = async ({
               ? parseFloat(booking.total_price.replace(/[^\d.]/g, ""))
               : booking.total_price;
           totalRevenue += totalPrice || 0;
-          console.log(`Added booking revenue from total_price: ${totalPrice}`);
           return;
         }
 
@@ -814,7 +801,6 @@ export const fetchMonthlyRevenue = async ({
             basePrice = parseFloat(priceString.replace(/[^\d.]/g, "")) || 0;
           }
           totalRevenue += basePrice;
-          console.log(`Added venue booking revenue: ${basePrice}`);
           return;
         } else if (!booking.is_venue_booking && booking.room_details) {
           const checkIn = new Date(booking.check_in_date);
@@ -841,9 +827,6 @@ export const fetchMonthlyRevenue = async ({
 
           const roomRevenue = basePrice * nights;
           totalRevenue += roomRevenue;
-          console.log(
-            `Added room booking revenue: ${roomRevenue} (${basePrice} × ${nights} nights)`
-          );
           return;
         }
       } catch (error) {
@@ -851,7 +834,6 @@ export const fetchMonthlyRevenue = async ({
       }
     });
 
-    console.log("Total revenue calculated:", totalRevenue);
     const formatter = new Intl.NumberFormat("en-PH", {
       style: "currency",
       currency: "PHP",
@@ -859,7 +841,6 @@ export const fetchMonthlyRevenue = async ({
     });
 
     const formattedRevenue = formatter.format(totalRevenue).replace("PHP", "₱");
-    console.log("Formatted revenue:", formattedRevenue);
 
     return {
       revenue: totalRevenue,

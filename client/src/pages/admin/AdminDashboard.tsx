@@ -237,9 +237,6 @@ const AdminDashboard = () => {
   };
 
   const handleGenerateReport = () => {
-    console.log("Generate Report button clicked");
-
-    // Prepare the report data structure
     const reportData = prepareMonthlyReportData({
       formattedMonthYear,
       stats,
@@ -252,37 +249,20 @@ const AdminDashboard = () => {
       roomBookingValues,
     });
 
-    // Capture canvas elements from chart refs
     const getCanvasFromRef = (ref: React.RefObject<HTMLDivElement>) => {
       if (!ref.current) return null;
       const canvas = ref.current.querySelector('canvas');
       return canvas || null;
     };
 
-    // Get canvas elements for each chart
     const bookingStatusCanvas = getCanvasFromRef(bookingStatusChartRef);
     const areaRevenueCanvas = getCanvasFromRef(areaRevenueChartRef);
     const roomRevenueCanvas = getCanvasFromRef(roomRevenueChartRef);
 
-    // Log chart capture results for debugging
-    console.log("Booking status chart canvas found:", !!bookingStatusCanvas);
-    console.log("Area revenue chart canvas found:", !!areaRevenueCanvas);
-    console.log("Room revenue chart canvas found:", !!roomRevenueCanvas);
+    if (bookingStatusCanvas) reportData.charts.bookingStatusChart = bookingStatusCanvas;
+    if (areaRevenueCanvas) reportData.charts.areaRevenueChart = areaRevenueCanvas;
+    if (roomRevenueCanvas) reportData.charts.roomRevenueChart = roomRevenueCanvas;
 
-    // Add chart references to the report data
-    if (bookingStatusCanvas) {
-      reportData.charts.bookingStatusChart = bookingStatusCanvas;
-    }
-
-    if (areaRevenueCanvas) {
-      reportData.charts.areaRevenueChart = areaRevenueCanvas;
-    }
-
-    if (roomRevenueCanvas) {
-      reportData.charts.roomRevenueChart = roomRevenueCanvas;
-    }
-
-    console.log("Report data prepared and ready to render");
     setReportDataState(reportData);
     setShowReportModal(true);
   };

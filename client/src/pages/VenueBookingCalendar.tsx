@@ -138,7 +138,7 @@ const VenueBookingCalendar = () => {
         const isHovered = hoveredDate && isSameDay(date, hoveredDate);
         const dateStatus = getDateStatus(date);
 
-        const className = "relative h-10 w-10 flex items-center justify-center text-sm rounded-full";
+        const className = "relative h-11 w-11 flex items-center justify-center text-lg font-semibold";
 
         if (isSelected) return `${className} bg-blue-600 text-white font-medium`;
         if (isHovered && !isUnavailable) return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
@@ -186,7 +186,7 @@ const VenueBookingCalendar = () => {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8 mt-16">
+        <div className="container mx-auto px-7 py-10 mt-16">
             <div className="flex justify-between items-center mb-6">
                 <button
                     onClick={() => navigate(-1)}
@@ -196,7 +196,7 @@ const VenueBookingCalendar = () => {
                     <span>Go Back</span>
                 </button>
                 <h2 className="text-4xl font-semibold text-center">Book Your Area</h2>
-                <div className="w-[100px]"></div>
+                <div className="w-[100px]" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

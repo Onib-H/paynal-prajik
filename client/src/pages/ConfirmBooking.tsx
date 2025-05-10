@@ -89,7 +89,6 @@ const ConfirmBooking = () => {
       phoneNumber: "",
       numberOfGuests: 1,
       arrivalTime: "",
-      specialRequests: "",
       paymentMethod: 'gcash',
     },
   });
@@ -682,8 +681,6 @@ const ConfirmBooking = () => {
                 <input
                   type="time"
                   id="arrivalTime"
-                  min="7:00"
-                  max="11:00"
                   {...register("arrivalTime", {
                     required: "Please specify your expected time of arrival",
                     validate: (val) => {
@@ -692,11 +689,11 @@ const ConfirmBooking = () => {
                       const minute = parseInt(minuteStr, 10);
 
                       const totalMinutes = hour * 60 + minute;
-                      const minAllowed = 7 * 60;
+                      const minAllowed = 14 * 60;
                       const maxAllowed = 23 * 60;
 
                       if (totalMinutes < minAllowed)
-                        return "Arrival cannot be before 7:00 AM";
+                        return "Arrival cannot be before 2:00 PM";
                       if (totalMinutes > maxAllowed)
                         return "Arrival cannot be after 11:00 PM";
 
@@ -712,24 +709,8 @@ const ConfirmBooking = () => {
                   </p>
                 )}
                 <small className="mt-1 text-xs text-gray-500">
-                  Available between 7:00 AM and 11:00 PM
+                  Check-in of 2:00 PM and 11:00 PM
                 </small>
-              </div>
-
-              {/* Special Requests */}
-              <div className="mb-6">
-                <label
-                  htmlFor="specialRequests"
-                  className="block text-md font-medium text-gray-700 mb-1"
-                >
-                  Special requests to hotel
-                </label>
-                <textarea
-                  id="specialRequests"
-                  {...register("specialRequests")}
-                  rows={10}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 resize-none"
-                ></textarea>
               </div>
 
               {/* Submit Button for Mobile View */}
@@ -740,7 +721,7 @@ const ConfirmBooking = () => {
                   onClick={handleConfirmBooking}
                   className={`w-full py-3 px-6 rounded-md text-white text-center cursor-pointer font-semibold ${isSubmitting
                     ? "bg-blue-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
+                    : "bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-lg"
                     }`}
                   whileTap={{ scale: 0.98 }}
                   whileHover={{
