@@ -31,7 +31,7 @@ export class WebSocketService {
     private reconnectTimer?: NodeJS.Timeout;
     private lastConnectTime: number = 0;
 
-    constructor(private socketPath: string) {
+    constructor(public socketPath: string) {
         this.reconnect = this.reconnect.bind(this);
         this.connect = this.connect.bind(this);
         this.handleConnectionError = this.handleConnectionError.bind(this);

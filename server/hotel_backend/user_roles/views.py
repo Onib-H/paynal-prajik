@@ -19,6 +19,8 @@ from .google.oauth import google_auth as google_oauth_util
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from io import BytesIO
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 import os
 import uuid
 import requests
@@ -71,96 +73,61 @@ def create_notification(user, booking, notification_type):
     except Exception:
         return None
 
-def create_booking_notification(booking, new_status):
+def create_booking_notification(user, notification_type, booking_id, message):
+    """Create a notification for a booking status change and send via WebSocket."""
     try:
-        notification_types = {
-            'reserved': {
-                'type': 'reserved',
-                'message': lambda b: f"Your booking for {b.property_name} has been confirmed!"
-            },
-            'no_show': {
-                'type': 'no_show',
-                'message': lambda b: f"You did not show up for your booking at {b.property_name}."
-            },
-            'rejected': {
-                'type': 'rejected',
-                'message': lambda b: f"Your booking for {b.property_name} has been rejected. Click to see booking details."
-            },
-            'checked_in': {
-                'type': 'checked_in',
-                'message': lambda b: f"You have been checked in to {b.property_name}. Welcome!"
-            },
-            'checked_out': {
-                'type': 'checked_out',
-                'message': lambda b: f"You have been checked out from {b.property_name}. Thank you for staying with us!"
-            },
-            'cancelled': {
-                'type': 'cancelled',
-                'message': lambda b: f"Your booking for {b.property_name} has been cancelled. Click to see details."
-            }
-        }
+        booking = Bookings.objects.get(id=booking_id)
         
-        if not hasattr(booking, 'property_name') or not booking.property_name:
-            try:
-                if booking.is_venue_booking and booking.area:
-                    booking.property_name = booking.area.area_name
-                elif booking.room:
-                    booking.property_name = booking.room.room_name
-                else:
-                    booking.property_name = "your reservation"
-            except Exception:
-                booking.property_name = "your reservation"
+        # Clean up the notification type to match model choices
+        clean_type = notification_type
+        if notification_type.startswith('booking_'):
+            clean_type = notification_type.replace('booking_', '')
+            
+        # Validate notification type
+        valid_types = ['reserved', 'no_show', 'rejected', 'checkin_reminder', 
+                      'checked_in', 'checked_out', 'cancelled']
+        if clean_type not in valid_types:
+            clean_type = 'reserved'  # Default fallback
+            
+        print(f"Creating notification: {clean_type} for user {user.id}, booking {booking_id}")
         
-        notification_config = notification_types.get(new_status)
-        if notification_config:
-            notification = Notification.objects.create(
-                user=booking.user,
-                message=notification_config['message'](booking),
-                notification_type=notification_config['type'],
-                booking=booking
+        # Create the notification in the database
+        notification = Notification.objects.create(
+            user=user,
+            message=message,
+            notification_type=clean_type,
+            booking=booking
+        )
+        
+        # Send WebSocket notification
+        try:
+            channel_layer = get_channel_layer()
+            notification_data = NotificationSerializer(notification).data
+            
+            # Send the primary notification
+            async_to_sync(channel_layer.group_send)(
+                f"notifications_{user.id}",
+                {
+                    "type": "send_notification",  # This matches consumer method name
+                    "notification": notification_data,
+                    "unread_count": Notification.objects.filter(user=user, is_read=False).count()
+                }
             )
             
-            try:
-                from channels.layers import get_channel_layer
-                from asgiref.sync import async_to_sync
-                
-                channel_layer = get_channel_layer()
-                notification_data = NotificationSerializer(notification).data
-                
-                async_to_sync(channel_layer.group_send)(
-                    f"notifications_{booking.user.id}",
-                    {
-                        "type": "send_notification",
-                        "notification": notification_data,
-                        "unread_count": Notification.objects.filter(
-                            user=booking.user,
-                            is_read=False
-                        ).count()
-                    }
-                )
-                
-                async_to_sync(channel_layer.group_send)(
-                    f"notifications_{booking.user.id}",
-                    {
-                        "type": "update_unread_count",
-                        "count": Notification.objects.filter(
-                            user=booking.user,
-                            is_read=False
-                        ).count()
-                    }
-                )
-                
-                print(f"Successfully sent notification to user {booking.user.id} for booking {booking.id}")
-            except Exception as e:
-                print(f"WebSocket notification error: {str(e)}")
-            
+            print(f"✅ Sent notification to user {user.id} for booking {booking_id}")
             return notification
+            
+        except Exception as e:
+            print(f"❌ WebSocket notification error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return notification  # Still return the notification even if WS fails
+            
     except Exception as e:
-        print(f"Error creating notification: {str(e)}")
+        print(f"❌ Error creating notification: {str(e)}")
         import traceback
         traceback.print_exc()
-    
-    return None
+        return None
 
 # Create your views here.
 @api_view(['POST'])

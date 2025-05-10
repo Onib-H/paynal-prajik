@@ -15,6 +15,8 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q, Count, Sum
 from datetime import datetime, date, timedelta
 from .email.booking import send_booking_confirmation_email, send_booking_rejection_email
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 import traceback
 
 @api_view(['GET'])
@@ -735,19 +737,40 @@ def update_booking_status(request, booking_id):
         property_name = "your reservation"
     
     booking.property_name = property_name
-    
     booking.save()
-    
     serializer = BookingSerializer(booking)
     
     if old_status != status_value:
         try:
+            notification_message = ""
             if status_value == 'reserved':
+                notification_message = f"Your booking for {property_name} has been reserved."
                 user_email = booking.user.email
                 send_booking_confirmation_email(user_email, serializer.data)
+            elif status_value == 'confirmed':
+                notification_message = f"Your booking for {property_name} has been confirmed."
+            elif status_value == 'checked_in':
+                notification_message = f"You've been checked in to {property_name}."
+            elif status_value == 'checked_out':
+                notification_message = f"You've been checked out from {property_name}."
             elif status_value == 'rejected':
+                reason = booking.cancellation_reason or "No reason provided"
+                notification_message = f"Your booking for {property_name} was rejected. Reason: {reason}"
                 user_email = booking.user.email
                 send_booking_rejection_email(user_email, serializer.data)
+            elif status_value == 'no_show':
+                notification_message = f"You were marked as no-show for your booking at {property_name}."
+            elif status_value == 'cancelled':
+                notification_message = f"Your booking for {property_name} has been cancelled."
+            
+            if notification_message:
+                print(f"Creating notification for user {booking.user.id}: {notification_message}")
+                create_booking_notification(
+                    user=booking.user,
+                    notification_type=f"booking_{status_value}",
+                    booking_id=booking.id,
+                    message=notification_message
+                )
         except Exception as e:
             print(f"Error creating notification or sending email: {str(e)}")
     
@@ -761,11 +784,7 @@ def update_booking_status(request, booking_id):
             room.status = 'available'
             room.save()
     
-    # Update active booking counts for admin dashboard via WebSocket
     try:
-        from channels.layers import get_channel_layer
-        from asgiref.sync import async_to_sync
-        
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             'admin_notifications',
