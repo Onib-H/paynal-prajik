@@ -2,12 +2,8 @@
 .report-root {
   width: 210mm !important;
   min-height: 297mm !important;
+  overflow: visible !important;
   margin: 0 auto;
-  padding: 20px;
-  background: white;
-  box-sizing: border-box;
-  font-family: system-ui, sans-serif;
-  color: #333;
 }
 
 .report-header {
@@ -33,7 +29,6 @@
 }
 
 .report-section {
-  margin: 25px 0;
   page-break-inside: avoid;
 }
 
@@ -105,4 +100,24 @@
   line-height: 1.6;
   color: #4a5568;
   margin-bottom: 20px;
+}
+
+@media print {
+  body {
+    margin: 0;
+    visibility: hidden;
+  }
+
+  .report-root {
+    visibility: visible;
+    position: absolute;
+    left: 0;
+    top: 0;
+    box-shadow: none !important;
+    margin: 0 !important;
+  }
+
+  .modal-header, .modal-footer, .close-button {
+    display: none !important;
+  }
 }

@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, BookCheck } from "lucide-react";
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import GCashPaymentModal from "../components/bookings/GCashPaymentModal";
@@ -28,8 +28,7 @@ const ConfirmVenueBooking = () => {
   const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [pendingFormData, setPendingFormData] = useState<ReservationFormData | null>(null);
-  const [validIdPreview, setValidIdPreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [gcashProof, setGcashProof] = useState<File | null>(null);
   const [gcashPreview, setGcashPreview] = useState<string | null>(null);
   const [showGCashModal, setShowGCashModal] = useState<boolean>(false);
@@ -63,17 +62,6 @@ const ConfirmVenueBooking = () => {
     queryFn: () => fetchAreaById(areaId as string),
     enabled: !!areaId,
   });
-
-  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setValidIdPreview(reader.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setValidIdPreview(null);
-    }
-  };
 
   useMemo(() => {
     if (!areaId || !startTime || !endTime) navigate("/areas");
@@ -114,14 +102,10 @@ const ConfirmVenueBooking = () => {
     if (!gcashProof) return;
     if (!areaId || !startTime || !endTime || !totalPrice) return;
 
-    const validIdFile = (data.validId as FileList)[0];
-    if (!validIdFile) return;
-
     const reservationData: ReservationFormData = {
       firstName: data.firstName,
       lastName: data.lastName,
       phoneNumber: data.phoneNumber.replace(/\s+/g, ""),
-      validId: validIdFile,
       areaId: areaId!,
       startTime: new Date(startTime).toISOString(),
       endTime: new Date(endTime).toISOString(),
@@ -462,65 +446,8 @@ const ConfirmVenueBooking = () => {
                 </div>
               </div>
 
-              {/* Valid ID and GCash Payment Proof */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label
-                    htmlFor="validId"
-                    className="block text-md font-medium text-gray-700 mb-1"
-                  >
-                    Valid ID <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="file"
-                    id="validId"
-                    {...register("validId", {
-                      required: "Valid ID is required",
-                      onChange: onFileChange,
-                    })}
-                    accept="image/*"
-                    className={`w-full py-2 border pl-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300 ${errors.validId ? "border-red-500" : "border-gray-300"
-                      }`}
-                  />
-                  {errors.validId && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.validId.message}
-                    </p>
-                  )}
-                  {/* Valid ID Preview Container */}
-                  {validIdPreview && (
-                    <div className="mt-2 relative">
-                      <div className="relative overflow-hidden">
-                        <img
-                          loading="lazy"
-                          src={validIdPreview}
-                          alt="ID Preview"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setValidIdPreview(null)}
-                        className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
-                        aria-label="Remove image"
-                      >
-                        <svg
-                          className="w-4 h-4 text-red-500"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  )}
-                </div>
+              {/* GCash Payment Proof */}
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-4">
                 <div>
                   <label className="block text-md font-medium text-gray-700 mb-1">
                     GCash Payment Proof <span className="text-red-500">*</span>

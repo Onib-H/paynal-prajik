@@ -510,9 +510,7 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
       
       <div class="report-divider"></div>
       
-      <section class="report-section">
-        <h3 class="report-section-title">Revenue Analysis</h3>
-        
+      <section class="report-section">        
         <div class="report-grid">
           <div>
             <h4 class="report-section-title">Area Revenue</h4>

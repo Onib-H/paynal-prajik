@@ -24,6 +24,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     const [paymentAmount, setPaymentAmount] = useState<string>("");
     const [downPayment, setDownPayment] = useState<string>("");
     const [expandedImage, setExpandedImage] = useState<'validId' | 'paymentProof' | null>(null);
+    const [pendingAction, setPendingAction] = useState<'checkin' | 'checkout' | 'cancel' | 'reject' | 'no_show' | 'reserve' | null>(null);
 
     const isVenueBooking: boolean = booking?.is_venue_booking;
     const bookingPrice: number = getBookingPrice(booking);
@@ -194,42 +195,52 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     };
 
     const getLoadingText = () => {
-        if (booking.status === "reserved" && isUpdating && onCancel) return "Cancelling booking...";
-        switch (booking.status) {
-            case "pending":
-                return "Reserving booking...";
-            case "reserved":
-                return "Checking in guest...";
-            case "checked_in":
-                return "Checking out guest...";
-            case "no_show":
-                return "Marking as no-show...";
-            case "cancelled":
-                return "Cancelling booking...";
-            case "rejected":
-                return "Rejecting booking request...";
-            default:
-                return "Processing booking...";
-        }
+        if (pendingAction) {
+            switch (pendingAction) {
+              case 'checkin': return "Checking in guest...";
+              case 'checkout': return "Checking out guest...";
+              case 'cancel': return "Cancelling booking...";
+              case 'no_show': return "Marking as no-show...";
+              case 'reject': return "Rejecting booking request...";
+              case 'reserve': return "Reserving booking...";
+              default: return "Processing booking...";
+            }
+          }
+        
+          if (booking.status === "reserved" && isUpdating) return "Checking in guest...";
+          switch (booking.status) {
+            case "pending": return "Reserving booking...";
+            case "reserved": return "Checking in guest...";
+            case "checked_in": return "Checking out guest...";
+            case "no_show": return "Marking as no-show...";
+            case "cancelled": return "Cancelling booking...";
+            case "rejected": return "Rejecting booking request...";
+            default: return "Processing booking...";
+          }
     };
 
     const getLoaderType = () => {
-        if (booking.status === "reserved" && isUpdating && onCancel) return "cancelled";
+        if (pendingAction) {
+            switch (pendingAction) {
+                case 'checkin': return 'checkin';
+                case 'checkout': return 'checkout';
+                case 'cancel': return 'cancelled';
+                case 'no_show': return 'noshow';
+                case 'reject': return 'rejected';
+                case 'reserve': return 'reserve';
+                default: return 'default';
+            }
+        }
+
+        if (booking.status === 'reserved' && isUpdating) return 'checkin';
         switch (booking.status) {
-            case "pending":
-                return "reserve";
-            case "reserved":
-                return "checkin";
-            case "checked_in":
-                return "checkout";
-            case "no_show":
-                return "noshow";
-            case "cancelled":
-                return 'cancelled';
-            case "rejected":
-                return "rejected";
-            default:
-                return "default";
+            case "pending": return "reserve";
+            case "reserved": return "checkin";
+            case "checked_in": return "checkout";
+            case "no_show": return "noshow";
+            case "cancelled": return 'cancelled';
+            case "rejected": return "rejected";
+            default: return "default";
         }
     };
 
@@ -563,7 +574,10 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                             <motion.button
                                 whileHover={{ scale: 1.02, backgroundColor: "#dc2626" }}
                                 whileTap={{ scale: 0.98 }}
-                                onClick={onReject}
+                                onClick={() => {
+                                    setPendingAction('reject');
+                                    onReject();
+                                }}
                                 className="px-4 py-2 cursor-pointer bg-red-600 text-white rounded-lg curp transition-colors flex items-center justify-center gap-2 shadow-sm"
                             >
                                 <X size={18} />
@@ -571,7 +585,10 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                             </motion.button>
                             <motion.button
                                 whileTap={isDownPaymentValid ? { scale: 0.98 } : {}}
-                                onClick={() => isDownPaymentValid && onConfirm(currentDownPayment)}
+                                onClick={() => {
+                                    setPendingAction('reserve');
+                                    if (isDownPaymentValid) onConfirm(currentDownPayment);
+                                }}
                                 className={`px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-sm ${isDownPaymentValid
                                     ? 'bg-blue-600 text-white cursor-pointer hover:bg-blue-700'
                                     : 'bg-gray-400 text-gray-200 cursor-not-allowed'
@@ -594,7 +611,10 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                             <div className="relative group">
                                 <motion.button
                                     whileTap={canMarkNoShow ? { scale: 0.98 } : {}}
-                                    onClick={() => onNoShow && canMarkNoShow && onNoShow()}
+                                    onClick={() => {
+                                        setPendingAction('no_show');
+                                        if (onNoShow && canMarkNoShow) onNoShow();
+                                    }}
                                     className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 shadow-sm ${canMarkNoShow
                                         ? 'bg-amber-600 text-white cursor-pointer'
                                         : 'bg-gray-400 text-gray-200 cursor-not-allowed'}`}
@@ -619,7 +639,10 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
 
                             <motion.button
                                 whileTap={{ scale: 0.98 }}
-                                onClick={onCancel}
+                                onClick={() => {
+                                    setPendingAction('cancel');
+                                    if (onCancel) onCancel();
+                                }}
                                 className="px-4 py-2 bg-red-600 text-white rounded-lg cursor-pointer flex items-center justify-center gap-2 shadow-sm"
                             >
                                 <X size={18} />
@@ -628,7 +651,10 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                             <div className="relative group">
                                 <motion.button
                                     whileTap={canCheckIn ? { scale: 0.98 } : {}}
-                                    onClick={() => onCheckIn && canCheckIn && onCheckIn(bookingPrice)}
+                                    onClick={() => {
+                                        setPendingAction('checkin');
+                                        if (onCheckIn && canCheckIn) onCheckIn(bookingPrice);
+                                    }}
                                     className={`px-4 py-2 text-white rounded-lg flex items-center justify-center gap-2 shadow-sm ${canCheckIn
                                         ? 'bg-blue-600 cursor-pointer hover:bg-blue-700'
                                         : 'bg-gray-400 cursor-not-allowed'
@@ -673,7 +699,10 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                             <div className="relative group">
                                 <motion.button
                                     whileTap={canCheckOut ? { scale: 0.95 } : {}}
-                                    onClick={() => onCheckOut && canCheckOut && onCheckOut()}
+                                    onClick={() => {
+                                        setPendingAction('checkout');
+                                        if (onCheckOut && canCheckOut) onCheckOut();
+                                    }}
                                     className={`px-6 py-3 text-white rounded-lg transition-colors flex items-center justify-center gap-2 shadow-md duration-300 ${canCheckOut
                                         ? 'bg-indigo-600 cursor-pointer hover:bg-indigo-700'
                                         : 'bg-gray-400 cursor-not-allowed'

@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AnimatePresence, motion } from 'framer-motion';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { generateNativePDF, generateReportPreviewHTML } from '../../utils/monthlyReportGenerator';
 import '../../styles/report-modal.css';
+import { generateReportPreviewHTML } from '../../utils/monthlyReportGenerator';
 
 interface MonthlyReportModalProps {
     isOpen: boolean;
@@ -51,8 +53,68 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
 
     const handlePrintReport = async () => {
         try {
-            const pdf = generateNativePDF(reportData);
-            pdf.save(`${reportData.period}-monthly-report.pdf`);
+            if (!reportContainerRef.current) {
+                throw new Error('Report container not found');
+            }
+
+            const element = reportContainerRef.current;
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            const pageWidth = 210;
+            const pageHeight = 297;
+
+            const targetWidth = pageWidth * 3.78; // 210mm → 794px
+            const targetHeight = pageHeight * 3.78; // 297mm → 1123px
+
+            console.log('Target Dimensions:', {
+                width: `${targetWidth}px`,
+                height: `${targetHeight}px`
+            });
+
+            element.style.width = `${pageWidth}mm`;
+            element.style.minHeight = `auto`;
+            element.style.overflow = 'visible';
+
+            const totalPages = Math.ceil(element.scrollHeight / targetHeight);
+
+            for (let page = 0; page < totalPages; page++) {
+                if (page > 0) pdf.addPage();
+
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    windowHeight: targetHeight,
+                    y: page * targetHeight,
+                    height: targetHeight,
+                    useCORS: true,
+                    logging: true,
+                    onclone: (clonedDoc) => {
+                        clonedDoc.documentElement.style.overflow = 'visible';
+                        clonedDoc.body.style.zoom = '100%';
+                    }
+                });
+
+                console.log('Captured Canvas:', {
+                    width: `${canvas.width}px`,
+                    height: `${canvas.height}px`,
+                    ratio: (canvas.width / targetWidth).toFixed(2)
+                });
+
+                pdf.addImage(
+                    canvas.toDataURL('image/png', 0.85),
+                    'PNG',
+                    0,
+                    0,
+                    pageWidth,
+                    pageHeight,
+                    undefined,
+                    'FAST'
+                );
+            }
+
+            pdf.save(`AzureaHotel_${reportData.period}_Monthly_Report.pdf`);
         } catch (err) {
             setError(`Failed to print report: ${err instanceof Error ? err.message : String(err)}`);
         }
