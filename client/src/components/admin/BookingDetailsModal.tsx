@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { motion } from "framer-motion";
-import { AlertCircle, Calendar, Check, CheckCircle2, Clock, CreditCard, IdCard, Image, X } from "lucide-react";
+import { AlertCircle, Calendar, Check, CheckCircle2, Clock, CreditCard, Image, X } from "lucide-react";
 import { FC, useState } from "react";
 import EventLoader from "../../motions/loaders/EventLoader";
 import { BookingResponse } from "../../types/BookingClient";
@@ -165,28 +165,6 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     const canCheckOut = checkOutValidation.isValid;
 
     const canMarkNoShow = isNoShowEligible();
-
-    const renderValidId = () => {
-        if (!booking.valid_id) {
-            return (
-                <div className="text-center py-4 bg-gray-50 rounded-lg">
-                    <p className="text-gray-500">No valid ID uploaded</p>
-                </div>
-            );
-        }
-
-        return (
-            <div className="overflow-hidden">
-                <img
-                    src={booking.valid_id}
-                    alt="Valid ID"
-                    loading="lazy"
-                    className="w-full h-auto rounded-lg cursor-zoom-in hover:opacity-90 transition-opacity"
-                    onClick={() => setExpandedImage('validId')}
-                />
-            </div>
-        );
-    };
 
     const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const raw = e.target.value;
@@ -532,22 +510,8 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.3 }}
-                            className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4"
+                            className="mt-4 grid grid-cols-1 md:grid-cols-1 gap-4"
                         >
-                            {/* Valid ID Section */}
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.3 }}
-                                className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200"
-                            >
-                                <h3 className="font-semibold mb-2 text-gray-700 flex items-center">
-                                    <IdCard className="w-4 h-4 mr-2" />
-                                    Valid ID:
-                                </h3>
-                                {renderValidId()}
-                            </motion.div>
-
                             {/* GCash Payment Proof */}
                             <motion.div
                                 initial={{ opacity: 0 }}

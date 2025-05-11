@@ -54,7 +54,6 @@ class BookingSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer()
     room_details = RoomSerializer(source='room', read_only=True)
     area_details = AreaSerializer(source='area', read_only=True)
-    valid_id = serializers.SerializerMethodField()
     payment_proof = serializers.SerializerMethodField()
     payment_method = serializers.CharField(source='get_payment_method_display')
     
@@ -70,7 +69,6 @@ class BookingSerializer(serializers.ModelSerializer):
             'check_in_date',
             'check_out_date',
             'status',
-            'valid_id',
             'special_request',
             'cancellation_date',
             'cancellation_reason',
@@ -127,7 +125,7 @@ class BookingRequestSerializer(serializers.Serializer):
     lastName = serializers.CharField(max_length=100)
     phoneNumber = serializers.CharField(max_length=20)
     specialRequests = serializers.CharField(required=False, allow_blank=True)
-    validId = serializers.FileField(required=True)
+    validId = serializers.FileField(required=False)
     roomId = serializers.CharField()
     checkIn = serializers.DateField()
     checkOut = serializers.DateField()
@@ -223,16 +221,6 @@ class BookingRequestSerializer(serializers.Serializer):
                     )
 
         is_venue_booking = validated_data.get('isVenueBooking', False)
-        
-        valid_id = validated_data.get('validId')
-        if valid_id:
-            try:
-                upload_result = cloudinary.uploader.upload(valid_id)
-                valid_id_url = upload_result['secure_url']
-            except Exception as e:
-                raise serializers.ValidationError(f"Error uploading ID: {str(e)}")
-        else:
-            raise serializers.ValidationError("Valid ID is required")
 
         if hasattr(user, 'role') and user.role == 'guest' and validated_data.get('checkIn'):
             check_in_date = validated_data.get('checkIn')
@@ -266,8 +254,6 @@ class BookingRequestSerializer(serializers.Serializer):
                     check_in_date=validated_data['checkIn'],
                     check_out_date=validated_data['checkOut'],
                     status=validated_data.get('status', 'pending'),
-                    valid_id=valid_id_url,
-                    special_request=validated_data.get('specialRequests', ''),
                     total_price=total_price,
                     is_venue_booking=True,
                     time_of_arrival=validated_data.get('arrivalTime'),
@@ -293,7 +279,6 @@ class BookingRequestSerializer(serializers.Serializer):
                     check_in_date=validated_data['checkIn'],
                     check_out_date=validated_data['checkOut'],
                     status=validated_data.get('status', 'pending'),
-                    valid_id=valid_id_url,
                     special_request=validated_data.get('specialRequests', ''),
                     is_venue_booking=False,
                     total_price=validated_data.get('totalPrice'),

@@ -54,7 +54,7 @@ export interface BookingFormData {
     phoneNumber: string;
     address?: string;
     specialRequests?: string;
-    validId: File | null;
+    validId?: File | null;
     roomId: string | null;
     checkIn: string | null;
     checkOut: string | null;
@@ -73,7 +73,7 @@ export interface ReservationFormData {
     emailAddress?: string;
     address?: string;
     specialRequests?: string;
-    validId: File | null;
+    validId?: File | null;
     areaId: string | null;
     startTime: string | null;
     endTime: string | null;

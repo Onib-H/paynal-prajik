@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { generateReportPreviewHTML } from '../../utils/monthlyReportGenerator';
+import { generateNativePDF, generateReportPreviewHTML } from '../../utils/monthlyReportGenerator';
 import '../../styles/report-modal.css';
 
 interface MonthlyReportModalProps {
@@ -50,34 +50,9 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
     }, [isOpen, reportData, renderReport]);
 
     const handlePrintReport = async () => {
-        if (isLoading || !reportContainerRef.current) return;
-
         try {
-            const printContent = reportContainerRef.current.innerHTML;
-            const iframe = document.createElement('iframe');
-            iframe.style.position = 'absolute';
-            iframe.style.left = '-9999px';
-
-            document.body.appendChild(iframe);
-
-            iframe.contentDocument?.write(`
-                <html>
-                  <head>
-                    <title>${reportData.period} Report</title>
-                    <link rel="stylesheet" href="/styles/report-modal.css">
-                  </head>
-                  <body>
-                    ${printContent}
-                  </body>
-                </html>
-            `);
-
-            iframe.contentDocument?.close();
-
-            iframe.contentWindow?.addEventListener('load', () => {
-                iframe.contentWindow?.print();
-                document.body.removeChild(iframe);
-            }, { once: true });
+            const pdf = generateNativePDF(reportData);
+            pdf.save(`${reportData.period}-monthly-report.pdf`);
         } catch (err) {
             setError(`Failed to print report: ${err instanceof Error ? err.message : String(err)}`);
         }
@@ -156,7 +131,12 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
                     >
                         <div
                             ref={reportContainerRef}
-                            className="p-6 print-container"
+                            className="report-root"
+                            style={{
+                                background: 'white',
+                                margin: '0 auto',
+                                overflow: 'hidden'
+                            }}
                         />
                     </motion.div>
 
@@ -172,7 +152,7 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
                                 disabled={isLoading || !!error}
                                 className="px-4 py-2 cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isLoading ? 'Preparing...' : 'Print Report'}
+                                {isLoading ? 'Preparing...' : 'Download PDF'}
                             </button>
                         </div>
                     </motion.div>
