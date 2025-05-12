@@ -6,12 +6,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchRoomBookings, fetchRoomById } from '../services/Booking';
 import { AmenityObject, BookingData, BookingsByDate, RoomData } from '../types/BookingClient';
+import { useUserContext } from '../contexts/AuthContext';
 
 const isAmenityObject = (amenity: any): amenity is AmenityObject => {
     return amenity && typeof amenity === 'object' && 'description' in amenity;
 }
 
 const BookingCalendar = () => {
+    const { userDetails } = useUserContext();
     const { roomId } = useParams<{ roomId: string }>();
     const [searchParams] = useSearchParams();
     const arrivalParam = searchParams.get("arrival");
@@ -30,6 +32,11 @@ const BookingCalendar = () => {
     const [conflictMessage, setConflictMessage] = useState<string | null>(null);
     const [isSameDayBooking, setIsSameDayBooking] = useState<boolean>(false);
     const [maxDayExceed, setMaxDayExceed] = useState<boolean>(false);
+
+    const isVerifiedUser = userDetails?.is_verified === 'verified';
+    const lastBookingDay = userDetails?.last_booking_date ?
+        startOfDay(parseISO(userDetails.last_booking_date)) : null;
+    const isBookingLocked = !isVerifiedUser && lastBookingDay && isSameDay(lastBookingDay, new Date());
 
     useEffect(() => {
         if (arrivalParam && departureParam) {
@@ -263,7 +270,7 @@ const BookingCalendar = () => {
         }
 
         if (isCheckinDate || isCheckoutDate) return `${className} bg-blue-600 text-white font-medium`;
-        if (isInRange) return `${className} bg-blue-200 text-blue-800`;
+        if (isInRange) return `${className} bg-blue-600 text-white font-medium`;
         if (isHovered) return `${className} bg-blue-100 border border-blue-300 cursor-pointer`;
         if (isToday && !isUnavailable) className += " border-blue-500 border-2";
         if (isUnavailable) return `${className} bg-gray-300 text-gray-500 cursor-not-allowed`;
@@ -334,6 +341,12 @@ const BookingCalendar = () => {
                                     </svg>
                                     <p>{conflictMessage}</p>
                                 </div>
+                            </div>
+                        )}
+
+                        {isBookingLocked && (
+                            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                                <p>⚠️ Daily booking limit reached. Verify your ID to book multiple stays.</p>
                             </div>
                         )}
 
@@ -457,10 +470,6 @@ const BookingCalendar = () => {
                                             <span className="text-sm">Selected Date</span>
                                         </div>
                                         <div className="flex items-center">
-                                            <div className="h-6 w-6 bg-blue-200 mr-2 rounded-full"></div>
-                                            <span className="text-sm">Selected Range</span>
-                                        </div>
-                                        <div className="flex items-center">
                                             <div className="h-6 w-6 bg-gray-300 mr-2 rounded-full"></div>
                                             <span className="text-sm">Unavailable</span>
                                         </div>
@@ -481,7 +490,7 @@ const BookingCalendar = () => {
                         <div className="flex justify-end mt-6">
                             <button
                                 onClick={handleProceed}
-                                disabled={!checkInDate || !checkOutDate || hasConflict || isSameDayBooking || maxDayExceed}
+                                disabled={!checkInDate || !checkOutDate || hasConflict || isSameDayBooking || maxDayExceed || isBookingLocked}
                                 className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${checkInDate && checkOutDate && !hasConflict && !isSameDayBooking && !maxDayExceed
                                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'

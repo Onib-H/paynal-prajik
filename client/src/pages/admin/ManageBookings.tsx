@@ -34,7 +34,7 @@ const ManageBookings: FC = () => {
 
   const { data: bookingsResponse, error, isLoading } = useQuery<BookingQuery>({
     queryKey: ["adminBookings", currentPage, pageSize],
-    queryFn: () => getAllBookings({ page: currentPage, pageSize }),
+    queryFn: () => getAllBookings(currentPage, pageSize),
   });
 
   useWebSockets(webSocketAdminActives, userDetails?.id, {

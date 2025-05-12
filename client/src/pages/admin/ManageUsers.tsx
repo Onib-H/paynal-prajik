@@ -20,6 +20,8 @@ const VALID_EMAIL_PROVIDERS = [
   "ymail.com", "googlemail.com"
 ];
 
+type VerificationStatus = 'unverified' | 'pending' | 'verified';
+
 const ManageUsers: FC = () => {
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
@@ -234,6 +236,30 @@ const ManageUsers: FC = () => {
     }
   }, [formErrors]);
 
+  const getVerificationStatus = (status: VerificationStatus) => {
+    switch (status) {
+      case "verified":
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
+            ✅ Verified
+          </span>
+        );
+      case "pending":
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">
+            ⏳ Pending
+          </span>
+        );
+      case "unverified":
+      default:
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium">
+            ❌ Unverified
+          </span>
+        );
+    }
+  };
+
   if (isLoading) return <ManageAmenitiesSkeleton />;
   if (isError) return <Error />;
 
@@ -257,7 +283,7 @@ const ManageUsers: FC = () => {
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">First Name</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Last Name</th>
                   <th className="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">Verified</th>
+                  <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">Verification Status</th>
                   <th className="px-6 py-3 text-center text-sm font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -275,11 +301,7 @@ const ManageUsers: FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-700">{user.last_name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-lg text-gray-700">{user.email}</td>
                     <td className="px-6 py-4 text-center whitespace-nowrap">
-                      {user.is_verified ? (
-                        <span className="text-green-500 font-semibold text-sm uppercase bg-green-100 rounded-full px-2 py-1">Verified</span>
-                      ) : (
-                        <span className="text-red-500 font-semibold text-sm uppercase bg-red-100 rounded-full px-2 py-1">Not Verified</span>
-                      )}
+                      {getVerificationStatus(user.is_verified)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-center">
                       <div className="flex items-center justify-center space-x-2">

@@ -5,13 +5,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchAreaBookings, fetchAreaById } from '../services/Booking';
 import { AreaData, BookingData, BookingsByDate } from '../types/BookingClient';
+import { useUserContext } from '../contexts/AuthContext';
 
 const VenueBookingCalendar = () => {
+    const { userDetails } = useUserContext();
     const { areaId } = useParams<{ areaId: string }>();
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
-
     const arrivalParam = searchParams.get("arrival");
+    const navigate = useNavigate();
 
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -19,6 +20,11 @@ const VenueBookingCalendar = () => {
     const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
     const [price, setPrice] = useState<number>(0);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    const isVerifiedUser = userDetails?.is_verified === 'verified';
+    const lastBookingDay = userDetails?.last_booking_date ?
+        startOfDay(parseISO(userDetails.last_booking_date)) : null;
+    const isBookingLocked = !isVerifiedUser && lastBookingDay && isSameDay(lastBookingDay, new Date());
 
     useEffect(() => {
         if (arrivalParam) {
@@ -227,6 +233,12 @@ const VenueBookingCalendar = () => {
                             </div>
                         )}
 
+                        {isBookingLocked && (
+                            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                                <p>⚠️ Daily booking limit reached. Verify your ID to book multiple stays.</p>
+                            </div>
+                        )}
+
                         {!arrivalParam && isTodayUnavailable() && (
                             <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded-md">
                                 <p>⚠️ Note: Today's date is unavailable for new bookings after 5:00 PM.
@@ -376,7 +388,7 @@ const VenueBookingCalendar = () => {
                         <div className="flex justify-end mt-6">
                             <button
                                 onClick={handleProceed}
-                                disabled={!selectedDate}
+                                disabled={!selectedDate || isBookingLocked}
                                 className={`px-6 py-2 rounded-md font-semibold ${selectedDate
                                     ? 'text-white bg-blue-600 hover:bg-blue-700 cursor-pointer'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'

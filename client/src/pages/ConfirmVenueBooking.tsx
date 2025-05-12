@@ -28,7 +28,7 @@ const ConfirmVenueBooking = () => {
   const [showSignupModal, setShowSignupModal] = useState<boolean>(false);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [pendingFormData, setPendingFormData] = useState<ReservationFormData | null>(null);
-   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [gcashProof, setGcashProof] = useState<File | null>(null);
   const [gcashPreview, setGcashPreview] = useState<string | null>(null);
   const [showGCashModal, setShowGCashModal] = useState<boolean>(false);
@@ -99,13 +99,20 @@ const ConfirmVenueBooking = () => {
 
   const onSubmit: SubmitHandler<FormData> = (data) => {
     if (isSubmitting) return;
-    if (!gcashProof) return;
-    if (!areaId || !startTime || !endTime || !totalPrice) return;
+    if (paymentMethod === 'gcash' && !gcashProof) {
+      alert("Please upload GCash payment proof");
+      return;
+    }
+    if (!areaId || !startTime || !endTime || !totalPrice) {
+      alert("Missing booking information. Please try again.");
+      return;
+    }
 
     const reservationData: ReservationFormData = {
       firstName: data.firstName,
       lastName: data.lastName,
       phoneNumber: data.phoneNumber.replace(/\s+/g, ""),
+      specialRequests: data.specialRequests || "",
       areaId: areaId!,
       startTime: new Date(startTime).toISOString(),
       endTime: new Date(endTime).toISOString(),
@@ -125,8 +132,10 @@ const ConfirmVenueBooking = () => {
     if (!pendingFormData) return;
 
     if (paymentMethod === 'gcash') {
-      if (!gcashProof) return;
-      if (typeof gcashProof === 'string') return;
+      if (!gcashProof) {
+        alert("Please upload GCash payment proof");
+        return;
+      }
     }
 
     setShowConfirmModal(false);
@@ -137,8 +146,6 @@ const ConfirmVenueBooking = () => {
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=true`);
     } catch (error: any) {
       console.error(`Error creating reservation: ${error}`);
-      throw error;
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -464,11 +471,15 @@ const ConfirmVenueBooking = () => {
                       <img
                         src={gcashPreview}
                         alt="Payment Proof for GCash"
-                        className="w-full h-full object-contain"
+                        className="w-full h-auto object-contain"
                         loading="lazy"
                       />
                       <button
-                        onClick={() => setGcashPreview(null)}
+                        onClick={() => {
+                          setGcashPreview(null);
+                          setGcashProof(null);
+                          setValue('paymentMethod', 'physical', { shouldValidate: true });
+                        }}
                         className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 cursor-pointer"
                         aria-label="Remove image"
                       >

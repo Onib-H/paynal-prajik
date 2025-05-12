@@ -8,6 +8,9 @@ interface User {
     username: string;
     email: string;
     profile_image?: string;
+    is_verified?: string;
+    last_booking_date?: string | null;
+    role?: string;
 }
 
 interface UserContextType {

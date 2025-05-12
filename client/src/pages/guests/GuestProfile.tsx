@@ -533,7 +533,7 @@ const GuestProfile = () => {
                         <Key className="h-5 w-5 text-gray-500 mr-3" />
                         <div>
                           <span className="block text-sm font-medium text-gray-700">Password</span>
-                          <span className="text-gray-600">{guestData.password}</span>
+                          <span className="text-gray-600">••••••••</span>
                         </div>
                       </div>
                       <motion.button

@@ -135,35 +135,33 @@ const ConfirmBooking = () => {
     e.preventDefault();
     setDateError(null);
 
-    if (!selectedArrival || !selectedDeparture) {
-      return setDateError("Please select both dates.");
-    }
-
-    if (new Date(selectedDeparture) <= new Date(selectedArrival)) {
-      return setDateError("Check-out date must be after check-in date.");
-    }
+    if (!selectedArrival || !selectedDeparture) return setDateError("Please select both dates.");
+    if (new Date(selectedDeparture) <= new Date(selectedArrival)) return setDateError("Check-out date must be after check-in date.");
 
     setDateSelectionCompleted(true);
   };
 
   const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
+    console.log({...data})
+    
     if (isSubmitting) return;
     if (paymentMethod === 'gcash' && !gcashProof) return;
 
     const booking: BookingFormData = {
       firstName: data.firstName,
       lastName: data.lastName,
-      phoneNumber: data.phoneNumber,
-      specialRequests: data.specialRequests,
+      phoneNumber: data.phoneNumber.replace(/\s+/g, ""),
+      specialRequests: data.specialRequests || "",
       roomId: roomId!,
-      checkIn: selectedArrival,
-      checkOut: selectedDeparture,
+      check_in_date: selectedArrival,
+      check_out_date: selectedDeparture,
       arrivalTime: data.arrivalTime,
       numberOfGuests: data.numberOfGuests,
       totalPrice: calculatedTotalPrice,
       paymentMethod: data.paymentMethod,
       paymentProof: gcashProof
     };
+
     setPendingFormData(booking);
     setShowConfirmModal(true);
   };
@@ -172,8 +170,10 @@ const ConfirmBooking = () => {
     if (!pendingFormData) return;
 
     if (paymentMethod === 'gcash') {
-      if (!gcashProof) return;
-      if (typeof gcashProof === 'string') return;
+      if (!gcashProof) {
+        alert("Please upload GCash payment proof");
+        return;
+      }
     }
 
     setShowConfirmModal(false);
@@ -184,9 +184,8 @@ const ConfirmBooking = () => {
       navigate(`/booking-accepted?bookingId=${response.id}&isVenue=false`);
     } catch (err: any) {
       console.error(`Error creating booking: ${err}`);
-      throw err;
-    } finally {
       setIsSubmitting(false);
+      alert(`Failed to create booking: ${err?.response?.data?.message || "Unknown error occurred"}`);
     }
   };
 
@@ -533,6 +532,7 @@ const ConfirmBooking = () => {
                         onClick={() => {
                           setGcashPreview(null);
                           setGcashProof(null);
+                          setValue('paymentMethod', 'physical', { shouldValidate: true });
                         }}
                         className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-md hover:bg-gray-100 cursor-pointer"
                         aria-label="Remove image"

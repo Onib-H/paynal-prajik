@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, FC, useContext, useEffect, useState } from 'react';
 import { getUserBookingsForToday } from '../services/Booking';
 import { useUserContext } from './AuthContext';
 
@@ -10,7 +10,7 @@ interface BookingLimitContextType {
     maxLimit: number;
     isLoading: boolean;
     refreshLimit: () => void;
-}
+}   
 
 const BookingLimitContext = createContext<BookingLimitContextType>({
     canBook: true,
@@ -22,11 +22,11 @@ const BookingLimitContext = createContext<BookingLimitContextType>({
 
 export const useBookingLimit = () => useContext(BookingLimitContext);
 
-export const BookingLimitProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const BookingLimitProvider: FC<{ children: React.ReactNode }> = ({ children }) => {
     const [currentBookings, setCurrentBookings] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const { isAuthenticated, userDetails } = useUserContext();
-    const maxLimit = 3;
+    const maxLimit = 1;
 
     const fetchBookingCount = async () => {
         if (!isAuthenticated || !userDetails?.id) {

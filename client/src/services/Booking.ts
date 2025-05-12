@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookingFormData, BookingResponse, ReservationFormData } from "../types/BookingClient";
-import { createBookingFormData } from "../utils/booking";
 import { booking } from "./_axios";
 
 export const fetchBookings = async (page: number, pageSize: number): Promise<{
@@ -74,7 +73,29 @@ export const fetchAvailability = async (arrival: string, departure: string) => {
 
 export const createBooking = async (bookingData: BookingFormData) => {
   try {
-    const formData = createBookingFormData(bookingData);
+    const formData = new FormData();
+
+    // Add basic user information
+    formData.append("firstName", bookingData.firstName);
+    formData.append("lastName", bookingData.lastName);
+    formData.append("phoneNumber", bookingData.phoneNumber);
+    formData.append("specialRequests", bookingData.specialRequests || "");
+    formData.append("roomId", bookingData.roomId);
+    formData.append("check_in_date", bookingData.check_in_date);
+    formData.append("check_out_date", bookingData.check_out_date);
+    
+    if (bookingData.arrivalTime) {
+      formData.append("arrivalTime", bookingData.arrivalTime);
+    }
+    
+    formData.append("numberOfGuests", bookingData.numberOfGuests.toString());
+    formData.append("totalPrice", bookingData.totalPrice.toString());
+    formData.append("paymentMethod", bookingData.paymentMethod);
+    formData.append("isVenueBooking", "false");
+    
+    if (bookingData.paymentMethod === 'gcash' && bookingData.paymentProof) {
+      formData.append("paymentProof", bookingData.paymentProof);
+    }
 
     const response = await booking.post("/bookings", formData, {
       headers: {
@@ -98,51 +119,37 @@ export const createReservation = async (reservationData: ReservationFormData) =>
     formData.append("lastName", reservationData.lastName);
     formData.append("phoneNumber", reservationData.phoneNumber);
     formData.append("specialRequests", reservationData.specialRequests || "");
-
-    if (reservationData.validId) {
-      formData.append("validId", reservationData.validId);
-    }
-
     formData.append("roomId", reservationData.areaId || "");
-
+    formData.append("isVenueBooking", "true");
+    formData.append("status", reservationData.status || "pending");
+    
     if (reservationData.startTime) {
       const startDate = new Date(reservationData.startTime);
       const formattedStartDate = startDate.toISOString().split("T")[0];
-      formData.append("checkIn", formattedStartDate);
+      formData.append("check_in_date", formattedStartDate);
+      
+      const hours = startDate.getHours().toString().padStart(2, '0');
+      const minutes = startDate.getMinutes().toString().padStart(2, '0');
+      formData.append("startTime", `${hours}:${minutes}`);
     }
 
     if (reservationData.endTime) {
       const endDate = new Date(reservationData.endTime);
       const formattedEndDate = endDate.toISOString().split("T")[0];
-      formData.append("checkOut", formattedEndDate);
-    }
-
-    formData.append("isVenueBooking", "true");
-    formData.append("status", reservationData.status || "pending");
-
-    if (reservationData.startTime) {
-      const date = new Date(reservationData.startTime);
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
-      formData.append("startTime", `${hours}:${minutes}`);
-    }
-
-    if (reservationData.endTime) {
-      const date = new Date(reservationData.endTime);
-      const hours = date.getHours().toString().padStart(2, '0');
-      const minutes = date.getMinutes().toString().padStart(2, '0');
+      formData.append("check_out_date", formattedEndDate);
+      
+      const hours = endDate.getHours().toString().padStart(2, '0');
+      const minutes = endDate.getMinutes().toString().padStart(2, '0');
       formData.append("endTime", `${hours}:${minutes}`);
     }
 
-    if (reservationData.totalPrice) {
-      formData.append("totalPrice", reservationData.totalPrice.toString());
-    }
-
+    formData.append("totalPrice", reservationData.totalPrice?.toString() || "0");
+    
     if (reservationData.numberOfGuests !== undefined) {
       formData.append("numberOfGuests", reservationData.numberOfGuests.toString());
     }
 
-    formData.append('paymentMethod', reservationData.paymentMethod)
+    formData.append('paymentMethod', reservationData.paymentMethod);
 
     if (reservationData.paymentMethod === 'gcash' && reservationData.paymentProof) {
       formData.append("paymentProof", reservationData.paymentProof);

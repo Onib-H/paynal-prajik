@@ -28,6 +28,8 @@ export interface IUser {
     confirm_password: string;
     role: string;
     profile_image?: string;
+    last_booking_date?: Date;
+    is_verified?: string;
 }
 
 export interface IUserFormModalProps {
