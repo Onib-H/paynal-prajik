@@ -631,6 +631,8 @@ def user_login(request):
             'last_name': auth_user.last_name,
             'role': auth_user.role,
             'profile_image': auth_user.profile_image.url if auth_user.profile_image else "",
+            'is_verified': user.is_verified,
+            'last_booking_date': user.last_booking_date
         }
         
         response = Response({
@@ -684,6 +686,8 @@ def user_auth(request):
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'profile_image': user.profile_image.url if user.profile_image else "",
+                'is_verified': user.is_verified,
+                'last_booking_date': user.last_booking_date
             }
         }, status=status.HTTP_200_OK)
     except Exception as e:

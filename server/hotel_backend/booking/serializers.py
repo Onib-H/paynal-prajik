@@ -178,6 +178,17 @@ class BookingRequestSerializer(serializers.Serializer):
             'validated_data': validated_data,
             'is_venue_booking': validated_data.get('isVenueBooking', False)
         })
+
+        if hasattr(user, 'role') and user.role == 'guest' and validated_data.get('checkIn'):
+            check_in_date = validated_data.get('checkIn')
+            today = timezone.now().date()
+
+            if user.is_verified != 'verified' and check_in_date == today:
+                if user.last_booking_date == today:
+                    raise serializers.ValidationError("You have already booked a room today.")
+                
+                user.last_booking_date = today
+                user.save()
         
         if payment_method == 'gcash':
             try:

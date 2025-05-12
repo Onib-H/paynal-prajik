@@ -233,7 +233,7 @@ const VenueBookingCalendar = () => {
                             </div>
                         )}
 
-                        {isBookingLocked && (
+                        {!isVerifiedUser && (
                             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
                                 <p>⚠️ Daily booking limit reached. Verify your ID to book multiple stays.</p>
                             </div>
@@ -388,7 +388,7 @@ const VenueBookingCalendar = () => {
                         <div className="flex justify-end mt-6">
                             <button
                                 onClick={handleProceed}
-                                disabled={!selectedDate || isBookingLocked}
+                                disabled={!selectedDate || isBookingLocked || !isVerifiedUser}
                                 className={`px-6 py-2 rounded-md font-semibold ${selectedDate
                                     ? 'text-white bg-blue-600 hover:bg-blue-700 cursor-pointer'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'

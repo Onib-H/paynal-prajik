@@ -344,13 +344,12 @@ const BookingCalendar = () => {
                             </div>
                         )}
 
-                        {isBookingLocked && (
+                        {!isVerifiedUser && (
                             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
                                 <p>⚠️ Daily booking limit reached. Verify your ID to book multiple stays.</p>
                             </div>
                         )}
 
-                        {/* Display same-day booking warning */}
                         {isSameDayBooking && (
                             <div className="mb-6 p-4 bg-amber-50 border border-amber-300 text-amber-800 rounded-lg">
                                 <div className="flex items-center">
@@ -490,7 +489,7 @@ const BookingCalendar = () => {
                         <div className="flex justify-end mt-6">
                             <button
                                 onClick={handleProceed}
-                                disabled={!checkInDate || !checkOutDate || hasConflict || isSameDayBooking || maxDayExceed || isBookingLocked}
+                                disabled={!checkInDate || !checkOutDate || hasConflict || isSameDayBooking || maxDayExceed || isBookingLocked || !isVerifiedUser}
                                 className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${checkInDate && checkOutDate && !hasConflict && !isSameDayBooking && !maxDayExceed
                                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'

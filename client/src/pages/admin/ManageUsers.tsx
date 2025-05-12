@@ -123,7 +123,7 @@ const ManageUsers: FC = () => {
     }
   };
 
-  const isGuestUnverified = (user: IUser) => user.role === "guest" && user.is_verified === 'unverified';
+  const isEditBtnRestricted = (user: IUser) => user.role === "guest" && user.is_verified !== 'pending';
 
   if (isLoading) return <ManageAmenitiesSkeleton />;
   if (isError) return <Error />;
@@ -171,13 +171,13 @@ const ManageUsers: FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-center">
                       <div className="flex items-center justify-center space-x-2">
                         <button
-                          onClick={() => !isGuestUnverified(user) && handleEdit(user)}
+                          onClick={() => !isEditBtnRestricted(user) && handleEdit(user)}
                           className={`
                             bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md transition-colors duration-300
-                            ${isGuestUnverified(user) ? "opacity-50 cursor-not-allowed hover:bg-blue-600" : "cursor-pointer"}
+                            ${isEditBtnRestricted(user) ? "opacity-50 cursor-not-allowed hover:bg-blue-600" : "cursor-pointer"}
                           `}
-                          title="Edit User"
-                          disabled={isGuestUnverified(user)}
+                          title={isEditBtnRestricted(user) ? "Guest is not verified" : "Edit User"}
+                          disabled={isEditBtnRestricted(user)}
                         >
                           <PencilIcon className="h-5 w-5" />
                         </button>
