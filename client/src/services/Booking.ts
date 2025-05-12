@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookingFormData, BookingResponse, ReservationFormData } from "../types/BookingClient";
+import { createBookingFormData } from "../utils/booking";
 import { booking } from "./_axios";
 
 export const fetchBookings = async (page: number, pageSize: number): Promise<{
@@ -73,29 +74,7 @@ export const fetchAvailability = async (arrival: string, departure: string) => {
 
 export const createBooking = async (bookingData: BookingFormData) => {
   try {
-    const formData = new FormData();
-
-    // Add basic user information
-    formData.append("firstName", bookingData.firstName);
-    formData.append("lastName", bookingData.lastName);
-    formData.append("phoneNumber", bookingData.phoneNumber);
-    formData.append("specialRequests", bookingData.specialRequests || "");
-    formData.append("roomId", bookingData.roomId);
-    formData.append("check_in_date", bookingData.check_in_date);
-    formData.append("check_out_date", bookingData.check_out_date);
-    
-    if (bookingData.arrivalTime) {
-      formData.append("arrivalTime", bookingData.arrivalTime);
-    }
-    
-    formData.append("numberOfGuests", bookingData.numberOfGuests.toString());
-    formData.append("totalPrice", bookingData.totalPrice.toString());
-    formData.append("paymentMethod", bookingData.paymentMethod);
-    formData.append("isVenueBooking", "false");
-    
-    if (bookingData.paymentMethod === 'gcash' && bookingData.paymentProof) {
-      formData.append("paymentProof", bookingData.paymentProof);
-    }
+    const formData = createBookingFormData(bookingData);
 
     const response = await booking.post("/bookings", formData, {
       headers: {
@@ -115,6 +94,7 @@ export const createReservation = async (reservationData: ReservationFormData) =>
   try {
     const formData = new FormData();
 
+    // Add basic user information
     formData.append("firstName", reservationData.firstName);
     formData.append("lastName", reservationData.lastName);
     formData.append("phoneNumber", reservationData.phoneNumber);
@@ -126,7 +106,7 @@ export const createReservation = async (reservationData: ReservationFormData) =>
     if (reservationData.startTime) {
       const startDate = new Date(reservationData.startTime);
       const formattedStartDate = startDate.toISOString().split("T")[0];
-      formData.append("check_in_date", formattedStartDate);
+      formData.append("checkIn", formattedStartDate);
       
       const hours = startDate.getHours().toString().padStart(2, '0');
       const minutes = startDate.getMinutes().toString().padStart(2, '0');
@@ -136,7 +116,7 @@ export const createReservation = async (reservationData: ReservationFormData) =>
     if (reservationData.endTime) {
       const endDate = new Date(reservationData.endTime);
       const formattedEndDate = endDate.toISOString().split("T")[0];
-      formData.append("check_out_date", formattedEndDate);
+      formData.append("checkOut", formattedEndDate);
       
       const hours = endDate.getHours().toString().padStart(2, '0');
       const minutes = endDate.getMinutes().toString().padStart(2, '0');

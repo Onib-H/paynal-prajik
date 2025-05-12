@@ -19,6 +19,12 @@ class CustomUsers(AbstractUser):
         ('student_id', 'Student ID'),
         ('other', 'Other Government-Issued ID'),
     ]
+    VALID_ID_STATUS = [
+        ('unverified', 'Unverified'),
+        ('pending', 'Pending'),
+        ('rejected', 'Rejected'),
+        ('verified', 'Verified')
+    ]
     email = models.EmailField(unique=True, max_length=200)
     password = models.CharField(max_length=200)
     role = models.CharField(
@@ -32,8 +38,9 @@ class CustomUsers(AbstractUser):
     valid_id_type = models.CharField(max_length=60, null=True, blank=True, choices=VALID_ID_CHOICES)
     valid_id_front = CloudinaryField('valid_id_front', null=True, blank=True)
     valid_id_back = CloudinaryField('valid_id_back', null=True, blank=True)
-    is_verified = models.BooleanField(default=False)
-    
+    is_verified = models.CharField(max_length=60, null=True, blank=True, choices=VALID_ID_STATUS, default='unverified')
+    valid_id_rejection_reason = models.TextField(null=True, blank=True)
+
     class Meta: 
         db_table = 'users'
     

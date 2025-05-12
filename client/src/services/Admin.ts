@@ -291,6 +291,32 @@ export const restoreUser = async (userId: number) => {
   }
 };
 
+export const approveValidId = async (userId: number) => {
+  try {
+    const response = await ADMIN.put(`/approve_valid_id/${userId}`, {}, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to approve valid ID: ${error}`);
+    throw error;
+  }
+};
+
+export const rejectValidId = async (userId: number, reason: string) => {
+  try {
+    const response = await ADMIN.put(`/reject_valid_id/${userId}`, {
+      reason,
+    }, {
+      withCredentials: true,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to reject valid ID: ${error}`);
+    throw error;
+  }
+};
+
 // CRUD Rooms
 export const fetchRooms = async (page: number, pageSize: number) => {
   try {

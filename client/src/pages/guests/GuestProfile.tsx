@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, CheckCircle, Eye, EyeOff, IdCard, ImageUp, Key, Mail, Save, ShieldCheck, User, X } from "lucide-react";
+import { AlertCircle, CheckCircle, Eye, EyeOff, IdCard, ImageUp, Key, Mail, Save, User, X, XCircle } from "lucide-react";
 import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useNavigate, useParams } from "react-router-dom";
@@ -138,9 +138,9 @@ const GuestProfile = () => {
 
   const handleIdUpload = useCallback((idType: string, frontFile: File, backFile: File) => {
     const formData = new FormData();
-    formData.append('id_type', idType);
-    formData.append("front_id", frontFile);
-    formData.append("back_id", backFile);
+    formData.append('valid_id_type', idType);
+    formData.append("valid_id_front", frontFile);
+    formData.append("valid_id_back", backFile);
     validIdUploadMutation.mutate(formData);
   }, [validIdUploadMutation]);
 
@@ -156,7 +156,6 @@ const GuestProfile = () => {
   const handleSaveProfile = (data: FormFields) => {
     updateProfileMutation.mutate(data);
   };
-
 
   const handleCancelEdit = () => {
     if (userDetails) {
@@ -201,6 +200,56 @@ const GuestProfile = () => {
       [field]: !prev[field]
     }));
   };
+
+  const getVerificationStatus = (status: string) => {
+    switch (status) {
+      case 'verified':
+        return (
+          <>
+            <CheckCircle className="h-6 w-6 text-green-600 mr-3" />
+            <div>
+              <span className="block text-sm font-medium text-green-600">
+                Verified Account
+              </span>
+              <span className="text-gray-600 text-sm">
+                Your ID has been successfully verified
+              </span>
+            </div>
+          </>
+        );
+
+      case 'pending':
+        return (
+          <>
+            <AlertCircle className="h-6 w-6 text-yellow-600 mr-3" />
+            <div>
+              <span className="block text-sm font-medium text-yellow-600">
+                Pending Verification
+              </span>
+              <span className="text-gray-600 text-sm">
+                Admin has processing your valid ID for account verification.
+              </span>
+            </div>
+          </>
+        );
+
+      case 'unverified':
+      default:
+        return (
+          <>
+            <XCircle className="h-6 w-6 text-red-600 mr-3" />
+            <div>
+              <span className="block text-sm font-medium text-red-600">
+                Unverified Account
+              </span>
+              <span className="text-gray-600 text-sm">
+                You have not submitted a valid ID yet
+              </span>
+            </div>
+          </>
+        );
+    }
+  }
 
   const guestData = profile?.data;
   const displayImage = guestData?.profile_image || profileImage;
@@ -365,9 +414,12 @@ const GuestProfile = () => {
               <div className="text-center sm:text-left mb-4 sm:mb-0">
                 <motion.h1
                   variants={itemVariants}
-                  className="text-2xl sm:text-3xl font-bold text-gray-900"
+                  className="flex items-center text-2xl sm:text-3xl font-bold text-gray-900"
                 >
-                  {guestData?.first_name} {guestData?.last_name} {guestData?.is_verified ? <ShieldCheck className="text-green-500" /> : null}
+                  {guestData?.first_name} {guestData?.last_name}
+                  {guestData?.is_verified === 'verified' && (
+                    <CheckCircle className="ml-2 h-6 w-6 text-green-500" />
+                  )}
                 </motion.h1>
                 <motion.div
                   variants={itemVariants}
@@ -610,31 +662,7 @@ const GuestProfile = () => {
                 {/* Verification Status */}
                 <div className="mb-1">
                   <div className="flex items-center p-1 bg-gray-50 rounded-lg">
-                    {guestData?.is_verified ? (
-                      <>
-                        <CheckCircle className="h-6 w-6 text-green-600 mr-3" />
-                        <div>
-                          <span className="block text-sm font-medium text-green-600">
-                            Verified Account
-                          </span>
-                          <span className="text-gray-600 text-sm">
-                            Your ID has been successfully verified
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-6 w-6 text-yellow-600 mr-3" />
-                        <div>
-                          <span className="block text-sm font-medium text-yellow-600">
-                            Pending Verification
-                          </span>
-                          <span className="text-gray-600 text-sm">
-                            Please upload both sides of your valid ID
-                          </span>
-                        </div>
-                      </>
-                    )}
+                    {getVerificationStatus(guestData?.is_verified)}
                   </div>
                 </div>
 

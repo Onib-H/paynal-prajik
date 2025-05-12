@@ -46,7 +46,8 @@ urlpatterns = [
     path('show_user/<int:user_id>', views.show_user_details, name='show_user_details'),
     path('edit_user/<int:user_id>', views.manage_user, name='manage_user'),
     path('archived_user/<int:user_id>', views.archive_user, name='archive_user'),
-    path('verify_user/<int:user_id>', views.verify_guest_user, name='verify_guest_user'),
+    path('approve_valid_id/<int:user_id>', views.approve_valid_id, name='approve_valid_id'),
+    path('reject_valid_id/<int:user_id>', views.reject_valid_id, name='reject_valid_id'),
 
     # Archived Users Management
     path('archived_users', views.fetch_archived_users, name='fetch_archived_users'),

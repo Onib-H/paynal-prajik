@@ -1054,37 +1054,54 @@ def archive_user(request, user_id):
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def verify_guest_user(request, user_id):
+def approve_valid_id(request, user_id):
     try:
         user = CustomUsers.objects.get(id=user_id)
-        is_verified = request.data.get('is_verified', None)
-        
-        if is_verified is None:
-            return Response({
-                'error': 'is_verified field is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-            
-        user.is_verified = bool(is_verified)
+        user.is_verified = 'verified'
+        user.valid_id_rejection_reason = None
         user.save()
-        
-        if user.is_verified:
-            Notification.objects.create(
-                user=user,
-                message="Your account has been verified.",
-                notification_type="verified"
-            )
-        else:
-            Notification.objects.create(
-                user=user,
-                message="Your account has been unverified.",
-                notification_type="unverified"
-            )
+        Notification.objects.create(
+            user=user,
+            message="Your account has been verified!",
+            notification_type="verified"
+        )
         return Response({
-            'message': 'User verification status updated successfully',
+            'message': 'Valid ID approved',
             'user_id': user.id,
             'is_verified': user.is_verified,
-            'valid_id_type': user.valid_id_type,
-            'valid_id_type_display': user.get_valid_id_type_display(),
+            'valid_id_rejection_reason': user.valid_id_rejection_reason
+        }, status=status.HTTP_200_OK)
+    except CustomUsers.DoesNotExist:
+        return Response({
+            'error': 'User not found'
+        }, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def reject_valid_id(request, user_id):
+    try:
+        user = CustomUsers.objects.get(id=user_id)
+        reason = request.data.get('reason')
+        if not reason:
+            return Response(
+                {'error': 'Rejection reason is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user.is_verified = False
+        user.valid_id_rejection_reason = reason
+        user.save()
+        Notification.objects.create(
+            user=user,
+            message=f"Your ID was rejected: {reason}",
+            notification_type="rejected"
+        )
+        return Response({
+            'message': 'Valid ID rejected',
+            'user_id': user.id,
+            'is_verified': user.is_verified,
+            'valid_id_rejection_reason': user.valid_id_rejection_reason,
         }, status=status.HTTP_200_OK)
     except CustomUsers.DoesNotExist:
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)

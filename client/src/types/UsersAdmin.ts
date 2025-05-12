@@ -29,6 +29,10 @@ export interface IUser {
     role: string;
     profile_image?: string;
     last_booking_date?: Date;
+    is_archived?: boolean;
+    valid_id_front?: string;
+    valid_id_back?: string;
+    valid_id_type?: string;
     is_verified?: string;
 }
 

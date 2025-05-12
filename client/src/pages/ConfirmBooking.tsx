@@ -141,20 +141,18 @@ const ConfirmBooking = () => {
     setDateSelectionCompleted(true);
   };
 
-  const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
-    console.log({...data})
-    
+  const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {    
     if (isSubmitting) return;
     if (paymentMethod === 'gcash' && !gcashProof) return;
 
     const booking: BookingFormData = {
       firstName: data.firstName,
       lastName: data.lastName,
-      phoneNumber: data.phoneNumber.replace(/\s+/g, ""),
+      phoneNumber: data.phoneNumber,
       specialRequests: data.specialRequests || "",
       roomId: roomId!,
-      check_in_date: selectedArrival,
-      check_out_date: selectedDeparture,
+      checkIn: selectedArrival,
+      checkOut: selectedDeparture,
       arrivalTime: data.arrivalTime,
       numberOfGuests: data.numberOfGuests,
       totalPrice: calculatedTotalPrice,
@@ -185,7 +183,6 @@ const ConfirmBooking = () => {
     } catch (err: any) {
       console.error(`Error creating booking: ${err}`);
       setIsSubmitting(false);
-      alert(`Failed to create booking: ${err?.response?.data?.message || "Unknown error occurred"}`);
     }
   };
 

@@ -173,6 +173,11 @@ class BookingRequestSerializer(serializers.Serializer):
         payment_proof_file = request.FILES.get('paymentProof')
         payment_method = validated_data.get('paymentMethod', 'physical')
         payment_proof_url = None
+
+        print(f'Backend BookingRequestSerializer.create() called with data: ', {
+            'validated_data': validated_data,
+            'is_venue_booking': validated_data.get('isVenueBooking', False)
+        })
         
         if payment_method == 'gcash':
             try:

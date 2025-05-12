@@ -1,43 +1,25 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
-import { AtSign, PencilIcon, TrashIcon, UserRound } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import { PencilIcon, TrashIcon } from "lucide-react";
 import { FC, useCallback, useState } from "react";
 import { toast } from "react-toastify";
-import DefaultProfilePic from "../../assets/Default_pfp.jpg";
 import EditUserModal from "../../components/admin/EditUserModal";
-import { IUser } from "../../types/UsersAdmin";
 import Modal from "../../components/Modal";
 import EventLoader from "../../motions/loaders/EventLoader";
 import { archiveUser, fetchAllUsers, manageUser } from "../../services/Admin";
-import { CreateUserFormData } from "../../types/UsersAdmin";
+import { IUser } from "../../types/UsersAdmin";
 import Error from "../_ErrorBoundary";
 import ManageAmenitiesSkeleton from "../../motions/skeletons/ManageAmenitiesSkeleton";
-
-const VALID_EMAIL_PROVIDERS = [
-  "gmail.com", "yahoo.com", "yahoo.com.ph", "outlook.com", "hotmail.com",
-  "aol.com", "icloud.com", "live.com", "msn.com", "hotmail.co.uk",
-  "ymail.com", "googlemail.com"
-];
 
 type VerificationStatus = 'unverified' | 'pending' | 'verified';
 
 const ManageUsers: FC = () => {
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-  const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [editModal, setEditModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [createFormData, setCreateFormData] = useState<CreateUserFormData>({
-    email: "",
-    password: "",
-    confirmPassword: "",
-    firstName: "",
-    lastName: "",
-    role: "admin",
-  });
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const queryClient = useQueryClient();
   const pageSize = 6;
@@ -65,34 +47,6 @@ const ManageUsers: FC = () => {
     },
     onError: () => {
       toast.error("Failed to update user");
-      setIsSubmitting(false);
-    }
-  });
-
-  const createMutation = useMutation({
-    mutationFn: (payload: FormData) => manageUser(0, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success("User created successfully");
-      setShowCreateModal(false);
-      setIsSubmitting(false);
-      setCreateFormData({
-        email: "",
-        password: "",
-        confirmPassword: "",
-        firstName: "",
-        lastName: "",
-        role: "admin",
-      });
-    },
-    onError: (error) => {
-      const errorResponse = error as { response?: { data?: { email?: string; password?: string; error?: string } } };
-      const errorData = errorResponse.response?.data || {};
-
-      if (errorData.email) setFormErrors(prev => ({ ...prev, email: errorData.email }));
-      if (errorData.password) setFormErrors(prev => ({ ...prev, password: errorData.password }));
-
-      toast.error("Failed to create user");
       setIsSubmitting(false);
     }
   });
@@ -145,120 +99,31 @@ const ManageUsers: FC = () => {
     await updateMutation.mutateAsync({ id: user.id, payload: formData });
   }, [updateMutation]);
 
-  const handleCreateUser = useCallback(async () => {
-    setFormErrors({});
-
-    if (!createFormData.email) {
-      setFormErrors(prev => ({ ...prev, email: "Email is required" }));
-      return;
-    }
-
-    if (!createFormData.email.includes('@')) {
-      setFormErrors(prev => ({ ...prev, email: "Invalid email address" }));
-      return;
-    }
-
-    const domain = createFormData.email.split('@')[1];
-    if (!domain || !VALID_EMAIL_PROVIDERS.includes(domain)) {
-      setFormErrors(prev => ({
-        ...prev,
-        email: `Invalid email domain. ${domain || ''} is not a valid email provider.`
-      }));
-      return;
-    }
-
-    if (!createFormData.password) {
-      setFormErrors(prev => ({ ...prev, password: "Password is required" }));
-      return;
-    }
-
-    const passwordRegex = /^(?=.*[A-Z])(?=.*[@$!%*?&])(?=.*\d)(?!.*\s).{6,}$/;
-    if (!passwordRegex.test(createFormData.password)) {
-      setFormErrors(prev => ({
-        ...prev,
-        password: "Password must contain at least one uppercase letter, one special character, one number, and no spaces."
-      }));
-      return;
-    }
-
-    if (createFormData.password !== createFormData.confirmPassword) {
-      setFormErrors(prev => ({ ...prev, confirmPassword: "Passwords do not match" }));
-      return;
-    }
-
-    if (!createFormData.firstName) {
-      setFormErrors(prev => ({ ...prev, firstName: "First name is required" }));
-      return;
-    }
-
-    if (!createFormData.lastName) {
-      setFormErrors(prev => ({ ...prev, lastName: "Last name is required" }));
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    const formData = new FormData();
-    formData.append("first_name", createFormData.firstName);
-    formData.append("last_name", createFormData.lastName);
-    formData.append("email", createFormData.email);
-    formData.append("password", createFormData.password);
-    formData.append("role", "admin");
-
-    const fetchDefaultImage = async () => {
-      try {
-        const response = await fetch(DefaultProfilePic);
-        const blob = await response.blob();
-        const file = new File([blob], "default_profile.jpg", { type: "image/jpeg" });
-        formData.append("profile_image", file);
-      } catch (error) {
-        console.error(`Error loading default profile image: ${error}`);
-      }
-    };
-
-    try {
-      await fetchDefaultImage();
-      await createMutation.mutateAsync(formData);
-    } catch (error) {
-      console.error(`Error creating user: ${error}`);
-    }
-  }, [createFormData, createMutation]);
-
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setCreateFormData(prev => ({ ...prev, [name]: value }));
-    if (formErrors[name]) {
-      setFormErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
-  }, [formErrors]);
-
   const getVerificationStatus = (status: VerificationStatus) => {
     switch (status) {
       case "verified":
         return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium">
+          <span className="inline-flex uppercase font-semibold items-center px-2 py-1 rounded-full bg-green-100 text-green-800 text-sm">
             ✅ Verified
           </span>
         );
       case "pending":
         return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm font-medium">
+          <span className="inline-flex uppercase font-semibold items-center px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-sm">
             ⏳ Pending
           </span>
         );
       case "unverified":
       default:
         return (
-          <span className="inline-flex items-center px-2 py-1 rounded-full bg-red-100 text-red-800 text-sm font-medium">
+          <span className="inline-flex uppercase font-semibold items-center px-2 py-1 rounded-full bg-red-100 text-red-800 text-sm">
             ❌ Unverified
           </span>
         );
     }
   };
+
+  const isGuestUnverified = (user: IUser) => user.role === "guest" && user.is_verified === 'unverified';
 
   if (isLoading) return <ManageAmenitiesSkeleton />;
   if (isError) return <Error />;
@@ -306,9 +171,13 @@ const ManageUsers: FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-md font-medium text-center">
                       <div className="flex items-center justify-center space-x-2">
                         <button
-                          onClick={() => handleEdit(user)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white p-2 cursor-pointer rounded-md mr-2 transition-colors duration-300"
+                          onClick={() => !isGuestUnverified(user) && handleEdit(user)}
+                          className={`
+                            bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-md transition-colors duration-300
+                            ${isGuestUnverified(user) ? "opacity-50 cursor-not-allowed hover:bg-blue-600" : "cursor-pointer"}
+                          `}
                           title="Edit User"
+                          disabled={isGuestUnverified(user)}
                         >
                           <PencilIcon className="h-5 w-5" />
                         </button>
@@ -347,153 +216,6 @@ const ManageUsers: FC = () => {
           </div>
         </>
       )}
-
-      {/* Create User Modal */}
-      <AnimatePresence>
-        {showCreateModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="w-full max-w-md bg-white rounded-lg shadow-lg p-6 mx-4"
-            >
-              <motion.h2
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="text-xl font-semibold mb-4"
-              >
-                Create New User
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.15 }}
-                className="text-sm text-gray-600 mb-4"
-              >
-                All users created will have admin role by default.
-              </motion.p>
-
-              <div className="space-y-4">
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.15 }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                  <div className="relative">
-                    <AtSign className="absolute left-3 top-2.5 text-gray-500" size={18} />
-                    <input
-                      type="email"
-                      name="email"
-                      value={createFormData.email}
-                      onChange={handleInputChange}
-                      className={`pl-10 w-full border-2 p-2 rounded-md ${formErrors.email ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                  </div>
-                  {formErrors.email && <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>}
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={createFormData.password}
-                    onChange={handleInputChange}
-                    className={`w-full border-2 p-2 rounded-md ${formErrors.password ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="••••••••"
-                  />
-                  {formErrors.password && <p className="mt-1 text-sm text-red-600">{formErrors.password}</p>}
-                  <p className="mt-1 text-xs text-gray-500">
-                    Password must have at least 6 characters, one uppercase letter, one number, and one special character
-                  </p>
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.25 }}
-                >
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
-                  <input
-                    type="password"
-                    name="confirmPassword"
-                    value={createFormData.confirmPassword}
-                    onChange={handleInputChange}
-                    className={`w-full border-2 p-2 rounded-md ${formErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="••••••••"
-                  />
-                  {formErrors.confirmPassword && <p className="mt-1 text-sm text-red-600">{formErrors.confirmPassword}</p>}
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className="grid grid-cols-2 gap-4"
-                >
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
-                    <div className="relative">
-                      <UserRound className="absolute left-3 top-2.5 text-gray-500" size={18} />
-                      <input
-                        type="text"
-                        name="firstName"
-                        value={createFormData.firstName}
-                        onChange={handleInputChange}
-                        className={`pl-10 w-full border-2 p-2 rounded-md ${formErrors.firstName ? 'border-red-500' : 'border-gray-300'}`}
-                      />
-                    </div>
-                    {formErrors.firstName && <p className="mt-1 text-sm text-red-600">{formErrors.firstName}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
-                    <input
-                      type="text"
-                      name="lastName"
-                      value={createFormData.lastName}
-                      onChange={handleInputChange}
-                      className={`w-full border-2 p-2 rounded-md ${formErrors.lastName ? 'border-red-500' : 'border-gray-300'}`}
-                    />
-                    {formErrors.lastName && <p className="mt-1 text-sm text-red-600">{formErrors.lastName}</p>}
-                  </div>
-                </motion.div>
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="flex justify-end space-x-2 mt-6"
-              >
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400 transition-colors duration-300"
-                >
-                  Cancel
-                </button>
-                <motion.button
-                  onClick={handleCreateUser}
-                  disabled={isSubmitting}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300"
-                >
-                  {isSubmitting ? "Creating..." : "Create User"}
-                </motion.button>
-              </motion.div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Edit Modal - Using existing EditUserModal component */}
       <EditUserModal

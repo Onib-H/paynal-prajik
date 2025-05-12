@@ -56,8 +56,8 @@ export interface BookingFormData {
     specialRequests?: string;
     validId?: File | null;
     roomId: string | null;
-    check_in_date: string | null;
-    check_out_date: string | null;
+    checkIn: string | null;
+    checkOut: string | null;
     status?: "pending" | "confirmed" | "cancelled" | "checked_in" | "checked_out";
     totalPrice?: number;
     arrivalTime: string;

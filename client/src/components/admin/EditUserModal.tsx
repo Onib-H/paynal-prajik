@@ -1,297 +1,146 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { AnimatePresence, motion } from "framer-motion";
-import { FC, memo, useEffect } from "react";
-import { IUserFormModalProps, IUser } from "../../types/UsersAdmin";
-import { useForm } from "react-hook-form";
+import { AnimatePresence, motion } from 'framer-motion';
+import { FC, memo, useEffect, useState } from 'react';
+import { IdCard } from 'lucide-react';
+import { IUserFormModalProps } from '../../types/UsersAdmin';
+import { getValidIdLabel } from '../../utils/booking';
+import { useMutation } from '@tanstack/react-query';
+import { approveValidId, rejectValidId } from '../../services/Admin';
+import { toast } from 'react-toastify';
 
-const EditUserModal: FC<IUserFormModalProps> = ({ isOpen, cancel, onSave, userData, loading = false }) => {
-    const { register, handleSubmit, formState: { errors }, reset, watch, setError, clearErrors } = useForm<IUser>({
-        mode: "onBlur",
-        defaultValues: {
-            id: userData?.id || 0,
-            first_name: userData?.first_name || "",
-            last_name: userData?.last_name || "",
-            email: userData?.email || "",
-            password: "",
-            confirm_password: "",
-            role: userData?.role || "guest",
-            profile_image: userData?.profile_image,
-        }
+const EditUserModal: FC<IUserFormModalProps> = ({ isOpen, cancel, userData }) => {
+    const [reason, setReason] = useState<string>("");
+    const [showReasonField, setShowReasonField] = useState<boolean>(false);
+
+    useEffect(() => {
+        setReason("");
+        setShowReasonField(false);
+    }, [isOpen])
+
+    const approveMutation = useMutation({
+        mutationFn: () => approveValidId(userData!.id),
+        onSuccess: (res) => {
+            toast.success(res.message);
+            cancel();
+        },
+        onError: () => toast.error('Failed to approve ID'),
     });
 
-    const password = watch("password");
+    const rejectMutation = useMutation({
+        mutationFn: (reason: string) => rejectValidId(userData!.id, reason),
+        onSuccess: (res) => {
+            toast.info(res.message);
+            cancel();
+        },
+        onError: () => toast.error('Failed to reject ID'),
+    });
 
-    useEffect(() => {
-        if (userData) {
-            reset({
-                id: userData.id || 0,
-                first_name: userData.first_name || "",
-                last_name: userData.last_name || "",
-                email: userData.email || "",
-                password: "",
-                confirm_password: "",
-                role: userData.role || "guest",
-                profile_image: userData.profile_image,
-            });
-        }
-    }, [userData, reset]);
-
-    const onSubmit = async (data: IUser) => {
-        try {
-            const submitData = userData?.id && !data.password ? {
-                ...data,
-                password: undefined,
-                confirm_password: undefined
-            } : data;
-
-            await onSave(submitData);
-        } catch (error: any) {
-            const errorData = error.response?.data?.error;
-            if (error) {
-                Object.entries(errorData).forEach(([key, message]) => {
-                    setError(key as keyof IUser, {
-                        type: "server",
-                        message: message as string,
-                    });
-                });
-            } else {
-                setError('root', {
-                    type: "manual",
-                    message: "An error occured"
-                })
-            }
-        }
+    const handleRejectSubmit = () => {
+        if (reason.trim()) rejectMutation.mutate(reason.trim());
+        else toast.error('Rejection reason cannot be empty');
     }
 
-    useEffect(() => {
-        const handleKeyDown = (evt: KeyboardEvent) => {
-            if (evt.key === "Escape") {
-                cancel();
-            }
-        };
-        if (isOpen) window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [cancel, isOpen]);
-
-    if (!isOpen) return null;
+    if (!isOpen || !userData) return null;
 
     return (
         <AnimatePresence>
-            {isOpen && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-                >
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: -20 }}
-                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
-                    >
-                        <motion.h2
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="text-xl font-semibold mb-4"
-                        >
-                            {userData?.id ? "Edit User" : "Add New User"}
-                        </motion.h2>
+            <motion.div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <motion.div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-xl mx-4"
+                    initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}>
 
-                        <form onSubmit={handleSubmit(onSubmit)}>
-                            <div className="space-y-4">
-                                {errors.root && (
-                                    <motion.div
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        className="p-3 bg-red-100 text-red-700 rounded-md text-sm"
-                                    >
-                                        {errors.root.message}
-                                    </motion.div>
-                                )}
+                    <h2 className="text-2xl font-bold mb-4">Guest ID Verification</h2>
 
-                                <motion.div
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.15 }}
-                                >
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        First Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="first_name"
-                                        {...register("first_name", {
-                                            required: "First name is required",
-                                            onChange: () => clearErrors("first_name")
-                                        })}
-                                        className={`w-full p-2 border rounded-md ${errors.first_name ? "border-red-500" : "border-gray-300"}`}
-                                        disabled={loading}
-                                    />
-                                    {errors.first_name && (
-                                        <motion.p
-                                            initial={{ opacity: 0, y: -5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="mt-1 text-xs text-red-500"
-                                        >
-                                            {errors.first_name.message}
-                                        </motion.p>
-                                    )}
-                                </motion.div>
+                    <div className="flex items-center space-x-2 mb-4">
+                        <IdCard className="w-5 h-5 text-purple-600" />
+                        <span className="text-lg font-medium">{getValidIdLabel(userData.valid_id_type)}</span>
+                    </div>
 
-                                <motion.div
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                >
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Last Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        name="last_name"
-                                        {...register("last_name", {
-                                            required: "Last name is required",
-                                            onChange: () => clearErrors("last_name")
-                                        })}
-                                        className={`w-full p-2 border rounded-md ${errors.last_name ? "border-red-500" : "border-gray-300"}`}
-                                        disabled={loading}
-                                    />
-                                    {errors.last_name && (
-                                        <motion.p
-                                            initial={{ opacity: 0, y: -5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="mt-1 text-xs text-red-500"
-                                        >
-                                            {errors.last_name.message}
-                                        </motion.p>
-                                    )}
-                                </motion.div>
-
-                                <motion.div
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.25 }}
-                                >
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Email
-                                    </label>
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        {...register("email", {
-                                            required: "Email is required",
-                                            pattern: {
-                                                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                                message: "Please enter a valid email address"
-                                            },
-                                            onChange: () => clearErrors("email")
-                                        })}
-                                        className={`w-full p-2 border rounded-md ${errors.email ? "border-red-500" : "border-gray-300"}`}
-                                        disabled={loading}
-                                    />
-                                    {errors.email && (
-                                        <motion.p
-                                            initial={{ opacity: 0, y: -5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="mt-1 text-xs text-red-500"
-                                        >
-                                            {errors.email.message}
-                                        </motion.p>
-                                    )}
-                                </motion.div>
-
-                                <motion.div
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.3 }}
-                                >
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Password {userData?.id && "(leave blank to keep current)"}
-                                    </label>
-                                    <input
-                                        type="password"
-                                        name="password"
-                                        {...register("password", {
-                                            validate: value => !userData?.id || value ? (value?.length >= 8 || "Password must be at least 8 characters") : true
-                                        })}
-                                        className={`w-full p-2 border rounded-md ${errors.password ? "border-red-500" : "border-gray-300"}`}
-                                        disabled={loading}
-                                    />
-                                    {errors.password && (
-                                        <motion.p
-                                            initial={{ opacity: 0, y: -5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="mt-1 text-xs text-red-500"
-                                        >
-                                            {errors.password.message}
-                                        </motion.p>
-                                    )}
-                                </motion.div>
-
-                                <motion.div
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.35 }}
-                                >
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Confirm Password
-                                    </label>
-                                    <input
-                                        type="password"
-                                        name="confirm_password"
-                                        {...register("confirm_password", {
-                                            validate: value => value === password || "Password do not match"
-                                        })}
-                                        className={`w-full p-2 border rounded-md ${errors.confirm_password ? "border-red-500" : "border-gray-300"}`}
-                                        disabled={loading}
-                                    />
-                                    {errors.confirm_password && (
-                                        <motion.p
-                                            initial={{ opacity: 0, y: -5 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className="mt-1 text-xs text-red-500"
-                                        >
-                                            {errors.confirm_password.message}
-                                        </motion.p>
-                                    )}
-                                </motion.div>
-                            </div>
-
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        {userData.valid_id_front && (
                             <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.45 }}
-                                className="mt-6 flex justify-end space-x-3"
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="space-y-2"
                             >
-                                <motion.button
-                                    type="button"
-                                    onClick={cancel}
-                                    className="px-4 py-2 cursor-pointer text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                                    disabled={loading}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    Cancel
-                                </motion.button>
-                                <motion.button
-                                    type="submit"
-                                    className="px-4 py-2 cursor-pointer text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-blue-300"
-                                    disabled={loading}
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                >
-                                    {loading ? "Saving..." : "Save"}
-                                </motion.button>
+                                <span className="text-sm font-medium text-gray-700">Front Side</span>
+                                <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200">
+                                    <img
+                                        src={userData.valid_id_front}
+                                        alt="ID Front"
+                                        className="w-full h-full object-contain p-2"
+                                    />
+                                </div>
                             </motion.div>
-                        </form>
-                    </motion.div>
+                        )}
+
+                        {userData.valid_id_back && (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="space-y-2"
+                            >
+                                <span className="text-sm font-medium text-gray-700">Back Side</span>
+                                <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200">
+                                    <img
+                                        src={userData.valid_id_back}
+                                        alt="ID Back"
+                                        className="w-full h-full object-contain p-2"
+                                    />
+                                </div>
+                            </motion.div>
+                        )}
+                    </div>
+
+                    {/* Rejection Reason Field (conditional) */}
+                    {showReasonField && (
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Rejection Reason
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={reason}
+                                onChange={e => setReason(e.target.value)}
+                                className="w-full border rounded-md p-2 resize-none"
+                                placeholder="Enter reason for rejecting this ID"
+                            />
+                        </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end gap-3">
+                        <button onClick={cancel} className="px-5 py-2 bg-gray-100 rounded-lg text-gray-600 hover:text-gray-800 cursor-pointer transition-colors duration-300">Cancel</button>
+
+                        <button
+                            onClick={() => approveMutation.mutate()}
+                            disabled={approveMutation.isPending}
+                            className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50 transition-colors duration-300 cursor-pointer"
+                        >
+                            {approveMutation.isPending ? 'Approving...' : 'Approve'}
+                        </button>
+
+                        {!showReasonField ? (
+                            <button
+                                onClick={() => setShowReasonField(true)}
+                                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg cursor-pointer"
+                            >
+                                Reject
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleRejectSubmit}
+                                disabled={rejectMutation.isPending}
+                                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg disabled:opacity-50 cursor-pointer"
+                            >
+                                {rejectMutation.isPending ? 'Rejecting...' : 'Submit Rejection'}
+                            </button>
+                        )}
+                    </div>
+
                 </motion.div>
-            )}
+            </motion.div>
         </AnimatePresence>
     );
 };
 
-export default memo(EditUserModal); 
+export default memo(EditUserModal);
