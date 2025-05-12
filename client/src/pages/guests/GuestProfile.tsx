@@ -710,16 +710,18 @@ const GuestProfile = () => {
                 </div>
 
                 {/* Upload Button */}
-                <div className="mt-6 flex justify-end">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowIdModal(true)}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    Upload IDs
-                  </motion.button>
-                </div>
+                {guestData?.is_verified !== 'verified' && (
+                  <div className="mt-6 flex justify-end">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowIdModal(true)}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                    >
+                      Upload IDs
+                    </motion.button>
+                  </div>
+                )}
 
                 {/* Upload Messages */}
                 {idUploadError && (
