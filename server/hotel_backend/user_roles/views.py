@@ -852,7 +852,7 @@ def upload_valid_id(request):
         user.valid_id_type = id_type
         user.valid_id_front = front_id
         user.valid_id_back = back_id
-        user.is_verified = False
+        user.is_verified = 'pending'
         user.save()
         
         return Response({

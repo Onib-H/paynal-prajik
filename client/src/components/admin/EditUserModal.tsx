@@ -3,13 +3,15 @@ import { FC, memo, useEffect, useState } from 'react';
 import { IdCard } from 'lucide-react';
 import { IUserFormModalProps } from '../../types/UsersAdmin';
 import { getValidIdLabel } from '../../utils/booking';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { approveValidId, rejectValidId } from '../../services/Admin';
 import { toast } from 'react-toastify';
 
 const EditUserModal: FC<IUserFormModalProps> = ({ isOpen, cancel, userData }) => {
     const [reason, setReason] = useState<string>("");
     const [showReasonField, setShowReasonField] = useState<boolean>(false);
+
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         setReason("");
@@ -19,6 +21,7 @@ const EditUserModal: FC<IUserFormModalProps> = ({ isOpen, cancel, userData }) =>
     const approveMutation = useMutation({
         mutationFn: () => approveValidId(userData!.id),
         onSuccess: (res) => {
+            queryClient.invalidateQueries({ queryKey: ['users']});
             toast.success(res.message);
             cancel();
         },

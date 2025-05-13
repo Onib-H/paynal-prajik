@@ -10,6 +10,7 @@ import { useUserContext } from "../../contexts/AuthContext";
 import { changePassword } from "../../services/Auth";
 import { getGuestDetails, updateGuestDetails, updateProfileImage, uploadValidId } from "../../services/Guest";
 import { FormFields, PasswordFields } from "../../types/GuestProfileClient";
+import { toast } from "react-toastify";
 
 const GuestProfile = () => {
   const { id } = useParams();
@@ -26,8 +27,6 @@ const GuestProfile = () => {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'verification'>("personal");
   const [showIdModal, setShowIdModal] = useState<boolean>(false);
-  const [idUploadError, setIdUploadError] = useState<string | null>(null);
-  const [idUploadSuccess, setIdUploadSuccess] = useState<string | null>(null);
   const [passwordData, setPasswordData] = useState<PasswordFields>({
     oldPassword: '',
     newPassword: '',
@@ -111,12 +110,12 @@ const GuestProfile = () => {
     mutationFn: (formData: FormData) => uploadValidId(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['guest', id] });
-      setIdUploadSuccess("Valid ID uploaded successfully!");
+      toast.success("Valid ID uploaded successfully!");
       setShowIdModal(false);
     },
     onError: (error: any) => {
       console.error(`Failed to upload valid ID: ${error}`);
-      setIdUploadError(error.response?.data?.error || "Failed to upload valid ID. Please try again.");
+      toast.error("Failed to upload valid ID. Please try again.");
     }
   });
 
@@ -232,6 +231,21 @@ const GuestProfile = () => {
             </div>
           </>
         );
+      
+      case 'rejected':
+        return (
+          <>
+            <XCircle className="h-6 w-6 text-red-600 mr-3" />
+            <div>
+              <span className="block text-sm font-medium text-red-600">
+                Verification Rejected. Please submit a new ID
+              </span>
+              <span className="text-gray-600 text-sm">
+                Reason: {profile?.data?.valid_id_rejection_reason}
+              </span>
+            </div>
+          </>
+        )
 
       case 'unverified':
       default:
@@ -653,14 +667,14 @@ const GuestProfile = () => {
               variants={fadeInVariants}
               className="bg-white ring-3 ring-purple-600 rounded-xl shadow-md overflow-hidden"
             >
-              <div className="p-6">
-                <h3 className="text-xl font-semibold flex items-center border-b border-gray-200 pb-3 mb-6">
+              <div className="p-4">
+                <h3 className="text-xl font-semibold flex items-center border-b border-gray-200 mb-3">
                   <IdCard className="h-5 w-5 mr-2 text-purple-500" />
                   ID Verification
                 </h3>
 
                 {/* Verification Status */}
-                <div className="mb-1">
+                <div className="mb-2">
                   <div className="flex items-center p-1 bg-gray-50 rounded-lg">
                     {getVerificationStatus(guestData?.is_verified)}
                   </div>
@@ -716,31 +730,11 @@ const GuestProfile = () => {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setShowIdModal(true)}
-                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                      className="px-4 py-2 cursor-pointer bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                     >
                       Upload IDs
                     </motion.button>
                   </div>
-                )}
-
-                {/* Upload Messages */}
-                {idUploadError && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 text-sm text-red-500 bg-red-50 p-2 rounded-md"
-                  >
-                    {idUploadError}
-                  </motion.div>
-                )}
-                {idUploadSuccess && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-4 text-sm text-green-600 bg-green-50 p-2 rounded-md"
-                  >
-                    {idUploadSuccess}
-                  </motion.div>
                 )}
               </div>
             </motion.div>
@@ -750,13 +744,9 @@ const GuestProfile = () => {
 
       <ValidIDUploadModal
         isOpen={showIdModal}
-        onClose={() => {
-          setShowIdModal(false);
-          setIdUploadError(null);
-        }}
+        onClose={() => setShowIdModal(false)}
         onUpload={handleIdUpload}
         isLoading={validIdUploadMutation.isPending}
-        error={idUploadError}
       />
 
       {/* Password Modal */}

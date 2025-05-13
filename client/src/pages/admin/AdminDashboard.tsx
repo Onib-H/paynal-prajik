@@ -40,6 +40,8 @@ const AdminDashboard = () => {
   const areaRevenueChartRef = useRef<HTMLDivElement>(null);
   const roomRevenueChartRef = useRef<HTMLDivElement>(null);
 
+  const CustomToolbar = (): null => null;
+
   const today = new Date();
   const selectedMonth = selectedDate.getMonth() + 1;
   const selectedYear = selectedDate.getFullYear();
@@ -294,27 +296,6 @@ const AdminDashboard = () => {
             />
           </div>
 
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setView('month')}
-              className={`px-3 py-1 rounded ${view === 'month' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-            >
-              Month
-            </button>
-            <button
-              onClick={() => setView('week')}
-              className={`px-3 py-1 rounded ${view === 'week' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-            >
-              Week
-            </button>
-            <button
-              onClick={() => setView('day')}
-              className={`px-3 py-1 rounded ${view === 'day' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-            >
-              Day
-            </button>
-          </div>
-
           <button
             onClick={handleGenerateReport}
             className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center cursor-pointer transition-colors duration-300"
@@ -379,9 +360,10 @@ const AdminDashboard = () => {
             onNavigate={handleNavigate}
             date={selectedDate}
             components={{
-              event: EventComponent
+              event: EventComponent,
+              toolbar: CustomToolbar,
             }}
-            views={[Views.MONTH, Views.WEEK, Views.DAY]}
+            views={[Views.MONTH]}
             popup
             eventPropGetter={(event) => {
               const { type } = event.resource || {};

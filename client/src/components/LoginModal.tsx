@@ -2,13 +2,13 @@
 import { faEye, faEyeSlash, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "framer-motion";
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserContext } from "../contexts/AuthContext";
 import { login } from "../services/Auth";
 import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { SubmitHandler, useForm } from "react-hook-form";
 import logo from "../assets/logo.png";
 
@@ -26,7 +26,8 @@ interface LoginFormInputs {
 
 const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSuccessfulLogin, bookingInProgress = false }) => {
   const navigate = useNavigate();
-  const { setIsAuthenticated, setRole, setUserDetails, setProfileImage } = useUserContext();
+  const { setIsAuthenticated, setRole, setUserDetails, setProfileImage, isAuthenticated, role } = useUserContext();
+  const queryClient = useQueryClient();
 
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
   const [notification, setNotification] = useState<{
@@ -107,15 +108,9 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
         setProfileImage(user.profile_image || "");
         setIsAuthenticated(true);
         setRole(user.role || "guest");
-
-        setNotification({
-          message: bookingInProgress ? "Logged in successfully, completing your booking..." : "Logged in successfully",
-          type: "success",
-          icon: "fas fa-chcek-circle"
-        });
+        queryClient.invalidateQueries({ queryKey: ['userAuth'] });
 
         if (onSuccessfulLogin) {
-          toggleLoginModal();
           onSuccessfulLogin();
           return;
         }
@@ -129,7 +124,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
       
       const errData = error.response?.data;
       const statusCode = error.response?.status;
-
+      
       if (statusCode === 403) {
         setError('email', {
           message: errData,
@@ -153,6 +148,13 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
     }
   });
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (role === 'admin') navigate("/admin");
+      else navigate("/guest/bookings");
+    }
+  }, [isAuthenticated, role, navigate]);
+  
   const onSubmit: SubmitHandler<LoginFormInputs> = (data) => loginMutation(data);
 
   return (

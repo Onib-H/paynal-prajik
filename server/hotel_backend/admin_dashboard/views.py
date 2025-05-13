@@ -1062,7 +1062,7 @@ def approve_valid_id(request, user_id):
         user.save()
         Notification.objects.create(
             user=user,
-            message="Your account has been verified!",
+            message="Your account has been verified! You may now enjoy unlimited bookings.",
             notification_type="verified"
         )
         return Response({
@@ -1089,7 +1089,7 @@ def reject_valid_id(request, user_id):
                 {'error': 'Rejection reason is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        user.is_verified = False
+        user.is_verified = 'rejected'
         user.valid_id_rejection_reason = reason
         user.save()
         Notification.objects.create(

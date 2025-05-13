@@ -39,7 +39,7 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const [profileImage, setProfileImage] = useState<string>("");
 
     const queryClient = useQueryClient();
-
+    
     const clearAuthState = useCallback(() => {
         setIsAuthenticated(false);
         setUserDetails(null);
@@ -77,7 +77,7 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
         },
         retry: 1,
         refetchOnWindowFocus: true,
-        staleTime: 5 * 60 * 1000,
+        staleTime: 0,
     });
 
     const contextValue = useMemo(() => ({

@@ -12,7 +12,7 @@ import { IUser } from "../../types/UsersAdmin";
 import Error from "../_ErrorBoundary";
 import ManageAmenitiesSkeleton from "../../motions/skeletons/ManageAmenitiesSkeleton";
 
-type VerificationStatus = 'unverified' | 'pending' | 'verified';
+type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
 
 const ManageUsers: FC = () => {
   const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
@@ -113,6 +113,12 @@ const ManageUsers: FC = () => {
             ⏳ Pending
           </span>
         );
+      case "rejected":
+        return (
+          <span className="inline-flex uppercase font-semibold items-center px-2 py-1 rounded-full bg-red-100 text-red-800 text-sm">
+            ❌ Rejected
+          </span>
+        )
       case "unverified":
       default:
         return (
