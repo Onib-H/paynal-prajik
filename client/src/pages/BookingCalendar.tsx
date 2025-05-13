@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isEqual, isSameDay, isWithinInterval, parseISO, startOfDay, startOfMonth } from 'date-fns';
+import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isEqual, isSameDay, isWithinInterval, parseISO, startOfDay, startOfMonth, differenceInCalendarDays } from 'date-fns';
 import { ArrowLeft, CircleAlert } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -34,9 +34,12 @@ const BookingCalendar = () => {
     const [maxDayExceed, setMaxDayExceed] = useState<boolean>(false);
 
     const isVerifiedUser = userDetails?.is_verified === 'verified';
-    const lastBookingDay = userDetails?.last_booking_date ?
-        startOfDay(parseISO(userDetails.last_booking_date)) : null;
-    const isBookingLocked = !isVerifiedUser && lastBookingDay && isSameDay(lastBookingDay, new Date());
+    const lastBookingDay = userDetails?.last_booking_date;
+    const daysSinceLastBooking = lastBookingDay
+        ? differenceInCalendarDays(startOfDay(new Date()), lastBookingDay)
+        : Infinity;
+
+    const isBookingLocked = !isVerifiedUser && daysSinceLastBooking === 0;
 
     useEffect(() => {
         if (arrivalParam && departureParam) {
@@ -344,7 +347,7 @@ const BookingCalendar = () => {
                             </div>
                         )}
 
-                        {!isVerifiedUser && (
+                        {isBookingLocked && (
                             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
                                 <p>⚠️ Daily booking limit reached. Verify your ID to book multiple stays.</p>
                             </div>
@@ -489,8 +492,8 @@ const BookingCalendar = () => {
                         <div className="flex justify-end mt-6">
                             <button
                                 onClick={handleProceed}
-                                disabled={!checkInDate || !checkOutDate || hasConflict || isSameDayBooking || maxDayExceed || isBookingLocked || !isVerifiedUser}
-                                className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${checkInDate && checkOutDate && !hasConflict && !isSameDayBooking && !maxDayExceed
+                                disabled={!checkInDate || !checkOutDate || hasConflict || isSameDayBooking || maxDayExceed || isBookingLocked}
+                                className={`px-6 py-2 rounded-md cursor-pointer font-semibold ${checkInDate && checkOutDate && !hasConflict && !isSameDayBooking && !maxDayExceed && !isBookingLocked
                                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                     }`}

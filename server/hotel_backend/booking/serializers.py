@@ -179,17 +179,6 @@ class BookingRequestSerializer(serializers.Serializer):
             'is_venue_booking': validated_data.get('isVenueBooking', False)
         })
 
-        if hasattr(user, 'role') and user.role == 'guest' and validated_data.get('checkIn'):
-            check_in_date = validated_data.get('checkIn')
-            today = timezone.now().date()
-
-            if user.is_verified != 'verified' and check_in_date == today:
-                if user.last_booking_date == today:
-                    raise serializers.ValidationError("You have already booked a room today.")
-                
-                user.last_booking_date = today
-                user.save()
-        
         if payment_method == 'gcash':
             try:
                 upload_result = cloudinary.uploader.upload(payment_proof_file)
@@ -248,12 +237,7 @@ class BookingRequestSerializer(serializers.Serializer):
         if is_venue_booking:
             try:
                 area_id = validated_data['roomId']
-                try:
-                    area = Areas.objects.get(id=area_id)
-                except Areas.DoesNotExist:
-                    raise serializers.ValidationError("Area not found")
-                
-                total_price = validated_data.get('totalPrice', 0)
+                area = Areas.objects.get(id=area_id)
                 
                 start_time = None
                 end_time = None
@@ -270,7 +254,7 @@ class BookingRequestSerializer(serializers.Serializer):
                     check_in_date=validated_data['checkIn'],
                     check_out_date=validated_data['checkOut'],
                     status=validated_data.get('status', 'pending'),
-                    total_price=total_price,
+                    total_price=validated_data.get('totalPrice'),
                     is_venue_booking=True,
                     time_of_arrival=validated_data.get('arrivalTime'),
                     start_time=start_time,
@@ -280,6 +264,10 @@ class BookingRequestSerializer(serializers.Serializer):
                     payment_proof=payment_proof_url,
                     payment_date=timezone.now() if payment_method == 'gcash' else None,
                 )
+
+                if user.is_verified != 'verified':
+                    user.last_booking_date = timezone.now().date()
+                    user.save()
                 
                 return booking                
             except Exception as e:
@@ -287,7 +275,6 @@ class BookingRequestSerializer(serializers.Serializer):
         else:
             try:
                 room = Rooms.objects.get(id=validated_data['roomId'])
-                
                 booking = Bookings.objects.create(
                     user=user,
                     room=room,
@@ -304,6 +291,10 @@ class BookingRequestSerializer(serializers.Serializer):
                     payment_proof=payment_proof_url,
                     payment_date=timezone.now() if payment_method == 'gcash' else None,
                 )
+
+                if user.is_verified != 'verified':
+                    user.last_booking_date = timezone.now().date()
+                    user.save()
                 
                 return booking
             except Rooms.DoesNotExist:

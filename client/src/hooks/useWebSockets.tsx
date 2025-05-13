@@ -47,14 +47,7 @@ const useWebSockets = (wsService: WebSocketService, userId: string | undefined, 
                 });
             });
 
-        const connectionCheck = setInterval(() => {
-            if (userIdRef.current && !wsService.isConnected) {
-                wsService.connect(userIdRef.current);
-            }
-        }, 5000);
-
         return () => {
-            clearInterval(connectionCheck);
 
             const newCount = (connectionCounts.get(wsService) || 1) - 1;
             connectionCounts.set(wsService, newCount);

@@ -17,6 +17,7 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
     const [error, setError] = useState<string | null>(null);
     const reportContainerRef = useRef<HTMLDivElement>(null);
     const modalRef = useRef<HTMLDivElement>(null);
+    const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
     useEffect(() => {
         const handleEscKey = (event: KeyboardEvent) => {
@@ -53,70 +54,50 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
 
     const handlePrintReport = async () => {
         try {
-            if (!reportContainerRef.current) {
-                throw new Error('Report container not found');
-            }
+            setIsGenerating(true);
+            if (!reportContainerRef.current) return;
 
             const element = reportContainerRef.current;
             const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
-            const pageWidth = 210;
-            const pageHeight = 297;
-
-            const targetWidth = pageWidth * 3.78; // 210mm → 794px
-            const targetHeight = pageHeight * 3.78; // 297mm → 1123px
-
-            console.log('Target Dimensions:', {
-                width: `${targetWidth}px`,
-                height: `${targetHeight}px`
+                orientation: "portrait",
+                unit: "mm",
+                format: "a4",
             });
 
-            element.style.width = `${pageWidth}mm`;
-            element.style.minHeight = `auto`;
-            element.style.overflow = 'visible';
+            element.style.width = "210mm";
+            element.style.height = "auto";
+            element.style.overflow = "visible";
+            await new Promise(resolve => setTimeout(resolve, 100));
 
-            const totalPages = Math.ceil(element.scrollHeight / targetHeight);
+            const canvas = await html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                logging: true,
+                onclone: (clonedDoc) => {
+                    clonedDoc.body.style.zoom = "100%";
+                    clonedDoc.body.style.width = "210mm";
+                }
+            });
 
-            for (let page = 0; page < totalPages; page++) {
-                if (page > 0) pdf.addPage();
+            const imgWidth = 190;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    windowHeight: targetHeight,
-                    y: page * targetHeight,
-                    height: targetHeight,
-                    useCORS: true,
-                    logging: true,
-                    onclone: (clonedDoc) => {
-                        clonedDoc.documentElement.style.overflow = 'visible';
-                        clonedDoc.body.style.zoom = '100%';
-                    }
-                });
-
-                console.log('Captured Canvas:', {
-                    width: `${canvas.width}px`,
-                    height: `${canvas.height}px`,
-                    ratio: (canvas.width / targetWidth).toFixed(2)
-                });
-
-                pdf.addImage(
-                    canvas.toDataURL('image/png', 0.85),
-                    'PNG',
-                    0,
-                    0,
-                    pageWidth,
-                    pageHeight,
-                    undefined,
-                    'FAST'
-                );
-            }
+            pdf.addImage(
+                canvas.toDataURL("image/png", 0.85),
+                "PNG",
+                0,
+                0,
+                imgWidth,
+                imgHeight,
+                undefined,
+                'FAST'
+            );
 
             pdf.save(`AzureaHotel_${reportData.period}_Monthly_Report.pdf`);
         } catch (err) {
             setError(`Failed to print report: ${err instanceof Error ? err.message : String(err)}`);
+        } finally {
+            setIsGenerating(false);
         }
     };
 
@@ -214,7 +195,7 @@ const MonthlyReportModal = ({ isOpen, onClose, reportData }: MonthlyReportModalP
                                 disabled={isLoading || !!error}
                                 className="px-4 py-2 cursor-pointer bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isLoading ? 'Preparing...' : 'Download PDF'}
+                                {isGenerating ? 'Generating...' : 'Download PDF'}
                             </button>
                         </div>
                     </motion.div>

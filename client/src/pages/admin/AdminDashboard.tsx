@@ -79,6 +79,10 @@ const AdminDashboard = () => {
   const { data: areaRevenueResponse } = useQuery({
     queryKey: ["areaRevenue", selectedMonth, selectedYear],
     queryFn: () => fetchAreaRevenue(selectedMonth, selectedYear),
+    select: (data) => ({
+      area_names: data.area_names || [],
+      revenue_data: data.revenue_data || [],
+    })
   });
 
   const { data: roomRevenueResponse } = useQuery({

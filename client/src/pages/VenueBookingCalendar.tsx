@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isSameDay, parseISO, startOfDay, startOfMonth } from 'date-fns';
+import { addMonths, differenceInCalendarDays, eachDayOfInterval, endOfMonth, format, isBefore, isSameDay, parseISO, startOfDay, startOfMonth } from 'date-fns';
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -22,9 +22,12 @@ const VenueBookingCalendar = () => {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const isVerifiedUser = userDetails?.is_verified === 'verified';
-    const lastBookingDay = userDetails?.last_booking_date ?
-        startOfDay(parseISO(userDetails.last_booking_date)) : null;
-    const isBookingLocked = !isVerifiedUser && lastBookingDay && isSameDay(lastBookingDay, new Date());
+    const lastBookingDay = userDetails?.last_booking_date;
+    const daysSinceLastBooking = lastBookingDay
+        ? differenceInCalendarDays(startOfDay(new Date()), lastBookingDay)
+        : Infinity;
+
+    const isBookingLocked = !isVerifiedUser && daysSinceLastBooking === 0;
 
     useEffect(() => {
         if (arrivalParam) {
@@ -233,7 +236,7 @@ const VenueBookingCalendar = () => {
                             </div>
                         )}
 
-                        {!isVerifiedUser && (
+                        {isBookingLocked && (
                             <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
                                 <p>⚠️ Daily booking limit reached. Verify your ID to book multiple stays.</p>
                             </div>
@@ -388,7 +391,7 @@ const VenueBookingCalendar = () => {
                         <div className="flex justify-end mt-6">
                             <button
                                 onClick={handleProceed}
-                                disabled={!selectedDate || isBookingLocked || !isVerifiedUser}
+                                disabled={!selectedDate || isBookingLocked}
                                 className={`px-6 py-2 rounded-md font-semibold ${selectedDate
                                     ? 'text-white bg-blue-600 hover:bg-blue-700 cursor-pointer'
                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'

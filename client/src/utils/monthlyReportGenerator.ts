@@ -45,6 +45,8 @@ export const generateNativePDF = (data: MonthlyReportData): jsPDF => {
     orientation: "portrait",
     unit: "mm",
     format: "a4",
+    putOnlyUsedFonts: true,
+    compress: true,
   });
 
   const styles = {
@@ -166,7 +168,7 @@ export const generateNativePDF = (data: MonthlyReportData): jsPDF => {
   
   y = startY + 10;
   
-  if (y > pageHeight - 100) {
+  if (y > pageHeight - 50) {
     doc.addPage();
     y = styles.spacing.margin;
   }
@@ -512,7 +514,7 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
       
       <section class="report-section">        
         <div class="report-grid">
-          <div>
+          <div class="report-table-container">
             <h4 class="report-section-title">Area Revenue</h4>
             <table class="report-table">
               <thead>
@@ -536,7 +538,7 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
             </table>
           </div>
           
-          <div>
+          <div class="report-table-container">
             <h4 class="report-section-title">Room Revenue</h4>
             <table class="report-table">
               <thead>
@@ -579,7 +581,6 @@ export const generateReportPreviewHTML = (data: MonthlyReportData): string => {
           There were a total of ${data.stats.totalBookings} bookings, with ${
     data.stats.activeBookings
   } currently active and ${data.stats.pendingBookings} pending.
-          The hotel's occupancy rate stands at ${occupancyRate}.
         </p>
       </section>
     </div>

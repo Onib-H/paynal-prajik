@@ -1,9 +1,10 @@
 /* Report Modal Preview Styles */
 .report-root {
   width: 210mm !important;
-  min-height: 297mm !important;
+  max-height: 297mm !important;
   overflow: visible !important;
-  margin: 0 auto;
+  padding: 10mm !important;
+  box-sizing: border-box;
 }
 
 .report-header {
@@ -68,9 +69,8 @@
 }
 
 .report-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 15px 0;
+  margin: 20px 0;
+  page-break-inside: avoid;
 }
 
 .report-table th {
@@ -90,6 +90,10 @@
   text-align: center;
 }
 
+.report-table-container {
+  page-break-inside: avoid;
+}
+
 .report-divider {
   height: 1px;
   background: #e2e8f0;
@@ -103,18 +107,21 @@
 }
 
 @media print {
-  body {
-    margin: 0;
-    visibility: hidden;
+  .report-root {
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
-  .report-root {
-    visibility: visible;
-    position: absolute;
-    left: 0;
-    top: 0;
-    box-shadow: none !important;
-    margin: 0 !important;
+  .report-table {
+    width: 95% !important;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .report-table td:last-child,
+  .report-table th:last-child {
+    text-align: right;
+    padding-right: 20px !important;
   }
 
   .modal-header, .modal-footer, .close-button {

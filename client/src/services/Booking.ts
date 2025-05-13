@@ -94,7 +94,6 @@ export const createReservation = async (reservationData: ReservationFormData) =>
   try {
     const formData = new FormData();
 
-    // Add basic user information
     formData.append("firstName", reservationData.firstName);
     formData.append("lastName", reservationData.lastName);
     formData.append("phoneNumber", reservationData.phoneNumber);

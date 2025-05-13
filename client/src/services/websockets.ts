@@ -102,7 +102,6 @@ export class WebSocketService {
 
     private handleConnectionError() {
         this.connecting = false;
-        console.error(`WebSocket: Connection error, retry count: ${this.retries}/${this.maxRetries}`);
 
         if (this.retries < this.maxRetries) {
             const delay = this.retryDelay * Math.pow(1.5, this.retries);
@@ -116,9 +115,7 @@ export class WebSocketService {
 
     private reconnect() {
         this.retries++;
-        if (this.retries <= this.maxRetries) {
-            this.connect(this.currentUserId);
-        }
+        if (this.retries <= this.maxRetries) this.connect(this.currentUserId);
     }
 
     private startHeartbeat() {
@@ -180,9 +177,7 @@ export class WebSocketService {
     }
 
     disconnect() {
-        if (this.reconnectTimer) {
-            clearTimeout(this.reconnectTimer);
-        }
+        if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
         if (this.socket) {
             this.socket.close();
             this.socket = null;

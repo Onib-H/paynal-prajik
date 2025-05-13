@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, FC, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, FC, ReactNode, useCallback, useContext, useMemo, useState } from "react";
 import { authenticateUser } from "../services/Auth";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface User {
     id: number;
@@ -35,8 +36,9 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const [userDetails, setUserDetails] = useState<User | null>(null);
     const [sessionExpired, setSessionExpired] = useState<boolean>(false);
     const [role, setRole] = useState<string>("");
-    const [isLoading, setIsLoading] = useState<boolean>(true);
     const [profileImage, setProfileImage] = useState<string>("");
+
+    const queryClient = useQueryClient();
 
     const clearAuthState = useCallback(() => {
         setIsAuthenticated(false);
@@ -44,11 +46,13 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setSessionExpired(false);
         setRole("");
         setProfileImage("");
-    }, []);
 
-    useEffect(() => {
-        const checkAuth = async () => {
-            setIsLoading(true);
+        queryClient.invalidateQueries({ queryKey: ['userAuth'] });
+    }, [queryClient]);
+
+    const { isLoading } = useQuery({
+        queryKey: ['userAuth'],
+        queryFn: async () => {
             try {
                 const res = await authenticateUser();
                 if (
@@ -65,15 +69,16 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
                 } else {
                     clearAuthState();
                 }
-            } catch {
+                return res.data;
+            } catch (error) {
                 clearAuthState();
-            } finally {
-                setIsLoading(false);
+                throw error;
             }
-        };
-
-        checkAuth();
-    }, [clearAuthState]);
+        },
+        retry: 1,
+        refetchOnWindowFocus: true,
+        staleTime: 5 * 60 * 1000,
+    });
 
     const contextValue = useMemo(() => ({
         isAuthenticated,
@@ -87,7 +92,7 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setSessionExpired,
         setRole,
         setProfileImage,
-        clearAuthState
+        clearAuthState,
     }), [
         isAuthenticated,
         userDetails,
@@ -95,7 +100,7 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
         role,
         isLoading,
         profileImage,
-        clearAuthState
+        clearAuthState,
     ]);
 
     return (
