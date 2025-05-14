@@ -6,7 +6,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from property.models import Areas, Rooms, Amenities
 from property.serializers import AreaSerializer, RoomSerializer, AmenitySerializer
-from booking.models import Bookings, Reservations, Transactions
+from booking.models import Bookings, Transactions
 from booking.serializers import BookingSerializer
 from user_roles.models import CustomUsers, Notification
 from user_roles.serializers import CustomUserSerializer
@@ -142,7 +142,7 @@ def dashboard_stats(request):
         
         venue_revenue = transactions_this_month.filter(
             Q(booking__isnull=False) & 
-            (Q(booking__is_venue_booking=True) | Q(reservation__isnull=False))
+            (Q(booking__is_venue_booking=True))
         ).aggregate(Sum('amount'))['amount__sum'] or 0
         
         formatted_revenue = f"₱{revenue:,.2f}"
@@ -175,18 +175,6 @@ def dashboard_stats(request):
         return Response({
             "error": str(e)
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def area_reservations(request):
-    try:
-        data = Reservations.objects.values('area').annotate(count=Count('area'))
-        
-        return Response({
-            "data": data
-        }, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 # Rooms
 @api_view(['GET'])
@@ -437,31 +425,7 @@ def edit_area(request, area_id):
     except Areas.DoesNotExist:
         return Response({"error": "Area not found"}, status=status.HTTP_404_NOT_FOUND)
     
-    has_active_reservations = Reservations.objects.filter(
-        area=area,
-        start_time__gte=timezone.now()
-    ).exists()
-    
-    if has_active_reservations:
-        allowed_fields = ['description', 'status']
-        filtered_data = {k: v for k, v in request.data.items() if k in allowed_fields}    
-        
-        if 'status' in filtered_data and filtered_data['status'] == 'maintenance':
-            return Response({
-                "error": "Cannot change status to maintenance when there are upcoming reservations",
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        serializer = AreaSerializer(area, data=filtered_data, partial=True)
-    else:
-        data = request.data.copy()
-        if 'price_per_hour' in data and isinstance(data['price_per_hour'], str):
-            try:
-                price_str = data['price_per_hour'].replace('₱', '').replace(',', '')
-                data['price_per_hour'] = float(price_str)
-            except (ValueError, TypeError):
-                pass 
-                
-        serializer = AreaSerializer(area, data=data, partial=True)
+    serializer = AreaSerializer(area, data=request.data, partial=True)
     
     if serializer.is_valid():
         instance = serializer.save()

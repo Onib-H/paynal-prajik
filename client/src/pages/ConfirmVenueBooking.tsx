@@ -47,6 +47,7 @@ const ConfirmVenueBooking = () => {
       lastName: userDetails.last_name || "",
       phoneNumber: "",
       numberOfGuests: 1,
+      specialRequests: "",
       paymentMethod: 'gcash',
     },
   });
@@ -252,6 +253,7 @@ const ConfirmVenueBooking = () => {
           setShowGCashModal(false);
         }}
         initialPreview={gcashPreview}
+        totalPrice={totalPrice ? parseFloat(totalPrice) : undefined}
       />
 
       <motion.div
@@ -537,6 +539,22 @@ const ConfirmVenueBooking = () => {
                   />
                 </div>
               </div>
+
+              <motion.div variants={itemVariants} className="mb-4">
+                <label
+                  htmlFor="specialRequests"
+                  className="block text-md font-medium text-gray-700 mb-1"
+                >
+                  Special Requests
+                </label>
+                <textarea
+                  id="specialRequests"
+                  {...register("specialRequests")}
+                  rows={4}
+                  className="w-full px-3 py-2 resize-none border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300"
+                  placeholder="Any special requirements or notes for your stay..."
+                />
+              </motion.div>
 
               {/* Submit Button for Mobile View */}
               <div className="lg:hidden mt-6">

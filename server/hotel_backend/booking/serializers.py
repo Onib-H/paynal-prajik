@@ -1,6 +1,6 @@
 import cloudinary.uploader
 from rest_framework import serializers
-from .models import Bookings, Reservations, Transactions, Reviews
+from .models import Bookings, Transactions, Reviews
 from user_roles.models import CustomUsers
 from user_roles.serializers import CustomUserSerializer
 from property.models import Rooms, Amenities, Areas
@@ -82,6 +82,7 @@ class BookingSerializer(serializers.ModelSerializer):
             'payment_proof',
             'payment_date',
             'down_payment',
+            'phone_number',
         ]
         
     def get_payment_proof(self, obj):
@@ -123,9 +124,8 @@ class BookingSerializer(serializers.ModelSerializer):
 class BookingRequestSerializer(serializers.Serializer):
     firstName = serializers.CharField(max_length=100)
     lastName = serializers.CharField(max_length=100)
-    phoneNumber = serializers.CharField(max_length=20)
+    phoneNumber = serializers.CharField(max_length=20, required=False)
     specialRequests = serializers.CharField(required=False, allow_blank=True)
-    validId = serializers.FileField(required=False)
     roomId = serializers.CharField()
     checkIn = serializers.DateField()
     checkOut = serializers.DateField()
@@ -256,6 +256,7 @@ class BookingRequestSerializer(serializers.Serializer):
                     status=validated_data.get('status', 'pending'),
                     total_price=validated_data.get('totalPrice'),
                     is_venue_booking=True,
+                    phone_number=validated_data.get('phoneNumber', ''),
                     time_of_arrival=validated_data.get('arrivalTime'),
                     start_time=start_time,
                     end_time=end_time,
@@ -284,6 +285,7 @@ class BookingRequestSerializer(serializers.Serializer):
                     status=validated_data.get('status', 'pending'),
                     special_request=validated_data.get('specialRequests', ''),
                     is_venue_booking=False,
+                    phone_number=validated_data.get('phoneNumber', ''),
                     total_price=validated_data.get('totalPrice'),
                     time_of_arrival=validated_data.get('arrivalTime'),
                     number_of_guests=validated_data.get('numberOfGuests', 1),
@@ -301,31 +303,6 @@ class BookingRequestSerializer(serializers.Serializer):
                 raise serializers.ValidationError("Room not found")
             except Exception as e:
                 raise serializers.ValidationError(str(e))
-
-class ReservationSerializer(serializers.ModelSerializer):
-    guest_name = serializers.SerializerMethodField()
-    area_name = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Reservations
-        fields = '__all__'
-    
-    def get_guest_name(self, obj):
-        return obj.user.first_name + " " + obj.user.last_name if obj.user else "Unknown Guest"
-    
-    def get_area_name(self, obj):
-        return obj.area.name if obj.area else "Unknown Area"
-    
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        
-        if instance.total_price is not None:
-            try:
-                representation['total_price'] = f"₱{float(instance.total_price):,.2f}"
-            except (ValueError, TypeError):
-                pass
-                
-        return representation
 
 class TransactionSerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source='user.email', read_only=True)

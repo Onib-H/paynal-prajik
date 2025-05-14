@@ -43,7 +43,7 @@ const Navbar: FC = () => {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [offset, setOffset] = useState<number>(0);
 
-  const limit = 10;
+  const limit = 10
 
   const [notification, setNotification] = useState<{
     message: string;
@@ -248,6 +248,7 @@ const Navbar: FC = () => {
     mutationFn: logout,
     onSuccess: (response) => {
       if (response.status === 200) {
+        queryClient.invalidateQueries({ queryKey: ['userAuth'] });
         clearAuthState();
         setIsModalOpen(false);
         navigate("/", { replace: true });

@@ -209,7 +209,7 @@ const ManageAmenities = () => {
                           animate={{ opacity: 1 }}
                           className="hover:bg-gray-50"
                         >
-                          <td className="px-6 py-4 whitespace-nowrap text-center text-md text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap text-center text-xl text-gray-900">
                             {amenity.description}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -218,7 +218,7 @@ const ManageAmenities = () => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => handleEditAmenity(amenity)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full flex items-center gap-1"
+                                className="bg-blue-600 text-xl hover:bg-blue-700 text-white px-4 py-2 rounded-full flex items-center gap-1"
                               >
                                 <Edit size={18} />
                                 <span>Edit</span>
@@ -227,7 +227,7 @@ const ManageAmenities = () => {
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => handleDeleteAmenity(amenity.id)}
-                                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full flex items-center gap-1"
+                                className="bg-red-600 text-xl hover:bg-red-700 text-white px-4 py-2 rounded-full flex items-center gap-1"
                               >
                                 <Trash2 size={18} />
                                 <span>Delete</span>

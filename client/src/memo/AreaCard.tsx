@@ -59,11 +59,11 @@ const AreaCard = memo(
                 />
                 <div className="p-4 flex flex-col h-full">
                     <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-xl font-bold text-gray-900">
+                        <h2 className="text-2xl font-bold text-gray-900">
                             {area.area_name}
                         </h2>
                         <span
-                            className={`text-sm font-semibold ${area.status === "available"
+                            className={`text-md font-semibold ${area.status === "available"
                                     ? "text-green-600"
                                     : "text-amber-600"
                                 } uppercase`}

@@ -207,7 +207,7 @@ const GuestProfile = () => {
           <>
             <CheckCircle className="h-6 w-6 text-green-600 mr-3" />
             <div>
-              <span className="block text-sm font-medium text-green-600">
+              <span className="block text-lg font-medium text-green-600">
                 Verified Account
               </span>
               <span className="text-gray-600 text-sm">
@@ -222,7 +222,7 @@ const GuestProfile = () => {
           <>
             <AlertCircle className="h-6 w-6 text-yellow-600 mr-3" />
             <div>
-              <span className="block text-sm font-medium text-yellow-600">
+              <span className="block text-lg font-medium text-yellow-600">
                 Pending Verification
               </span>
               <span className="text-gray-600 text-sm">
@@ -237,7 +237,7 @@ const GuestProfile = () => {
           <>
             <XCircle className="h-6 w-6 text-red-600 mr-3" />
             <div>
-              <span className="block text-sm font-medium text-red-600">
+              <span className="block text-lg font-medium text-red-600">
                 Verification Rejected. Please submit a new ID
               </span>
               <span className="text-gray-600 text-sm">
@@ -479,7 +479,7 @@ const GuestProfile = () => {
       <div className="flex border-b border-gray-200 mb-6">
         <button
           onClick={() => setActiveTab('personal')}
-          className={`px-4 py-2 flex items-center text-sm font-medium ${activeTab === 'personal'
+          className={`px-4 py-2 flex items-center text-xl font-medium ${activeTab === 'personal'
             ? 'border-b-2 border-purple-600 text-purple-600'
             : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -490,7 +490,7 @@ const GuestProfile = () => {
 
         <button
           onClick={() => setActiveTab('verification')}
-          className={`px-4 py-2 flex items-center text-sm font-medium ${activeTab === 'verification'
+          className={`px-4 py-2 flex items-center text-xl font-medium ${activeTab === 'verification'
             ? 'border-b-2 border-purple-600 text-purple-600'
             : 'text-gray-500 hover:text-gray-700'
             }`}

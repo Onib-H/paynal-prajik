@@ -202,7 +202,7 @@ const ManageAreas = () => {
           <h1 className="text-3xl font-bold">Manage Areas</h1>
           <motion.button
             onClick={handleAddNew}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 cursor-pointer font-semibold transition-colors duration-300"
+            className="px-4 py-2 text-xl bg-purple-500 text-white rounded-lg hover:bg-purple-600 cursor-pointer font-semibold transition-colors duration-300"
             whileHover={{ scale: 1.05, backgroundColor: "#7c3aed" }}
             whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0, x: 20 }}

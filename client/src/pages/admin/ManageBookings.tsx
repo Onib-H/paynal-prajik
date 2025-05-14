@@ -297,12 +297,7 @@ const ManageBookings: FC = () => {
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="reserved">Reserved</option>
-            <option value="confirmed">Confirmed</option>
             <option value="checked_in">Checked In</option>
-            <option value="checked_out">Checked Out</option>
-            <option value="cancelled">Cancelled</option>
-            <option value="rejected">Rejected</option>
-            <option value="no_show">No Show</option>
           </select>
         </div>
       </div>

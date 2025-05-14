@@ -178,5 +178,5 @@ export interface ConfirmBookingFormValues {
     arrivalTime: string;
     specialRequests: string;
     paymentMethod: 'physical' | 'gcash';
-    paymentProof: File | null;
+    paymentProof: File | boolean | null;
 }

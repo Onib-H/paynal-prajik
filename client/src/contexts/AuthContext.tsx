@@ -39,15 +39,14 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
     const [profileImage, setProfileImage] = useState<string>("");
 
     const queryClient = useQueryClient();
-    
+
     const clearAuthState = useCallback(() => {
+        queryClient.invalidateQueries({ queryKey: ['userAuth'] });
         setIsAuthenticated(false);
         setUserDetails(null);
         setSessionExpired(false);
         setRole("");
         setProfileImage("");
-
-        queryClient.invalidateQueries({ queryKey: ['userAuth'] });
     }, [queryClient]);
 
     const { isLoading } = useQuery({
@@ -71,13 +70,12 @@ export const UserProvider: FC<{ children: ReactNode }> = ({ children }) => {
                 }
                 return res.data;
             } catch (error) {
-                clearAuthState();
+                console.error(`Error fetching user authentication: ${error}`);
                 throw error;
             }
         },
         retry: 1,
         refetchOnWindowFocus: true,
-        staleTime: 0,
     });
 
     const contextValue = useMemo(() => ({

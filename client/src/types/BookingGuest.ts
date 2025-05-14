@@ -10,6 +10,7 @@ export interface FormattedBooking {
     price: number;
     status: string;
     bookingId: string | number;
+    phoneNumber?: string;
     isVenueBooking?: boolean;
     roomDetails?: {
         room_image?: string;
@@ -66,6 +67,7 @@ export interface BookingDataTypes {
     area_details?: AreaData;
     is_venue_booking?: boolean;
     total_price?: number;
+    phone_number?: string;
     user?: {
         first_name: string;
         last_name: string;

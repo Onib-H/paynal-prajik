@@ -25,7 +25,7 @@ const BookingData = memo(({ bookingId }: BookingDataProps) => {
       status: bookingData?.status || "pending",
       dates: `${formatDate(bookingData?.check_in_date || '').split(',')[0]} - ${formatDate(bookingData?.check_out_date || '').split(',')[0]}`,
       specialRequest: bookingData?.special_request,
-      validId: bookingData?.valid_id,
+      phoneNumber: bookingData?.phone_number,
       bookingDate: bookingData?.created_at ? formatDate(bookingData.created_at) : undefined,
       cancellationReason: bookingData?.cancellation_reason,
       cancellationDate: bookingData?.cancellation_date ? formatDate(bookingData.cancellation_date) : undefined,
@@ -43,7 +43,7 @@ const BookingData = memo(({ bookingId }: BookingDataProps) => {
       result.userDetails = {
         fullName: `${bookingData.user.first_name} ${bookingData.user.last_name}`,
         email: bookingData.user.email,
-        phoneNumber: bookingData.user.phone_number
+        phoneNumber: bookingData.phone_number
       };
     }
 
@@ -53,6 +53,7 @@ const BookingData = memo(({ bookingId }: BookingDataProps) => {
         result.roomType = areaData.area_name || "Venue";
         result.imageUrl = areaData.area_image || "";
         result.guests = areaData.capacity || 0;
+        result.phoneNumber = bookingData?.phone_number;
         result.price = bookingData?.total_price || 0;
         result.totalPrice = bookingData?.total_price;
         result.areaDetails = {
@@ -67,6 +68,7 @@ const BookingData = memo(({ bookingId }: BookingDataProps) => {
       if (roomData) {
         const roomType = roomData.room_name || "Unknown Room";
         result.roomType = roomType;
+        result.phoneNumber = bookingData?.phone_number;
         result.imageUrl = roomData.room_image || deluxe_twin;
         result.guests = roomData?.max_guests;
         result.price = bookingData?.total_price || 0;

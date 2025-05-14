@@ -88,6 +88,7 @@ const ConfirmBooking = () => {
       phoneNumber: "",
       numberOfGuests: 1,
       arrivalTime: "",
+      specialRequests: "",
       paymentMethod: 'gcash',
     },
   });
@@ -141,7 +142,7 @@ const ConfirmBooking = () => {
     setDateSelectionCompleted(true);
   };
 
-  const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {    
+  const onSubmit: SubmitHandler<ConfirmBookingFormValues> = (data) => {
     if (isSubmitting) return;
     if (paymentMethod === 'gcash' && !gcashProof) return;
 
@@ -314,6 +315,7 @@ const ConfirmBooking = () => {
           setShowGCashModal(false);
         }}
         initialPreview={gcashPreview}
+        totalPrice={calculatedTotalPrice}
       />
 
       <motion.div
@@ -513,10 +515,21 @@ const ConfirmBooking = () => {
                   <button
                     type="button"
                     onClick={() => setShowGCashModal(true)}
-                    className="w-full py-2 px-3 border border-gray-300 rounded-md bg-gray-50 hover:bg-gray-100 cursor-pointer"
+                    className={`w-full py-2 px-3 border ${errors.paymentProof ? 'border-red-500' : 'border-gray-300'
+                      } rounded-md bg-gray-50 hover:bg-gray-100 cursor-pointer`}
                   >
                     Upload Payment Proof
                   </button>
+                  {errors.paymentProof && (
+                    <motion.p
+                      className="text-red-500 text-sm mt-1"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                    >
+                      {errors.paymentProof.message}
+                    </motion.p>
+                  )}
                   {gcashPreview && (
                     <div className="mt-2 relative">
                       <img
@@ -632,6 +645,22 @@ const ConfirmBooking = () => {
                   Check-in of 2:00 PM and 11:00 PM
                 </small>
               </div>
+
+              <motion.div variants={itemVariants} className="mb-4">
+                <label
+                  htmlFor="specialRequests"
+                  className="block text-md font-medium text-gray-700 mb-1"
+                >
+                  Special Requests
+                </label>
+                <textarea
+                  id="specialRequests"
+                  {...register("specialRequests")}
+                  rows={4}
+                  className="w-full px-3 py-2 resize-none border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 transition-all duration-300"
+                  placeholder="Any special requirements or notes for your stay..."
+                />
+              </motion.div>
 
               {/* Submit Button for Mobile View */}
               <div className="lg:hidden mt-6">

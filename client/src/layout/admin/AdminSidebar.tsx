@@ -116,7 +116,7 @@ const AdminSidebar: FC = () => {
                     icon={item.icon}
                     className="w-5 h-5 text-xl"
                   />
-                  <span className="text-md">{item.label}</span>
+                  <span className="text-lg">{item.label}</span>
                 </NavLink>
               </li>
             ))}

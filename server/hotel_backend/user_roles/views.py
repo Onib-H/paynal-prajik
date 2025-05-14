@@ -804,12 +804,6 @@ def get_guest_bookings(request):
                 room_serializer = RoomSerializer(booking.room)
                 data['room_details'] = room_serializer.data
             
-            if booking.valid_id:
-                if hasattr(booking.valid_id, 'url'):
-                    data['valid_id'] = booking.valid_id.url
-                else:
-                    data['valid_id'] = booking.valid_id
-            
             booking_data.append(data)
         
         return Response({

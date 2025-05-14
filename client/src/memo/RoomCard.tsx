@@ -58,11 +58,11 @@ export const RoomCard = memo(
                 />
                 <div className="p-4 flex flex-col h-full">
                     <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-xl font-bold text-gray-900">
+                        <h2 className="text-2xl font-bold text-gray-900">
                             {room.room_name}
                         </h2>
                         <span
-                            className={`text-sm font-semibold ${room.status === "available"
+                            className={`text-md font-semibold ${room.status === "available"
                                     ? "text-green-600"
                                     : "text-amber-600"
                                 } uppercase`}

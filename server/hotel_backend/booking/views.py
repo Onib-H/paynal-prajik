@@ -1,11 +1,10 @@
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from .models import Reservations, Bookings, Reviews
+from .models import Bookings, Reviews
 from property.models import Rooms, Areas
 from property.serializers import AreaSerializer
 from .serializers import (
-    ReservationSerializer, 
     BookingSerializer, 
     BookingRequestSerializer,
     RoomSerializer,
@@ -154,7 +153,6 @@ def booking_detail(request, booking_id):
     
     try:
         booking = Bookings.objects.get(id=booking_id)
-        
     except Bookings.DoesNotExist:
         return Response({"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND)
     
@@ -168,13 +166,7 @@ def booking_detail(request, booking_id):
         elif booking.room:
             room_serializer = RoomSerializer(booking.room)
             data['room'] = room_serializer.data
-        
-        if booking.valid_id:
-            if hasattr(booking.valid_id, 'url'):
-                data['valid_id'] = booking.valid_id.url
-            else:
-                data['valid_id'] = booking.valid_id
-            
+
         return Response({
             "data": data
         }, status=status.HTTP_200_OK)
@@ -202,8 +194,8 @@ def reservation_list(request):
                 return Response({"error": "Authentication required to view reservations"}, 
                                 status=status.HTTP_401_UNAUTHORIZED)
             
-            reservations = Reservations.objects.all()
-            serializer = ReservationSerializer(reservations, many=True)
+            bookings = Bookings.objects.all()
+            serializer = BookingSerializer(bookings, many=True)
             return Response({
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
@@ -228,14 +220,14 @@ def reservation_list(request):
 @permission_classes([IsAuthenticated])
 def reservation_detail(request, reservation_id):
     try:
-        reservation = Reservations.objects.get(id=reservation_id)
-    except Reservations.DoesNotExist:
-        return Response({"error": "Reservation not found"}, status=status.HTTP_404_NOT_FOUND)
+        booking = Bookings.objects.get(id=reservation_id)
+    except Bookings.DoesNotExist:
+        return Response({"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND)
     if request.method == 'GET':
-        serializer = ReservationSerializer(reservation)
+        serializer = BookingSerializer(booking)
         return Response(serializer.data)
     elif request.method == 'PUT':
-        serializer = ReservationSerializer(reservation, data=request.data)
+        serializer = BookingSerializer(booking, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -243,7 +235,7 @@ def reservation_detail(request, reservation_id):
             "error": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
     elif request.method == 'DELETE':
-        reservation.delete()
+        booking.delete()
         return Response({
             "message": "Reservation deleted successfully"
         }, status=status.HTTP_204_NO_CONTENT)
@@ -256,8 +248,8 @@ def area_reservations(request):
                 return Response({"error": "Authentication required to view area reservations"}, 
                                 status=status.HTTP_401_UNAUTHORIZED)
                 
-            reservations = Reservations.objects.all().order_by('-created_at')
-            serializer = ReservationSerializer(reservations, many=True)
+            bookings = Bookings.objects.filter(is_venue_booking=True).order_by('-created_at')
+            serializer = BookingSerializer(bookings, many=True)
             return Response({
                 "data": serializer.data
             }, status=status.HTTP_200_OK)
@@ -334,12 +326,6 @@ def user_bookings(request):
             elif booking.room:
                 room_serializer = RoomSerializer(booking.room)
                 data['room'] = room_serializer.data
-            
-            if booking.valid_id:
-                if hasattr(booking.valid_id, 'url'):
-                    data['valid_id'] = booking.valid_id.url
-                else:
-                    data['valid_id'] = booking.valid_id
             
             booking_data.append(data)
         

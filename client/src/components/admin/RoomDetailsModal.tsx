@@ -1,8 +1,8 @@
-import { FC, useMemo } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Room } from "../../types/RoomClient";
-import { Amenity } from "../../types/AmenityClient";
+import { FC, useMemo } from "react";
 import { MemoizedImage } from "../../memo/MemoizedImage";
+import { Amenity } from "../../types/AmenityClient";
+import { Room } from "../../types/RoomClient";
 
 interface RoomDetailsModalProps {
     isOpen: boolean;
@@ -68,7 +68,6 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                         </motion.button>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 h-full max-h-[90vh]">
-                            {/* Left Column: Image with gradient overlay - FIXED, NO SCROLL */}
                             <div className="relative h-64 md:h-full">
                                 {roomData.room_image ? (
                                     <div className="relative h-full">
@@ -163,7 +162,7 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                     </motion.div>
 
                                     <motion.div
-                                        className="bg-gray-50 p-4 rounded-lg mb-5 shadow-inner"
+                                        className="bg-gray-50 p-4 rounded-lg mb-5 shadow-inner border border-gray-400"
                                         initial={{ y: 10, opacity: 0 }}
                                         animate={{ y: 0, opacity: 1 }}
                                         transition={{ delay: 0.3 }}
@@ -182,7 +181,7 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                         animate={{ y: 0, opacity: 1 }}
                                         transition={{ delay: 0.4 }}
                                     >
-                                        <div className="bg-blue-50 p-3 rounded-lg">
+                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-300">
                                             <span className="block text-amber-600 text-sm uppercase">
                                                 Room Type
                                             </span>
@@ -209,7 +208,7 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                             </div>
                                         </div>
 
-                                        <div className="bg-green-50 p-3 rounded-lg">
+                                        <div className="bg-green-50 p-3 rounded-lg border border-green-400">
                                             <span className="block text-amber-600 text-sm uppercase">
                                                 Max Guests
                                             </span>
@@ -236,34 +235,57 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                     </motion.div>
 
                                     {/* Bed Type */}
-                                    <motion.div
-                                        className="bg-amber-50 p-4 rounded-lg mb-5"
-                                        initial={{ y: 10, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
-                                        transition={{ delay: 0.45 }}
-                                    >
-                                        <h3 className="text-sm uppercase tracking-wider text-amber-600 font-medium mb-2">
-                                            Bed Type
-                                        </h3>
-                                        <div className="flex items-center">
-                                            <svg
-                                                xmlns="http://www.w3.org/2000/svg"
-                                                className="h-5 w-5 text-amber-600 mr-2"
-                                                fill="none"
-                                                viewBox="0 0 24 24"
-                                                stroke="currentColor"
-                                            >
-                                                <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth={2}
-                                                    d="M5 13l4 4L19 7"
-                                                />
-                                            </svg>
-                                            <span className="text-lg font-bold text-gray-800 capitalize">
-                                                {roomData.bed_type}
-                                            </span>
-                                        </div>
+                                    <motion.div className="grid grid-cols-2 gap-4 mb-2">
+                                        <motion.div
+                                            className="bg-amber-50 p-4 rounded-lg mb-5 border border-amber-400"
+                                            initial={{ y: 10, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            transition={{ delay: 0.45 }}
+                                        >
+                                            <h3 className="text-sm uppercase tracking-wider text-amber-600 font-medium mb-2">
+                                                Bed Type
+                                            </h3>
+                                            <div className="flex items-center">
+                                                <svg
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    className="h-5 w-5 text-amber-600 mr-2"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M5 13l4 4L19 7"
+                                                    />
+                                                </svg>
+                                                <span className="text-lg font-bold text-gray-800 capitalize">
+                                                    {roomData.bed_type}
+                                                </span>
+                                            </div>
+                                        </motion.div>
+
+                                        <motion.div
+                                            className="bg-amber-50 p-4 rounded-lg mb-5 border border-amber-400"
+                                            initial={{ y: 10, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            transition={{ delay: 0.6 }}
+                                        >
+                                            <h3 className="text-sm uppercase tracking-wider text-amber-600 font-medium mb-2">
+                                                Pricing
+                                            </h3>
+                                            <div className="flex items-center">
+                                                <span className="text-2xl font-bold text-gray-800">
+                                                    {typeof roomData.room_price === "string" &&
+                                                        roomData.room_price.trim() !== ""
+                                                        ? roomData.room_price
+                                                        : typeof roomData.room_price === "number"
+                                                            ? `₱${roomData.room_price.toLocaleString()}`
+                                                            : "₱0"}
+                                                </span>
+                                            </div>
+                                        </motion.div>
                                     </motion.div>
 
                                     {/* Amenities Section */}
@@ -315,28 +337,6 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                                 ))}
                                             </div>
                                         )}
-                                    </motion.div>
-
-                                    {/* Price Section - Fixed to ensure it always shows */}
-                                    <motion.div
-                                        className="mb-5 bg-amber-50 p-4 rounded-lg"
-                                        initial={{ y: 10, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
-                                        transition={{ delay: 0.6 }}
-                                    >
-                                        <h3 className="text-sm uppercase tracking-wider text-amber-600 font-medium mb-2">
-                                            Pricing
-                                        </h3>
-                                        <div className="flex items-center">
-                                            <span className="text-2xl font-bold text-gray-800">
-                                                {typeof roomData.room_price === "string" &&
-                                                    roomData.room_price.trim() !== ""
-                                                    ? roomData.room_price
-                                                    : typeof roomData.room_price === "number"
-                                                        ? `₱${roomData.room_price.toLocaleString()}`
-                                                        : "₱0"}
-                                            </span>
-                                        </div>
                                     </motion.div>
                                 </div>
                             </div>

@@ -138,7 +138,7 @@ const AreaDetailsModal: FC<AreaDetailsModalProps> = ({ isOpen, onClose, areaData
 
                                 {/* Description with a nice background */}
                                 <motion.div
-                                    className="bg-gray-50 p-4 rounded-lg mb-5 shadow-inner"
+                                    className="bg-gray-50 p-4 rounded-lg mb-5 shadow-inner border border-gray-400"
                                     initial={{ y: 10, opacity: 0 }}
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.3 }}
@@ -158,9 +158,9 @@ const AreaDetailsModal: FC<AreaDetailsModalProps> = ({ isOpen, onClose, areaData
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.4 }}
                                 >
-                                    <div className="bg-blue-50 p-3 rounded-lg">
-                                        <span className="block text-gray-500 text-sm">
-                                            Maximum No. of Guests
+                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-400">
+                                        <span className="block text-gray-500 text-md">
+                                            Max Guests
                                         </span>
                                         <div className="flex items-center mt-1">
                                             <svg
@@ -177,17 +177,17 @@ const AreaDetailsModal: FC<AreaDetailsModalProps> = ({ isOpen, onClose, areaData
                                                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                                                 />
                                             </svg>
-                                            <span className="text-xl font-bold text-gray-800">
+                                            <span className="text-2xl font-bold text-gray-800">
                                                 {areaData.capacity}{" "}
-                                                <span className="text-sm font-normal text-gray-600">
+                                                <span className="text-md font-normal text-gray-600">
                                                     people
                                                 </span>
                                             </span>
                                         </div>
                                     </div>
 
-                                    <div className="bg-green-50 p-3 rounded-lg">
-                                        <span className="block text-gray-500 text-sm">Price</span>
+                                    <div className="bg-green-50 p-3 rounded-lg border border-green-400">
+                                        <span className="block text-gray-500 text-md">Price</span>
                                         <div className="flex items-center mt-1">
                                             <svg
                                                 xmlns="http://www.w3.org/2000/svg"
@@ -203,7 +203,7 @@ const AreaDetailsModal: FC<AreaDetailsModalProps> = ({ isOpen, onClose, areaData
                                                     d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                                                 />
                                             </svg>
-                                            <span className="text-xl font-bold text-gray-800">
+                                            <span className="text-2xl font-bold text-gray-800">
                                                 {areaData.price_per_hour.toLocaleString()}
                                             </span>
                                         </div>

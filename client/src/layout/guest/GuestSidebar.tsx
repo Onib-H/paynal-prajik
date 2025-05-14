@@ -4,9 +4,9 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
 
 const menuItems = [
-  { icon: <User size={18} />, label: "My Profile", link: "/guest/:id" },
-  { icon: <Calendar size={18} />, label: "Bookings", link: "/guest/bookings" },
-  { icon: <Ban size={18} />, label: "Cancellations", link: "/guest/cancellations" },
+  { icon: <User size={23} />, label: "My Profile", link: "/guest/:id" },
+  { icon: <Calendar size={23} />, label: "Bookings", link: "/guest/bookings" },
+  { icon: <Ban size={23} />, label: "Cancellations", link: "/guest/cancellations" },
 ];
 
 const GuestSidebar: FC = () => {
@@ -20,8 +20,8 @@ const GuestSidebar: FC = () => {
           onClick={() => navigate('/')}
           className="w-full flex items-center space-x-2 p-2 rounded-md text-purple-600 hover:bg-purple-100 cursor-pointer hover:text-purple-600 transition-colors duration-200"
         >
-          <Home size={25} className="mr-2" />
-          <span className="text-md">Go To Homepage</span>
+          <Home size={32} className="mr-2" />
+          <span className="text-xl">Go To Homepage</span>
         </button>
       </div>
 
@@ -43,8 +43,8 @@ const GuestSidebar: FC = () => {
                     ? "border-r-4 border-purple-600 bg-purple-100/80 text-purple-700 font-bold"
                     : "hover:bg-purple-100/80"
                     }`}>
-                    <span className="text-lg">{item.icon}</span>
-                    <span className="text-md">{item.label}</span>
+                    <span className="text-xl">{item.icon}</span>
+                    <span className="text-xl">{item.label}</span>
                   </div>
                 )}
               </NavLink>

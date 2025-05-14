@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { AlertCircle, Calendar, CheckCircle2, Clock, CreditCard, IdCard, User, Watch, XCircle } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle2, Clock, CreditCard, User, Watch, XCircle } from "lucide-react";
 import { FC, ReactNode, memo, useMemo } from "react";
 import { formatTime, formatStatus } from "../../utils/formatters";
 import { BookingCardProps } from "../../types/BookingGuest";
@@ -96,7 +96,6 @@ const BookingCard: FC<BookingCardProps> = memo(({
   status,
   userDetails,
   specialRequest,
-  validId,
   paymentProof,
   bookingDate,
   cancellationReason,
@@ -213,7 +212,7 @@ const BookingCard: FC<BookingCardProps> = memo(({
               <User className="w-5 h-5 mr-2 text-gray-600" />
               Guest Information
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               <div className="flex flex-col">
                 <span className="text-lg font-semibold text-gray-700">Name</span>
                 <span className="font-medium text-lg">{userDetails.fullName}</span>
@@ -222,12 +221,10 @@ const BookingCard: FC<BookingCardProps> = memo(({
                 <span className="text-lg font-semibold text-gray-700">Email</span>
                 <span className="font-medium text-lg">{userDetails.email}</span>
               </div>
-              {userDetails.phoneNumber && (
-                <div className="flex flex-col">
-                  <span className="text-lg font-semibold text-gray-700">Phone</span>
-                  <span className="font-medium text-lg">{userDetails.phoneNumber}</span>
-                </div>
-              )}
+              <div className="flex flex-col">
+                <span className="text-lg font-semibold text-gray-700">Phone Number</span>
+                <span className="font-medium text-lg">{userDetails.phoneNumber}</span>
+              </div>
             </div>
           </motion.div>
         )}
@@ -260,27 +257,6 @@ const BookingCard: FC<BookingCardProps> = memo(({
                 {cancellationDate}
               </p>
             )}
-          </motion.div>
-        )}
-
-        {/* Valid ID - only render when available */}
-        {validId && (
-          <motion.div
-            variants={itemVariants}
-            className="mt-6"
-          >
-            <h3 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-              <IdCard className="w-5 h-5 mr-2 text-gray-600" />
-              Valid ID
-            </h3>
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <img
-                src={validId}
-                alt="Valid ID"
-                className="w-full h-auto object-contain cursor-pointer transition-transform hover:scale-[1.01]"
-                loading="lazy"
-              />
-            </div>
           </motion.div>
         )}
 
