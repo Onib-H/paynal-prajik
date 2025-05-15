@@ -4,13 +4,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useMutation } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.png";
 import { sendRegisterOtp } from "../services/Auth";
 import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
 import TermsModal from "./TermsModal";
-import { SubmitHandler, useForm } from "react-hook-form";
-import logo from "../assets/logo.png";
 
 interface SignupModalProps {
   toggleRegisterModal: () => void;
@@ -127,6 +127,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
     onError: (error: any) => {
       console.error(`Failed to register: ${error}`);
       const { data, status } = error.response;
+
       if (!error.response) {
         setError("root", { message: data.error.general });
       } else {
@@ -179,7 +180,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                 variants={formItemVariants}
                 custom={0}
               />
-              
+
               <motion.h1
                 className="text-3xl text-center font-bold text-gray-800 mb-2 tracking-wide"
                 variants={formItemVariants}
@@ -378,7 +379,7 @@ const SignupModal: FC<SignupModalProps> = ({ toggleRegisterModal, openLoginModal
                 </motion.button>
 
                 <motion.div
-                  className="mt-4"
+                  className="mt-2"
                   variants={formItemVariants}
                   custom={7}
                 >

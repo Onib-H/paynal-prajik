@@ -22,7 +22,6 @@ const GuestProfile = () => {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'personal' | 'verification'>("personal");
@@ -59,7 +58,7 @@ const GuestProfile = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["guest", id] });
-      setUpdateSuccess("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
       setEditMode(false);
     },
     onError: (error) => {
@@ -357,17 +356,6 @@ const GuestProfile = () => {
     >
       {/* Success notification */}
       <AnimatePresence>
-        {updateSuccess && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed top-5 right-5 bg-green-100 border border-green-200 text-green-800 px-4 py-3 rounded-lg shadow-md z-50 flex items-center"
-          >
-            <CheckCircle className="h-5 w-5 mr-2" />
-            <p>{updateSuccess}</p>
-          </motion.div>
-        )}
         {updateError && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -386,7 +374,7 @@ const GuestProfile = () => {
         variants={itemVariants}
         className="bg-white rounded-2xl ring-3 ring-purple-600 shadow-xl overflow-hidden mb-8"
       >
-        <div className="px-6 pb-8 mt-6">
+        <div className="px-6 pt-4 mb-4">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between">
             <div className="flex flex-col sm:flex-row items-center sm:items-end">
               {/* Profile Image with animation */}
@@ -476,7 +464,7 @@ const GuestProfile = () => {
       </motion.div>
 
       {/* Tab content */}
-      <div className="flex border-b border-gray-200 mb-6">
+      <div className="flex border-b border-gray-200 mb-4">
         <button
           onClick={() => setActiveTab('personal')}
           className={`px-4 py-2 flex items-center text-xl font-medium ${activeTab === 'personal'
@@ -565,7 +553,7 @@ const GuestProfile = () => {
                     {errors.last_name && <p className="text-sm text-red-500 mt-1">{errors.last_name.message}</p>}
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                     <Controller
                       name="email"
@@ -593,8 +581,8 @@ const GuestProfile = () => {
                     {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
                   </div>
 
-                  <div className="md:col-span-2">
-                    <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                  <div className="">
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center">
                         <Key className="h-5 w-5 text-gray-500 mr-3" />
                         <div>

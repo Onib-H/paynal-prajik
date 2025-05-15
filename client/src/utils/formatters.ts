@@ -1,15 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookingResponse } from "../types/BookingClient";
 
+export const pesoFormatter = new Intl.NumberFormat('en-PH', {
+  style: 'currency',
+  currency: 'PHP',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 /**
  * Format a number as a currency string (₱)
  */
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    minimumFractionDigits: 2,
-  }).format(amount);
+export const formatCurrency = (value: number): string => {
+  const abs = Math.abs(value);
+  const basic = pesoFormatter.format(abs);
+  return value < 0 ? `(${basic})` : basic;
 };
 
 /**

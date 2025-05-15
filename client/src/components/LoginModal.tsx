@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { faEye, faEyeSlash, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
+import logo from "../assets/logo.png";
 import { useUserContext } from "../contexts/AuthContext";
 import { login } from "../services/Auth";
 import GoogleButton from "./GoogleButton";
 import Notification from "./Notification";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { SubmitHandler, useForm } from "react-hook-form";
-import logo from "../assets/logo.png";
 
 interface LoginProps {
   toggleLoginModal: () => void;
@@ -121,13 +121,13 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
     },
     onError: (error: any) => {
       console.error(`Failed to login: ${error}`);
-      
+
       const errData = error.response?.data;
       const statusCode = error.response?.status;
-      
+
       if (statusCode === 403) {
         setError('email', {
-          message: errData,
+          message: errData?.error,
           type: "403"
         });
         return;
@@ -154,7 +154,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
       else navigate("/guest/bookings");
     }
   }, [isAuthenticated, role, navigate]);
-  
+
   const onSubmit: SubmitHandler<LoginFormInputs> = (data) => loginMutation(data);
 
   return (
@@ -181,7 +181,7 @@ const LoginModal: FC<LoginProps> = ({ toggleLoginModal, openSignupModal, onSucce
             </motion.button>
 
             <div className="p-7 space-y-4 md:space-y-6 sm:p-9">
-              <motion.img 
+              <motion.img
                 src={logo}
                 alt={logo}
                 loading="lazy"

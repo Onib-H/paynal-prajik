@@ -10,13 +10,12 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { Doughnut } from "react-chartjs-2";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import MonthlyReportModal from "../../components/admin/MonthlyReportModal";
 import StatCard from "../../components/admin/StatCard";
 import DashboardSkeleton from "../../motions/skeletons/AdminDashboardSkeleton";
 import { fetchAreaBookings, fetchAreaRevenue, fetchBookingStatusCounts, fetchDailyBookings, fetchDailyCancellations, fetchDailyNoShowsRejected, fetchDailyRevenue, fetchMonthlyRevenue, fetchRoomBookings, fetchRoomRevenue, fetchStats } from "../../services/Admin";
 import "../../styles/report-modal.css";
 import { formatCurrency, formatMonthYear, getDaysInMonth } from "../../utils/formatters";
-import { MonthlyReportData, prepareMonthlyReportData } from "../../utils/monthlyReportGenerator";
+import { prepareMonthlyReportData, generateNativePDF } from "../../utils/monthlyReportGenerator";
 import Error from "../_ErrorBoundary";
 
 Chart.register(ArcElement, Tooltip, Legend);
@@ -33,9 +32,7 @@ const localizer = dateFnsLocalizer({
 const AdminDashboard = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>("month");
-  const [showReportModal, setShowReportModal] = useState<boolean>(false);
-  const [reportDataState, setReportDataState] = useState<MonthlyReportData | null>(null);
-
+  
   const bookingStatusChartRef = useRef<HTMLDivElement>(null);
   const areaRevenueChartRef = useRef<HTMLDivElement>(null);
   const roomRevenueChartRef = useRef<HTMLDivElement>(null);
@@ -224,21 +221,28 @@ const AdminDashboard = () => {
 
     const getCanvasFromRef = (ref: React.RefObject<HTMLDivElement>) => {
       if (!ref.current) return null;
-      const canvas = ref.current.querySelector('canvas');
-      return canvas || null;
+      return ref.current.querySelector('canvas');
     };
 
+    // Capture chart canvases
     const bookingStatusCanvas = getCanvasFromRef(bookingStatusChartRef);
     const areaRevenueCanvas = getCanvasFromRef(areaRevenueChartRef);
     const roomRevenueCanvas = getCanvasFromRef(roomRevenueChartRef);
 
+    // Attach canvas elements to report data (if needed for HTML preview)
     if (bookingStatusCanvas) reportData.charts.bookingStatusChart = bookingStatusCanvas;
     if (areaRevenueCanvas) reportData.charts.areaRevenueChart = areaRevenueCanvas;
     if (roomRevenueCanvas) reportData.charts.roomRevenueChart = roomRevenueCanvas;
 
-    setReportDataState(reportData);
-    setShowReportModal(true);
+    // Generate PDF
+    const pdfDoc = generateNativePDF(reportData);
+
+    // Open PDF in new tab for printing
+    const pdfBlob = pdfDoc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
   };
+
 
   const EventComponent = ({ event }: { event: any }) => {
     const resource = event.resource;
@@ -544,18 +548,6 @@ const AdminDashboard = () => {
           />
         </div>
       </motion.div>
-
-      {/* Monthly Report Modal */}
-      {showReportModal && reportDataState && (
-        <MonthlyReportModal
-          isOpen={showReportModal}
-          onClose={() => {
-            setShowReportModal(false);
-            setReportDataState(null);
-          }}
-          reportData={reportDataState}
-        />
-      )}
     </div>
   );
 };
