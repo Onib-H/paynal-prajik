@@ -214,74 +214,77 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                         )}
                                     </motion.div>
 
-                                    {/* Room Type */}
-                                    <motion.div variants={itemVariants}>
-                                        <label className="block text-sm font-medium mb-1 text-gray-700">
-                                            Room Type
-                                        </label>
-                                        <div className="relative">
-                                            <select
-                                                name="roomType"
-                                                {...register("roomType")}
-                                                className="appearance-none border border-gray-300 rounded-md w-full p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white"
-                                            >
-                                                <option value="" disabled>Select Room Type</option>
-                                                <option value="premium">Premium</option>
-                                                <option value="suites">Suites</option>
-                                            </select>
-                                            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                                                </svg>
+                                    {/* Room Type & Bed Type in 2-column grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {/* Room Type */}
+                                        <motion.div variants={itemVariants}>
+                                            <label className="block text-sm font-medium mb-1 text-gray-700">
+                                                Room Type
+                                            </label>
+                                            <div className="relative">
+                                                <select
+                                                    name="roomType"
+                                                    {...register("roomType")}
+                                                    className="appearance-none border border-gray-300 rounded-md w-full p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white"
+                                                >
+                                                    <option value="" disabled>Select Room Type</option>
+                                                    <option value="premium">Premium</option>
+                                                    <option value="suites">Suites</option>
+                                                </select>
+                                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </div>
                                             </div>
-                                        </div>
-                                        {errors.roomType && (
-                                            <motion.p
-                                                className="text-red-500 text-xs mt-1"
-                                                initial={{ opacity: 0, y: -5 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.2 }}
-                                            >
-                                                {errors.roomType.message}
-                                            </motion.p>
-                                        )}
-                                    </motion.div>
+                                            {errors.roomType && (
+                                                <motion.p
+                                                    className="text-red-500 text-xs mt-1"
+                                                    initial={{ opacity: 0, y: -5 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                >
+                                                    {errors.roomType.message}
+                                                </motion.p>
+                                            )}
+                                        </motion.div>
 
-                                    {/* Bed Type */}
-                                    <motion.div variants={itemVariants}>
-                                        <label className="block text-sm font-medium mb-1 text-gray-700">
-                                            Bed Type
-                                        </label>
-                                        <div className="relative">
-                                            <select
-                                                name="bedType"
-                                                {...register("bedType")}
-                                                className="appearance-none border border-gray-300 rounded-md w-full p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white"
-                                            >
-                                                <option value="" disabled>Select Bed Type</option>
-                                                <option value="single">Single</option>
-                                                <option value="twin">Twin</option>
-                                                <option value="double">Double</option>
-                                                <option value="queen">Queen</option>
-                                                <option value="king">King</option>
-                                            </select>
-                                            <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                                                </svg>
+                                        {/* Bed Type */}
+                                        <motion.div variants={itemVariants}>
+                                            <label className="block text-sm font-medium mb-1 text-gray-700">
+                                                Bed Type
+                                            </label>
+                                            <div className="relative">
+                                                <select
+                                                    name="bedType"
+                                                    {...register("bedType")}
+                                                    className="appearance-none border border-gray-300 rounded-md w-full p-2 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 bg-white"
+                                                >
+                                                    <option value="" disabled>Select Bed Type</option>
+                                                    <option value="single">Single</option>
+                                                    <option value="twin">Twin</option>
+                                                    <option value="double">Double</option>
+                                                    <option value="queen">Queen</option>
+                                                    <option value="king">King</option>
+                                                </select>
+                                                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                                                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                                                    </svg>
+                                                </div>
                                             </div>
-                                        </div>
-                                        {errors.bedType && (
-                                            <motion.p
-                                                className="text-red-500 text-xs mt-1"
-                                                initial={{ opacity: 0, y: -5 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.2 }}
-                                            >
-                                                {errors.bedType.message}
-                                            </motion.p>
-                                        )}
-                                    </motion.div>
+                                            {errors.bedType && (
+                                                <motion.p
+                                                    className="text-red-500 text-xs mt-1"
+                                                    initial={{ opacity: 0, y: -5 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ duration: 0.2 }}
+                                                >
+                                                    {errors.bedType.message}
+                                                </motion.p>
+                                            )}
+                                        </motion.div>
+                                    </div>
 
                                     {/* Max Guests */}
                                     <motion.div variants={itemVariants}>
@@ -429,7 +432,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                                     loading="lazy"
                                                     src={previewUrl}
                                                     alt="Preview"
-                                                    className="w-full h-48 object-cover border border-gray-200 rounded-md shadow-sm"
+                                                    className="w-full h-40 object-cover border border-gray-200 rounded-md shadow-sm"
                                                 />
                                                 <motion.button
                                                     type="button"
@@ -474,7 +477,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                             ) : isErrorAmenities ? (
                                                 <p className="text-red-500">Failed to load amenities</p>
                                             ) : (
-                                                <div className="grid grid-cols-1 space-y-2 gap-2 max-h-72 overflow-y-auto">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 space-y-2 gap-2 max-h-34 overflow-y-auto">
                                                     {availableAmenities.map((amenity: any, index: number) => (
                                                         <motion.div
                                                             key={amenity.id}

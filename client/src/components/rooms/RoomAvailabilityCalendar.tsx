@@ -266,7 +266,7 @@ const RoomAvailabilityCalendar = memo(({ onDatesChange }: RoomAvailabilityCalend
                   whileHover="hover"
                   whileTap="tap"
                   onClick={handleCheckAvailability}
-                  className="w-full sm:w-auto py-4 px-8 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 uppercase font-semibold text-lg text-white cursor-pointer shadow-lg flex items-center justify-center gap-3"
+                  className="w-full sm:w-auto py-4 px-8 rounded-xl bg-gradient-to-r from-indigo-800 to-purple-800 uppercase font-semibold text-lg text-white cursor-pointer shadow-lg flex items-center justify-center gap-3"
                 >
                   <CalendarRange size={50} />
                   <span>Check Availability</span>

@@ -596,7 +596,7 @@ def admin_bookings(request):
         
         bookings = Bookings.objects.filter(
             ~Q(status__in=exclude_statuses)
-        ).order_by('-created_at')
+        ).order_by('created_at')
         
         page = request.query_params.get('page', 1)
         page_size = request.query_params.get('page_size', 9)

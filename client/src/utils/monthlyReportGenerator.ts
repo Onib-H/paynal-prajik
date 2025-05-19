@@ -82,9 +82,6 @@ export const generateNativePDF = (data: MonthlyReportData): jsPDF => {
 
   let y = styles.spacing.margin;
 
-  doc.setFillColor(styles.colors.primary);
-  doc.rect(styles.spacing.margin, y, 10, 10, "F");
-
   doc.setFont("courier", "bold");
   doc.setFontSize(styles.fonts.header);
   doc.setTextColor(styles.colors.primary);

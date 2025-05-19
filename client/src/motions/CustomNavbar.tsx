@@ -14,7 +14,7 @@ const SlotNavButton: FC<NavBtn> = ({ to, children, className }) => {
             <NavLink
                 to={to}
                 className={({ isActive }) =>
-                    isActive ? "text-purple-600 font-extrabold" : ""
+                    isActive ? "text-purple-700 font-extrabold" : ""
                 }
             >
                 {({ isActive }) => (

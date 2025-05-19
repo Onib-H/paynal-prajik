@@ -322,7 +322,7 @@ const Navbar: FC = () => {
                 <SlotNavButton
                   key={index}
                   to={link.link}
-                  className="text-black hover:text-purple-600"
+                  className="text-black hover:text-purple-800"
                 >
                   <i className={link.icon}></i> {link.text}
                 </SlotNavButton>
