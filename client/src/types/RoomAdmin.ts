@@ -6,7 +6,7 @@ export interface IRoom {
     capacity: string;
     amenities: number[];
     roomPrice: number;
-    roomImage: File | string;
+    images: File | string;
     status: "Available" | "Maintenance";
     description: string;
     maxGuests: number;

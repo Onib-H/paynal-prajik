@@ -1,15 +1,36 @@
 from rest_framework import serializers
 from django.db.models import Avg
-from .models import Amenities, Rooms, Areas
+from .models import Amenities, Rooms, Areas, RoomImages, AreaImages
 
 class AmenitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Amenities
         fields = ['id', 'description']
+        
+class RoomImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = RoomImages
+        fields = ['id', 'image_url']
+        
+    def get_image_url(self, obj):
+        return obj.image.url if obj.image else None
+    
+class AreaImageSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = AreaImages
+        fields = ['id', 'image_url']
+        
+    def get_image_url(self, obj):
+        return obj.image.url if obj.image else None
 
 class RoomSerializer(serializers.ModelSerializer):
     amenities = serializers.PrimaryKeyRelatedField(queryset=Amenities.objects.all(), many=True, required=False)
     average_rating = serializers.SerializerMethodField()
+    images = RoomImageSerializer(many=True, read_only=True, source='room_images')
     
     class Meta:
         model = Rooms
@@ -25,6 +46,7 @@ class RoomSerializer(serializers.ModelSerializer):
             'max_guests',
             'amenities',
             'average_rating',
+            'images',
         ]
         
     def to_representation(self, instance):
@@ -40,6 +62,8 @@ class RoomSerializer(serializers.ModelSerializer):
 
 class AreaSerializer(serializers.ModelSerializer):
     average_rating = serializers.SerializerMethodField()
+    images = AreaImageSerializer(many=True, read_only=True, source='area_images')
+    
     class Meta:
         model = Areas
         fields = [
@@ -51,6 +75,7 @@ class AreaSerializer(serializers.ModelSerializer):
             'capacity',
             'price_per_hour',
             'average_rating',
+            'images',
         ]
         
     def to_representation(self, instance):

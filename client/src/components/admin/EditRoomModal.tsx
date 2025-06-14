@@ -24,12 +24,12 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
             roomPrice: roomData?.roomPrice,
             status: roomData?.status || "Available",
             description: roomData?.description || "",
-            roomImage: roomData?.roomImage || "",
+            images: roomData?.images || "",
             maxGuests: roomData?.maxGuests || 1,
         }
     });
 
-    const image = watch("roomImage");
+    const image = watch("images");
 
     useEffect(() => {
         if (roomData) {

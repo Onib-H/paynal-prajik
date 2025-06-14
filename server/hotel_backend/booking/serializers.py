@@ -9,6 +9,7 @@ from property.serializers import AreaSerializer
 from .validations.booking import validate_booking_request
 from django.utils import timezone
 from datetime import datetime
+from django.db.models import Sum
 from django.core.files.uploadedfile import InMemoryUploadedFile, UploadedFile
 import uuid
 
@@ -56,6 +57,7 @@ class BookingSerializer(serializers.ModelSerializer):
     area_details = AreaSerializer(source='area', read_only=True)
     payment_proof = serializers.SerializerMethodField()
     payment_method = serializers.CharField(source='get_payment_method_display')
+    total_amount = serializers.SerializerMethodField()
     
     class Meta:
         model = Bookings
@@ -83,6 +85,7 @@ class BookingSerializer(serializers.ModelSerializer):
             'payment_date',
             'down_payment',
             'phone_number',
+            'total_amount',
         ]
         
     def get_payment_proof(self, obj):
@@ -91,6 +94,12 @@ class BookingSerializer(serializers.ModelSerializer):
                 return obj.payment_proof
             return obj.payment_proof.url
         return None
+    
+    def get_total_amount(self, obj):
+        return Transactions.objects.filter(
+            booking=obj,
+            status='completed'
+        ).aggregate(Sum('amount'))['amount__sum'] or 0.00
     
     def get_user(self, obj):
         if obj.user:

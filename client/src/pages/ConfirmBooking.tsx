@@ -157,7 +157,7 @@ const ConfirmBooking = () => {
       arrivalTime: data.arrivalTime,
       numberOfGuests: data.numberOfGuests,
       totalPrice: calculatedTotalPrice,
-      paymentMethod: data.paymentMethod,
+      paymentMethod: "gcash",
       paymentProof: gcashProof
     };
 
