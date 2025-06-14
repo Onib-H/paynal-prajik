@@ -43,7 +43,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                 roomPrice: roomData.roomPrice,
                 status: roomData.status || "Available",
                 description: roomData.description || "",
-                roomImage: roomData.roomImage || "",
+                images: roomData.images || "",
                 maxGuests: roomData.maxGuests || 1,
             });
         }
@@ -75,7 +75,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
     };
 
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) setValue("roomImage", e.target.files[0]);
+        if (e.target.files?.[0]) setValue("images", e.target.files[0]);
     };
 
     const onSubmit = async (data: IRoom) => {
@@ -436,7 +436,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                                 />
                                                 <motion.button
                                                     type="button"
-                                                    onClick={() => setValue("roomImage", '')}
+                                                    onClick={() => setValue("images", '')}
                                                     className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors duration-200"
                                                     whileHover={{ scale: 1.1 }}
                                                     whileTap={{ scale: 0.9 }}
@@ -448,14 +448,14 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                             </motion.div>
                                         )}
 
-                                        {errors.roomImage && (
+                                        {errors.images && (
                                             <motion.p
                                                 className="text-red-500 text-xs mt-1"
                                                 initial={{ opacity: 0, y: -5 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.2 }}
                                             >
-                                                {errors.roomImage.message}
+                                                {errors.images.message}
                                             </motion.p>
                                         )}
                                     </motion.div>
