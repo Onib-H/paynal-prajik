@@ -1,8 +1,9 @@
-import { memo, useMemo, useCallback } from "react";
-import { Area } from "../types/AreaClient";
 import { motion } from "framer-motion";
+import { Edit, Eye, Trash2 } from "lucide-react";
+import { memo, useCallback, useMemo } from "react";
+import { Area } from "../types/AreaClient";
+import { formatDiscountedPrice, parsePriceValue } from "../utils/formatters";
 import { MemoizedImage } from "./MemoizedImage";
-import { Eye, Edit, Trash2 } from "lucide-react";
 
 const AreaCard = memo(
     ({
@@ -35,6 +36,12 @@ const AreaCard = memo(
 
         if (!area) return null;
 
+        // Discounted price logic
+        const priceValue = parsePriceValue(area.price_per_hour);
+        const hasDiscount = area.discount_percent && area.discount_percent > 0;
+        const discountedPrice = hasDiscount ? formatDiscountedPrice(priceValue, area.discount_percent) : null;
+        const originalPrice = hasDiscount ? formatDiscountedPrice(priceValue, 0) : null;
+
         return (
             <motion.div
                 className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full"
@@ -64,8 +71,8 @@ const AreaCard = memo(
                         </h2>
                         <span
                             className={`text-md font-semibold ${area.status === "available"
-                                    ? "text-green-600"
-                                    : "text-amber-600"
+                                ? "text-green-600"
+                                : "text-amber-600"
                                 } uppercase`}
                         >
                             {area.status === "available" ? "AVAILABLE" : "MAINTENANCE"}
@@ -95,9 +102,23 @@ const AreaCard = memo(
                     </p>
 
                     <div className="mt-auto flex justify-between items-center">
-                        <p className="text-lg font-bold text-gray-900">
-                            {area.price_per_hour.toLocaleString()}
-                        </p>
+                        <div className="flex flex-col">
+                            {hasDiscount ? (
+                                <>
+                                    <span className="text-base font-semibold text-gray-400 line-through">
+                                        {originalPrice}
+                                    </span>
+                                    <span className="text-lg font-bold text-purple-600">
+                                        {discountedPrice}
+                                        <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">-{area.discount_percent}%</span>
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-lg font-bold text-gray-900">
+                                    {formatDiscountedPrice(priceValue, 0)}
+                                </span>
+                            )}
+                        </div>
                         <div className="flex gap-2">
                             <motion.button
                                 onClick={handleView}

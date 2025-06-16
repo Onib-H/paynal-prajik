@@ -3,13 +3,13 @@ export interface IRoom {
     roomName: string;
     roomType: string;
     bedType: string;
-    capacity: string;
     amenities: number[];
     roomPrice: number;
     images: File | string;
     status: "Available" | "Maintenance";
     description: string;
     maxGuests: number;
+    discount_percent?: number;
 }
 
 export interface IRoomFormModalProps {

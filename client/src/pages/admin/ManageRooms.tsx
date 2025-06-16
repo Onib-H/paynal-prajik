@@ -2,20 +2,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
-import { FC, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
 import EditRoomModal from "../../components/admin/EditRoomModal";
+import RoomDetailsModal from "../../components/admin/RoomDetailsModal";
 import Modal from "../../components/Modal";
+import { RoomCard } from "../../memo/RoomCard";
 import EventLoader from "../../motions/loaders/EventLoader";
 import ManageSkeleton from "../../motions/skeletons/ManageSkeleton";
 import { addNewRoom, deleteRoom, editRoom, fetchAmenities, fetchRooms } from "../../services/Admin";
 import { IRoom } from "../../types/RoomAdmin";
 import { AddRoomResponse, Amenity, PaginationData, Room } from "../../types/RoomClient";
 import Error from "../_ErrorBoundary";
-import { RoomCard } from "../../memo/RoomCard";
-import RoomDetailsModal from "../../components/admin/RoomDetailsModal";
 
-const ManageRooms: FC = () => {
+const ManageRooms = () => {
   const [pageSize] = useState(9);
   const [showFormModal, setShowFormModal] = useState(false);
   const [editRoomData, setEditRoomData] = useState<IRoom | null>(null);
@@ -144,9 +144,9 @@ const ManageRooms: FC = () => {
       status: room.status === "available" ? "Available" : "Maintenance",
       roomPrice: parsedRoomPrice,
       description: room.description,
-      capacity: room.capacity,
       amenities: room.amenities || [],
       maxGuests: room.max_guests || 1,
+      discount_percent: room.discount_percent || 0,
     });
     setShowFormModal(true);
   }, []);
@@ -165,6 +165,8 @@ const ManageRooms: FC = () => {
   };
 
   const handleSave = async (roomData: IRoom): Promise<void> => {
+    console.log(`Room data: ${roomData}`)
+
     const formData = new FormData();
     formData.append("room_name", roomData.roomName);
     formData.append("room_type", roomData.roomType);
@@ -172,7 +174,6 @@ const ManageRooms: FC = () => {
     formData.append("status", roomData.status.toLowerCase());
     formData.append("room_price", String(roomData.roomPrice || 0));
     formData.append("description", roomData.description || "");
-    formData.append("capacity", roomData.capacity || "");
     formData.append("max_guests", String(roomData.maxGuests || 1));
 
     if (roomData.amenities && roomData.amenities.length > 0) {
@@ -183,6 +184,12 @@ const ManageRooms: FC = () => {
 
     if (roomData.images instanceof File) {
       formData.append("room_image", roomData.images);
+    }
+
+    formData.append('discount_percent', roomData.discount_percent?.toString());
+
+    for (const pair of formData.entries()) {
+      console.log(`${pair[0]}: ${pair[1]}`);
     }
 
     try {

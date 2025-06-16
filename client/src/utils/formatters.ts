@@ -175,3 +175,20 @@ export const formatTime = (time: string): string => {
 
   return `${formattedHour}:${minutes} ${period}`;
 };
+
+
+/**
+ * Shows the rendered discounted price if the 
+ * area / room has a discount applied.
+ * Otherwise, it returns the original price.
+ */
+export const formatDiscountedPrice = (
+  price: number,
+  discount: number | null
+): string => {
+  if (discount && discount > 0) {
+    const discountedPrice = price - (price * discount) / 100;
+    return pesoFormatter.format(discountedPrice);
+  }
+  return pesoFormatter.format(price);
+}

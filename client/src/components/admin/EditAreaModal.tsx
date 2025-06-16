@@ -21,6 +21,7 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, canc
       price_per_hour: areaData?.price_per_hour ? parsePriceValue(areaData.price_per_hour) : 0,
       status: areaData?.status || "available",
       area_image: areaData?.area_image || "",
+      discount_percent: areaData?.discount_percent || 0,
     }
   });
 
@@ -36,6 +37,7 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, canc
         price_per_hour: areaData.price_per_hour ? parsePriceValue(areaData.price_per_hour) : 0,
         status: areaData.status || "available",
         area_image: areaData.area_image || "",
+        discount_percent: areaData.discount_percent || 0,
       });
     }
   }, [areaData, reset]);
@@ -108,7 +110,7 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, canc
     rest: { x: "0%", opacity: 1, transition: { duration: 0.3, ease: "easeOut" } },
     hover: { x: "125%", opacity: 0, transition: { duration: 0.3, ease: "easeOut" } }
   };
-  
+
   const iconVariants = {
     rest: { x: "-125%", opacity: 0, transition: { duration: 0.3, ease: "easeOut" } },
     hover: { x: "0%", opacity: 1, transition: { duration: 0.3, ease: "easeOut" } }
@@ -292,6 +294,30 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, canc
                         transition={{ duration: 0.2 }}
                       >
                         {errors.description.message}
+                      </motion.p>
+                    )}
+                  </motion.div>
+
+                  {/* Discount Percentage */}
+                  <motion.div variants={itemVariants}>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">
+                      Discount (%)
+                    </label>
+                    <input
+                      type="number"
+                      name="discount_percent"
+                      min={0}
+                      max={99}
+                      {...register("discount_percent", {
+                        valueAsNumber: true,
+                        min: { value: 0, message: "Min 0%" },
+                        max: { value: 99, message: "Max 99%" }
+                      })}
+                      className="border border-gray-300 rounded-md w-full p-2"
+                    />
+                    {errors.discount_percent && (
+                      <motion.p className="text-red-500 text-xs mt-1">
+                        {errors.discount_percent.message}
                       </motion.p>
                     )}
                   </motion.div>

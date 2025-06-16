@@ -98,9 +98,6 @@ const GCashPaymentModal: FC<GCashPaymentModalProps> = ({ isOpen, onClose, onProo
                                 </div>
 
                                 <div className="mb-2">
-                                    <label className="block text-lg font-medium mb-4">
-                                        Upload Payment Receipt
-                                    </label>
                                     <input
                                         type="file"
                                         name="payment_proof"

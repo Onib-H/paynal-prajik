@@ -19,13 +19,13 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
             roomName: roomData?.roomName || "",
             roomType: roomData?.roomType || "premium",
             bedType: roomData?.bedType || "single",
-            capacity: roomData?.capacity || "",
             amenities: roomData?.amenities || [],
             roomPrice: roomData?.roomPrice,
             status: roomData?.status || "Available",
             description: roomData?.description || "",
             images: roomData?.images || "",
             maxGuests: roomData?.maxGuests || 1,
+            discount_percent: roomData?.discount_percent || 0,
         }
     });
 
@@ -38,13 +38,13 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                 roomName: roomData.roomName || "",
                 roomType: roomData.roomType || "premium",
                 bedType: roomData.bedType || "single",
-                capacity: roomData.capacity || "",
                 amenities: roomData.amenities || [],
                 roomPrice: roomData.roomPrice,
                 status: roomData.status || "Available",
                 description: roomData.description || "",
                 images: roomData.images || "",
                 maxGuests: roomData.maxGuests || 1,
+                discount_percent: roomData.discount_percent || 0,
             });
         }
     }, [roomData, reset]);
@@ -79,6 +79,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
     };
 
     const onSubmit = async (data: IRoom) => {
+        console.log(`Edit Room Data: ${data}`);;
         try {
             await onSave(data);
         } catch (error: any) {
@@ -286,60 +287,62 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                         </motion.div>
                                     </div>
 
-                                    {/* Max Guests */}
-                                    <motion.div variants={itemVariants}>
-                                        <label className="block text-sm font-medium mb-1 text-gray-700">
-                                            No. of Guest(s)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            name="maxGuests"
-                                            {...register("maxGuests", {
-                                                required: "Max guests is required",
-                                                valueAsNumber: true,
-                                                min: { value: 1, message: "Minimum 1 guest" }
-                                            })}
-                                            placeholder="Maximum number of guests"
-                                            className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                                        />
-                                        {errors.maxGuests && (
-                                            <motion.p
-                                                className="text-red-500 text-xs mt-1"
-                                                initial={{ opacity: 0, y: -5 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ duration: 0.2 }}
-                                            >
-                                                {errors.maxGuests.message}
-                                            </motion.p>
-                                        )}
-                                    </motion.div>
-
-                                    {/* Status (Only when editing) */}
-                                    {roomData && (
+                                    {/* Max Guests & Status */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <motion.div variants={itemVariants}>
                                             <label className="block text-sm font-medium mb-1 text-gray-700">
-                                                Status
+                                                No. of Guest(s)
                                             </label>
-                                            <select
-                                                name="status"
-                                                {...register("status")}
+                                            <input
+                                                type="number"
+                                                name="maxGuests"
+                                                {...register("maxGuests", {
+                                                    required: "Max guests is required",
+                                                    valueAsNumber: true,
+                                                    min: { value: 1, message: "Minimum 1 guest" }
+                                                })}
+                                                placeholder="Maximum number of guests"
                                                 className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                                            >
-                                                <option value="Available">Available</option>
-                                                <option value="Maintenance">Maintenance</option>
-                                            </select>
-                                            {errors.status && (
+                                            />
+                                            {errors.maxGuests && (
                                                 <motion.p
                                                     className="text-red-500 text-xs mt-1"
                                                     initial={{ opacity: 0, y: -5 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     transition={{ duration: 0.2 }}
                                                 >
-                                                    {errors.status.message}
+                                                    {errors.maxGuests.message}
                                                 </motion.p>
                                             )}
                                         </motion.div>
-                                    )}
+
+                                        {/* Status (Only when editing) */}
+                                        {roomData && (
+                                            <motion.div variants={itemVariants}>
+                                                <label className="block text-sm font-medium mb-1 text-gray-700">
+                                                    Status
+                                                </label>
+                                                <select
+                                                    name="status"
+                                                    {...register("status")}
+                                                    className="border border-gray-300 rounded-md w-full p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                                                >
+                                                    <option value="Available">Available</option>
+                                                    <option value="Maintenance">Maintenance</option>
+                                                </select>
+                                                {errors.status && (
+                                                    <motion.p
+                                                        className="text-red-500 text-xs mt-1"
+                                                        initial={{ opacity: 0, y: -5 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ duration: 0.2 }}
+                                                    >
+                                                        {errors.status.message}
+                                                    </motion.p>
+                                                )}
+                                            </motion.div>
+                                        )}
+                                    </div>
 
                                     {/* Room Price */}
                                     <motion.div variants={itemVariants}>
@@ -388,6 +391,30 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                                 transition={{ duration: 0.2 }}
                                             >
                                                 {errors.description.message}
+                                            </motion.p>
+                                        )}
+                                    </motion.div>
+
+                                    <motion.div variants={itemVariants}>
+                                        <label className="block text-sm font-medium mb-1 text-gray-700">
+                                            Discount (%)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="discount_percent"
+                                            min={0}
+                                            max={99}
+                                            {...register("discount_percent", {
+                                                valueAsNumber: true,
+                                                min: { value: 0, message: "Min 0%" },
+                                                max: { value: 99, message: "Max 99%" }
+                                            })}
+                                            className="border border-gray-300 rounded-md w-full p-2"
+                                            placeholder="0"
+                                        />
+                                        {errors.discount_percent && (
+                                            <motion.p className="text-red-500 text-xs mt-1">
+                                                {errors.discount_percent.message}
                                             </motion.p>
                                         )}
                                     </motion.div>

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FC, useState, useEffect, FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { FC, FormEvent, useEffect, useRef, useState } from "react";
 import { IAmenity, IEditAmenityModalProps } from "../../types/AmenityAdmin";
 
 const EditAmenityModal: FC<IEditAmenityModalProps> = ({ isOpen, amenityData, onSave, cancel, loading = false }) => {
@@ -9,6 +9,9 @@ const EditAmenityModal: FC<IEditAmenityModalProps> = ({ isOpen, amenityData, onS
     description: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Add ref for the input
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (amenityData) {
@@ -20,6 +23,13 @@ const EditAmenityModal: FC<IEditAmenityModalProps> = ({ isOpen, amenityData, onS
       setFormState({ id: 0, description: "" });
     }
   }, [amenityData]);
+
+  // Auto-focus input when modal opens
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -70,6 +80,7 @@ const EditAmenityModal: FC<IEditAmenityModalProps> = ({ isOpen, amenityData, onS
                     }))
                   }
                   className="w-full border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  ref={inputRef}
                 />
                 {errors["description"] && (
                   <p className="text-red-500 text-xs mt-1">
