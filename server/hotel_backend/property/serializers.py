@@ -25,6 +25,7 @@ class RoomSerializer(serializers.ModelSerializer):
             'max_guests',
             'amenities',
             'average_rating',
+            'discount_percent',
         ]
         
     def to_representation(self, instance):
@@ -51,6 +52,7 @@ class AreaSerializer(serializers.ModelSerializer):
             'capacity',
             'price_per_hour',
             'average_rating',
+            'discount_percent',
         ]
         
     def to_representation(self, instance):

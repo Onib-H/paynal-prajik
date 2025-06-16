@@ -44,7 +44,8 @@ const RoomList: FC = () => {
           description: room.description,
           capacity: room.capacity,
           price: room.room_price,
-          amenities: room.amenities
+          amenities: room.amenities,
+          discount_percent: room.discount_percent || 0,
         };
       });
   }, [data?.data]);
@@ -74,6 +75,7 @@ const RoomList: FC = () => {
                 title={room.title}
                 price={room.price}
                 description={room.description}
+                discount_percent={room.discount_percent > 0 ? room.discount_percent : null}
               />
             </div>
           ))}

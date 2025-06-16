@@ -12,9 +12,9 @@ from user_roles.models import CustomUsers, Notification
 from user_roles.serializers import CustomUserSerializer
 from user_roles.views import create_booking_notification
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Sum
 from datetime import datetime, date, timedelta
-from .email.booking import send_booking_confirmation_email, send_booking_rejection_email
+from .email.booking import send_booking_confirmation_email, send_booking_rejection_email, send_checkout_e_receipt
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import traceback
@@ -221,13 +221,20 @@ def add_new_room(request):
                 data['room_price'] = float(price_str)
             except (ValueError, TypeError):
                 pass
-        
         if 'max_guests' in data and not isinstance(data['max_guests'], int):
             try:
                 data['max_guests'] = int(data['max_guests'])
             except (ValueError, TypeError):
                 data['max_guests'] = 2
-
+        # Handle discount_percent
+        if 'discount_percent' in data:
+            try:
+                discount = int(data['discount_percent'])
+                if discount < 0 or discount > 99:
+                    return Response({"error": {"discount_percent": "Discount must be between 0 and 99."}}, status=status.HTTP_400_BAD_REQUEST)
+                data['discount_percent'] = discount
+            except (ValueError, TypeError):
+                data['discount_percent'] = 0
         serializer = RoomSerializer(data=data)
         if serializer.is_valid():
             instance = serializer.save()
@@ -260,31 +267,36 @@ def show_room_details(request, room_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def edit_room(request, room_id):
+    print(f'edit_room Data: {request.data}')
     try:
         room = Rooms.objects.get(id=room_id)
     except Rooms.DoesNotExist:
         return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
-    
     has_active_bookings = Bookings.objects.filter(
         room=room,
         status__in=['reserved', 'confirmed', 'checked_in']
     ).exists()
-    
     if has_active_bookings:
-        allowed_fields = ['description', 'amenities', 'status', 'max_guests']
+        allowed_fields = ['description', 'amenities', 'status', 'max_guests', 'discount_percent']
         filtered_data = {k: v for k, v in request.data.items() if k in allowed_fields}
-        
+        # Validate discount_percent
+        if 'discount_percent' in filtered_data:
+            try:
+                discount = int(filtered_data['discount_percent'])
+                if discount < 0 or discount > 99:
+                    return Response({"error": {"discount_percent": "Discount must be between 0 and 99."}}, status=status.HTTP_400_BAD_REQUEST)
+                filtered_data['discount_percent'] = discount
+            except (ValueError, TypeError):
+                filtered_data['discount_percent'] = 0
         if 'status' in filtered_data and filtered_data['status'] == 'unavailable':
             return Response({
                 "error": "Cannot change status to unavailable when there are active or reserved bookings",
             }, status=status.HTTP_400_BAD_REQUEST)
-        
         if 'max_guests' in filtered_data and not isinstance(filtered_data['max_guests'], int):
             try:
                 filtered_data['max_guests'] = int(filtered_data['max_guests'])
             except (ValueError, TypeError):
                 filtered_data['max_guests'] = 2
-        
         serializer = RoomSerializer(room, data=filtered_data, partial=True)
     else:
         data = request.data.copy()
@@ -293,16 +305,22 @@ def edit_room(request, room_id):
                 price_str = data['room_price'].replace('₱', '').replace(',', '')
                 data['room_price'] = float(price_str)
             except (ValueError, TypeError):
-                pass 
-        
+                pass
         if 'max_guests' in data and not isinstance(data['max_guests'], int):
             try:
                 data['max_guests'] = int(data['max_guests'])
             except (ValueError, TypeError):
                 data['max_guests'] = 2
-        
+        # Handle discount_percent
+        if 'discount_percent' in data:
+            try:
+                discount = int(data['discount_percent'])
+                if discount < 0 or discount > 99:
+                    return Response({"error": {"discount_percent": "Discount must be between 0 and 99."}}, status=status.HTTP_400_BAD_REQUEST)
+                data['discount_percent'] = discount
+            except (ValueError, TypeError):
+                data['discount_percent'] = 0
         serializer = RoomSerializer(room, data=data, partial=True)
-    
     if serializer.is_valid():
         instance = serializer.save()
         return Response({
@@ -383,8 +401,16 @@ def add_new_area(request):
                 price_str = data['price_per_hour'].replace('₱', '').replace(',', '')
                 data['price_per_hour'] = float(price_str)
             except (ValueError, TypeError):
-                pass 
-        
+                pass
+        # Handle discount_percent
+        if 'discount_percent' in data:
+            try:
+                discount = int(data['discount_percent'])
+                if discount < 0 or discount > 99:
+                    return Response({"error": {"discount_percent": "Discount must be between 0 and 99."}}, status=status.HTTP_400_BAD_REQUEST)
+                data['discount_percent'] = discount
+            except (ValueError, TypeError):
+                data['discount_percent'] = 0
         serializer = AreaSerializer(data=data)
         if serializer.is_valid():
             instance = serializer.save()
@@ -424,9 +450,17 @@ def edit_area(request, area_id):
         area = Areas.objects.get(id=area_id)
     except Areas.DoesNotExist:
         return Response({"error": "Area not found"}, status=status.HTTP_404_NOT_FOUND)
-    
-    serializer = AreaSerializer(area, data=request.data, partial=True)
-    
+    data = request.data.copy()
+
+    if 'discount_percent' in data:
+        try:
+            discount = int(data['discount_percent'])
+            if discount < 0 or discount > 99:
+                return Response({"error": {"discount_percent": "Discount must be between 0 and 99."}}, status=status.HTTP_400_BAD_REQUEST)
+            data['discount_percent'] = discount
+        except (ValueError, TypeError):
+            data['discount_percent'] = 0
+    serializer = AreaSerializer(area, data=data, partial=True)
     if serializer.is_valid():
         instance = serializer.save()
         return Response({
@@ -734,6 +768,7 @@ def update_booking_status(request, booking_id):
                 notification_message = f"You've been checked in to {property_name}."
             elif status_value == 'checked_out':
                 notification_message = f"You've been checked out from {property_name}."
+                send_checkout_e_receipt(user_email, serializer.data)
             elif status_value == 'rejected':
                 reason = booking.cancellation_reason or "No reason provided"
                 notification_message = f"Your booking for {property_name} was rejected. Reason: {reason}"

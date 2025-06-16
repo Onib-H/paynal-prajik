@@ -1,9 +1,9 @@
-import { memo } from "react";
 import { motion } from "framer-motion";
-import { useCallback, useMemo } from "react";
-import { Eye, Edit, Trash2 } from "lucide-react";
-import { MemoizedImage } from "./MemoizedImage";
+import { Edit, Eye, Trash2 } from "lucide-react";
+import { memo, useCallback, useMemo } from "react";
 import { Room } from "../types/RoomClient";
+import { formatDiscountedPrice, parsePriceValue } from "../utils/formatters";
+import { MemoizedImage } from "./MemoizedImage";
 
 export const RoomCard = memo(
     ({
@@ -26,13 +26,15 @@ export const RoomCard = memo(
             }),
             [room.room_image, room.room_name]
         );
-
         const handleView = useCallback(() => onView(room), [room, onView]);
         const handleEdit = useCallback(() => onEdit(room), [room, onEdit]);
-        const handleDelete = useCallback(
-            () => onDelete(room.id),
-            [room.id, onDelete]
-        );
+        const handleDelete = useCallback(() => onDelete(room.id), [room.id, onDelete]);
+
+        // Discounted price logic
+        const priceValue = parsePriceValue(room.room_price);
+        const hasDiscount = room.discount_percent && room.discount_percent > 0;
+        const discountedPrice = hasDiscount ? formatDiscountedPrice(priceValue, room.discount_percent) : null;
+        const originalPrice = hasDiscount ? formatDiscountedPrice(priceValue, 0) : null;
 
         return (
             <motion.div
@@ -63,8 +65,8 @@ export const RoomCard = memo(
                         </h2>
                         <span
                             className={`text-md font-semibold ${room.status === "available"
-                                    ? "text-green-600"
-                                    : "text-amber-600"
+                                ? "text-green-600"
+                                : "text-amber-600"
                                 } uppercase`}
                         >
                             {room.status === "available" ? "AVAILABLE" : "MAINTENANCE"}
@@ -73,8 +75,8 @@ export const RoomCard = memo(
                     <p className="text-gray-600 text-sm mb-1 flex items-center">
                         <span
                             className={`inline-flex items-center rounded-md px-2 py-1 text-xs uppercase font-semibold mr-2 ${room.room_type === "premium"
-                                    ? "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20"
-                                    : "bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20"
+                                ? "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20"
+                                : "bg-purple-50 text-purple-700 ring-1 ring-inset ring-purple-600/20"
                                 }`}
                         >
                             {room.room_type === "premium" ? "Premium" : "Suites"}
@@ -108,11 +110,23 @@ export const RoomCard = memo(
                     </p>
 
                     <div className="mt-auto flex justify-between items-center">
-                        <p className="text-xl font-bold text-gray-900">
-                            {typeof room.room_price === "string"
-                                ? room.room_price
-                                : room.room_price.toLocaleString()}
-                        </p>
+                        <div className="flex flex-col">
+                            {hasDiscount ? (
+                                <>
+                                    <span className="text-base font-semibold text-gray-400 line-through">
+                                        {originalPrice}
+                                    </span>
+                                    <span className="text-lg font-bold text-purple-600">
+                                        {discountedPrice}
+                                        <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">-{room.discount_percent}%</span>
+                                    </span>
+                                </>
+                            ) : (
+                                <span className="text-lg font-bold text-gray-900">
+                                    {formatDiscountedPrice(priceValue, 0)}
+                                </span>
+                            )}
+                        </div>
                         <div className="flex gap-2">
                             <motion.button
                                 onClick={handleView}

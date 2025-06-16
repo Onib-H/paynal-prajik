@@ -121,7 +121,7 @@ const ConfirmVenueBooking = () => {
       status: "pending",
       isVenueBooking: true,
       numberOfGuests: data.numberOfGuests,
-      paymentMethod: data.paymentMethod,
+      paymentMethod: "gcash",
       paymentProof: gcashProof
     };
 

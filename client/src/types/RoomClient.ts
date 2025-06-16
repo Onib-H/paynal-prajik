@@ -16,6 +16,7 @@ export interface Room {
     capacity: string;
     max_guests: number;
     amenities: number[];
+    discount_percent?: number;
 }
 
 export interface AddRoomResponse {
@@ -36,4 +37,5 @@ export interface RoomCardProps {
     title: string;
     price: string;
     description: string;
+    discount_percent?: number;
 }

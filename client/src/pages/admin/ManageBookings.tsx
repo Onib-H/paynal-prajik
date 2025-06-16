@@ -17,6 +17,7 @@ import { webSocketAdminActives, WebSocketEvent } from "../../services/websockets
 import { BookingResponse } from "../../types/BookingClient";
 import { BookingQuery } from "../../types/BookingsAdmin";
 import { formatDate, getBookingPrice } from "../../utils/formatters";
+import { adminRejectionReasons } from "../../constants/Dropdown";
 
 const ManageBookings: FC = () => {
   const { userDetails } = useUserContext();
@@ -537,6 +538,7 @@ const ManageBookings: FC = () => {
           reasonPlaceholder="Enter detailed reason for rejecting this booking..."
           confirmButtonText="Confirm Rejection"
           showPolicyNote={false}
+          reasons={adminRejectionReasons}
         />
       )}
 

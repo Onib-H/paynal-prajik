@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 interface CancellationModalProps {
     isOpen: boolean;
@@ -12,9 +12,10 @@ interface CancellationModalProps {
     reasonPlaceholder?: string;
     confirmButtonText?: string;
     showPolicyNote?: boolean;
+    reasons?: string[];
 }
 
-const CancellationModal = ({
+const CancellationModal: FC<CancellationModalProps> = ({
     isOpen,
     onClose,
     onConfirm,
@@ -23,21 +24,37 @@ const CancellationModal = ({
     reasonLabel = "Reason for Cancellation",
     reasonPlaceholder = "Please explain why you're cancelling this reservation...",
     confirmButtonText = "Confirm Cancellation",
-    showPolicyNote = true
-}: CancellationModalProps) => {
-    const [reason, setReason] = useState('');
+    showPolicyNote = true,
+    reasons
+}) => {
+    const [selectedReason, setSelectedReason] = useState('');
+    const [otherReason, setOtherReason] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
+    const isOther = selectedReason === 'Other (please specify)';
+    const dropdownReasons = reasons || [];
+
     const handleConfirm = () => {
-        if (!reason.trim()) {
-            setError(`Please provide a ${reasonLabel.toLowerCase()}`);
+        const reasonToSend = isOther ? otherReason.trim() : selectedReason;
+        if (!reasonToSend) {
+            setError(isOther ? 'Please specify your reason for cancellation.' : `Please select a ${reasonLabel.toLowerCase()}`);
             return;
         }
         setError('');
         setIsSubmitting(true);
-        onConfirm(reason);
+        onConfirm(reasonToSend);
     };
+
+    // Reset state when modal opens/closes
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedReason('');
+            setOtherReason('');
+            setError('');
+            setIsSubmitting(false);
+        }
+    }, [isOpen]);
 
     return (
         <AnimatePresence>
@@ -65,22 +82,45 @@ const CancellationModal = ({
                         </p>
 
                         <div className="mb-4">
-                            <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="reason-select" className="block text-sm font-medium text-gray-700 mb-1">
                                 {reasonLabel} <span className="text-red-500">*</span>
                             </label>
-                            <textarea
-                                id="reason"
-                                rows={4}
-                                className={`w-full px-3 py-2 border ${error ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 resize-none focus:ring-blue-500`}
-                                value={reason}
-                                onChange={(e) => {
-                                    setReason(e.target.value);
-                                    if (e.target.value.trim()) setError('');
+                            <select
+                                id="reason-select"
+                                className={`w-full px-3 py-2 border ${error && !isOther ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                                value={selectedReason}
+                                onChange={e => {
+                                    setSelectedReason(e.target.value);
+                                    setError('');
                                 }}
-                                placeholder={reasonPlaceholder}
-                            />
-                            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                            >
+                                <option disabled value="">Select a reason...</option>
+                                {dropdownReasons.map((reason) => (
+                                    <option key={reason} value={reason}>{reason}</option>
+                                ))}
+                            </select>
                         </div>
+
+                        {isOther && (
+                            <div className="mb-4">
+                                <label htmlFor="other-reason" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Please specify your reason <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    id="other-reason"
+                                    rows={4}
+                                    className={`w-full px-3 py-2 border ${error && isOther ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 resize-none focus:ring-blue-500`}
+                                    value={otherReason}
+                                    onChange={e => {
+                                        setOtherReason(e.target.value);
+                                        setError('');
+                                    }}
+                                    placeholder={reasonPlaceholder}
+                                />
+                                {error && isOther && <p className="text-red-500 text-sm mt-1">{error}</p>}
+                            </div>
+                        )}
+                        {error && !isOther && <p className="text-red-500 text-sm mb-2">{error}</p>}
 
                         <div className="flex justify-between mt-6">
                             <button

@@ -15,6 +15,7 @@ import { fetchGuestBookings } from "../../services/Guest";
 import { formatStatus, formatDate, getStatusColor } from "../../utils/formatters";
 import GuestBookingsSkeleton from "../../motions/skeletons/GuestBookingsSkeleton";
 import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
+import { guestCancellationReasons } from "../../constants/Dropdown";
 
 const GuestBookings = () => {
   const { userDetails } = useUserContext();
@@ -527,6 +528,7 @@ const GuestBookings = () => {
         reasonPlaceholder="Enter detailed reason for cancelling this booking..."
         confirmButtonText="Confirm Cancellation"
         showPolicyNote={true}
+        reasons={guestCancellationReasons}
       />
 
       {showBookingDetailModal && (

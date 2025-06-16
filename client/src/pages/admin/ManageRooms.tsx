@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { FC, useCallback, useState } from "react";
 import { toast } from "react-toastify";
 import EditRoomModal from "../../components/admin/EditRoomModal";
@@ -144,9 +144,9 @@ const ManageRooms: FC = () => {
       status: room.status === "available" ? "Available" : "Maintenance",
       roomPrice: parsedRoomPrice,
       description: room.description,
-      capacity: room.capacity,
       amenities: room.amenities || [],
       maxGuests: room.max_guests || 1,
+      discount_percent: room.discount_percent || 0,
     });
     setShowFormModal(true);
   }, []);
@@ -165,6 +165,8 @@ const ManageRooms: FC = () => {
   };
 
   const handleSave = async (roomData: IRoom): Promise<void> => {
+    console.log(`Room data: ${roomData}`)
+    
     const formData = new FormData();
     formData.append("room_name", roomData.roomName);
     formData.append("room_type", roomData.roomType);
@@ -172,17 +174,22 @@ const ManageRooms: FC = () => {
     formData.append("status", roomData.status.toLowerCase());
     formData.append("room_price", String(roomData.roomPrice || 0));
     formData.append("description", roomData.description || "");
-    formData.append("capacity", roomData.capacity || "");
     formData.append("max_guests", String(roomData.maxGuests || 1));
-
+    
     if (roomData.amenities && roomData.amenities.length > 0) {
       roomData.amenities.forEach((amenityId) => {
         formData.append("amenities", String(amenityId));
       });
     }
-
+    
     if (roomData.roomImage instanceof File) {
       formData.append("room_image", roomData.roomImage);
+    }
+
+    formData.append('discount_percent', roomData.discount_percent?.toString());
+    
+    for (const pair of formData.entries()) {
+      console.log(`${pair[0]}: ${pair[1]}`);
     }
 
     try {
@@ -246,18 +253,52 @@ const ManageRooms: FC = () => {
         </div>
 
         {/* Grid of Room Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
-          {rooms.map((room, index) => (
-            <RoomCard
-              key={room.id}
-              room={room}
-              index={index}
-              onView={handleViewRoom}
-              onEdit={handleEditRoom}
-              onDelete={handleDeleteRoom}
-            />
-          ))}
-        </div>
+        {rooms.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+            {rooms.map((room, index) => (
+              <RoomCard
+                key={room.id}
+                room={room}
+                index={index}
+                onView={handleViewRoom}
+                onEdit={handleEditRoom}
+                onDelete={handleDeleteRoom}
+              />
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            className="flex flex-col items-center justify-center mt-16"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, type: "spring" }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              <MapPin className="w-16 h-16 text-gray-400 mb-4" />
+            </motion.div>
+            <motion.p
+              className="text-2xl font-semibold"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+            >
+              No Rooms Found
+            </motion.p>
+            <motion.p
+              className="mt-2 text-gray-500 text-center max-w-md"
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+            >
+              It looks like you haven't added any rooms yet. Click the button
+              below to create your first room.
+            </motion.p>
+          </motion.div>
+        )}
 
         {/* Pagination Controls */}
         {pagination && pagination.total_pages > 1 && (

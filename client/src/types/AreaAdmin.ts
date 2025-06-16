@@ -6,6 +6,7 @@ export interface IArea {
     price_per_hour: number | string;
     status: "available" | "maintenance";
     area_image: File | string;
+    discount_percent?: number;
 }
 
 export interface IAreaFormModalProps {

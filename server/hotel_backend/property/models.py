@@ -45,6 +45,7 @@ class Rooms(models.Model):
     description = models.TextField(blank=True)
     max_guests = models.PositiveIntegerField(default=2, help_text="Maximum number of guests allowed")
     amenities = models.ManyToManyField(Amenities, related_name='rooms', blank=True)
+    discount_percent = models.PositiveIntegerField(default=0)
     
     class Meta:
         db_table = 'rooms'
@@ -65,6 +66,7 @@ class Areas(models.Model):
         default='available',
     )
     area_image = CloudinaryField('area_image', null=True, blank=True)
+    discount_percent = models.PositiveIntegerField(default=0)
     
     class Meta:
         db_table = 'areas'

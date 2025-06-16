@@ -65,6 +65,7 @@ const VenueList = () => {
                 priceRange={area.price_per_hour.toString()}
                 image={area.area_image}
                 description={area.description}
+                discount_percent={area.discount_percent > 0 ? area.discount_percent : null}
               />
             </div>
           ))}

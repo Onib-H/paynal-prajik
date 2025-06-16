@@ -146,6 +146,7 @@ const ManageAreas = () => {
       capacity: area.capacity,
       price_per_hour: area.price_per_hour,
       status: area.status,
+      discount_percent: area.discount_percent || 0,
     });
     setShowFormModal(true);
   }, []);
@@ -175,6 +176,8 @@ const ManageAreas = () => {
     if (areaData.area_image instanceof File) {
       formData.append("area_image", areaData.area_image);
     }
+
+    formData.append("discount_percent", areaData.discount_percent?.toString());
 
     try {
       if (!areaData.id) await addAreaMutation.mutateAsync(formData);
