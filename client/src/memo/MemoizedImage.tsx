@@ -10,7 +10,7 @@ export const MemoizedImage = memo(
         alt: string;
         className: string;
     }) => {
-        return <img loading="lazy" src={src} alt={alt} className={className} />;
+        return <img src={src} alt={alt} className={className} />;
     }
 );
 

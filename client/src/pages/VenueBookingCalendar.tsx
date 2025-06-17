@@ -3,9 +3,9 @@ import { addMonths, differenceInCalendarDays, eachDayOfInterval, endOfMonth, for
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useUserContext } from '../contexts/AuthContext';
 import { fetchAreaBookings, fetchAreaById } from '../services/Booking';
 import { AreaData, BookingData, BookingsByDate } from '../types/BookingClient';
-import { useUserContext } from '../contexts/AuthContext';
 
 const VenueBookingCalendar = () => {
     const { userDetails } = useUserContext();
@@ -177,12 +177,16 @@ const VenueBookingCalendar = () => {
     };
 
     const handleProceed = () => {
-        if (selectedDate) {
+        if (selectedDate && areaData) {
             const dateStr = format(selectedDate, 'yyyy-MM-dd');
             const startTime = `${dateStr}`;
             const endTime = `${dateStr}T17:00:00`;
-
-            navigate(`/confirm-area-booking?areaId=${areaId}&startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}&totalPrice=${price}`);
+            let totalPrice: number = price;
+            if (areaData.discount_percent > 0) {
+                const numericValue = areaData.discounted_price?.toString().replace(/[^\d.]/g, '') || '0';
+                totalPrice = parseFloat(numericValue);
+            }
+            navigate(`/confirm-area-booking?areaId=${areaId}&startTime=${encodeURIComponent(startTime)}&endTime=${encodeURIComponent(endTime)}&totalPrice=${totalPrice}`);
         }
     };
 
@@ -418,7 +422,26 @@ const VenueBookingCalendar = () => {
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-xl font-bold mb-2">{areaData.area_name}</h3>
                             </div>
-                            <p className="text-xl font-semibold text-blue-600 mb-3">₱{price.toLocaleString()}</p>
+
+                            {areaData.discount_percent && areaData.discount_percent > 0 ? (
+                                <span>
+                                    <span className="line-through text-gray-400 mr-2">{areaData.price_per_hour}</span>
+                                    <span className="text-blue-600 font-bold">
+                                        ₱
+                                        {(
+                                            parseFloat(
+                                                areaData.price_per_hour?.toString().replace(/[^\d.]/g, '') || '0'
+                                            ) *
+                                            (1 - areaData.discount_percent / 100)
+                                        ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </span>
+                                    <span className="ml-2 text-green-600 font-semibold">
+                                        -{areaData.discount_percent}% OFF
+                                    </span>
+                                </span>
+                            ) : (
+                                <span>{areaData.price_per_hour}</span>
+                            )}
 
                             <div className="flex items-center text-gray-600 text-lg mb-3">
                                 <span className="mr-2">👥</span>
@@ -440,7 +463,21 @@ const VenueBookingCalendar = () => {
                                             </div>
                                             <div className="flex justify-between text-2xl font-semibold text-blue-600 pt-2 border-t border-gray-200">
                                                 <span>Total Price:</span>
-                                                <span>₱{price.toLocaleString()}</span>
+                                                {areaData.discount_percent && areaData.discount_percent > 0 ? (
+                                                    <>
+                                                        <span className="line-through text-gray-400 mr-2">
+                                                            ₱{price.toLocaleString()}
+                                                        </span>
+                                                        <span className="text-blue-600 font-bold">
+                                                            ₱
+                                                            {(
+                                                                price * (1 - areaData.discount_percent / 100)
+                                                            ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <>₱{price.toLocaleString()}</>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

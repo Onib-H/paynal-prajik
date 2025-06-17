@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { Edit, Eye, Trash2 } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
 import { Area } from "../types/AreaClient";
-import { formatDiscountedPrice, parsePriceValue } from "../utils/formatters";
 import { MemoizedImage } from "./MemoizedImage";
 
 const AreaCard = memo(
@@ -36,12 +35,6 @@ const AreaCard = memo(
 
         if (!area) return null;
 
-        // Discounted price logic
-        const priceValue = parsePriceValue(area.price_per_hour);
-        const hasDiscount = area.discount_percent && area.discount_percent > 0;
-        const discountedPrice = hasDiscount ? formatDiscountedPrice(priceValue, area.discount_percent) : null;
-        const originalPrice = hasDiscount ? formatDiscountedPrice(priceValue, 0) : null;
-
         return (
             <motion.div
                 className="bg-white shadow-md rounded-lg overflow-hidden flex flex-col h-full"
@@ -59,11 +52,18 @@ const AreaCard = memo(
                         "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
                 }}
             >
-                <MemoizedImage
-                    src={areaImageProps.src}
-                    alt={areaImageProps.alt}
-                    className="w-full h-40 object-cover"
-                />
+                <div className="relative">
+                    <MemoizedImage
+                        src={areaImageProps.src}
+                        alt={areaImageProps.alt}
+                        className="w-full h-40 object-cover"
+                    />
+                    {area.discount_percent > 0 && (
+                        <span className="absolute top-3 left-3 bg-red-600 text-white text-base font-extrabold px-4 py-2 rounded-full shadow-lg z-10 border-4 border-white drop-shadow-lg tracking-wide uppercase">
+                            -{area.discount_percent}% OFF
+                        </span>
+                    )}
+                </div>
                 <div className="p-4 flex flex-col h-full">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-2xl font-bold text-gray-900">
@@ -103,20 +103,15 @@ const AreaCard = memo(
 
                     <div className="mt-auto flex justify-between items-center">
                         <div className="flex flex-col">
-                            {hasDiscount ? (
+                            {area.discounted_price ? (
                                 <>
-                                    <span className="text-base font-semibold text-gray-400 line-through">
-                                        {originalPrice}
-                                    </span>
-                                    <span className="text-lg font-bold text-purple-600">
-                                        {discountedPrice}
-                                        <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">-{area.discount_percent}%</span>
+                                    <span className="text-sm text-gray-500 line-through">{area.price_per_hour}</span>
+                                    <span className="text-lg font-bold text-green-600">
+                                        {area.discounted_price}
                                     </span>
                                 </>
                             ) : (
-                                <span className="text-lg font-bold text-gray-900">
-                                    {formatDiscountedPrice(priceValue, 0)}
-                                </span>
+                                <span className="text-lg font-bold text-gray-900">{area.price_per_hour}</span>
                             )}
                         </div>
                         <div className="flex gap-2">

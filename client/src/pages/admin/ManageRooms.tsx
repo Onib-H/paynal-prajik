@@ -165,8 +165,6 @@ const ManageRooms = () => {
   };
 
   const handleSave = async (roomData: IRoom): Promise<void> => {
-    console.log(`Room data: ${roomData}`)
-
     const formData = new FormData();
     formData.append("room_name", roomData.roomName);
     formData.append("room_type", roomData.roomType);
@@ -187,10 +185,6 @@ const ManageRooms = () => {
     }
 
     formData.append('discount_percent', roomData.discount_percent?.toString());
-
-    for (const pair of formData.entries()) {
-      console.log(`${pair[0]}: ${pair[1]}`);
-    }
 
     try {
       if (!roomData.id) {

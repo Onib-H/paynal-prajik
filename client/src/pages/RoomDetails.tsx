@@ -11,17 +11,20 @@ import { fetchAmenities } from "../services/Admin";
 import { fetchRoomReviews } from "../services/Booking";
 import { fetchRoomDetail } from "../services/Room";
 import Error from "./_ErrorBoundary";
+import { Room } from "../types/RoomClient";
+import { MemoizedImage } from "../memo/MemoizedImage";
 
 const RoomDetails = () => {
   const { isAuthenticated } = useUserContext();
   const { id } = useParams<{ id: string }>();
-  const [isImageLoaded, setIsImageLoaded] = useState(false);
+
+  const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const navigate = useNavigate();
 
   const pageSize: number = 5;
 
-  const { data: roomData, isLoading: isLoadingRoom, error: roomError } = useQuery({
+  const { data: roomData, isLoading: isLoadingRoom, error: roomError } = useQuery<{ data: Room }>({
     queryKey: ["room", id],
     queryFn: () => fetchRoomDetail(id as string),
     enabled: !!id,
@@ -222,7 +225,18 @@ const RoomDetails = () => {
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-900">Pricing</h3>
-                      <p className="text-gray-600">{roomDetail.room_price}</p>
+                      {roomDetail.discount_percent > 0 ? (
+                        <>
+                          <span className="text-gray-400 line-through mr-2">
+                            {roomDetail.room_price}
+                          </span>
+                          <span className="text-green-600 font-semibold">
+                            {roomDetail.discounted_price}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-gray-600">{roomDetail.room_price}</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -304,7 +318,7 @@ const RoomDetails = () => {
               variants={imageVariants}
               className="bg-white p-4 rounded-xl shadow-lg overflow-hidden"
             >
-              <img
+              <MemoizedImage
                 src={roomDetail.room_image}
                 alt={roomDetail.room_name}
                 className="w-full h-64 object-cover rounded-lg transition-all duration-500 hover:scale-105"

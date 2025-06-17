@@ -5,8 +5,12 @@ import ContentLoader from "../../../motions/loaders/ContentLoader";
 import { fetchAreas } from "../../../services/Area";
 import { Area } from "../../../types/AreaClient";
 
+interface AreaResponse {
+  data: Area[];
+}
+
 const VenueList = () => {
-  const { data: areasData, isLoading, isError } = useQuery<{ data: Area[] }>({
+  const { data: areasData, isLoading, isError } = useQuery<AreaResponse>({
     queryKey: ["venues"],
     queryFn: fetchAreas,
   });
@@ -66,6 +70,7 @@ const VenueList = () => {
                 image={area.area_image}
                 description={area.description}
                 discount_percent={area.discount_percent > 0 ? area.discount_percent : null}
+                discounted_price={area.discounted_price}
               />
             </div>
           ))}

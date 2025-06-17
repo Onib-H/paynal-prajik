@@ -1,36 +1,16 @@
 from rest_framework import serializers
 from django.db.models import Avg
-from .models import Amenities, Rooms, Areas, RoomImages, AreaImages
+from .models import Amenities, Rooms, Areas
 
 class AmenitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Amenities
         fields = ['id', 'description']
         
-class RoomImageSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = RoomImages
-        fields = ['id', 'image_url']
-        
-    def get_image_url(self, obj):
-        return obj.image.url if obj.image else None
-    
-class AreaImageSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = AreaImages
-        fields = ['id', 'image_url']
-        
-    def get_image_url(self, obj):
-        return obj.image.url if obj.image else None
-
 class RoomSerializer(serializers.ModelSerializer):
-    amenities = serializers.PrimaryKeyRelatedField(queryset=Amenities.objects.all(), many=True, required=False)
+    amenities = AmenitySerializer(many=True, read_only=True)
     average_rating = serializers.SerializerMethodField()
-    images = RoomImageSerializer(many=True, read_only=True, source='room_images')
+    discounted_price = serializers.SerializerMethodField()
     
     class Meta:
         model = Rooms
@@ -38,15 +18,16 @@ class RoomSerializer(serializers.ModelSerializer):
             'id',
             'room_name',
             'room_type',
+            'room_image',
             'bed_type',
             'status',
             'room_price',
-            'room_image',
+            'discount_percent',
+            'discounted_price',
             'description',
             'max_guests',
             'amenities',
             'average_rating',
-            'discount_percent',
         ]
         
     def to_representation(self, instance):
@@ -60,9 +41,15 @@ class RoomSerializer(serializers.ModelSerializer):
     def get_average_rating(self, obj):
         return obj.reviews.aggregate(Avg('rating'))['rating__avg'] or 0
 
+    def get_discounted_price(self, obj):
+        if obj.discount_percent > 0:
+            discounted = obj.room_price * (100 - obj.discount_percent) / 100
+            return f"₱{discounted:,.2f}"
+        return None
+
 class AreaSerializer(serializers.ModelSerializer):
     average_rating = serializers.SerializerMethodField()
-    images = AreaImageSerializer(many=True, read_only=True, source='area_images')
+    discounted_price = serializers.SerializerMethodField()
     
     class Meta:
         model = Areas
@@ -74,8 +61,9 @@ class AreaSerializer(serializers.ModelSerializer):
             'status',
             'capacity',
             'price_per_hour',
-            'average_rating',
+            'discounted_price',
             'discount_percent',
+            'average_rating',
         ]
         
     def to_representation(self, instance):
@@ -88,3 +76,9 @@ class AreaSerializer(serializers.ModelSerializer):
 
     def get_average_rating(self, obj):
         return obj.reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+    
+    def get_discounted_price(self, obj):
+        if obj.discount_percent > 0:
+            discounted = obj.price_per_hour * (100 - obj.discount_percent) / 100
+            return f"₱{discounted:,.2f}"
+        return None

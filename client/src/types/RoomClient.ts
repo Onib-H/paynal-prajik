@@ -11,12 +11,13 @@ export interface Room {
     room_type: string;
     bed_type: string;
     status: "available" | "occupied" | "maintenance";
+    discounted_price?: number;
     room_price: string | number;
     description: string;
-    capacity: string;
     max_guests: number;
     amenities: number[];
     discount_percent?: number;
+    average_rating?: number;
 }
 
 export interface AddRoomResponse {
@@ -37,5 +38,6 @@ export interface RoomCardProps {
     title: string;
     price: string;
     description: string;
+    discounted_price?: number;
     discount_percent?: number;
 }

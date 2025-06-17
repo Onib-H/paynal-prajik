@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
 import { useBookingLimit } from "../../contexts/BookingLimitContext";
 import { AreaCardProps } from "../../types/AreaClient";
-import { formatDiscountedPrice, parsePriceValue } from "../../utils/formatters";
+import { MemoizedImage } from "../../memo/MemoizedImage";
 
-const VenueCard: FC<AreaCardProps> = ({ id, title, priceRange, image, description, discount_percent }) => {
+const VenueCard: FC<AreaCardProps> = ({ id, title, priceRange, image, description, discount_percent, discounted_price }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
   const { canBook, maxLimit } = useBookingLimit();
@@ -38,27 +38,20 @@ const VenueCard: FC<AreaCardProps> = ({ id, title, priceRange, image, descriptio
       : `Limit of ${maxLimit} bookings per day reached`
     : "Login required to book";
 
-  // Discounted price logic
-  const priceValue = parsePriceValue(priceRange);
-  const hasDiscount = discount_percent && discount_percent > 0;
-  const discountedPrice = hasDiscount ? formatDiscountedPrice(priceValue, discount_percent) : null;
-  const originalPrice = formatDiscountedPrice(priceValue, 0);
-
   return (
     <div
       className="relative rounded-xl overflow-hidden shadow-lg bg-white flex flex-col cursor-pointer group h-full transition-all duration-500 hover:-translate-y-1 hover:shadow-xl"
       onClick={() => navigate(`/areas/${id}`)}
     >
       {/* Discount badge top-right */}
-      {hasDiscount && (
+      {discount_percent > 0 && (
         <span className="absolute top-3 right-3 z-20 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
           -{discount_percent}% OFF
         </span>
       )}
       {/* Image container with elegant overlay */}
       <div className="relative w-full h-48 overflow-hidden group">
-        <img
-          loading="lazy"
+        <MemoizedImage
           src={image}
           alt={title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -85,13 +78,13 @@ const VenueCard: FC<AreaCardProps> = ({ id, title, priceRange, image, descriptio
               {title}
             </h1>
             <span className="text-lg font-semibold text-purple-600 flex flex-row items-center gap-2">
-              {hasDiscount ? (
+              {discount_percent > 0 ? (
                 <>
-                  <span className="line-through text-gray-400 text-base">{originalPrice}</span>
-                  <span className="text-xl font-bold text-purple-700">{discountedPrice}</span>
+                  <span className="line-through text-gray-400 text-base">{priceRange}</span>
+                  <span className="text-xl font-bold text-purple-700">{discounted_price}</span>
                 </>
               ) : (
-                <span className="text-xl font-bold text-purple-700">{originalPrice}</span>
+                <span className="text-xl font-bold text-purple-700">{priceRange}</span>
               )}
             </span>
           </div>

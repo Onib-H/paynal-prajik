@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { addMonths, eachDayOfInterval, endOfMonth, format, isBefore, isEqual, isSameDay, isWithinInterval, parseISO, startOfDay, startOfMonth, differenceInCalendarDays } from 'date-fns';
+import { addMonths, differenceInCalendarDays, eachDayOfInterval, endOfMonth, format, isBefore, isEqual, isSameDay, isWithinInterval, parseISO, startOfDay, startOfMonth } from 'date-fns';
 import { ArrowLeft, CircleAlert } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useUserContext } from '../contexts/AuthContext';
 import { fetchRoomBookings, fetchRoomById } from '../services/Booking';
 import { AmenityObject, BookingData, BookingsByDate, RoomData } from '../types/BookingClient';
-import { useUserContext } from '../contexts/AuthContext';
 
 const isAmenityObject = (amenity: any): amenity is AmenityObject => {
     return amenity && typeof amenity === 'object' && 'description' in amenity;
@@ -151,18 +151,23 @@ const BookingCalendar = () => {
 
             setMaxDayExceed(days > 30);
 
-            const priceString = roomData.price_per_night || roomData.room_price;
-
             let priceValue = 0;
+            let discountedValue = 0;
+            let hasDiscount = false;
+            const priceString = roomData.price_per_night || roomData.room_price;
             try {
-                const numericValue = priceString.toString().replace(/[^\d.]/g, '');
+                const numericValue = priceString?.toString().replace(/[^\d.]/g, '') || '0';
                 priceValue = parseFloat(numericValue) || 0;
+                if (roomData.discount_percent && roomData.discount_percent > 0 && roomData.discounted_price) {
+                    const discountedNumeric = roomData.discounted_price?.toString().replace(/[^\d.]/g, '') || '0';
+                    discountedValue = parseFloat(discountedNumeric) || 0;
+                    hasDiscount = true;
+                }
             } catch (error) {
                 console.error(`Error parsing room price: ${error}`);
                 priceValue = 0;
             }
-
-            setTotalPrice(priceValue * days);
+            setTotalPrice(hasDiscount ? discountedValue * days : priceValue * days);
         }
     }, [checkInDate, checkOutDate, roomData]);
 
@@ -519,9 +524,21 @@ const BookingCalendar = () => {
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-xl font-bold">{roomData.room_name}</h3>
                             </div>
-                            <p className="text-lg font-semibold text-blue-600 mb-3">
-                                {roomData.price_per_night || roomData.room_price || '₱0'}
-                            </p>
+                            {roomData.discount_percent && roomData.discount_percent > 0 ? (
+                                <span>
+                                    <span className="line-through text-gray-400 mr-2">{roomData.discounted_price}</span>
+                                    <span className="text-blue-600 font-bold">
+                                        {roomData.discounted_price}
+                                    </span>
+                                    <span className="ml-2 text-green-600 font-semibold">
+                                        -{roomData.discount_percent}% OFF
+                                    </span>
+                                </span>
+                            ) : (
+                                <p className="text-lg font-semibold text-blue-600 mb-3">
+                                    {roomData.price_per_night || roomData.room_price}
+                                </p>
+                            )}
 
                             <div className="flex flex-col space-y-2 mb-4">
                                 <div className="flex items-center text-gray-800">

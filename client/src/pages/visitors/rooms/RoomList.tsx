@@ -5,19 +5,7 @@ import RoomCard from "../../../components/rooms/RoomCard";
 import DashboardSkeleton from "../../../motions/skeletons/AdminDashboardSkeleton";
 import { fetchAllRooms } from "../../../services/Room";
 import Error from "../../_ErrorBoundary";
-
-interface Room {
-  id: number;
-  room_name: string;
-  room_image: string;
-  room_type: string;
-  status: string;
-  description: string;
-  capacity: number;
-  room_price: number;
-  amenities: string[];
-  average_rating?: number;
-}
+import { Room } from "../../../types/RoomClient";
 
 interface RoomsResponse {
   data: Room[];
@@ -44,6 +32,7 @@ const RoomList: FC = () => {
           description: room.description,
           capacity: room.capacity,
           price: room.room_price,
+          discounted_price: room?.discounted_price,
           amenities: room.amenities,
           discount_percent: room.discount_percent || 0,
         };
@@ -75,6 +64,7 @@ const RoomList: FC = () => {
                 title={room.title}
                 price={room.price}
                 description={room.description}
+                discounted_price={room.discounted_price}
                 discount_percent={room.discount_percent > 0 ? room.discount_percent : null}
               />
             </div>

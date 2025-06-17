@@ -16,12 +16,12 @@ import AreaDetailsModal from "../../components/admin/AreaDetailsModal";
 import AreaCard from "../../memo/AreaCard";
 
 const ManageAreas = () => {
-  const [showFormModal, setShowFormModal] = useState(false);
+  const [showFormModal, setShowFormModal] = useState<boolean>(false);
   const [editAreaData, setEditAreaData] = useState<IEditArea | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize] = useState(9);
 
-  const [showViewModal, setShowViewModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState<boolean>(false);
   const [viewAreaData, setViewAreaData] = useState<Area | null>(null);
 
   const [showModal, setShowModal] = useState<boolean>(false);

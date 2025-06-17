@@ -3,9 +3,9 @@ import { FC } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
 import { RoomCardProps } from "../../types/RoomClient";
-import { formatDiscountedPrice, parsePriceValue } from "../../utils/formatters";
+import { MemoizedImage } from "../../memo/MemoizedImage";
 
-const RoomCard: FC<RoomCardProps> = ({ id, name, image, title, price, description, discount_percent }) => {
+const RoomCard: FC<RoomCardProps> = ({ id, name, image, title, price, description, discount_percent, discounted_price }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
 
@@ -24,27 +24,20 @@ const RoomCard: FC<RoomCardProps> = ({ id, name, image, title, price, descriptio
     ? "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 shadow-lg shadow-purple-100 hover:shadow-purple-200 cursor-pointer"
     : "bg-gray-400 cursor-not-allowed";
 
-  // Discounted price logic
-  const priceValue = parsePriceValue(price);
-  const hasDiscount = discount_percent && discount_percent > 0;
-  const discountedPrice = hasDiscount ? formatDiscountedPrice(priceValue, discount_percent) : null;
-  const originalPrice = formatDiscountedPrice(priceValue, 0);
-
   return (
     <div
       className="relative rounded-xl overflow-hidden shadow-lg bg-white flex flex-col cursor-pointer group h-full transition-all duration-500 hover:-translate-y-1 hover:shadow-xl"
       onClick={() => navigate(`/rooms/${id}`)}
     >
       {/* Discount badge top-right */}
-      {hasDiscount && (
+      {discount_percent > 0 && (
         <span className="absolute top-3 right-3 z-20 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
           -{discount_percent}% OFF
         </span>
       )}
       {/* Image container with elegant overlay */}
       <div className="relative w-full h-48 overflow-hidden group">
-        <img
-          loading="lazy"
+        <MemoizedImage
           src={image}
           alt={title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -70,13 +63,13 @@ const RoomCard: FC<RoomCardProps> = ({ id, name, image, title, price, descriptio
               {name}
             </h1>
             <span className="text-lg font-semibold text-purple-600 flex flex-row items-center gap-2">
-              {hasDiscount ? (
+              {discount_percent > 0 ? (
                 <>
-                  <span className="line-through text-gray-400 text-base">{originalPrice}</span>
-                  <span className="text-xl font-bold text-purple-700">{discountedPrice}</span>
+                  <span className="line-through text-gray-400 text-base">{price}</span>
+                  <span className="text-xl font-bold text-purple-700">{discounted_price}</span>
                 </>
               ) : (
-                <span className="text-xl font-bold text-purple-700">{originalPrice}</span>
+                <span className="text-xl font-bold text-purple-700">{price}</span>
               )}
             </span>
           </div>

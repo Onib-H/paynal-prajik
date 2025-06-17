@@ -6,6 +6,7 @@ export interface Area {
     description?: string;
     capacity: number;
     price_per_hour: number | string;
+    discounted_price?: number;
     status?: "available" | "maintenance";
     average_rating?: number;
     discount_percent?: number;
@@ -17,6 +18,7 @@ export interface AreaCardProps {
     priceRange: string;
     image: string;
     description: string;
+    discounted_price?: number;
     discount_percent?: number;
 }
 

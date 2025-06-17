@@ -10,6 +10,7 @@ import { fetchAreaDetail } from "../services/Area";
 import { fetchAreaReviews } from "../services/Booking";
 import { Area } from "../types/AreaClient";
 import Error from "./_ErrorBoundary";
+import { MemoizedImage } from "../memo/MemoizedImage";
 
 const VenueDetails = () => {
     const { id } = useParams<{ id: string }>();
@@ -43,12 +44,6 @@ const VenueDetails = () => {
 
     const reviews = reviewsData?.data || [];
     const totalReviews = reviewsData?.total || 0;
-
-    const formattedPrice = typeof venueDetail.price_per_hour === 'string'
-        ? venueDetail.price_per_hour.startsWith('₱')
-            ? venueDetail.price_per_hour
-            : `${venueDetail.price_per_hour}`
-        : `${venueDetail.price_per_hour}`;
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -209,7 +204,18 @@ const VenueDetails = () => {
                                         </div>
                                         <div>
                                             <h3 className="font-medium text-gray-900">Pricing</h3>
-                                            <p className="text-gray-600">{formattedPrice}</p>
+                                            {venueDetail.discount_percent > 0 ? (
+                                                <>
+                                                    <span className="text-gray-400 line-through mr-2">
+                                                        {venueDetail.price_per_hour}
+                                                    </span>
+                                                    <span className="text-green-600 font-semibold">
+                                                        {venueDetail.discounted_price}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className="text-gray-600">{venueDetail.price_per_hour}</span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -257,8 +263,7 @@ const VenueDetails = () => {
                             variants={imageVariants}
                             className="bg-white p-4 rounded-xl shadow-lg overflow-hidden"
                         >
-                            <img
-                                loading="lazy"
+                            <MemoizedImage
                                 src={venueDetail.area_image}
                                 alt={venueDetail.area_name}
                                 className="w-full h-64 object-cover rounded-lg transition-all duration-500 hover:scale-105"
@@ -281,7 +286,18 @@ const VenueDetails = () => {
                                         <PhilippinePeso className="w-5 h-5 text-indigo-500 mr-3" />
                                         <div>
                                             <h4 className="font-medium text-gray-800">Pricing</h4>
-                                            <p className="text-indigo-600 text-lg font-semibold">{formattedPrice}</p>
+                                            {venueDetail.discount_percent > 0 ? (
+                                                <>
+                                                    <span className="text-gray-400 line-through mr-2">
+                                                        {venueDetail.price_per_hour}
+                                                    </span>
+                                                    <span className="text-green-600 font-semibold">
+                                                        {venueDetail.discounted_price}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span>{venueDetail.price_per_hour}</span>
+                                            )}
                                         </div>
                                     </div>
 

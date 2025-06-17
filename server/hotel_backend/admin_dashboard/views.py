@@ -768,6 +768,7 @@ def update_booking_status(request, booking_id):
                 notification_message = f"You've been checked in to {property_name}."
             elif status_value == 'checked_out':
                 notification_message = f"You've been checked out from {property_name}."
+                user_email = booking.user.email
                 send_checkout_e_receipt(user_email, serializer.data)
             elif status_value == 'rejected':
                 reason = booking.cancellation_reason or "No reason provided"

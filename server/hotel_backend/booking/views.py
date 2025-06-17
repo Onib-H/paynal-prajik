@@ -3,11 +3,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from .models import Bookings, Reviews
 from property.models import Rooms, Areas
-from property.serializers import AreaSerializer
+from property.serializers import AreaSerializer, RoomSerializer
 from .serializers import (
     BookingSerializer, 
     BookingRequestSerializer,
-    RoomSerializer,
     ReviewSerializer
 )
 from django.utils import timezone

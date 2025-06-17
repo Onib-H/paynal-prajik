@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { Edit, Eye, Trash2 } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
 import { Room } from "../types/RoomClient";
-import { formatDiscountedPrice, parsePriceValue } from "../utils/formatters";
 import { MemoizedImage } from "./MemoizedImage";
 
 export const RoomCard = memo(
@@ -30,11 +29,7 @@ export const RoomCard = memo(
         const handleEdit = useCallback(() => onEdit(room), [room, onEdit]);
         const handleDelete = useCallback(() => onDelete(room.id), [room.id, onDelete]);
 
-        // Discounted price logic
-        const priceValue = parsePriceValue(room.room_price);
-        const hasDiscount = room.discount_percent && room.discount_percent > 0;
-        const discountedPrice = hasDiscount ? formatDiscountedPrice(priceValue, room.discount_percent) : null;
-        const originalPrice = hasDiscount ? formatDiscountedPrice(priceValue, 0) : null;
+        if (!room) return null;
 
         return (
             <motion.div
@@ -53,11 +48,18 @@ export const RoomCard = memo(
                         "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
                 }}
             >
-                <MemoizedImage
-                    src={roomImageProps.src}
-                    alt={roomImageProps.alt}
-                    className="w-full h-40 object-cover"
-                />
+                <div className="relative">
+                    <MemoizedImage
+                        src={roomImageProps.src}
+                        alt={roomImageProps.alt}
+                        className="w-full h-40 object-cover"
+                    />
+                    {room.discount_percent > 0 && (
+                        <span className="absolute top-3 left-3 bg-red-600 text-white text-base font-extrabold px-4 py-2 rounded-full shadow-lg z-10 border-4 border-white drop-shadow-lg tracking-wide uppercase">
+                            -{room.discount_percent}% OFF
+                        </span>
+                    )}
+                </div>
                 <div className="p-4 flex flex-col h-full">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-2xl font-bold text-gray-900">
@@ -111,19 +113,16 @@ export const RoomCard = memo(
 
                     <div className="mt-auto flex justify-between items-center">
                         <div className="flex flex-col">
-                            {hasDiscount ? (
+                            {room.discount_percent > 0 ? (
                                 <>
-                                    <span className="text-base font-semibold text-gray-400 line-through">
-                                        {originalPrice}
-                                    </span>
-                                    <span className="text-lg font-bold text-purple-600">
-                                        {discountedPrice}
-                                        <span className="ml-2 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded font-bold">-{room.discount_percent}%</span>
+                                    <span className="text-sm text-gray-500 line-through">{room.room_price}</span>
+                                    <span className="text-lg font-bold text-green-600">
+                                        {room.discounted_price}
                                     </span>
                                 </>
                             ) : (
                                 <span className="text-lg font-bold text-gray-900">
-                                    {formatDiscountedPrice(priceValue, 0)}
+                                    {room.room_price}
                                 </span>
                             )}
                         </div>
