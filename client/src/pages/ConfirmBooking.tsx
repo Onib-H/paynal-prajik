@@ -878,7 +878,24 @@ const ConfirmBooking = () => {
               >
                 <p className="font-medium">{roomData?.room_name || "Room"}</p>
                 <p className="text-lg text-gray-700">
-                  {roomData?.room_price} per night
+                    {roomData?.discount_percent && roomData.discount_percent > 0 ? (
+                    <>
+                      <span className="line-through text-gray-400 mr-2">
+                      {roomData.room_price}
+                      </span>
+                      <span className="text-green-600 font-bold">
+                      ₱
+                      {(
+                        parseFloat(
+                        (roomData.room_price || "0").replace(/[₱,]/g, "")
+                        ) *
+                        (1 - roomData.discount_percent / 100)
+                      ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </>
+                    ) : (
+                    <>{roomData?.room_price} per night </>
+                    )}
                 </p>
               </motion.div>
               <motion.div
