@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { AnimatePresence, motion } from "framer-motion";
 import { FC, useMemo } from "react";
 import { MemoizedImage } from "../../memo/MemoizedImage";
 import { Amenity } from "../../types/AmenityClient";
 import { Room } from "../../types/RoomClient";
+import { AmenityObject } from "../../types/BookingClient";
+import { Bed } from "lucide-react";
 
 interface RoomDetailsModalProps {
     isOpen: boolean;
@@ -11,11 +14,10 @@ interface RoomDetailsModalProps {
     allAmenities: Amenity[];
 }
 
-const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData, allAmenities }) => {
-    const getAmenityDescription = (id: number) => {
-        const found = allAmenities.find((a) => a.id === id);
-        return found ? found.description : `ID: ${id}`;
-    };
+const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData }) => {
+    const isAmenityObject = (amenity: any): amenity is AmenityObject => {
+        return amenity && typeof amenity === 'object' && 'description' in amenity;
+    }
 
     const roomImage = useMemo(() => ({
         src: roomData.room_image,
@@ -200,10 +202,8 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                                         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                                                     />
                                                 </svg>
-                                                <span className="text-lg font-bold text-gray-800">
-                                                    {roomData.room_type === "premium"
-                                                        ? "Premium"
-                                                        : "Suites"}
+                                                <span className="text-lg capitalize font-bold text-gray-800">
+                                                    {roomData.room_type}
                                                 </span>
                                             </div>
                                         </div>
@@ -246,20 +246,7 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                                 Bed Type
                                             </h3>
                                             <div className="flex items-center">
-                                                <svg
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    className="h-5 w-5 text-amber-600 mr-2"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth={2}
-                                                        d="M5 13l4 4L19 7"
-                                                    />
-                                                </svg>
+                                                <Bed className="h-5 w-5 text-amber-600 mr-2" />
                                                 <span className="text-lg font-bold text-gray-800 capitalize">
                                                     {roomData.bed_type}
                                                 </span>
@@ -306,7 +293,7 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                             <div className="grid grid-cols-1 gap-1">
                                                 {roomData.amenities.map((amenityId, index) => (
                                                     <motion.div
-                                                        key={amenityId}
+                                                        key={amenityId.id}
                                                         className="flex items-center py-1"
                                                         initial={{ x: -10, opacity: 0 }}
                                                         animate={{ x: 0, opacity: 1 }}
@@ -331,7 +318,7 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                                             />
                                                         </svg>
                                                         <span className="text-gray-700">
-                                                            {getAmenityDescription(Number(amenityId))}
+                                                            {isAmenityObject(amenityId) ? amenityId.description : String(amenityId)}
                                                         </span>
                                                     </motion.div>
                                                 ))}

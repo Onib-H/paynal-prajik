@@ -56,7 +56,7 @@ const RoomDetails = () => {
   const allAmenities = allAmenitiesData?.data || [];
   const getAmenityDescription = (amenityId: any) => {
     const found = allAmenities.find((a: any) => a.id === amenityId);
-    return found ? found.description : `ID: ${amenityId}`;
+    return found ? found.description : `${amenityId}`;
   };
 
   const isBookingDisabled = (): boolean => {
@@ -270,7 +270,7 @@ const RoomDetails = () => {
                       className="flex items-start"
                     >
                       <Check className="w-5 h-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
-                      <span className="text-gray-700">{getAmenityDescription(amenityId)}</span>
+                      <span className="text-gray-700">{getAmenityDescription(amenityId.description)}</span>
                     </div>
                   ))}
                 </div>

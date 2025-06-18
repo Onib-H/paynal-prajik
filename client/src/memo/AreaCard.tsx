@@ -105,13 +105,13 @@ const AreaCard = memo(
                         <div className="flex flex-col">
                             {area.discounted_price ? (
                                 <>
-                                    <span className="text-sm text-gray-500 line-through">{area.price_per_hour}</span>
-                                    <span className="text-lg font-bold text-green-600">
+                                    <span className="text-sm font-bold text-gray-500 line-through">{area.price_per_hour}</span>
+                                    <span className="text-xl font-bold text-green-600">
                                         {area.discounted_price}
                                     </span>
                                 </>
                             ) : (
-                                <span className="text-lg font-bold text-gray-900">{area.price_per_hour}</span>
+                                <span className="text-xl font-bold text-gray-900">{area.price_per_hour}</span>
                             )}
                         </div>
                         <div className="flex gap-2">

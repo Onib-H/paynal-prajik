@@ -144,7 +144,7 @@ const ManageRooms = () => {
       status: room.status === "available" ? "Available" : "Maintenance",
       roomPrice: parsedRoomPrice,
       description: room.description,
-      amenities: room.amenities || [],
+      amenities: room.amenities ? room.amenities.map((a: { id: number }) => a.id) : [],
       maxGuests: room.max_guests || 1,
       discount_percent: room.discount_percent || 0,
     });

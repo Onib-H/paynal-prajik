@@ -26,7 +26,7 @@ urlpatterns = [
     path('edit_room/<int:room_id>', views.edit_room, name='edit_room'),
     path('delete_room/<int:room_id>', views.delete_room, name='delete_room'),
     
-    # CRUD Areas
+    # CRUD Areasz
     path('areas', views.fetch_areas, name='fetch_areas'),
     path('add_area', views.add_new_area, name='add_new_area'),
     path('show_area/<int:area_id>', views.show_area_details, name='show_area_details'),

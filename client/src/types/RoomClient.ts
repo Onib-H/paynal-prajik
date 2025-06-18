@@ -15,7 +15,10 @@ export interface Room {
     room_price: string | number;
     description: string;
     max_guests: number;
-    amenities: number[];
+    amenities?: {
+        id: number;
+        description: string
+    }[];
     discount_percent?: number;
     average_rating?: number;
 }

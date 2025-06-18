@@ -115,13 +115,13 @@ export const RoomCard = memo(
                         <div className="flex flex-col">
                             {room.discount_percent > 0 ? (
                                 <>
-                                    <span className="text-sm text-gray-500 line-through">{room.room_price}</span>
-                                    <span className="text-lg font-bold text-green-600">
+                                    <span className="text-sm font-bold text-gray-500 line-through">{room.room_price}</span>
+                                    <span className="text-xl font-bold text-green-600">
                                         {room.discounted_price}
                                     </span>
                                 </>
                             ) : (
-                                <span className="text-lg font-bold text-gray-900">
+                                <span className="text-xl font-bold text-gray-900">
                                     {room.room_price}
                                 </span>
                             )}
