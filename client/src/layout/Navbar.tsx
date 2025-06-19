@@ -506,6 +506,7 @@ const Navbar: FC = () => {
                 </div>
 
                 <Dropdown
+                  userDetails={userDetails}
                   options={[
                     {
                       label: "Account",

@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { CheckCircle } from "lucide-react";
 import { FC, ReactNode, memo, useCallback, useEffect, useRef, useState } from "react";
 
 interface DropdownItem {
@@ -8,12 +9,19 @@ interface DropdownItem {
 }
 
 interface CustomDropdownProps {
+    userDetails?: {
+        first_name: string;
+        last_name: string;
+        email: string;
+        profile_image?: string | null;
+        is_verified?: "verified" | "unverified";
+    };
     options: DropdownItem[];
     position?: "top" | "right" | "bottom" | "left";
     children: ReactNode;
 }
 
-const Dropdown: FC<CustomDropdownProps> = ({ options, position = "bottom", children }) => {
+const Dropdown: FC<CustomDropdownProps> = ({ options, position = "bottom", children, userDetails }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -25,6 +33,8 @@ const Dropdown: FC<CustomDropdownProps> = ({ options, position = "bottom", child
         onClick();
         setIsOpen(false);
     }, []);
+
+    const userFullname = `${userDetails?.first_name} ${userDetails?.last_name}`;
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -62,15 +72,36 @@ const Dropdown: FC<CustomDropdownProps> = ({ options, position = "bottom", child
             <div onClick={handleToggle} className="cursor-pointer">
                 {children}
             </div>
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
                 {isOpen && (
                     <motion.div
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 15 }}
                         transition={{ duration: 0.3 }}
-                        className={`${dropdownPositionClasses} bg-white text-gray-800 rounded-md shadow-lg z-50 overflow-hidden w-44`}
+                        className={`${dropdownPositionClasses} bg-white text-gray-800 rounded-md shadow-lg z-50 overflow-hidden min-w-[250px] max-w-xs`}
                     >
+                        {userDetails && (
+                            <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-gray-50">
+                                <div className="w-10 h-10 relative rounded-full overflow-hidden border border-accent">
+                                    <img
+                                        src={userDetails.profile_image as string}
+                                        alt={userFullname}
+                                        loading="lazy"
+                                        className="object-cover"
+                                    />
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                    <span className="font-semibold text-primary text-lg flex items-center flex-wrap min-w-0">
+                                        <span className="truncate max-w-[140px]">{userFullname}</span>
+                                        {userDetails.is_verified === "verified" && (
+                                            <CheckCircle className="ml-2 text-green-500 flex-shrink-0" size={20} />
+                                        )}
+                                    </span>
+                                    <span className="text-sm text-gray-500 truncate max-w-[180px]">{userDetails.email}</span>
+                                </div>
+                            </div>
+                        )}
                         <ul className="py-2">
                             {options.map((option, index) => (
                                 <li key={`${option.label}-${index}`}>
