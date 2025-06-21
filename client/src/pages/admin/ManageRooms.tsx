@@ -133,12 +133,11 @@ const ManageRooms = () => {
       parsedRoomPrice = parseFloat(priceString);
     } else {
       parsedRoomPrice = room.room_price;
-    }
-
-    // Map backend images (array of {id, room_image}) to string URLs
+    }    // Map backend images (array of {id, room_image}) to string URLs
     let images: string[] = [];
     if (Array.isArray(room.images)) {
       images = room.images.map((img: any) => img.room_image).filter(Boolean);
+      console.log("Loaded room images for editing:", images);
     }
 
     setEditRoomData({
@@ -184,15 +183,35 @@ const ManageRooms = () => {
       roomData.amenities.forEach((amenityId) => {
         formData.append("amenities", String(amenityId));
       });
-    }
+    }    // Count the number of existing vs. new images for logging
+    let existingImagesCount = 0;
+    let newImagesCount = 0;
 
-    // Append all images (only File types) for add, and only existing image URLs for edit
+    // Handle images properly for both add and edit cases
     if (roomData.images && roomData.images.length > 0) {
+      // Add new File objects
       roomData.images.forEach((img) => {
         if (img instanceof File) {
-          formData.append("images", img);
+          formData.append("new_images", img);
+          newImagesCount++;
+        } else if (typeof img === 'string') {
+          // Keep track of existing images to retain
+          formData.append("existing_images", img);
+          existingImagesCount++;
         }
       });
+
+      console.log(`Preparing to save room with ${existingImagesCount} existing images and ${newImagesCount} new images`);
+      console.log("Existing images:", roomData.images.filter(img => typeof img === 'string'));
+    } else {
+      formData.append("remove_all_images", "true");
+      console.log("No images selected, all existing images will be removed");
+    }
+
+    if (!roomData.images || roomData.images.length === 0) {
+      formData.append("remove_all_images", "true");
+    } else {
+      formData.append("remove_all_images", "false");
     }
 
     formData.append('discount_percent', roomData.discount_percent?.toString() || '0');

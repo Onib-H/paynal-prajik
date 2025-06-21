@@ -9,7 +9,6 @@ import { fetchAmenities } from "../../services/Admin";
 import { IRoom, IRoomFormModalProps } from "../../types/RoomAdmin";
 
 const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomData, loading = false }) => {
-    const [previewUrl, setPreviewUrl] = useState<string>("");
     const [isHovered, setIsHovered] = useState<boolean>(false);
 
     const { register, handleSubmit, formState: { errors }, reset, watch, setError, setValue, getValues } = useForm<IRoom>({
@@ -57,44 +56,70 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
 
     const availableAmenities = amenitiesData?.data || [];
 
-    useEffect(() => {
-        if (images instanceof File) {
-            const objectUrl = URL.createObjectURL(images);
-            setPreviewUrl(objectUrl);
-            return () => URL.revokeObjectURL(objectUrl);
-        } else if (typeof images === "string") setPreviewUrl(images);
-        else setPreviewUrl("");
-    }, [images]);
-
     const handleAmenityChange = (amenityId: number) => {
         const currentAmenities = getValues("amenities");
         const newAmenities = currentAmenities.includes(amenityId)
             ? currentAmenities.filter(id => id !== amenityId)
             : [...currentAmenities, amenityId];
         setValue("amenities", newAmenities);
-    };
-
-    const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    }; const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
+            // Keep existing string URLs and add new files
+            const existingImages = images.filter((img) => typeof img === 'string');
             setValue("images", [
-                ...(images.filter((img) => typeof img === 'string' || [])),
+                ...existingImages,
                 ...files
             ]);
         }
-    };
-
-    // Preview all images
-    const renderImagePreviews = () => {
+    }; const renderImagePreviews = () => {
         if (!images || images.length === 0) return null;
-        if (!previewUrl) return (
+        return (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {images.map((img, idx) => {
                     const src = typeof img === 'string' ? img : URL.createObjectURL(img);
-                    return <img key={idx} src={src} alt="Preview" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 16 }} />;
+                    const isExistingImage = typeof img === 'string';
+
+                    return (
+                        <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                            <img
+                                src={src}
+                                alt={`Preview ${idx + 1}`}
+                                className="w-20 h-20 object-cover border border-gray-200 rounded-md shadow-sm mt-4"
+                                onLoad={!isExistingImage ? () => URL.revokeObjectURL(src) : undefined}
+                            />
+                            <motion.button
+                                type="button"
+                                onClick={() => handleRemoveImage(idx)}
+                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors duration-200"
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                aria-label="Remove image"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </motion.button>
+                        </div>
+                    );
                 })}
             </div>
         );
+    };    // Remove image handler - filters out the image at the specified index
+    const handleRemoveImage = (idx: number) => {
+        const imageToRemove = images[idx];
+        const isExistingImage = typeof imageToRemove === 'string';
+
+        // Create a new array without the image at the specified index
+        const updatedImages = images.filter((_, i) => i !== idx);
+        setValue("images", updatedImages);
+
+        if (isExistingImage) {
+            console.log(`Removed existing image at index ${idx}: ${imageToRemove}`);
+        } else {
+            console.log(`Removed new image at index ${idx}`);
+        }
+        console.log(`Remaining images: ${updatedImages.length}`);
     };
 
     const onSubmit = async (data: IRoom) => {
@@ -461,7 +486,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                                 whileTap={{ scale: 0.98 }}
                                             >
                                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
                                                 <span className="text-sm text-gray-500">Click to upload an image</span>
                                             </motion.label>

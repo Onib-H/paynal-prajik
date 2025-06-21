@@ -306,10 +306,12 @@ def show_room_details(request, room_id):
 @permission_classes([IsAuthenticated])
 def edit_room(request, room_id):
     print(f'edit_room Data: {request.data}')
+    print(f'edit_room FILES: {request.FILES}')
     try:
         room = Rooms.objects.get(id=room_id)
     except Rooms.DoesNotExist:
         return Response({"error": "Room not found"}, status=status.HTTP_404_NOT_FOUND)
+
     has_active_bookings = Bookings.objects.filter(
         room=room,
         status__in=['reserved', 'confirmed', 'checked_in']
@@ -361,9 +363,56 @@ def edit_room(request, room_id):
         serializer = RoomSerializer(room, data=data, partial=True)
     if serializer.is_valid():
         instance = serializer.save()
+
+        # Handle amenities (always use getlist)
+        amenities = request.data.getlist('amenities') if hasattr(request.data, 'getlist') else data.get('amenities', [])
+        if isinstance(amenities, str):
+            amenities = [amenities]
+        amenities = [int(a) for a in amenities]
+        instance.amenities.set(amenities)        # Handle images with the improved approach
+        # 1. Get existing images to keep
+        existing_image_urls = request.data.getlist('existing_images') if hasattr(request.data, 'getlist') else []
+        
+        # Log the existing images being preserved
+        print(f"Existing images to keep: {existing_image_urls}")
+        
+        # 2. Handle explicit image removal cases
+        remove_all = request.data.get('remove_all_images', 'false').lower() == 'true'
+        print(f"Remove all images flag: {remove_all}")
+          # If remove_all flag is set or there are no existing images specified, delete all images
+        if remove_all or (not existing_image_urls and 'existing_images' in request.data):
+            instance.images.all().delete()
+        # Otherwise, only delete images not in the existing_images list
+        elif existing_image_urls:
+            # Remove images not in the list of existing_images            # First, create a list of base filenames from existing_image_urls
+            existing_image_paths = []
+            for url in existing_image_urls:
+                # Extract the filename part only from the URL for more reliable comparison
+                filename = url.split('/')[-1].split('?')[0] if '/' in url else url
+                existing_image_paths.append(filename)
+            
+            print(f"Extracted filenames from URLs: {existing_image_paths}")
+              # Compare images by their filename rather than full URL
+            for img_obj in instance.images.all():
+                if img_obj.room_image:
+                    filename = img_obj.get_filename()
+                    print(f"Checking image: {filename}")
+                    if filename not in existing_image_paths:
+                        print(f"Deleting image: {filename}")
+                        img_obj.delete()
+                    else:
+                        print(f"Keeping image: {filename}")        # 3. Add new images
+        new_images = request.FILES.getlist('new_images')
+        print(f"Adding {len(new_images)} new images")
+        
+        for i, img in enumerate(new_images):
+            new_img = RoomImages.objects.create(room=instance, room_image=img)
+            print(f"Added new image {i+1}: {new_img.get_filename() if new_img.room_image else 'No filename'}")
+
+        data = RoomSerializer(instance).data
         return Response({
             "message": "Room updated successfully",
-            "data": RoomSerializer(instance).data
+            "data": data
         }, status=status.HTTP_200_OK)
     else:
         return Response({
@@ -866,16 +915,11 @@ def record_payment(request, booking_id):
     except Bookings.DoesNotExist:
         return Response({"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND)
     
-    amount = request.data.get('amount')
-    transaction_type = request.data.get('transaction_type', 'booking')
-    
-    if not amount:
-        return Response({"error": "Payment amount is required"}, status=status.HTTP_400_BAD_REQUEST)
-    
     try:
-        if isinstance(amount, str):
-            amount = float(amount)
-            
+        amount = request.data.get('amount', 0)
+        transaction_type = request.data.get('transaction_type', 'full_payment')
+        amount = float(amount)
+        
         booking.payment_status = 'paid'
         booking.save()
         

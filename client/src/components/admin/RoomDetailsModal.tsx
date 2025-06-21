@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { AnimatePresence, motion } from "framer-motion";
-import { FC, useMemo } from "react";
+import { Bed } from "lucide-react";
+import { FC, useMemo, useState } from "react";
 import { MemoizedImage } from "../../memo/MemoizedImage";
 import { Amenity } from "../../types/AmenityClient";
-import { Room } from "../../types/RoomClient";
 import { AmenityObject } from "../../types/BookingClient";
-import { Bed } from "lucide-react";
+import { Room } from "../../types/RoomClient";
 
 interface RoomDetailsModalProps {
     isOpen: boolean;
@@ -19,10 +19,34 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
         return amenity && typeof amenity === 'object' && 'description' in amenity;
     }
 
-    const roomImage = useMemo(() => ({
-        src: roomData.room_image,
-        alt: roomData.room_name || roomData.room_image,
-    }), [roomData.room_image, roomData.room_name]);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isFullScreen, setIsFullScreen] = useState(false);
+
+    const roomImages = useMemo(() => {
+        if (!roomData || !roomData.images || !Array.isArray(roomData.images)) {
+            return [];
+        }
+        return roomData.images.map(img => ({
+            src: img.room_image,
+            alt: roomData.room_name
+        }));
+    }, [roomData]);
+
+    const toggleFullScreen = () => {
+        setIsFullScreen(prev => !prev);
+    };
+
+    const handleNextImage = () => {
+        if (roomImages.length > 1) {
+            setCurrentImageIndex((prev) => (prev + 1) % roomImages.length);
+        }
+    };
+
+    const handlePrevImage = () => {
+        if (roomImages.length > 1) {
+            setCurrentImageIndex((prev) => (prev - 1 + roomImages.length) % roomImages.length);
+        }
+    };
 
     if (!roomData) return null;
 
@@ -71,7 +95,7 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
 
                         <div className="grid grid-cols-1 md:grid-cols-2 h-full max-h-[90vh]">
                             <div className="relative h-64 md:h-full">
-                                {roomData.room_image ? (
+                                {roomData.images && roomData.images.length > 0 ? (
                                     <div className="relative h-full">
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-10"></div>
                                         <motion.div
@@ -80,12 +104,77 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                             transition={{ delay: 0.2 }}
                                             className="h-full"
                                         >
-                                            <MemoizedImage
-                                                src={roomImage.src}
-                                                alt={roomImage.alt}
-                                                className="w-full h-full object-cover"
-                                            />
+                                            <div
+                                                className="relative h-full cursor-pointer"
+                                                onClick={toggleFullScreen}
+                                            >
+                                                <MemoizedImage
+                                                    src={roomImages[currentImageIndex]?.src || roomData.images[0]?.room_image}
+                                                    alt={roomData.room_name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-md opacity-50 hover:opacity-100 transition-opacity">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                                                    </svg>
+                                                </div>
+                                            </div>
                                         </motion.div>
+
+                                        {/* Image Gallery Navigation */}
+                                        {roomImages.length > 1 && (
+                                            <>
+                                                <button
+                                                    onClick={handlePrevImage}
+                                                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-2 shadow-md z-20"
+                                                    aria-label="Previous image"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={handleNextImage}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 rounded-full p-2 shadow-md z-20"
+                                                    aria-label="Next image"
+                                                >
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {/* Image counter */}
+                                        {roomImages.length > 1 && (
+                                            <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm z-20">
+                                                {currentImageIndex + 1} / {roomImages.length}
+                                            </div>
+                                        )}
+
+                                        {/* Thumbnail Gallery */}
+                                        {roomImages.length > 1 && (
+                                            <div className="absolute bottom-16 left-0 right-0 flex justify-center gap-2 px-4 z-20">
+                                                <div className="bg-black/40 backdrop-blur-sm p-2 rounded-lg flex gap-2 overflow-x-auto max-w-full">
+                                                    {roomImages.map((img, idx) => (
+                                                        <motion.div
+                                                            key={idx}
+                                                            className={`w-16 h-12 rounded cursor-pointer overflow-hidden transition-all duration-300 ${idx === currentImageIndex ? 'ring-2 ring-white scale-110' : 'opacity-70 hover:opacity-100'}`}
+                                                            whileHover={{ scale: 1.05 }}
+                                                            whileTap={{ scale: 0.95 }}
+                                                            onClick={() => setCurrentImageIndex(idx)}
+                                                        >
+                                                            <MemoizedImage
+                                                                src={img.src}
+                                                                alt={`Thumbnail ${idx + 1}`}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </motion.div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
                                         <div className="absolute bottom-4 left-4 z-20 md:hidden">
                                             <motion.h1
                                                 className="text-2xl font-bold text-white mb-1"
@@ -331,6 +420,87 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                     </motion.div>
                 </motion.div>
             )}
+
+            {/* Full Screen Image Viewer */}
+            <AnimatePresence>
+                {isFullScreen && roomImages.length > 0 && (
+                    <motion.div
+                        className="fixed inset-0 bg-black z-[60] flex items-center justify-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <button
+                            className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 z-10 hover:bg-black/80"
+                            onClick={toggleFullScreen}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <div className="w-full h-full flex flex-col">
+                            {/* Main Image */}
+                            <div className="flex-1 flex items-center justify-center overflow-hidden">
+                                <motion.img
+                                    src={roomImages[currentImageIndex]?.src}
+                                    alt={roomImages[currentImageIndex]?.alt}
+                                    className="max-w-full max-h-full object-contain"
+                                    initial={{ scale: 0.9, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    transition={{ duration: 0.3 }}
+                                />
+                            </div>
+
+                            {/* Navigation Controls */}
+                            <div className="absolute top-1/2 left-0 right-0 transform -translate-y-1/2 flex justify-between px-4">
+                                <button
+                                    className="bg-black/30 hover:bg-black/60 rounded-full p-3 text-white transition-all"
+                                    onClick={handlePrevImage}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <button
+                                    className="bg-black/30 hover:bg-black/60 rounded-full p-3 text-white transition-all"
+                                    onClick={handleNextImage}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {/* Thumbnail strip */}
+                            <div className="h-24 bg-black/80 flex items-center justify-center p-2 overflow-x-auto">
+                                <div className="flex gap-2">
+                                    {roomImages.map((img, idx) => (
+                                        <div
+                                            key={idx}
+                                            className={`h-16 w-20 rounded overflow-hidden cursor-pointer transition-all duration-300 ${idx === currentImageIndex ? 'ring-2 ring-white scale-110' : 'opacity-70 hover:opacity-100'
+                                                }`}
+                                            onClick={() => setCurrentImageIndex(idx)}
+                                        >
+                                            <img
+                                                src={img.src}
+                                                alt={`Thumbnail ${idx + 1}`}
+                                                className="h-full w-full object-cover"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Image Counter */}
+                            <div className="absolute bottom-28 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full">
+                                {currentImageIndex + 1} / {roomImages.length}
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </AnimatePresence>
     );
 };
