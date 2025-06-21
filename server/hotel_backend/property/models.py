@@ -41,7 +41,6 @@ class Rooms(models.Model):
         default='available',
     )
     room_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    room_image = CloudinaryField('room_image', null=True, blank=True)
     description = models.TextField(blank=True)
     max_guests = models.PositiveIntegerField(default=2, help_text="Maximum number of guests allowed")
     amenities = models.ManyToManyField(Amenities, related_name='rooms', blank=True)
@@ -49,6 +48,13 @@ class Rooms(models.Model):
     
     class Meta:
         db_table = 'rooms'
+
+class RoomImages(models.Model):
+    room = models.ForeignKey(Rooms, related_name='images', on_delete=models.CASCADE)
+    room_image = CloudinaryField('room_image', null=True, blank=True)
+    
+    class Meta:
+        db_table = 'room_images'
 
 class Areas(models.Model):
     AREA_STATUS_CHOICES = [
@@ -65,8 +71,14 @@ class Areas(models.Model):
         choices=AREA_STATUS_CHOICES,
         default='available',
     )
-    area_image = CloudinaryField('area_image', null=True, blank=True)
     discount_percent = models.PositiveIntegerField(default=0)
     
     class Meta:
         db_table = 'areas'
+
+class AreaImages(models.Model):
+    area = models.ForeignKey(Areas, related_name='images', on_delete=models.CASCADE)
+    area_image = CloudinaryField('area_image', null=True, blank=True)
+    
+    class Meta:
+        db_table = 'area_images'

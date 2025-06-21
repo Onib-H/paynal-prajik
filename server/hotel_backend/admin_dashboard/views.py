@@ -1,10 +1,11 @@
 from django.utils import timezone
 from django.core.validators import ValidationError
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from property.models import Areas, Rooms, Amenities
+from property.models import Areas, Rooms, Amenities, RoomImages, AreaImages
 from property.serializers import AreaSerializer, RoomSerializer, AmenitySerializer
 from booking.models import Bookings, Transactions
 from booking.serializers import BookingSerializer
@@ -18,6 +19,22 @@ from .email.booking import send_booking_confirmation_email, send_booking_rejecti
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import traceback
+import io
+
+def convert_tempfile_to_inmemory(file):
+    if hasattr(file, 'temporary_file_path'):
+        file.seek(0)
+        content = file.read()
+        memfile = io.BytesIO(content)
+        return InMemoryUploadedFile(
+            memfile,
+            field_name=file.field_name,
+            name=file.name,
+            content_type=file.content_type,
+            size=file.size,
+            charset=file.charset,
+        )
+    return file
 
 def notify_user_for_verification(user, notification_type, message):
     try:
@@ -215,6 +232,10 @@ def fetch_rooms(request):
 def add_new_room(request):
     try:
         data = request.data.copy()
+        print(f"Received data for new room: {data}")
+        print(f"Received files: {request.FILES}")
+
+        # Parse numeric fields as before...
         if 'room_price' in data and isinstance(data['room_price'], str):
             try:
                 price_str = data['room_price'].replace('₱', '').replace(',', '')
@@ -226,28 +247,45 @@ def add_new_room(request):
                 data['max_guests'] = int(data['max_guests'])
             except (ValueError, TypeError):
                 data['max_guests'] = 2
-        # Handle discount_percent
         if 'discount_percent' in data:
             try:
                 discount = int(data['discount_percent'])
                 if discount < 0 or discount > 99:
-                    return Response({"error": {"discount_percent": "Discount must be between 0 and 99."}}, status=status.HTTP_400_BAD_REQUEST)
+                    discount = 0
                 data['discount_percent'] = discount
             except (ValueError, TypeError):
                 data['discount_percent'] = 0
+
         serializer = RoomSerializer(data=data)
         if serializer.is_valid():
             instance = serializer.save()
+
+            # Always use getlist for amenities
+            amenities = request.data.getlist('amenities') if hasattr(request.data, 'getlist') else data.get('amenities', [])
+            if isinstance(amenities, str):
+                amenities = [amenities]
+            amenities = [int(a) for a in amenities]
+            instance.amenities.set(amenities)
+
+            # Always use getlist for images
+            images = request.FILES.getlist('images')
+            print(f"Images received for saving: {images}")
+            for img in images:
+                image_obj = RoomImages.objects.create(room=instance, room_image=img)
+                print(f"Saved image: {image_obj.room_image.url if image_obj.room_image else 'No URL'}")
+
             data = RoomSerializer(instance).data
             return Response({
                 "message": "Room added successfully",
                 "data": data
             }, status=status.HTTP_201_CREATED)
         else:
+            print(f"Room serializer errors: {serializer.errors}")
             return Response({
                 "error": serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
+        print(f"Exception in add_new_room: {e}")
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])

@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { faPlus, faSave } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, FC, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { fetchAmenities } from "../../services/Admin";
 import { IRoom, IRoomFormModalProps } from "../../types/RoomAdmin";
-import { useForm } from "react-hook-form";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faPlus } from "@fortawesome/free-solid-svg-icons"
 
 const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomData, loading = false }) => {
     const [previewUrl, setPreviewUrl] = useState<string>("");
@@ -23,13 +23,13 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
             roomPrice: roomData?.roomPrice,
             status: roomData?.status || "Available",
             description: roomData?.description || "",
-            images: roomData?.images || "",
+            images: roomData?.images || [],
             maxGuests: roomData?.maxGuests || 1,
             discount_percent: roomData?.discount_percent || 0,
         }
     });
 
-    const image = watch("images");
+    const images = watch("images");
 
     useEffect(() => {
         if (roomData) {
@@ -42,7 +42,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                 roomPrice: roomData.roomPrice,
                 status: roomData.status || "Available",
                 description: roomData.description || "",
-                images: roomData.images || "",
+                images: roomData.images || [],
                 maxGuests: roomData.maxGuests || 1,
                 discount_percent: roomData.discount_percent || 0,
             });
@@ -58,13 +58,13 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
     const availableAmenities = amenitiesData?.data || [];
 
     useEffect(() => {
-        if (image instanceof File) {
-            const objectUrl = URL.createObjectURL(image);
+        if (images instanceof File) {
+            const objectUrl = URL.createObjectURL(images);
             setPreviewUrl(objectUrl);
             return () => URL.revokeObjectURL(objectUrl);
-        } else if (typeof image === "string") setPreviewUrl(image);
+        } else if (typeof images === "string") setPreviewUrl(images);
         else setPreviewUrl("");
-    }, [image]);
+    }, [images]);
 
     const handleAmenityChange = (amenityId: number) => {
         const currentAmenities = getValues("amenities");
@@ -75,11 +75,29 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
     };
 
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) setValue("images", e.target.files[0]);
+        if (e.target.files) {
+            const files = Array.from(e.target.files);
+            setValue("images", [
+                ...(images.filter((img) => typeof img === 'string' || [])),
+                ...files
+            ]);
+        }
+    };
+
+    // Preview all images
+    const renderImagePreviews = () => {
+        if (!images || images.length === 0) return null;
+        if (!previewUrl) return (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {images.map((img, idx) => {
+                    const src = typeof img === 'string' ? img : URL.createObjectURL(img);
+                    return <img key={idx} src={src} alt="Preview" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 16 }} />;
+                })}
+            </div>
+        );
     };
 
     const onSubmit = async (data: IRoom) => {
-        console.log(`Edit Room Data: ${data}`);;
         try {
             await onSave(data);
         } catch (error: any) {
@@ -432,6 +450,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={handleImageChange}
+                                                multiple
                                                 className="hidden"
                                                 id="room-image-upload"
                                             />
@@ -448,32 +467,7 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                             </motion.label>
                                         </div>
 
-                                        {previewUrl && (
-                                            <motion.div
-                                                className="mt-4 relative"
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ type: "spring", damping: 20 }}
-                                            >
-                                                <img
-                                                    loading="lazy"
-                                                    src={previewUrl}
-                                                    alt="Preview"
-                                                    className="w-full h-40 object-cover border border-gray-200 rounded-md shadow-sm"
-                                                />
-                                                <motion.button
-                                                    type="button"
-                                                    onClick={() => setValue("images", '')}
-                                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors duration-200"
-                                                    whileHover={{ scale: 1.1 }}
-                                                    whileTap={{ scale: 0.9 }}
-                                                >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </motion.button>
-                                            </motion.div>
-                                        )}
+                                        {renderImagePreviews()}
 
                                         {errors.images && (
                                             <motion.p

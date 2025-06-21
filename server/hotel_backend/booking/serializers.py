@@ -3,53 +3,15 @@ from rest_framework import serializers
 from .models import Bookings, Transactions, Reviews
 from user_roles.models import CustomUsers
 from user_roles.serializers import CustomUserSerializer
-from property.models import Rooms, Amenities, Areas
+from property.models import Rooms, Areas
 import cloudinary
-from property.serializers import AreaSerializer
+from property.serializers import AreaSerializer, RoomSerializer
 from .validations.booking import validate_booking_request
 from django.utils import timezone
 from datetime import datetime
 from django.db.models import Sum
 from django.core.files.uploadedfile import InMemoryUploadedFile, UploadedFile
 import uuid
-
-class AmenitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Amenities
-        fields = ['id', 'description']
-
-class RoomSerializer(serializers.ModelSerializer):
-    amenities = AmenitySerializer(many=True, read_only=True)
-    room_image = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Rooms
-        fields = [
-            'id',
-            'room_name',
-            'room_type',
-            'bed_type',
-            'status',
-            'room_price',
-            'room_image',
-            'description',
-            'max_guests',
-            'amenities'
-        ]
-    
-    def get_room_image(self, obj):
-        if obj.room_image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.room_image.url)
-            return obj.room_image.url
-        return None
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        if instance.room_price is not None:
-            representation['room_price'] = f"₱{float(instance.room_price):,.2f}"
-        return representation
 
 class BookingSerializer(serializers.ModelSerializer):
     user = CustomUserSerializer()

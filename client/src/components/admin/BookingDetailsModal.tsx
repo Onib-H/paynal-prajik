@@ -197,18 +197,18 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
     const getLoadingText = () => {
         if (pendingAction) {
             switch (pendingAction) {
-              case 'checkin': return "Checking in guest...";
-              case 'checkout': return "Checking out guest...";
-              case 'cancel': return "Cancelling booking...";
-              case 'no_show': return "Marking as no-show...";
-              case 'reject': return "Rejecting booking request...";
-              case 'reserve': return "Reserving booking...";
-              default: return "Processing booking...";
+                case 'checkin': return "Checking in guest...";
+                case 'checkout': return "Checking out guest...";
+                case 'cancel': return "Cancelling booking...";
+                case 'no_show': return "Marking as no-show...";
+                case 'reject': return "Rejecting booking request...";
+                case 'reserve': return "Reserving booking...";
+                default: return "Processing booking...";
             }
-          }
-        
-          if (booking.status === "reserved" && isUpdating) return "Checking in guest...";
-          switch (booking.status) {
+        }
+
+        if (booking.status === "reserved" && isUpdating) return "Checking in guest...";
+        switch (booking.status) {
             case "pending": return "Reserving booking...";
             case "reserved": return "Checking in guest...";
             case "checked_in": return "Checking out guest...";
@@ -216,7 +216,7 @@ const BookingDetailsModal: FC<BookingDetailProps> = ({ booking, onClose, onConfi
             case "cancelled": return "Cancelling booking...";
             case "rejected": return "Rejecting booking request...";
             default: return "Processing booking...";
-          }
+        }
     };
 
     const getLoaderType = () => {

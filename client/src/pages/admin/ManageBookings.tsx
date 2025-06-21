@@ -548,12 +548,13 @@ const ManageBookings: FC = () => {
           isOpen={showCancellationModal}
           onClose={closeCancellationModal}
           onConfirm={handleCancellationConfirm}
-          title="Cancel Booking"
+          title="Cancel Reserved Booking"
           description="Please provide a reason for cancelling this booking on behalf of the guest. This will be recorded in the system."
           reasonLabel="Reason for Cancellation"
           reasonPlaceholder="Enter reason for guest's cancellation request..."
           confirmButtonText="Confirm Cancellation"
           showPolicyNote={true}
+          reasons={adminRejectionReasons}
         />
       )}
 

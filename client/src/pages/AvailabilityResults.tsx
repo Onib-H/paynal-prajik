@@ -239,6 +239,8 @@ const AvailabilityResults = () => {
                           title={room.room_name}
                           price={room.room_price}
                           description={room.description}
+                          discount_percent={room.discount_percent || 0}
+                          discounted_price={room.discounted_price || room.room_price}
                         />
                       </motion.div>
                     ))}

@@ -135,10 +135,18 @@ const ManageRooms = () => {
       parsedRoomPrice = room.room_price;
     }
 
+    // Map backend images (array of {id, room_image}) to string URLs
+    let images: (string)[] = [];
+    if (Array.isArray((room as any).images)) {
+      images = (room as any).images.map((img: any) => img.room_image).filter(Boolean);
+    } else if (room.room_image) {
+      images = [room.room_image];
+    }
+
     setEditRoomData({
       id: room.id,
       roomName: room.room_name,
-      images: room.room_image,
+      images: images,
       roomType: room.room_type,
       bedType: room.bed_type,
       status: room.status === "available" ? "Available" : "Maintenance",
@@ -180,11 +188,16 @@ const ManageRooms = () => {
       });
     }
 
-    if (roomData.images instanceof File) {
-      formData.append("room_image", roomData.images);
+    // Append all images (only File types) for add, and only existing image URLs for edit
+    if (roomData.images && roomData.images.length > 0) {
+      roomData.images.forEach((img) => {
+        if (img instanceof File) {
+          formData.append("images", img);
+        }
+      });
     }
 
-    formData.append('discount_percent', roomData.discount_percent?.toString());
+    formData.append('discount_percent', roomData.discount_percent?.toString() || '0');
 
     try {
       if (!roomData.id) {

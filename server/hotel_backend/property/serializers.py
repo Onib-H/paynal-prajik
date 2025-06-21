@@ -1,16 +1,37 @@
 from rest_framework import serializers
 from django.db.models import Avg
-from .models import Amenities, Rooms, Areas
+from .models import Amenities, Rooms, Areas, RoomImages, AreaImages
 
 class AmenitySerializer(serializers.ModelSerializer):
     class Meta:
         model = Amenities
         fields = ['id', 'description']
         
+class RoomImagesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoomImages
+        fields = ['id', 'room_image']
+        
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['room_image'] = instance.room_image.url if instance.room_image else None
+        return representation
+
+class AreaImagesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AreaImages
+        fields = ['id', 'image']
+        
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['image'] = instance.image.url if instance.image else None
+        return representation
+
 class RoomSerializer(serializers.ModelSerializer):
     amenities = AmenitySerializer(many=True, read_only=True)
     average_rating = serializers.SerializerMethodField()
     discounted_price = serializers.SerializerMethodField()
+    images = RoomImagesSerializer(many=True, read_only=True)
     
     class Meta:
         model = Rooms
@@ -18,7 +39,7 @@ class RoomSerializer(serializers.ModelSerializer):
             'id',
             'room_name',
             'room_type',
-            'room_image',
+            'images',
             'bed_type',
             'status',
             'room_price',
@@ -32,8 +53,6 @@ class RoomSerializer(serializers.ModelSerializer):
         
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['room_image'] = instance.room_image.url if instance.room_image else None
-        
         if instance.room_price is not None:
             representation['room_price'] = f"₱{float(instance.room_price):,.2f}"
         return representation
