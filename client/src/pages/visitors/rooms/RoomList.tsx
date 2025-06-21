@@ -4,8 +4,8 @@ import { FC, useMemo } from "react";
 import RoomCard from "../../../components/rooms/RoomCard";
 import DashboardSkeleton from "../../../motions/skeletons/AdminDashboardSkeleton";
 import { fetchAllRooms } from "../../../services/Room";
-import Error from "../../_ErrorBoundary";
 import { Room } from "../../../types/RoomClient";
+import Error from "../../_ErrorBoundary";
 
 interface RoomsResponse {
   data: Room[];
@@ -27,6 +27,7 @@ const RoomList: FC = () => {
           id: room.id,
           name: room.room_name,
           image: room.room_image,
+          images: room.images,
           title: room.room_type,
           status: room.status,
           description: room.description,
@@ -61,6 +62,7 @@ const RoomList: FC = () => {
                 id={room.id}
                 name={room.name}
                 image={room.image}
+                images={room.images} // Pass the images array from the API
                 title={room.title}
                 price={room.price}
                 description={room.description}

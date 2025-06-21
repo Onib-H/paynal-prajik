@@ -6,19 +6,19 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
 import { useUserContext } from "../contexts/AuthContext";
+import { MemoizedImage } from "../memo/MemoizedImage";
 import RoomAndAreaDetailsSkeleton from "../motions/skeletons/RoomAndAreaDetailsSkeleton";
 import { fetchAmenities } from "../services/Admin";
 import { fetchRoomReviews } from "../services/Booking";
 import { fetchRoomDetail } from "../services/Room";
-import Error from "./_ErrorBoundary";
 import { Room } from "../types/RoomClient";
-import { MemoizedImage } from "../memo/MemoizedImage";
+import Error from "./_ErrorBoundary";
 
 const RoomDetails = () => {
   const { isAuthenticated } = useUserContext();
   const { id } = useParams<{ id: string }>();
 
-  const [isImageLoaded, setIsImageLoaded] = useState<boolean>(false);
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const navigate = useNavigate();
 
@@ -52,6 +52,20 @@ const RoomDetails = () => {
   if (!roomDetail) {
     return <div className="text-center mt-4">No room details available</div>;
   }
+
+  // Image gallery state
+  const images = roomDetail.images && roomDetail.images.length > 0
+    ? roomDetail.images.map((img) => img.room_image)
+    : [];
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedImageIdx((prev) => (prev - 1 + images.length) % images.length);
+  };
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedImageIdx((prev) => (prev + 1) % images.length);
+  };
 
   const allAmenities = allAmenitiesData?.data || [];
   const getAmenityDescription = (amenityId: any) => {
@@ -124,30 +138,32 @@ const RoomDetails = () => {
         </div>
       </div>
 
-      {/* Hero Banner */}
-      <div className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden">
+      {/* Hero Banner with Image Gallery */}
+      <div className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden flex flex-col items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 1.1 }}
           animate={{
-            opacity: isImageLoaded ? 1 : 0,
-            scale: isImageLoaded ? 1 : 1.1,
+            opacity: 1,
+            scale: 1,
             transition: { duration: 1.2, ease: "easeOut" }
           }}
           className="absolute inset-0 bg-black/30 backdrop-blur-[2px] z-10"
         />
+        {/* Main Gallery Image (no arrows here) */}
+        {images.length > 0 && (
+          <motion.img
+            key={images[selectedImageIdx]}
+            initial={{ scale: 1.1, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            loading="lazy"
+            src={images[selectedImageIdx]}
+            alt={roomDetail.room_name}
+            className="absolute inset-0 h-full w-full object-cover z-10 transition-transform duration-10000"
+          />
+        )}
 
-        <motion.img
-          initial={{ scale: 1.1 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 10, ease: "easeOut" }}
-          loading="lazy"
-          src={roomDetail.room_image}
-          alt={roomDetail.room_name}
-          onLoad={() => setIsImageLoaded(true)}
-          className="absolute inset-0 h-full w-full object-cover z-0 transition-transform duration-10000"
-        />
-
-        <div className="relative z-20 h-full w-full flex flex-col justify-between">
+        <div className="relative z-25 h-full w-full flex flex-col justify-between">
           {/* Back Button */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -182,7 +198,7 @@ const RoomDetails = () => {
       {/* Content Section */}
       <motion.div
         variants={containerVariants}
-        className="container mx-auto py-12 px-4 sm:px-6 relative z-10 -mt-20"
+        className="container mx-auto py-12 px-4 sm:px-6 relative z-10 -mt-8"
       >
         <motion.div
           variants={itemVariants}
@@ -313,16 +329,34 @@ const RoomDetails = () => {
             variants={itemVariants}
             className="lg:col-span-1 space-y-6"
           >
-            {/* Image */}
+            {/* Image with navigation arrows */}
             <motion.div
               variants={imageVariants}
-              className="bg-white p-4 rounded-xl shadow-lg overflow-hidden"
+              className="bg-white p-4 rounded-xl shadow-lg overflow-hidden relative"
             >
               <MemoizedImage
-                src={roomDetail.room_image}
+                src={images.length > 0 && images[selectedImageIdx]}
                 alt={roomDetail.room_name}
-                className="w-full h-64 object-cover rounded-lg transition-all duration-500 hover:scale-105"
+                className="w-full h-full object-cover rounded-lg transition-all duration-500 hover:scale-105"
               />
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-indigo-700 rounded-full p-1 shadow z-20"
+                    aria-label="Previous image"
+                  >
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 17 7 12 13 7"></polyline></svg>
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-indigo-700 rounded-full p-1 shadow z-20"
+                    aria-label="Next image"
+                  >
+                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="7 17 13 12 7 7"></polyline></svg>
+                  </button>
+                </>
+              )}
             </motion.div>
 
             {/* Booking Card */}

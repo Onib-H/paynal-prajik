@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { motion } from "framer-motion";
 import { Edit, Eye, Trash2 } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
@@ -19,18 +18,15 @@ export const RoomCard = memo(
         onEdit: (room: Room) => void;
         onDelete: (id: number) => void;
     }) => {
-        // Show the first image from room.images if available, else fallback to room.room_image
+        // Show the first image from room.images if available, else fallback to a placeholder
         const firstImage =
-            Array.isArray((room as any).images) && (room as any).images.length > 0
-                ? (room as any).images[0].room_image
-                : room.room_image;
-        const roomImageProps = useMemo(
-            () => ({
-                src: firstImage,
-                alt: room.room_name,
-            }),
-            [firstImage, room.room_name]
-        );
+            Array.isArray(room.images) && room.images.length > 0
+                ? room.images[0].room_image
+                : "https://via.placeholder.com/400x300?text=No+Image";
+        const roomImageProps = useMemo(() => ({
+            src: firstImage,
+            alt: room.room_name,
+        }), [firstImage, room.room_name]);
         const handleView = useCallback(() => onView(room), [room, onView]);
         const handleEdit = useCallback(() => onEdit(room), [room, onEdit]);
         const handleDelete = useCallback(() => onDelete(room.id), [room.id, onDelete]);

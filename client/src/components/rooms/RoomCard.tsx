@@ -1,13 +1,22 @@
 import { Book, Eye } from "lucide-react";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
-import { RoomCardProps } from "../../types/RoomClient";
 import { MemoizedImage } from "../../memo/MemoizedImage";
+import { RoomCardProps } from "../../types/RoomClient";
 
-const RoomCard: FC<RoomCardProps> = ({ id, name, image, title, price, description, discount_percent, discounted_price }) => {
+const RoomCard: FC<RoomCardProps> = ({ id, name, image, images, title, price, description, discount_percent, discounted_price }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
+
+  const displayImage = useMemo(() => {
+    if (Array.isArray(images) && images.length > 0) {
+      if (typeof images[0] === 'object' && images[0] !== null && 'room_image' in images[0]) {
+        return images[0].room_image;
+      }
+    }
+    return image;
+  }, [images, image]);
 
   const handleReserveClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -38,7 +47,7 @@ const RoomCard: FC<RoomCardProps> = ({ id, name, image, title, price, descriptio
       {/* Image container with elegant overlay */}
       <div className="relative w-full h-48 overflow-hidden group">
         <MemoizedImage
-          src={image}
+          src={displayImage}
           alt={title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />

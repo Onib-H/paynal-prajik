@@ -136,11 +136,9 @@ const ManageRooms = () => {
     }
 
     // Map backend images (array of {id, room_image}) to string URLs
-    let images: (string)[] = [];
-    if (Array.isArray((room as any).images)) {
-      images = (room as any).images.map((img: any) => img.room_image).filter(Boolean);
-    } else if (room.room_image) {
-      images = [room.room_image];
+    let images: string[] = [];
+    if (Array.isArray(room.images)) {
+      images = room.images.map((img: any) => img.room_image).filter(Boolean);
     }
 
     setEditRoomData({
