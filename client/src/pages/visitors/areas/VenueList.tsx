@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { FC, useMemo } from "react";
 import VenueCard from "../../../components/areas/VenueCard";
 import ContentLoader from "../../../motions/loaders/ContentLoader";
 import { fetchAreas } from "../../../services/Area";
@@ -9,17 +10,27 @@ interface AreaResponse {
   data: Area[];
 }
 
-const VenueList = () => {
+const VenueList: FC = () => {
   const { data: areasData, isLoading, isError } = useQuery<AreaResponse>({
     queryKey: ["venues"],
     queryFn: fetchAreas,
   });
 
-  const [selectedArea, setSelectedArea] = useState<number | null>(null);
-
   const availableAreas = useMemo(() => {
     if (!areasData?.data) return [];
-    return areasData.data.filter(area => area.status === 'available') || [];
+    return areasData.data
+      .filter((area: any) => area.status === 'available')
+      .map((area: any) => {
+        return {
+          id: area.id,
+          area_name: area.area_name,
+          area_image: area.images,
+          description: area.description || '',
+          price_per_hour: area.price_per_hour,
+          discounted_price: area.discounted_price || null,
+          discount_percent: area.discount_percent || 0,
+        }
+      });
   }, [areasData?.data]);
 
   if (isLoading) {
@@ -58,16 +69,14 @@ const VenueList = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {availableAreas.map((area: Area) => (
-            <div
-              key={area.id}
-              onClick={() => setSelectedArea(selectedArea === area.id ? null : area.id)}
-            >
+          {availableAreas.map((area, index) => (
+            <div key={index}>
               <VenueCard
                 id={area.id}
                 title={area.area_name}
                 priceRange={area.price_per_hour.toString()}
                 image={area.area_image}
+                images={area.area_image}
                 description={area.description}
                 discount_percent={area.discount_percent > 0 ? area.discount_percent : null}
                 discounted_price={area.discounted_price}

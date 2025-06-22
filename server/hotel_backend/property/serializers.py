@@ -61,8 +61,13 @@ class RoomSerializer(serializers.ModelSerializer):
         return obj.reviews.aggregate(Avg('rating'))['rating__avg'] or 0
 
     def get_discounted_price(self, obj):
-        if obj.discount_percent > 0:
-            discounted = obj.room_price * (100 - obj.discount_percent) / 100
+        try:
+            discount_percent = int(obj.discount_percent) if obj.discount_percent is not None else 0
+            room_price = float(obj.room_price) if obj.room_price is not None else 0.0
+        except (ValueError, TypeError):
+            return None
+        if discount_percent > 0:
+            discounted = room_price * (100 - discount_percent) / 100
             return f"₱{discounted:,.2f}"
         return None
 
@@ -96,7 +101,12 @@ class AreaSerializer(serializers.ModelSerializer):
         return obj.reviews.aggregate(Avg('rating'))['rating__avg'] or 0
     
     def get_discounted_price(self, obj):
-        if obj.discount_percent > 0:
-            discounted = obj.price_per_hour * (100 - obj.discount_percent) / 100
+        try:
+            discount_percent = int(obj.discount_percent) if obj.discount_percent is not None else 0
+            price_per_hour = float(obj.price_per_hour) if obj.price_per_hour is not None else 0.0
+        except (ValueError, TypeError):
+            return None
+        if discount_percent > 0:
+            discounted = price_per_hour * (100 - discount_percent) / 100
             return f"₱{discounted:,.2f}"
         return None

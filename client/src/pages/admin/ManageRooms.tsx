@@ -133,7 +133,7 @@ const ManageRooms = () => {
       parsedRoomPrice = parseFloat(priceString);
     } else {
       parsedRoomPrice = room.room_price;
-    }    // Map backend images (array of {id, room_image}) to string URLs
+    }
     let images: string[] = [];
     if (Array.isArray(room.images)) {
       images = room.images.map((img: any) => img.room_image).filter(Boolean);
@@ -172,6 +172,7 @@ const ManageRooms = () => {
 
   const handleSave = async (roomData: IRoom): Promise<void> => {
     const formData = new FormData();
+
     formData.append("room_name", roomData.roomName);
     formData.append("room_type", roomData.roomType);
     formData.append("bed_type", roomData.bedType);
@@ -179,49 +180,36 @@ const ManageRooms = () => {
     formData.append("room_price", String(roomData.roomPrice || 0));
     formData.append("description", roomData.description || "");
     formData.append("max_guests", String(roomData.maxGuests || 1));
+    formData.append("discount_percent", roomData.discount_percent?.toString() || '0');
 
     if (roomData.amenities && roomData.amenities.length > 0) {
-      roomData.amenities.forEach((amenityId) => {
+      roomData.amenities.forEach(amenityId => {
         formData.append("amenities", String(amenityId));
       });
-    }    // Count the number of existing vs. new images for logging
-    let existingImagesCount: number = 0;
-    let newImagesCount: number = 0;
+    }
 
-    // Handle images properly for both add and edit cases
+    // Handle images
     if (roomData.images && roomData.images.length > 0) {
-      // Add new File objects
-      roomData.images.forEach((img) => {
+      roomData.images.forEach(img => {
         if (img instanceof File) {
-          formData.append("new_images", img);
-          newImagesCount++;
+          formData.append("images", img);
         } else if (typeof img === 'string') {
-          // Keep track of existing images to retain
           formData.append("existing_images", img);
-          existingImagesCount++;
         }
       });
-
-      console.log(`Preparing to save room with ${existingImagesCount} existing images and ${newImagesCount} new images`);
-      console.log("Existing images:", roomData.images.filter(img => typeof img === 'string'));
-    } else {
-      formData.append("remove_all_images", "true");
-      console.log("No images selected, all existing images will be removed");
     }
-
-    if (!roomData.images || roomData.images.length === 0) {
-      formData.append("remove_all_images", "true");
-    } else {
-      formData.append("remove_all_images", "false");
-    }
-
-    formData.append('discount_percent', roomData.discount_percent?.toString() || '0');
 
     try {
-      if (!roomData.id) await addRoomMutation.mutateAsync(formData);
-      else await editRoomMutation.mutateAsync({ roomId: roomData.id, formData });
+      if (!roomData.id) {
+        await addRoomMutation.mutateAsync(formData);
+      } else {
+        await editRoomMutation.mutateAsync({
+          roomId: roomData.id,
+          formData
+        });
+      }
     } catch (error) {
-      console.error(`Error saving room ${error}`);
+      console.error(`Error saving room: ${error}`);
       throw error;
     }
   };

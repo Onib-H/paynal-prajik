@@ -178,44 +178,35 @@ const ManageAreas = () => {
 
   const handleSave = async (areaData: IArea): Promise<void> => {
     const formData = new FormData();
+
+    // Append basic area fields
     formData.append("area_name", areaData.area_name);
     formData.append("description", areaData.description || "");
-    formData.append("capacity", areaData.capacity.toString());
-    formData.append("price_per_hour", areaData.price_per_hour.toString());
+    formData.append("capacity", String(areaData.capacity || 0));
+    formData.append("price_per_hour", String(areaData.price_per_hour || 0));
     formData.append("status", areaData.status);
     formData.append("discount_percent", areaData.discount_percent?.toString() || '0');
 
-    // Handle images: append new File objects, keep existing URLs
-    let existingImagesCount: number = 0;
-    let newImagesCount: number = 0;
-
+    // Handle images
     if (areaData.images && areaData.images.length > 0) {
-      areaData.images.forEach((img) => {
+      areaData.images.forEach(img => {
         if (img instanceof File) {
-          formData.append('images', img);
-          newImagesCount++;
+          formData.append("images", img);
         } else if (typeof img === 'string') {
-          formData.append(`existing_images`, img);
-          existingImagesCount++;
+          formData.append("existing_images", img);
         }
       });
-
-      console.log(`Preparing to save area with ${newImagesCount} new images and ${existingImagesCount} existing images.`);
-      console.log(`Existing images: ${areaData.images.filter(img => typeof img === 'string')}`);
-    } else {
-      formData.append('remove_all_images', 'true');
-      console.log("No images provided, removing all existing images.");
-    }
-
-    if (!areaData.images || areaData.images.length === 0) {
-      formData.append('remove_all_images', 'true');
-    } else {
-      formData.append('remove_all_images', 'false');
     }
 
     try {
-      if (!areaData.id) await addAreaMutation.mutateAsync(formData);
-      else await editAreaMutation.mutateAsync({ areaId: areaData.id, formData });
+      if (!areaData.id) {
+        await addAreaMutation.mutateAsync(formData);
+      } else {
+        await editAreaMutation.mutateAsync({
+          areaId: areaData.id,
+          formData
+        });
+      }
     } catch (error) {
       console.error(`Error saving area: ${error}`);
       throw error;

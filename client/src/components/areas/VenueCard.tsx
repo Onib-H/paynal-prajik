@@ -1,15 +1,24 @@
 import { AlertCircle, Book, Eye } from "lucide-react";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserContext } from "../../contexts/AuthContext";
 import { useBookingLimit } from "../../contexts/BookingLimitContext";
 import { AreaCardProps } from "../../types/AreaClient";
 import { MemoizedImage } from "../../memo/MemoizedImage";
 
-const VenueCard: FC<AreaCardProps> = ({ id, title, priceRange, image, description, discount_percent, discounted_price }) => {
+const VenueCard: FC<AreaCardProps> = ({ id, title, priceRange, image, images, description, discount_percent, discounted_price }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useUserContext();
   const { canBook, maxLimit } = useBookingLimit();
+
+  const displayImage = useMemo(() => {
+    if (Array.isArray(images) && images.length > 0) {
+      if (typeof images[0] === 'object' && images[0] !== null && 'area_image' in images[0]) {
+        return images[0].area_image;
+      }
+    }
+    return image;
+  }, [images, image]);
 
   const handleBookNow = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -52,7 +61,7 @@ const VenueCard: FC<AreaCardProps> = ({ id, title, priceRange, image, descriptio
       {/* Image container with elegant overlay */}
       <div className="relative w-full h-48 overflow-hidden group">
         <MemoizedImage
-          src={image}
+          src={displayImage}
           alt={title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
