@@ -235,7 +235,6 @@ def add_new_room(request):
         print(f"Received data for new room: {data}")
         print(f"Received files: {request.FILES}")
 
-        # Parse numeric fields as before...
         if 'room_price' in data and isinstance(data['room_price'], str):
             try:
                 price_str = data['room_price'].replace('₱', '').replace(',', '')
@@ -280,12 +279,10 @@ def add_new_room(request):
                 "data": data
             }, status=status.HTTP_201_CREATED)
         else:
-            print(f"Room serializer errors: {serializer.errors}")
             return Response({
                 "error": serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        print(f"Exception in add_new_room: {e}")
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -379,7 +376,7 @@ def edit_room(request, room_id):
         # 2. Handle explicit image removal cases
         remove_all = request.data.get('remove_all_images', 'false').lower() == 'true'
         print(f"Remove all images flag: {remove_all}")
-          # If remove_all flag is set or there are no existing images specified, delete all images
+        # If remove_all flag is set or there are no existing images specified, delete all images
         if remove_all or (not existing_image_urls and 'existing_images' in request.data):
             instance.images.all().delete()
         # Otherwise, only delete images not in the existing_images list
@@ -392,7 +389,7 @@ def edit_room(request, room_id):
                 existing_image_paths.append(filename)
             
             print(f"Extracted filenames from URLs: {existing_image_paths}")
-              # Compare images by their filename rather than full URL
+            # Compare images by their filename rather than full URL
             for img_obj in instance.images.all():
                 if img_obj.room_image:
                     filename = img_obj.get_filename()
@@ -483,6 +480,9 @@ def fetch_areas(request):
 def add_new_area(request):
     try:
         data = request.data.copy()
+        print(f"Received data for new area: {data}")
+        print(f"Recieved files: {request.FILES}")
+        
         if 'price_per_hour' in data and isinstance(data['price_per_hour'], str):
             try:
                 price_str = data['price_per_hour'].replace('₱', '').replace(',', '')
@@ -501,11 +501,22 @@ def add_new_area(request):
         serializer = AreaSerializer(data=data)
         if serializer.is_valid():
             instance = serializer.save()
+            
+            images = request.FILES.getlist('images')
+            print(f"Images recieved for saving: {images}")
+            
+            for img in images:
+                image_obj = AreaImages.objects.create(area=instance, area_image=img)
+                print(f"Saved image: {image_obj.area_image.url if image_obj.area_image else 'No URL'}")
+            
+            data = AreaSerializer(instance).data
+            
             return Response({
                 "message": "Area added successfully",
-                "data": AreaSerializer(instance).data
+                "data": data
             }, status=status.HTTP_201_CREATED)
         else:
+            print(f"Area serializer errors: {serializer.errors}")
             return Response({
                 "error": serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -532,7 +543,9 @@ def show_area_details(request, area_id):
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def edit_area(request, area_id):
+def edit_area(request, area_id):    
+    print(f"edit_area Data: {request.data}")
+    print(f"edit_area FILES: {request.FILES}")
     try:
         area = Areas.objects.get(id=area_id)
     except Areas.DoesNotExist:
@@ -550,9 +563,45 @@ def edit_area(request, area_id):
     serializer = AreaSerializer(area, data=data, partial=True)
     if serializer.is_valid():
         instance = serializer.save()
+        
+        existing_image_urls = request.data.getlist('existing_images') if hasattr(request.data, 'getlist') else []
+        
+        print(f"Existing images to keep: {existing_image_urls}")
+        
+        remove_all = request.data.get('remove_all_images', 'false').lower() == 'true'
+        print(f"Remove all images flag: {remove_all}")
+        
+        if remove_all or (not existing_image_urls and 'existing_images' in request.data):
+            instance.images.all().delete()
+        elif existing_image_urls:
+            existing_image_paths = []
+            for url in existing_image_urls:
+                filename = url.split('/')[-1].split('?')[0] if '/' in url else url
+                existing_image_paths.append(filename)
+                
+            print(f"Extracted filenames from URLs: {existing_image_paths}")
+            for img_obj in instance.images.all():
+                if img_obj.area_image:
+                    filename = img_obj.get_filename()
+                    print(f"Checking image: {filename}")
+                    if filename not in existing_image_paths:
+                        print(f"Deleting image: {filename}")
+                        img_obj.delete()
+                    else:
+                        print(f"Keeping image: {filename}")
+
+        new_images = request.FILES.getlist('new_images')
+        print(f"Adding {len(new_images)} new images")
+        
+        for i, img in enumerate(new_images):
+            new_img = AreaImages.objects.create(area=instance, area_image=img)
+            print(f"Added new image {i+1}: {new_img.get_filename() if new_img.area_image else 'No filename'}")
+            
+        data = AreaSerializer(instance).data
+        
         return Response({
             "message": "Area updated successfully",
-            "data": AreaSerializer(instance).data
+            "data": data
         }, status=status.HTTP_200_OK)
     else:
         return Response({

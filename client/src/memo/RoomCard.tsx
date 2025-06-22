@@ -22,7 +22,7 @@ export const RoomCard = memo(
         const firstImage =
             Array.isArray(room.images) && room.images.length > 0
                 ? room.images[0].room_image
-                : "https://via.placeholder.com/400x300?text=No+Image";
+                : null;
         const roomImageProps = useMemo(() => ({
             src: firstImage,
             alt: room.room_name,

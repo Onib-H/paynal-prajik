@@ -4,30 +4,29 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "react-toastify";
+import AreaDetailsModal from "../../components/admin/AreaDetailsModal";
 import EditAreaModal from "../../components/admin/EditAreaModal";
 import Modal from "../../components/Modal";
+import { AreaCard } from "../../memo/AreaCard";
 import EventLoader from "../../motions/loaders/EventLoader";
 import ManageSkeleton from "../../motions/skeletons/ManageSkeleton";
 import { addNewArea, deleteArea, editArea, fetchAreas } from "../../services/Admin";
-import { IArea as IEditArea } from "../../types/AreaAdmin";
+import { IArea } from "../../types/AreaAdmin";
 import { AddAreaResponse, Area, PaginationData } from "../../types/AreaClient";
 import Error from "../_ErrorBoundary";
-import AreaDetailsModal from "../../components/admin/AreaDetailsModal";
-import AreaCard from "../../memo/AreaCard";
 
 const ManageAreas = () => {
+  const [pageSize] = useState<number>(9);
   const [showFormModal, setShowFormModal] = useState<boolean>(false);
-  const [editAreaData, setEditAreaData] = useState<IEditArea | null>(null);
+  const [editAreaData, setEditAreaData] = useState<IArea | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [pageSize] = useState(9);
-
   const [showViewModal, setShowViewModal] = useState<boolean>(false);
   const [viewAreaData, setViewAreaData] = useState<Area | null>(null);
-
   const [showModal, setShowModal] = useState<boolean>(false);
   const [deleteAreaId, setDeleteAreaId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [loaderText, setLoaderText] = useState<string>("");
+
   const queryClient = useQueryClient();
 
   const { data: areasResponse, isLoading, isError } = useQuery<{
@@ -64,7 +63,6 @@ const ManageAreas = () => {
       });
       setShowFormModal(false);
       toast.success("Area added successfully!");
-
       setCurrentPage(1);
     },
     onError: (error: any) => {
@@ -137,14 +135,27 @@ const ManageAreas = () => {
   }, []);
 
   const handleEditArea = useCallback((area: Area) => {
+    let parsedAreaPrce: number;
+
+    if (typeof area.price_per_hour === 'string') {
+      const priceString = area.price_per_hour.replace(/[₱,]/g, "");
+      parsedAreaPrce = parseFloat(priceString);
+    } else {
+      parsedAreaPrce = area.price_per_hour;
+    }
+    let images: string[] = [];
+    if (Array.isArray(area.images)) {
+      images = area.images.map((img: any) => img.area_image).filter(Boolean);
+      console.log(`Loaded area images for editing: ${images}`)
+    }
+
     setEditAreaData({
       id: area.id,
       area_name: area.area_name,
-      area_image:
-        typeof area.area_image === "string" ? area.area_image : area.area_image,
-      description: area.description || "",
+      images: images,
+      description: area.description,
       capacity: area.capacity,
-      price_per_hour: area.price_per_hour,
+      price_per_hour: parsedAreaPrce,
       status: area.status,
       discount_percent: area.discount_percent || 0,
     });
@@ -165,19 +176,42 @@ const ManageAreas = () => {
     setShowModal(false);
   };
 
-  const handleSave = async (areaData: IEditArea): Promise<void> => {
+  const handleSave = async (areaData: IArea): Promise<void> => {
     const formData = new FormData();
     formData.append("area_name", areaData.area_name);
     formData.append("description", areaData.description || "");
     formData.append("capacity", areaData.capacity.toString());
     formData.append("price_per_hour", areaData.price_per_hour.toString());
     formData.append("status", areaData.status);
+    formData.append("discount_percent", areaData.discount_percent?.toString() || '0');
 
-    if (areaData.area_image instanceof File) {
-      formData.append("area_image", areaData.area_image);
+    // Handle images: append new File objects, keep existing URLs
+    let existingImagesCount: number = 0;
+    let newImagesCount: number = 0;
+
+    if (areaData.images && areaData.images.length > 0) {
+      areaData.images.forEach((img) => {
+        if (img instanceof File) {
+          formData.append('images', img);
+          newImagesCount++;
+        } else if (typeof img === 'string') {
+          formData.append(`existing_images`, img);
+          existingImagesCount++;
+        }
+      });
+
+      console.log(`Preparing to save area with ${newImagesCount} new images and ${existingImagesCount} existing images.`);
+      console.log(`Existing images: ${areaData.images.filter(img => typeof img === 'string')}`);
+    } else {
+      formData.append('remove_all_images', 'true');
+      console.log("No images provided, removing all existing images.");
     }
 
-    formData.append("discount_percent", areaData.discount_percent?.toString());
+    if (!areaData.images || areaData.images.length === 0) {
+      formData.append('remove_all_images', 'true');
+    } else {
+      formData.append('remove_all_images', 'false');
+    }
 
     try {
       if (!areaData.id) await addAreaMutation.mutateAsync(formData);
@@ -347,11 +381,13 @@ const ManageAreas = () => {
         )}
 
         {/* View Area Modal */}
-        <AreaDetailsModal
-          isOpen={showViewModal}
-          onClose={() => setShowViewModal(false)}
-          areaData={viewAreaData}
-        />
+        {viewAreaData && (
+          <AreaDetailsModal
+            isOpen={showViewModal}
+            onClose={() => setShowViewModal(false)}
+            areaData={viewAreaData}
+          />
+        )}
 
         {/* Delete Confirmation Modal */}
         <Modal

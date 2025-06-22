@@ -15,12 +15,12 @@ interface RoomDetailsModalProps {
 }
 
 const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData }) => {
+    const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
+    const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
+
     const isAmenityObject = (amenity: any): amenity is AmenityObject => {
         return amenity && typeof amenity === 'object' && 'description' in amenity;
     }
-
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [isFullScreen, setIsFullScreen] = useState(false);
 
     const roomImages = useMemo(() => {
         if (!roomData || !roomData.images || !Array.isArray(roomData.images)) {
@@ -95,7 +95,7 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
 
                         <div className="grid grid-cols-1 md:grid-cols-2 h-full max-h-[90vh]">
                             <div className="relative h-64 md:h-full">
-                                {roomData.images && roomData.images.length > 0 ? (
+                                {roomData.images.length > 0 ? (
                                     <div className="relative h-full">
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent z-10"></div>
                                         <motion.div
@@ -113,11 +113,6 @@ const RoomDetailsModal: FC<RoomDetailsModalProps> = ({ isOpen, onClose, roomData
                                                     alt={roomData.room_name}
                                                     className="w-full h-full object-cover"
                                                 />
-                                                <div className="absolute top-2 right-2 bg-black/50 text-white p-1 rounded-md opacity-50 hover:opacity-100 transition-opacity">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                                                    </svg>
-                                                </div>
                                             </div>
                                         </motion.div>
 

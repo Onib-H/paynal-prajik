@@ -20,11 +20,11 @@ class RoomImagesSerializer(serializers.ModelSerializer):
 class AreaImagesSerializer(serializers.ModelSerializer):
     class Meta:
         model = AreaImages
-        fields = ['id', 'image']
+        fields = ['id', 'area_image']
         
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['image'] = instance.image.url if instance.image else None
+        representation['area_image'] = instance.area_image.url if instance.area_image else None
         return representation
 
 class RoomSerializer(serializers.ModelSerializer):
@@ -69,6 +69,7 @@ class RoomSerializer(serializers.ModelSerializer):
 class AreaSerializer(serializers.ModelSerializer):
     average_rating = serializers.SerializerMethodField()
     discounted_price = serializers.SerializerMethodField()
+    images = AreaImagesSerializer(many=True, read_only=True)
     
     class Meta:
         model = Areas
@@ -76,7 +77,7 @@ class AreaSerializer(serializers.ModelSerializer):
             'id',
             'area_name',
             'description',
-            'area_image',
+            'images',
             'status',
             'capacity',
             'price_per_hour',
@@ -87,8 +88,6 @@ class AreaSerializer(serializers.ModelSerializer):
         
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['area_image'] = instance.area_image.url if instance.area_image else None
-        
         if instance.price_per_hour is not None:
             representation['price_per_hour'] = f"₱{float(instance.price_per_hour):,.2f}"
         return representation

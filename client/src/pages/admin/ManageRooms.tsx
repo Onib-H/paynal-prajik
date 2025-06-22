@@ -16,16 +16,16 @@ import { AddRoomResponse, Amenity, PaginationData, Room } from "../../types/Room
 import Error from "../_ErrorBoundary";
 
 const ManageRooms = () => {
-  const [pageSize] = useState(9);
-  const [showFormModal, setShowFormModal] = useState(false);
+  const [pageSize] = useState<number>(9);
+  const [showFormModal, setShowFormModal] = useState<boolean>(false);
   const [editRoomData, setEditRoomData] = useState<IRoom | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showViewModal, setShowViewModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [showViewModal, setShowViewModal] = useState<boolean>(false);
   const [viewRoomData, setViewRoomData] = useState<Room | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showModal, setShowModal] = useState<boolean>(false);
   const [deleteRoomId, setDeleteRoomId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [loaderText, setLoaderText] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [loaderText, setLoaderText] = useState<string>("");
 
   const queryClient = useQueryClient();
 
@@ -164,6 +164,7 @@ const ManageRooms = () => {
   const confirmDelete = () => {
     if (deleteRoomId !== null) deleteRoomMutation.mutate(deleteRoomId);
   };
+
   const cancelDelete = () => {
     setDeleteRoomId(null);
     setShowModal(false);
@@ -184,8 +185,8 @@ const ManageRooms = () => {
         formData.append("amenities", String(amenityId));
       });
     }    // Count the number of existing vs. new images for logging
-    let existingImagesCount = 0;
-    let newImagesCount = 0;
+    let existingImagesCount: number = 0;
+    let newImagesCount: number = 0;
 
     // Handle images properly for both add and edit cases
     if (roomData.images && roomData.images.length > 0) {
@@ -217,11 +218,8 @@ const ManageRooms = () => {
     formData.append('discount_percent', roomData.discount_percent?.toString() || '0');
 
     try {
-      if (!roomData.id) {
-        await addRoomMutation.mutateAsync(formData);
-      } else {
-        await editRoomMutation.mutateAsync({ roomId: roomData.id, formData });
-      }
+      if (!roomData.id) await addRoomMutation.mutateAsync(formData);
+      else await editRoomMutation.mutateAsync({ roomId: roomData.id, formData });
     } catch (error) {
       console.error(`Error saving room ${error}`);
       throw error;

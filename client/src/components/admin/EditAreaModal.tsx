@@ -1,14 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { faPlus, faSave } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChangeEvent, FC, useEffect, useState } from "react";
-import { parsePriceValue } from "../../utils/formatters";
-import { IArea, IAreaFormModalProps } from "../../types/AreaAdmin";
 import { useForm } from "react-hook-form";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faPlus } from "@fortawesome/free-solid-svg-icons"
+import { IArea, IAreaFormModalProps } from "../../types/AreaAdmin";
+import { parsePriceValue } from "../../utils/formatters";
 
 const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, cancel, loading = false }) => {
-  const [previewUrl, setPreviewUrl] = useState<string | null>("");
   const [isHovered, setIsHovered] = useState<boolean>(false);
 
   const { register, handleSubmit, formState: { errors }, reset, watch, setValue, setError } = useForm<IArea>({
@@ -20,12 +19,12 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, canc
       capacity: areaData?.capacity || 0,
       price_per_hour: areaData?.price_per_hour ? parsePriceValue(areaData.price_per_hour) : 0,
       status: areaData?.status || "available",
-      area_image: areaData?.area_image || "",
+      images: areaData?.images || [],
       discount_percent: areaData?.discount_percent || 0,
     }
   });
 
-  const image = watch("area_image");
+  const images = watch("images");
 
   useEffect(() => {
     if (areaData) {
@@ -36,40 +35,71 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, canc
         capacity: areaData.capacity || 0,
         price_per_hour: areaData.price_per_hour ? parsePriceValue(areaData.price_per_hour) : 0,
         status: areaData.status || "available",
-        area_image: areaData.area_image || "",
+        images: areaData.images || [],
         discount_percent: areaData.discount_percent || 0,
       });
     }
   }, [areaData, reset]);
 
-  useEffect(() => {
-    if (image instanceof File) {
-      const objectUrl = URL.createObjectURL(image);
-      setPreviewUrl(objectUrl);
-      return () => URL.revokeObjectURL(objectUrl);
-    } else if (typeof image === "string" && image !== "") {
-      if (image.startsWith("http")) {
-        setPreviewUrl(image);
-      } else {
-        setPreviewUrl(`https://res.cloudinary.com/dxxzqzq0y/image/upload/${image}`);
-      }
-    } else {
-      setPreviewUrl("");
-    }
-  }, [image]);
-
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      setValue('area_image', file);
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      const existingImages = images?.filter((img: any) => typeof img === 'string') || [];
+      setValue("images", [...existingImages, ...files]);
     }
+  };
+
+  const handleRemoveImage = (idx: number) => {
+    const imageToRemove = images[idx];
+    const isExistingImage = typeof imageToRemove === 'string';
+
+    const updatedImages = images.filter((_, i) => i !== idx);
+    setValue("images", updatedImages);
+
+    if (isExistingImage) {
+      console.log(`Removing existing image at index: ${idx}: ${imageToRemove}`);
+    } else {
+      console.log(`Removing new image at index: ${idx}`);
+    }
+    console.log(`Remaining images: ${updatedImages.length}`);
+  };
+
+  const renderImagePreviews = () => {
+    if (!images || images.length === 0) return null;
+    return (
+      <div className="flex flex-wrap gap-2">
+        {images.map((img: any, idx: number) => {
+          const src = typeof img === 'string' ? img : URL.createObjectURL(img);
+          const isExistingImage = typeof img === 'string';
+          return (
+            <div key={idx} className="relative group">
+              <img
+                src={src}
+                alt={`Preview ${idx + 1}`}
+                className="w-20 h-20 object-cover rounded-lg border border-gray-200 shadow-sm mt-4"
+                onLoad={!isExistingImage ? () => URL.revokeObjectURL(src) : undefined}
+              />
+              <motion.button
+                type="button"
+                onClick={() => handleRemoveImage(idx)}
+                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors duration-200"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                aria-label="Remove image"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </motion.button>
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   const onSubmit = async (data: IArea) => {
     try {
-      if (!areaData?.id) {
-        data.status = "available";
-      }
       await onSave(data);
     } catch (error: any) {
       const errors = error.response?.data?.error || {};
@@ -81,11 +111,8 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, canc
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        cancel();
-      }
+      if (e.key === "Escape") cancel();
     };
-
     if (isOpen) window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [cancel, isOpen]);
@@ -328,15 +355,16 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, canc
                   {/* Area Image */}
                   <motion.div variants={itemVariants}>
                     <label className="block text-sm font-medium mb-1 text-gray-700">
-                      Area Image
+                      Area Images
                     </label>
                     <div className="border border-dashed border-gray-300 rounded-md p-4 text-center hover:border-blue-500 transition-colors duration-200">
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         onChange={handleImageChange}
                         className="hidden"
-                        id="area-image-upload"
+                        id='area-image-upload'
                       />
                       <motion.label
                         htmlFor="area-image-upload"
@@ -345,47 +373,22 @@ const EditAreaModal: FC<IAreaFormModalProps> = ({ onSave, areaData, isOpen, canc
                         whileTap={{ scale: 0.98 }}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <span className="text-sm text-gray-500">Click to upload an image</span>
                       </motion.label>
                     </div>
 
-                    {previewUrl && (
-                      <motion.div
-                        className="mt-4 relative"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ type: "spring", damping: 20 }}
-                      >
-                        <img
-                          loading="lazy"
-                          src={previewUrl}
-                          alt="Preview"
-                          className="w-full h-48 object-cover border border-gray-200 rounded-md shadow-sm"
-                        />
-                        <motion.button
-                          type="button"
-                          onClick={() => setValue("area_image", '')}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors duration-200"
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </motion.button>
-                      </motion.div>
-                    )}
+                    {renderImagePreviews()}
 
-                    {errors.area_image && (
+                    {errors.images && (
                       <motion.p
                         className="text-red-500 text-xs mt-1"
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        {errors.area_image.message}
+                        {errors.images.message}
                       </motion.p>
                     )}
                   </motion.div>

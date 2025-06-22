@@ -4,7 +4,7 @@ import { memo, useCallback, useMemo } from "react";
 import { Area } from "../types/AreaClient";
 import { MemoizedImage } from "./MemoizedImage";
 
-const AreaCard = memo(
+export const AreaCard = memo(
     ({
         area,
         index,
@@ -18,12 +18,16 @@ const AreaCard = memo(
         onEdit: (area: Area) => void;
         onDelete: (id: number) => void;
     }) => {
+        const firstImage =
+            Array.isArray(area.images) && area.images.length > 0
+                ? area.images[0].area_image
+                : null;
         const areaImageProps = useMemo(
             () => ({
-                src: area.area_image,
+                src: firstImage,
                 alt: area.area_name,
             }),
-            [area.area_image, area.area_name]
+            [firstImage, area.area_name]
         );
 
         const handleView = useCallback(() => onView(area), [area, onView]);
@@ -148,5 +152,3 @@ const AreaCard = memo(
 );
 
 AreaCard.displayName = "AreaCard";
-
-export default AreaCard;

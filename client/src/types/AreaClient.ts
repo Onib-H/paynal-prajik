@@ -2,21 +2,27 @@
 export interface Area {
     id: number;
     area_name: string;
-    area_image: string;
+    images: AreaImage[];
     description?: string;
     capacity: number;
     price_per_hour: number | string;
-    discounted_price?: number;
+    discounted_price?: number | null;
     status?: "available" | "maintenance";
     average_rating?: number;
     discount_percent?: number;
 }
 
-export interface AreaCardProps {
+export interface AreaImage {
     id: number;
+    area_image: string;
+}
+
+export interface AreaCardProps {
+    id: string | number;
     title: string;
     priceRange: string;
     image: string;
+    images: AreaImage[];
     description: string;
     discounted_price?: number;
     discount_percent?: number;

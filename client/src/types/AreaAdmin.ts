@@ -5,7 +5,7 @@ export interface IArea {
     capacity: number;
     price_per_hour: number | string;
     status: "available" | "maintenance";
-    area_image: File | string;
+    images: (File | string)[];
     discount_percent?: number;
 }
 

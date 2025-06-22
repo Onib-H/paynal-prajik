@@ -62,26 +62,29 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
             ? currentAmenities.filter(id => id !== amenityId)
             : [...currentAmenities, amenityId];
         setValue("amenities", newAmenities);
-    }; const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    }; 
+    
+    const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
-            // Keep existing string URLs and add new files
-            const existingImages = images.filter((img) => typeof img === 'string');
+            const existingImages = images.filter((img) => typeof img === 'string') || [];
             setValue("images", [
                 ...existingImages,
                 ...files
             ]);
         }
-    }; const renderImagePreviews = () => {
+    }; 
+    
+    const renderImagePreviews = () => {
         if (!images || images.length === 0) return null;
         return (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {images.map((img, idx) => {
+            <div className="flex flex-wrap gap-2">
+                {images.map((img: any, idx: number) => {
                     const src = typeof img === 'string' ? img : URL.createObjectURL(img);
                     const isExistingImage = typeof img === 'string';
 
                     return (
-                        <div key={idx} style={{ position: 'relative', display: 'inline-block' }}>
+                        <div key={idx} className="relative inline-block">
                             <img
                                 src={src}
                                 alt={`Preview ${idx + 1}`}
@@ -105,7 +108,8 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                 })}
             </div>
         );
-    };    // Remove image handler - filters out the image at the specified index
+    };
+
     const handleRemoveImage = (idx: number) => {
         const imageToRemove = images[idx];
         const isExistingImage = typeof imageToRemove === 'string';
