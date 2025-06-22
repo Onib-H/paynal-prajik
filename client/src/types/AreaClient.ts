@@ -1,4 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export interface AreaImage {
+    id: number;
+    area_image: string;
+}
+
 export interface Area {
     id: number;
     area_name: string;
@@ -10,11 +15,6 @@ export interface Area {
     status?: "available" | "maintenance";
     average_rating?: number;
     discount_percent?: number;
-}
-
-export interface AreaImage {
-    id: number;
-    area_image: string;
 }
 
 export interface AreaCardProps {

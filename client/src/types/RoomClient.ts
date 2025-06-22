@@ -15,7 +15,7 @@ export interface Room {
   room_type: string;
   images: RoomImage[];
   bed_type: string;
-  status: "available" | "occupied" | "maintenance";
+  status: "available" | "maintenance";
   discounted_price?: number | null;
   room_price: string | number;
   description: string;

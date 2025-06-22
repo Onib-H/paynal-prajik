@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, Bookmark, Check, Home, Info, PhilippinePeso, Star, Users, X } from "lucide-react";
+import { ArrowLeft, ArrowLeftIcon, ArrowRightIcon, Bookmark, Check, Home, Info, PhilippinePeso, Star, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
@@ -15,13 +15,13 @@ import { Room } from "../types/RoomClient";
 import Error from "./_ErrorBoundary";
 
 const RoomDetails = () => {
+  const [selectedImageIdx, setSelectedImageIdx] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  
   const { isAuthenticated } = useUserContext();
   const { id } = useParams<{ id: string }>();
-
-  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  
   const navigate = useNavigate();
-
   const pageSize: number = 5;
 
   const { data: roomData, isLoading: isLoadingRoom, error: roomError } = useQuery<{ data: Room }>({
@@ -62,6 +62,7 @@ const RoomDetails = () => {
     e.stopPropagation();
     setSelectedImageIdx((prev) => (prev - 1 + images.length) % images.length);
   };
+
   const handleNextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedImageIdx((prev) => (prev + 1) % images.length);
@@ -139,7 +140,7 @@ const RoomDetails = () => {
       </div>
 
       {/* Hero Banner with Image Gallery */}
-      <div className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden flex flex-col items-center justify-center">
+      <div className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden">
         <motion.div
           initial={{ opacity: 0, scale: 1.1 }}
           animate={{
@@ -186,9 +187,9 @@ const RoomDetails = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.7 }}
-            className="p-10 md:p-16 text-center"
+            className="p-6 md:p-8 text-center"
           >
-            <h1 className="font-playfair text-4xl md:text-6xl lg:text-7xl font-bold text-white drop-shadow-lg -mt-28">
+            <h1 className="font-playfair text-4xl md:text-6xl lg:text-8xl font-bold text-white drop-shadow-lg">
               {roomDetail.room_name}
             </h1>
           </motion.div>
@@ -332,28 +333,28 @@ const RoomDetails = () => {
             {/* Image with navigation arrows */}
             <motion.div
               variants={imageVariants}
-              className="bg-white p-4 rounded-xl shadow-lg overflow-hidden relative"
+              className="bg-white p-4 rounded-xl shadow-lg overflow-hidden relative flex items-center justify-center h-56"
             >
               <MemoizedImage
-                src={images.length > 0 && images[selectedImageIdx]}
+                src={images[selectedImageIdx]}
                 alt={roomDetail.room_name}
-                className="w-full h-full object-cover rounded-lg transition-all duration-500 hover:scale-105"
+                className="w-full h-full object-contain rounded-lg transition-all duration-500"
               />
               {images.length > 1 && (
                 <>
                   <button
                     onClick={handlePrevImage}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-indigo-700 rounded-full p-1 shadow z-20"
+                    className="absolute cursor-pointer left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-indigo-700 rounded-full p-1 shadow z-20"
                     aria-label="Previous image"
                   >
-                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 17 7 12 13 7"></polyline></svg>
+                    <ArrowLeftIcon className="w-5 h-5" />
                   </button>
                   <button
                     onClick={handleNextImage}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-indigo-700 rounded-full p-1 shadow z-20"
+                    className="absolute cursor-pointer right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-indigo-700 rounded-full p-1 shadow z-20"
                     aria-label="Next image"
                   >
-                    <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="7 17 13 12 7 7"></polyline></svg>
+                    <ArrowRightIcon className="w-5 h-5" />
                   </button>
                 </>
               )}

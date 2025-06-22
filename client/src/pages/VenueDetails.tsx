@@ -1,22 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, BookOpen, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
+import { ArrowLeft, ArrowLeftIcon, ArrowRightIcon, BookOpen, MapPin, PhilippinePeso, Star, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ReviewList from "../components/reviews/ReviewList";
 import { useUserContext } from "../contexts/AuthContext";
+import { MemoizedImage } from "../memo/MemoizedImage";
 import RoomAndAreaDetailsSkeleton from "../motions/skeletons/RoomAndAreaDetailsSkeleton";
 import { fetchAreaDetail } from "../services/Area";
 import { fetchAreaReviews } from "../services/Booking";
 import { Area } from "../types/AreaClient";
 import Error from "./_ErrorBoundary";
-import { MemoizedImage } from "../memo/MemoizedImage";
 
 const VenueDetails = () => {
+    const [selectedImageIdx, setSelectedImageIdx] = useState<number>(0);
+    const [currentPage, setCurrentPage] = useState<number>(1);
     const { id } = useParams<{ id: string }>();
     const { isAuthenticated } = useUserContext();
-    const [isImageLoaded, setIsImageLoaded] = useState(false);
-    const [currentPage, setCurrentPage] = useState<number>(1);
     const navigate = useNavigate();
     const pageSize = 5;
 
@@ -27,7 +27,7 @@ const VenueDetails = () => {
     });
 
     const { data: reviewsData, isLoading: isLoadingReviews, error: reviewsError } = useQuery({
-        queryKey: ["areaReviews", id],
+        queryKey: ["areaReviews", id, currentPage],
         queryFn: () => fetchAreaReviews(id, currentPage, pageSize),
         enabled: !!id,
     });
@@ -41,6 +41,20 @@ const VenueDetails = () => {
 
     const venueDetail = venueData?.data;
     if (!venueDetail) return <div className="text-center mt-4">No venue details available</div>;
+
+    const images = venueDetail.images && venueDetail.images.length > 0
+        ? venueDetail.images.map(image => image.area_image)
+        : [];
+
+    const handlePrevImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedImageIdx((prev) => (prev - 1 + images.length) % images.length);
+    };
+
+    const handleNextImage = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedImageIdx((prev) => (prev + 1) % images.length);
+    };
 
     const reviews = reviewsData?.data || [];
     const totalReviews = reviewsData?.total || 0;
@@ -103,30 +117,31 @@ const VenueDetails = () => {
                 </div>
             </div>
 
-            {/* Hero Banner */}
+            {/* Hero Banner with Image Gallery */}
             <div className="relative h-[60vh] md:h-[70vh] w-full overflow-hidden">
                 <motion.div
                     initial={{ opacity: 0, scale: 1.1 }}
                     animate={{
-                        opacity: isImageLoaded ? 1 : 0,
-                        scale: isImageLoaded ? 1 : 1.1,
+                        opacity: 1,
+                        scale: 1,
                         transition: { duration: 1.2, ease: "easeOut" }
                     }}
                     className="absolute inset-0 bg-black/30 backdrop-blur-[2px] z-10"
                 />
+                {images.length > 0 && (
+                    <motion.img
+                        key={images[selectedImageIdx]}
+                        initial={{ scale: 1.1, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        loading="lazy"
+                        src={images[selectedImageIdx]}
+                        alt={venueDetail.area_name}
+                        className="absolute inset-0 h-full w-full object-cover z-10 transition-transform duration-10000"
+                    />
+                )}
 
-                <motion.img
-                    initial={{ scale: 1.1 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 10, ease: "easeOut" }}
-                    loading="lazy"
-                    src={venueDetail.area_image}
-                    alt={venueDetail.area_name}
-                    onLoad={() => setIsImageLoaded(true)}
-                    className="absolute inset-0 h-full w-full object-cover z-0 transition-transform duration-10000"
-                />
-
-                <div className="relative z-20 h-full w-full flex flex-col justify-between">
+                <div className="relative z-25 h-full w-full flex flex-col justify-between">
                     {/* Back Button */}
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -140,7 +155,7 @@ const VenueDetails = () => {
                             className="inline-flex cursor-pointer items-center gap-2 mt-2 px-4 py-2 rounded-full bg-indigo-600/80 backdrop-blur-md text-white hover:bg-indigo-700/90 transition-all duration-300 shadow-lg"
                         >
                             <ArrowLeft className="w-4 h-4" />
-                            <span>Back to Rooms</span>
+                            <span>Back to Venues</span>
                         </motion.button>
                     </motion.div>
 
@@ -149,9 +164,9 @@ const VenueDetails = () => {
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.5, duration: 0.7 }}
-                        className="p-10 md:p-16 text-center"
+                        className="p-6 md:p-8 text-center"
                     >
-                        <h1 className="font-playfair text-4xl md:text-6xl lg:text-7xl font-bold text-white drop-shadow-lg -mt-28">
+                        <h1 className="font-playfair text-4xl md:text-6xl lg:text-8xl font-bold text-white drop-shadow-lg">
                             {venueDetail.area_name}
                         </h1>
                     </motion.div>
@@ -161,7 +176,7 @@ const VenueDetails = () => {
             {/* Content Section */}
             <motion.div
                 variants={containerVariants}
-                className="container mx-auto py-6 px-4 sm:px-6 relative z-10 -mt-20"
+                className="container mx-auto py-12 px-4 sm:px-6 relative z-10 -mt-8"
             >
                 <motion.div
                     variants={itemVariants}
@@ -253,21 +268,39 @@ const VenueDetails = () => {
                         </motion.div>
                     </motion.div>
 
-                    {/* Right Column - Reservation Card */}
+                    {/* Right Column - Gallery and Booking Card */}
                     <motion.div
                         variants={itemVariants}
                         className="lg:col-span-1 space-y-6"
                     >
-                        {/* Image */}
+                        {/* Image with navigation arrows */}
                         <motion.div
                             variants={imageVariants}
-                            className="bg-white p-4 rounded-xl shadow-lg overflow-hidden"
+                            className="bg-white p-4 rounded-xl shadow-lg overflow-hidden relative flex items-center justify-center h-56"
                         >
                             <MemoizedImage
-                                src={venueDetail.area_image}
+                                src={images[selectedImageIdx]}
                                 alt={venueDetail.area_name}
-                                className="w-full h-64 object-cover rounded-lg transition-all duration-500 hover:scale-105"
+                                className="w-full h-full object-contain rounded-lg transition-all duration-500"
                             />
+                            {images.length > 1 && (
+                                <>
+                                    <button
+                                        onClick={handlePrevImage}
+                                        className="absolute cursor-pointer left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-indigo-700 rounded-full p-1 shadow z-20"
+                                        aria-label="Previous image"
+                                    >
+                                        <ArrowLeftIcon className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={handleNextImage}
+                                        className="absolute cursor-pointer right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-indigo-700 rounded-full p-1 shadow z-20"
+                                        aria-label="Next image"
+                                    >
+                                        <ArrowRightIcon className="w-5 h-5" />
+                                    </button>
+                                </>
+                            )}
                         </motion.div>
 
                         {/* Booking Card */}
@@ -276,31 +309,19 @@ const VenueDetails = () => {
                             className="bg-white rounded-xl overflow-hidden shadow-lg sticky top-24"
                         >
                             <div className="p-6 bg-gradient-to-r from-indigo-600 to-purple-700 text-white">
-                                <h3 className="text-3xl font-bold">Book This Area!</h3>
+                                <h3 className="text-4xl font-bold">Book This Area!</h3>
                             </div>
 
                             <div className="p-6">
                                 {/* Venue Information */}
                                 <div className="space-y-4 mb-6">
                                     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
-                                        <PhilippinePeso className="w-5 h-5 text-indigo-500 mr-3" />
+                                        <MapPin className="w-5 h-5 text-blue-500 mr-3" />
                                         <div>
-                                            <h4 className="font-medium text-gray-800">Pricing</h4>
-                                            {venueDetail.discount_percent > 0 ? (
-                                                <>
-                                                    <span className="text-gray-400 line-through mr-2">
-                                                        {venueDetail.price_per_hour}
-                                                    </span>
-                                                    <span className="text-green-600 font-semibold">
-                                                        {venueDetail.discounted_price}
-                                                    </span>
-                                                </>
-                                            ) : (
-                                                <span>{venueDetail.price_per_hour}</span>
-                                            )}
+                                            <h4 className="font-medium text-gray-800">Venue</h4>
+                                            <p className="text-indigo-600 text-lg font-semibold">{venueDetail.area_name}</p>
                                         </div>
                                     </div>
-
                                     <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                                         <Users className="w-5 h-5 text-indigo-500 mr-3" />
                                         <div>
