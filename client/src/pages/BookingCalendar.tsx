@@ -516,9 +516,10 @@ const BookingCalendar = () => {
                             <div className="mb-4">
                                 <img
                                     loading="lazy"
-                                    src={roomData.room_image}
+                                    src={roomData.images[0].room_image}
                                     alt={roomData.room_name}
                                     className="w-full h-48 object-cover rounded-lg"
+                                    onError={e => (e.currentTarget.src = '/public/vite.svg')}
                                 />
                             </div>
                             <div className="flex items-center justify-between mb-2">

@@ -93,7 +93,10 @@ export interface AreaData {
   id: number;
   area_name: string;
   description: string;
-  area_image: string;
+  images: {
+    id: number;
+    area_image: string;
+  }[];
   status: string;
   capacity: number;
   price_per_hour: string;
@@ -123,7 +126,10 @@ export interface RoomData {
   room_type: string;
   room_price?: string;
   description: string;
-  room_image: string;
+  images: {
+    id: number;
+    room_image: string;
+  }[];
   discount_percent?: number;
   discounted_price?: number;
   status: string;

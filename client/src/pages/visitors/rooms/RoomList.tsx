@@ -62,12 +62,12 @@ const RoomList: FC = () => {
                 id={room.id}
                 name={room.name}
                 image={room.image}
-                images={room.images} // Pass the images array from the API
+                images={room.images}
                 title={room.title}
                 price={room.price}
                 description={room.description}
                 discounted_price={room.discounted_price}
-                discount_percent={room.discount_percent > 0 ? room.discount_percent : null}
+                discount_percent={room.discount_percent}
               />
             </div>
           ))}

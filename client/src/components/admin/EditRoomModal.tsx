@@ -62,8 +62,8 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
             ? currentAmenities.filter(id => id !== amenityId)
             : [...currentAmenities, amenityId];
         setValue("amenities", newAmenities);
-    }; 
-    
+    };
+
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
@@ -73,8 +73,8 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                 ...files
             ]);
         }
-    }; 
-    
+    };
+
     const renderImagePreviews = () => {
         if (!images || images.length === 0) return null;
         return (
@@ -493,6 +493,9 @@ const EditRoomModal: FC<IRoomFormModalProps> = ({ isOpen, cancel, onSave, roomDa
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
                                                 <span className="text-sm text-gray-500">Click to upload an image</span>
+                                                <span className="text-xs text-gray-400 mt-1 block">
+                                                    Maximum file size: 5MB per image
+                                                </span>
                                             </motion.label>
                                         </div>
 

@@ -410,25 +410,24 @@ const VenueBookingCalendar = () => {
                 {/* Right Side - Area Info (1/3 width on large screens) */}
                 <div className="lg:col-span-1">
                     {areaData && (
-                        <div className="bg-white rounded-lg ring-purple-500 ring-3 shadow-md p-6 sticky top-24">
+                        <div className="bg-white rounded-lg ring-purple-500 ring-3 shadow-xl p-6 sticky top-24">
                             <div className="mb-4">
                                 <img
-                                    loading='lazy'
-                                    src={areaData.area_image}
+                                    loading="lazy"
+                                    src={Array.isArray(areaData.images) && areaData.images.length > 0 ? areaData.images[0].area_image : '/public/vite.svg'}
                                     alt={areaData.area_name}
                                     className="w-full h-48 object-cover rounded-lg"
+                                    onError={e => (e.currentTarget.src = '/public/vite.svg')}
                                 />
                             </div>
                             <div className="flex items-center justify-between mb-2">
-                                <h3 className="text-xl font-bold mb-2">{areaData.area_name}</h3>
+                                <h3 className="text-xl font-bold">{areaData.area_name}</h3>
                             </div>
-
                             {areaData.discount_percent && areaData.discount_percent > 0 ? (
                                 <span>
                                     <span className="line-through text-gray-400 mr-2">{areaData.price_per_hour}</span>
                                     <span className="text-blue-600 font-bold">
-                                        ₱
-                                        {(
+                                        ₱{(
                                             parseFloat(
                                                 areaData.price_per_hour?.toString().replace(/[^\d.]/g, '') || '0'
                                             ) *
@@ -440,45 +439,38 @@ const VenueBookingCalendar = () => {
                                     </span>
                                 </span>
                             ) : (
-                                <span>{areaData.price_per_hour}</span>
+                                <p className="text-lg font-semibold text-blue-600 mb-3">{areaData.price_per_hour}</p>
                             )}
-
-                            <div className="flex items-center text-gray-600 text-lg mb-3">
-                                <span className="mr-2">👥</span>
-                                <span>Capacity: {areaData.capacity} pax</span>
+                            <div className="flex flex-col space-y-2 mb-4 mt-3">
+                                <div className="flex items-center text-gray-800">
+                                    <span className="mr-2">👥</span>
+                                    <span className="font-semibold">Capacity: {areaData.capacity} pax</span>
+                                </div>
                             </div>
-
+                            {/* Only show booking details if valid date selected */}
                             {selectedDate && (
-                                <div className="mt-auto">
-                                    <div className="border-t border-gray-200 pt-3 mt-3">
-                                        <h4 className="font-medium mb-2">Your Selection</h4>
-                                        <div className="bg-gray-50 p-3 rounded-md space-y-2">
-                                            <div className="flex justify-between text-lg">
-                                                <span>Date:</span>
-                                                <span className="font-medium">{format(selectedDate, 'EEE, MMM dd, yyyy')}</span>
-                                            </div>
-                                            <div className="flex justify-between text-lg">
-                                                <span>Duration:</span>
-                                                <span className="font-medium">9 hours (8AM - 5PM)</span>
-                                            </div>
-                                            <div className="flex justify-between text-2xl font-semibold text-blue-600 pt-2 border-t border-gray-200">
-                                                <span>Total Price:</span>
-                                                {areaData.discount_percent && areaData.discount_percent > 0 ? (
-                                                    <>
-                                                        <span className="line-through text-gray-400 mr-2">
-                                                            ₱{price.toLocaleString()}
-                                                        </span>
-                                                        <span className="text-blue-600 font-bold">
-                                                            ₱
-                                                            {(
-                                                                price * (1 - areaData.discount_percent / 100)
-                                                            ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                        </span>
-                                                    </>
-                                                ) : (
-                                                    <>₱{price.toLocaleString()}</>
-                                                )}
-                                            </div>
+                                <div className="border-t border-gray-200 pt-3 mt-3">
+                                    <h4 className="font-semibold text-lg mb-3">Your Selection:</h4>
+                                    <div className="p-1 rounded-md space-y-2">
+                                        <div className="flex justify-between">
+                                            <span>Date:</span>
+                                            <span className="font-medium">{format(selectedDate, 'MMM dd, yyyy')}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Duration:</span>
+                                            <span className="font-medium">9 hours (8AM - 5PM)</span>
+                                        </div>
+                                        <div className="flex justify-between text-3xl font-semibold text-blue-600 pt-2 border-t border-gray-200">
+                                            <span>Total Price:</span>
+                                            <span>
+                                                ₱{areaData.discount_percent && areaData.discount_percent > 0
+                                                    ? (
+                                                        parseFloat(
+                                                            areaData.price_per_hour?.toString().replace(/[^\d.]/g, '') || '0'
+                                                        ) * (1 - areaData.discount_percent / 100)
+                                                    ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                                    : price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
