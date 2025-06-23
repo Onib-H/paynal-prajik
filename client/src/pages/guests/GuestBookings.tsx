@@ -246,7 +246,7 @@ const GuestBookings = () => {
 
                     if (isVenueBooking) {
                       itemName = booking.area_name || booking.area_details?.area_name;
-                      itemImage = booking.area_image || booking.area_details?.area_image;
+                      itemImage = booking.area_details?.images[0]?.area_image
 
                       const startTime = booking.start_time || booking.check_in_date;
                       const endTime = booking.end_time || booking.check_out_date;
@@ -271,7 +271,7 @@ const GuestBookings = () => {
                       totalAmount = booking.total_price || booking.total_amount || (venuePrice * duration);
                     } else {
                       itemName = booking.room_name || booking.room_details?.room_name || "Room";
-                      itemImage = booking.room_image || booking.room_details?.room_image;
+                      itemImage = booking.room_details?.images[0]?.room_image
 
                       const checkInDate = booking.check_in_date;
                       const checkOutDate = booking.check_out_date;
@@ -446,13 +446,13 @@ const GuestBookings = () => {
                 className="text-gray-500 max-w-md mb-6"
               >
                 {searchTerm || filterStatus ? (
-                  <>
+                  <h1>
                     We couldn't find any bookings matching your search criteria. Try adjusting your filters or search terms.
-                  </>
+                  </h1>
                 ) : (
-                  <>
+                  <h1>
                     You don't have any bookings yet. When you make a reservation, it will appear here.
-                  </>
+                  </h1>
                 )}
               </motion.p>
 

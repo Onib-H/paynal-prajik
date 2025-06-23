@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { memo, useCallback, useMemo } from "react";
-import deluxe_twin from "../../assets/deluxe_twin.jpg";
 import { fetchBookingDetail } from "../../services/Booking";
 import BookingCard from "./BookingCard";
 import { formatDate } from "../../utils/formatters";
@@ -51,13 +50,13 @@ const BookingData = memo(({ bookingId }: BookingDataProps) => {
       const areaData = bookingData?.area_details || bookingData?.area;
       if (areaData) {
         result.roomType = areaData.area_name || "Venue";
-        result.imageUrl = areaData.area_image || "";
+        result.imageUrl = areaData.images[0].area_image;
         result.guests = areaData.capacity || 0;
         result.phoneNumber = bookingData?.phone_number;
         result.price = bookingData?.total_price || 0;
         result.totalPrice = bookingData?.total_price;
         result.areaDetails = {
-          area_image: areaData.area_image,
+          area_image: areaData.images[0].area_image,
           area_name: areaData.area_name,
           price_per_hour: areaData.price_per_hour,
           capacity: areaData.capacity
@@ -69,11 +68,14 @@ const BookingData = memo(({ bookingId }: BookingDataProps) => {
         const roomType = roomData.room_name || "Unknown Room";
         result.roomType = roomType;
         result.phoneNumber = bookingData?.phone_number;
-        result.imageUrl = roomData.room_image || deluxe_twin;
+        result.imageUrl = roomData.images[0].room_image;
         result.guests = roomData?.max_guests;
         result.price = bookingData?.total_price || 0;
         result.totalPrice = bookingData?.total_price;
-        result.roomDetails = roomData;
+        result.roomDetails = {
+          room_image: roomData.images[0].room_image,
+          capacity: roomData.max_guests,
+        }
       }
     }
 

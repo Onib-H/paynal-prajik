@@ -707,7 +707,7 @@ const ConfirmBooking = () => {
               <div className="relative mb-4 overflow-hidden rounded-md">
                 <motion.img
                   loading="lazy"
-                  src={roomData?.room_image}
+                  src={roomData?.images[0].room_image}
                   alt={roomData?.room_name || "Room"}
                   className="w-full h-40 object-cover rounded-md"
                   whileHover={{ scale: 1.05 }}

@@ -348,14 +348,13 @@ const ManageBookings: FC = () => {
                         {formatDate(booking.created_at)}
                       </td>
                       <td className="p-3 text-sm text-left md:text-base text-gray-700 whitespace-nowrap">
-                        {`${booking.user?.first_name || ""} ${booking.user?.last_name || ""
-                          }`}
+                        {`${booking.user?.first_name} ${booking.user?.last_name}`}
                       </td>
                       <td className="p-3 text-sm md:text-base text-gray-700 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-12 w-12 flex-shrink-0">
                             <img
-                              src={isVenueBooking ? booking.area_details?.area_image : booking.room_details?.room_image}
+                              src={isVenueBooking ? booking.area_details?.images[0].area_image : booking.room_details?.images[0].room_image}
                               alt={propertyName}
                               className="h-12 w-12 rounded-md object-cover"
                             />

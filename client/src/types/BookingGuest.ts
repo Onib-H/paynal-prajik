@@ -43,7 +43,10 @@ export interface FormattedBooking {
 export interface RoomData {
     id: string;
     room_name: string;
-    room_image?: string;
+    images: {
+        id: string;
+        room_image: string;
+    }[];
     room_price: number;
     max_guests: number;
 }
@@ -51,7 +54,10 @@ export interface RoomData {
 export interface AreaData {
     id: string;
     area_name: string;
-    area_image?: string;
+    images?: {
+        id: string;
+        area_image: string;
+    }[];
     price_per_hour: string;
     capacity: number;
 }

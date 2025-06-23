@@ -14,7 +14,10 @@ export interface BookingResponse {
     room_name: string;
     room_type: string;
     room_price: string;
-    room_image?: string;
+    images?: {
+      id: number;
+      room_image: string;
+    }[];
     discount_percent?: number;
     discounted_price?: string;
     description?: string;
@@ -27,7 +30,10 @@ export interface BookingResponse {
   area_details?: {
     id: number;
     area_name: string;
-    area_image?: string;
+    images?: {
+      id: string;
+      area_image: string;
+    }[];
     description?: string;
     price_per_hour?: string;
     discounted_price?: string;

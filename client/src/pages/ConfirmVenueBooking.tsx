@@ -601,7 +601,7 @@ const ConfirmVenueBooking = () => {
               <div className="relative mb-4 overflow-hidden rounded-md">
                 <motion.img
                   loading="lazy"
-                  src={areaData?.area_image}
+                  src={areaData?.images[0].area_image}
                   alt={areaData?.area_name}
                   className="w-full h-40 object-cover rounded-md"
                   whileHover={{ scale: 1.05 }}
