@@ -33,6 +33,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
+    '192.168.1.8',
+    'http://192.168.1.8:5173',
+    '127.0.0.1',
     os.getenv('CLIENT_URL', 'http://localhost:5173'),
 ]
 
@@ -70,11 +73,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
+    'http://192.168.1.8:5173',
     os.getenv('CLIENT_URL'),
 ]
 
@@ -95,6 +99,11 @@ CORS_ALLOW_HEADERS = [
     'sec-websocket-key',
     'sec-websocket-version',
 ]
+
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = False
 
 ROOT_URLCONF = 'hotel_backend.urls'
 

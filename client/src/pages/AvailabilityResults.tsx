@@ -236,6 +236,7 @@ const AvailabilityResults = () => {
                           id={room.id}
                           name={room.room_name}
                           image={room.room_image}
+                          images={room.images}
                           title={room.room_name}
                           price={room.room_price}
                           description={room.description}
