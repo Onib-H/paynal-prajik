@@ -32,11 +32,7 @@ SECRET_KEY = 'django-insecure-+b0(xsw8z5jwpu=+p1+=pom=xb59ry+iu+t9kdwdo6wi@9%k4r
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'localhost',
-    '192.168.1.8',
-    'http://192.168.1.8:5173',
-    '127.0.0.1',
-    os.getenv('CLIENT_URL', 'http://localhost:5173'),
+    "*",
 ]
 
 # Application definition
@@ -71,10 +67,11 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'user_roles.middleware.ClientIPMiddleware',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
@@ -136,6 +133,7 @@ SIMPLE_JWT = {
 
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
+    'django.contrib.auth.hashers.BCryptPasswordHasher',
 ]
 
 WSGI_APPLICATION = 'hotel_backend.wsgi.application'
@@ -158,8 +156,28 @@ DATABASES = {
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST', 'localhost'),
         'PORT': os.getenv('DB_PORT', '3306'),
+    },
+    'flask': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'craveon',
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': 'admin',
+        'HOST': '192.168.1.2',
+        'PORT': os.getenv('DB_PORT', '3306'),
+        'SETTINGS': {
+            'charset': 'utf8mb4',
+        }
     }
 }
+
+AUTHENTICATION_BACKENDS = [
+    'user_roles.backends.MultiDBAuthBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+DATABASE_ROUTERS = [
+    'user_roles.routers.SecondDbRouter',
+]
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'

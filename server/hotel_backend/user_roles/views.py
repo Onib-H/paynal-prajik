@@ -5,10 +5,11 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import CustomUsers, Notification
+from .models import CustomUsers, Notification, Customer
 from .serializers import CustomUserSerializer, NotificationSerializer
 from .email.email import send_otp_to_email, send_reset_password
 from django.core.cache import cache
+from django.contrib.auth.hashers import check_password
 from .validation.validation import RegistrationForm
 from datetime import timedelta
 from booking.models import Bookings
@@ -21,6 +22,7 @@ from asgiref.sync import async_to_sync
 from io import BytesIO
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+import bcrypt
 import os
 import uuid
 import requests
@@ -608,58 +610,96 @@ def user_login(request):
         if not email or not password:
             return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
         
-        user = CustomUsers.objects.filter(email=email).first()
-        
-        if not user:
-            return Response({'error': 'User does not exist'}, status=status.HTTP_404_NOT_FOUND)
-            
-        if user.is_archived:
-            return Response({'error': 'User account is archived'}, status=status.HTTP_403_FORBIDDEN)
-        
         auth_user = authenticate(request, username=email, password=password)
-        
+        print(f"auth_user result: {auth_user}")
         if auth_user is None:
-            return Response({'error': 'Your password is incorrect'}, status=status.HTTP_401_UNAUTHORIZED)
-        
-        token = RefreshToken.for_user(auth_user)
-        
-        user_data = {
-            'id': auth_user.id,
-            'email': auth_user.email,
-            'username': auth_user.username,
-            'first_name': auth_user.first_name,
-            'last_name': auth_user.last_name,
-            'role': auth_user.role,
-            'profile_image': auth_user.profile_image.url if auth_user.profile_image else "",
-            'is_verified': user.is_verified,
-            'last_booking_date': user.last_booking_date
-        }
-        
+            # Try direct bcrypt check for Customer (flask DB)
+            try:
+                flask_user = Customer.objects.using('flask').get(email=email)
+                if flask_user.is_archived:
+                    return Response({'error': 'User account is archived'}, status=status.HTTP_403_FORBIDDEN)
+                password_hash = flask_user.password.encode('utf-8')
+                valid = False
+                try:
+                    valid = bcrypt.checkpw(password.encode('utf-8'), password_hash)
+                except Exception:
+                    valid = check_password(password, flask_user.password)
+                if valid:
+                    user_data = {
+                        'id': flask_user.customer_id,
+                        'email': flask_user.email,
+                        'username': flask_user.full_name,
+                        'first_name': flask_user.full_name.split(' ')[0],
+                        'last_name': ' '.join(flask_user.full_name.split(' ')[1:]),
+                        'role': 'customer',
+                        'profile_image': "",
+                        'is_verified': flask_user.status == 'Active',
+                        'last_booking_date': None
+                    }
+                    response = Response({
+                        'message': f'{user_data["first_name"]} logged in successfully!',
+                        'user': user_data,
+                        'access_token': None,
+                        'refresh_token': None
+                    }, status=status.HTTP_200_OK)
+                    return response
+                else:
+                    return Response({'error': 'User does not exist or password is incorrect'}, status=status.HTTP_401_UNAUTHORIZED)
+            except Customer.DoesNotExist:
+                return Response({'error': 'User does not exist or password is incorrect'}, status=status.HTTP_401_UNAUTHORIZED)
+        if isinstance(auth_user, CustomUsers):
+            if auth_user.is_archived:
+                return Response({'error': 'User account is archived'}, status=status.HTTP_403_FORBIDDEN)
+            token = RefreshToken.for_user(auth_user)
+            user_data = {
+                'id': auth_user.id,
+                'email': auth_user.email,
+                'username': auth_user.username,
+                'first_name': auth_user.first_name,
+                'last_name': auth_user.last_name,
+                'role': auth_user.role,
+                'profile_image': auth_user.profile_image.url if auth_user.profile_image else "",
+                'is_verified': auth_user.is_verified,
+                'last_booking_date': auth_user.last_booking_date
+            }
+        elif hasattr(auth_user, 'is_flask_customer'):
+            if auth_user.is_archived:
+                return Response({'error': 'User account is archived'}, status=status.HTTP_403_FORBIDDEN)
+            token = None
+            user_data = {
+                'id': auth_user.customer_id,
+                'email': auth_user.email,
+                'username': auth_user.full_name,
+                'first_name': auth_user.full_name.split(' ')[0],
+                'last_name': ' '.join(auth_user.full_name.split(' ')[1:]),
+                'profile_image': "",
+                'last_booking_date': None
+            }
+        else:
+            return Response({'error': 'Unknown user type'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         response = Response({
-            'message': f'{auth_user.first_name} logged in successfully!',
+            'message': f'{user_data["first_name"]} logged in successfully!',
             'user': user_data,
             'access_token': str(token.access_token),
             'refresh_token': str(token)
         }, status=status.HTTP_200_OK)
-        
-        response.set_cookie(
-            key="access_token",
-            value=str(token.access_token),
-            httponly=True,
-            secure=False,
-            samesite='Lax',
-            max_age=timedelta(days=1)
-        )
-        
-        response.set_cookie(
-            key="refresh_token",
-            value=str(token),
-            httponly=True,
-            secure=False,
-            samesite='Lax',
-            max_age=timedelta(days=7)
-        )
-        
+        if token:
+            response.set_cookie(
+                key="access_token",
+                value=str(token.access_token),
+                httponly=True,
+                secure=False,
+                samesite='Lax',
+                max_age=timedelta(days=1)
+            )
+            response.set_cookie(
+                key="refresh_token",
+                value=str(token),
+                httponly=True,
+                secure=False,
+                samesite='Lax',
+                max_age=timedelta(days=7)
+            )
         return response
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

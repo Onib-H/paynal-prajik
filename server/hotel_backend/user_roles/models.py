@@ -43,7 +43,26 @@ class CustomUsers(AbstractUser):
 
     class Meta: 
         db_table = 'users'
-    
+
+class Customer(models.Model):
+    customer_id = models.AutoField(primary_key=True)
+    full_name = models.CharField(max_length=100)
+    email = models.CharField(max_length=100)
+    contact = models.CharField(max_length=11)
+    address = models.TextField()
+    password = models.CharField(max_length=100)
+    is_archived = models.BooleanField(default=False)
+    status = models.CharField(
+        max_length=10, 
+        choices=[('Active', 'Active'), ('Inactive', 'Inactive')],
+        default='Active'
+    )
+
+    class Meta:
+        managed = False  # Prevent Django from managing table creation
+        db_table = 'customers'  # Use existing table name
+        app_label = 'user_roles'
+
 class Notification(models.Model):
     TYPE_CHOICES = [
         ('reserved', 'Reserved'),
