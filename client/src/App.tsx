@@ -41,6 +41,7 @@ const GuestProfile = lazy(() => import("./pages/guests/GuestProfile"));
 const GuestBookings = lazy(() => import("./pages/guests/GuestBookings"));
 const GuestCancellations = lazy(() => import("./pages/guests/GuestCancellations"));
 const GuestLayout = lazy(() => import("./layout/guest/GuestLayout"));
+const GuestFoodOrders = lazy(() => import("./pages/guests/GuestFoodOrders"));
 
 const App = () => {
   const { isAuthenticated, role } = useUserContext();
@@ -104,6 +105,7 @@ const App = () => {
               <Route path=":id" element={<GuestProfile />} />
               <Route path="bookings" element={<GuestBookings />} />
               <Route path="cancellations" element={<GuestCancellations />} />
+              <Route path="food-orders" element={<GuestFoodOrders />} />
             </Route>
           </Route>
 

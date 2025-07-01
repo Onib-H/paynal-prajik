@@ -88,3 +88,11 @@ export const transaction = axios.create({
   },
   withCredentials: true,
 });
+
+export const food = axios.create({
+  baseURL: `${import.meta.env.FLASK_URL}/food`,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  withCredentials: true,
+});

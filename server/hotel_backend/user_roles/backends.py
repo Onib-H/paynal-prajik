@@ -22,7 +22,6 @@ class MultiDBAuthBackend(ModelBackend):
         try:
             flask_user = Customer.objects.using('flask').get(email=username)
             print("Found user in flask DB:", flask_user.email)
-            from django.contrib.auth.hashers import check_password
             if check_password(password, flask_user.password):
                 flask_user.is_flask_customer = True
                 print("Authenticated with flask customer")

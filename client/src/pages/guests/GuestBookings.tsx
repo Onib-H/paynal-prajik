@@ -1,21 +1,24 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Eye, MessageSquare, Search, XCircle, Calendar, SearchIcon, Filter } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, Calendar, Eye, Filter, MessageSquare, Search, SearchIcon, XCircle } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
-import ViewBookingDetailsModal from "../../components/guests/ViewBookingDetailsModal";
 import { toast } from "react-toastify";
 import CancellationModal from "../../components/bookings/CancellationModal";
 import GuestBookingComment from "../../components/guests/GuestBookingComment";
-import { useUserContext } from "../../contexts/AuthContext";
-import { cancelBooking, fetchUserReviews } from "../../services/Booking";
-import { BookingResponse } from "../../types/BookingClient";
-import { fetchGuestBookings } from "../../services/Guest";
-import { formatStatus, formatDate, getStatusColor } from "../../utils/formatters";
-import GuestBookingsSkeleton from "../../motions/skeletons/GuestBookingsSkeleton";
-import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
+import OrderFoodModal from "../../components/guests/OrderFoodModal";
+import ViewBookingDetailsModal from "../../components/guests/ViewBookingDetailsModal";
 import { guestCancellationReasons } from "../../constants/Dropdown";
+import { useUserContext } from "../../contexts/AuthContext";
+import GuestBookingsError from "../../motions/error-fallback/GuestBookingsError";
+import GuestBookingsSkeleton from "../../motions/skeletons/GuestBookingsSkeleton";
+import { cancelBooking, fetchUserReviews } from "../../services/Booking";
+import { fetchGuestBookings } from "../../services/Guest";
+import { BookingResponse } from "../../types/BookingClient";
+import { formatDate, formatStatus, getStatusColor } from "../../utils/formatters";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUtensils } from "@fortawesome/free-solid-svg-icons";
 
 const GuestBookings = () => {
   const { userDetails } = useUserContext();
@@ -30,6 +33,8 @@ const GuestBookings = () => {
   const [reviewBookingDetails, setReviewBookingDetails] = useState<any>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<number>(null);
   const [showBookingDetailModal, setShowBookingDetailModal] = useState<boolean>(false);
+  const [showOrderFoodModal, setShowOrderFoodModal] = useState(false);
+  const [orderFoodBookingId, setOrderFoodBookingId] = useState(null);
 
   const queryClient = useQueryClient();
   const pageSize = 5;
@@ -360,6 +365,17 @@ const GuestBookings = () => {
                                 <XCircle size={24} />
                               </button>
                             )}
+                            {booking.status.toLowerCase() === 'checked_in' && (
+                              <button
+                                className="bg-green-600 hover:bg-green-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
+                                onClick={() => {
+                                  setOrderFoodBookingId(booking.id);
+                                  setShowOrderFoodModal(true);
+                                }}
+                              >
+                                <FontAwesomeIcon icon={faUtensils} size="xl" />
+                              </button>
+                            )}
                             {booking.status.toLowerCase() === 'checked_out' && (
                               <button
                                 disabled={alreadyReviewed}
@@ -538,6 +554,14 @@ const GuestBookings = () => {
             setSelectedBookingId(null);
             setShowBookingDetailModal(false);
           }}
+        />
+      )}
+
+      {showOrderFoodModal && (
+        <OrderFoodModal
+          bookingId={orderFoodBookingId}
+          isOpen={showOrderFoodModal}
+          onClose={() => setShowOrderFoodModal(false)}
         />
       )}
     </div>
