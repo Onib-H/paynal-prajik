@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Calendar, Eye, Filter, MessageSquare, Search, SearchIcon, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar, Eye, Filter, MessageSquare, Search, SearchIcon, Utensils, XCircle } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import "react-loading-skeleton/dist/skeleton.css";
 import { toast } from "react-toastify";
@@ -17,8 +17,6 @@ import { cancelBooking, fetchUserReviews } from "../../services/Booking";
 import { fetchGuestBookings } from "../../services/Guest";
 import { BookingResponse } from "../../types/BookingClient";
 import { formatDate, formatStatus, getStatusColor } from "../../utils/formatters";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUtensils } from "@fortawesome/free-solid-svg-icons";
 
 const GuestBookings = () => {
   const { userDetails } = useUserContext();
@@ -348,41 +346,62 @@ const GuestBookings = () => {
                         </td>
                         <td className="p-2 whitespace-nowrap text-sm font-semibold">
                           <div className="flex justify-center space-x-2">
-                            <button
-                              className="bg-gray-600 hover:bg-gray-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
-                              onClick={() => {
-                                setSelectedBookingId(booking.id);
-                                setShowBookingDetailModal(true);
-                              }}
-                            >
-                              <Eye size={24} />
-                            </button>
-                            {booking.status.toLowerCase() === 'pending' && (
+                            <div className="relative group">
                               <button
-                                className="bg-red-600 hover:bg-red-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
-                                onClick={() => openCancelModal(id.toString())}
-                              >
-                                <XCircle size={24} />
-                              </button>
-                            )}
-                            {booking.status.toLowerCase() === 'checked_in' && (
-                              <button
-                                className="bg-green-600 hover:bg-green-700 uppercase text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
+                                className="bg-gray-600 hover:bg-gray-700 text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
                                 onClick={() => {
-                                  setOrderFoodBookingId(booking.id);
-                                  setShowOrderFoodModal(true);
+                                  setSelectedBookingId(booking.id);
+                                  setShowBookingDetailModal(true);
                                 }}
                               >
-                                <FontAwesomeIcon icon={faUtensils} size="xl" />
+                                <Eye size={24} />
                               </button>
+                              <span className="absolute left-1/2 -top-2 transform -translate-x-1/2 -translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 pointer-events-none shadow-lg">
+                                Show Booking Details
+                              </span>
+                            </div>
+                            {booking.status.toLowerCase() === 'pending' && (
+                              <div className="relative group">
+                                <button
+                                  className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
+                                  onClick={() => openCancelModal(id.toString())}
+                                >
+                                  <XCircle size={24} />
+                                </button>
+                                <span className="absolute -left-1/6 -top-2 transform -translate-x-1/2 -translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 pointer-events-none shadow-lg">
+                                  Cancel Booking
+                                </span>
+                              </div>
+                            )}
+                            {booking.status.toLowerCase() === 'checked_in' && (
+                              <div className="relative group">
+                                <button
+                                  className="bg-green-600 hover:bg-green-700 text-white p-2 rounded-full flex items-center cursor-pointer transition-all duration-300"
+                                  onClick={() => {
+                                    setOrderFoodBookingId(booking.id);
+                                    setShowOrderFoodModal(true);
+                                  }}
+                                >
+                                  <Utensils size={24} />
+                                  <span className="absolute left-1/8 -top-2 transform -translate-x-1/2 -translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 pointer-events-none shadow-lg">
+                                    Order Food
+                                  </span>
+                                </button>
+                              </div>
                             )}
                             {booking.status.toLowerCase() === 'checked_out' && (
-                              <button
-                                disabled={alreadyReviewed}
-                                onClick={() => !alreadyReviewed && openReviewModal(booking)}
-                                className={`bg-blue-600 text-white p-2 rounded-full flex items-center transition-all duration-300 uppercase ${alreadyReviewed ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700 cursor-pointer'}`}>
-                                <MessageSquare size={24} />
-                              </button>
+                              <div className="relative group">
+                                <button
+                                  disabled={alreadyReviewed}
+                                  onClick={() => !alreadyReviewed && openReviewModal(booking)}
+                                  className={`bg-blue-600 text-white p-2 rounded-full flex items-center transition-all duration-300 ${alreadyReviewed ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700 cursor-pointer'}`}
+                                >
+                                  <MessageSquare size={24} />
+                                  <span className="absolute -left-4/10 -top-2 transform -translate-x-1/2 -translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 pointer-events-none shadow-lg">
+                                    {alreadyReviewed ? "Already Reviewed" : "Leave a Review"}
+                                  </span>
+                                </button>
+                              </div>
                             )}
                           </div>
                         </td>

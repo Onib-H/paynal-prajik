@@ -66,7 +66,7 @@ export class WebSocketService {
     try {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const host =
-        window.location.hostname === "localhost"
+        window.location.hostname === "192.168.1.2:5173"
           ? process.env.VITE_API_URL
           : window.location.host;
       const url = `${protocol}//${host}/${this.socketPath}`;
