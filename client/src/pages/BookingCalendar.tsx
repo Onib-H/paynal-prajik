@@ -287,7 +287,14 @@ const BookingCalendar = () => {
 
     const handleProceed = () => {
         if (checkInDate && checkOutDate && numberOfNights > 0 && !hasConflict && !isSameDayBooking) {
-            navigate(`/confirm-booking?roomId=${roomId}&arrival=${format(checkInDate, 'yyyy-MM-dd')}&departure=${format(checkOutDate, 'yyyy-MM-dd')}&totalPrice=${totalPrice}`);
+            // Pass totalPrice (possibly discounted) to ConfirmBooking
+            const params = new URLSearchParams({
+                roomId: roomId!,
+                arrival: format(checkInDate, "yyyy-MM-dd"),
+                departure: format(checkOutDate, "yyyy-MM-dd"),
+                totalPrice: totalPrice.toString(),
+            });
+            navigate(`/confirm-booking?${params.toString()}`);
         }
     };
 
@@ -510,6 +517,7 @@ const BookingCalendar = () => {
                 </div>
 
                 {/* Room Info Card - Right Side */}
+
                 <div className="lg:col-span-1">
                     {roomData && (
                         <div className="bg-white rounded-lg ring-purple-500 ring-3 shadow-xl p-6 sticky top-24">
@@ -519,27 +527,57 @@ const BookingCalendar = () => {
                                     src={roomData.images[0].room_image}
                                     alt={roomData.room_name}
                                     className="w-full h-48 object-cover rounded-lg"
-                                    onError={e => (e.currentTarget.src = '/public/vite.svg')}
                                 />
                             </div>
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-xl font-bold">{roomData.room_name}</h3>
                             </div>
-                            {roomData.discount_percent && roomData.discount_percent > 0 ? (
-                                <span>
-                                    <span className="line-through text-gray-400 mr-2">{roomData.discounted_price}</span>
-                                    <span className="text-blue-600 font-bold">
-                                        {roomData.discounted_price}
-                                    </span>
-                                    <span className="ml-2 text-green-600 font-semibold">
-                                        -{roomData.discount_percent}% OFF
-                                    </span>
-                                </span>
-                            ) : (
-                                <p className="text-lg font-semibold text-blue-600 mb-3">
-                                    {roomData.price_per_night || roomData.room_price}
-                                </p>
-                            )}
+                            {/* Price/Discount Display - always in the same spot */}
+                            <div className="mb-4">
+                                {(() => {
+                                    let priceValue = 0;
+                                    let discountPercent = 0;
+                                    let discountedValue = 0;
+                                    const priceString = roomData.price_per_night || roomData.room_price;
+                                    try {
+                                        const numericValue = priceString?.toString().replace(/[^\d.]/g, '') || '0';
+                                        priceValue = parseFloat(numericValue) || 0;
+                                        if (numberOfNights >= 7) {
+                                            discountPercent = 10;
+                                        } else if (numberOfNights >= 3) {
+                                            discountPercent = 5;
+                                        }
+                                        discountedValue = priceValue * (1 - discountPercent / 100);
+                                    } catch {
+                                        priceValue = 0;
+                                    }
+                                    return (
+                                        <>
+                                            {discountPercent > 0 ? (
+                                                <>
+                                                    <div className="flex justify-between text-gray-500 line-through text-base">
+                                                        <span>Original Price:</span>
+                                                        <span>₱{(priceValue * numberOfNights).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-green-600 font-semibold text-base">
+                                                        <span>Long Stay Discount ({discountPercent}%):</span>
+                                                        <span>-₱{((priceValue * numberOfNights) - (discountedValue * numberOfNights)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                    <div className="flex justify-between text-blue-600 font-bold text-xl mt-2">
+                                                        <span>Total Price:</span>
+                                                        <span>₱{(discountedValue * numberOfNights).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="flex justify-between text-blue-600 font-bold text-xl">
+                                                    <span>Total Price:</span>
+                                                    <span>₱{(priceValue * numberOfNights).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                                                </div>
+                                            )}
+                                        </>
+                                    );
+                                })()}
+                            </div>
 
                             <div className="flex flex-col space-y-2 mb-4">
                                 <div className="flex items-center text-gray-800">
@@ -583,10 +621,7 @@ const BookingCalendar = () => {
                                             <span>Nights:</span>
                                             <span className="font-medium">{numberOfNights}</span>
                                         </div>
-                                        <div className="flex justify-between text-3xl font-semibold text-blue-600 pt-2 border-t border-gray-200">
-                                            <span>Total Price:</span>
-                                            <span>₱{totalPrice.toLocaleString()}</span>
-                                        </div>
+                                        {/* The above price summary already shows the discount and total price */}
                                     </div>
                                 </div>
                             )}

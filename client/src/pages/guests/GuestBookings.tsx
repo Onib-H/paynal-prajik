@@ -356,7 +356,7 @@ const GuestBookings = () => {
                               >
                                 <Eye size={24} />
                               </button>
-                              <span className="absolute left-1/2 -top-2 transform -translate-x-1/2 -translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 pointer-events-none shadow-lg">
+                              <span className="absolute -left-1/12 -top-2 transform -translate-x-1/2 -translate-y-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 pointer-events-none shadow-lg">
                                 Show Booking Details
                               </span>
                             </div>

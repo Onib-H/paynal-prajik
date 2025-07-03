@@ -112,22 +112,30 @@ const ConfirmBooking = () => {
     }
   }, [roomId, navigate]);
 
-  useMemo(() => {
+  useEffect(() => {
     if (priceParam) {
       setCalculatedTotalPrice(parseInt(priceParam));
     } else if (roomData && selectedArrival && selectedDeparture) {
       const start = new Date(selectedArrival);
       const end = new Date(selectedDeparture);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
-      if (roomData.room_price) {
-        const priceString = roomData.room_price.replace(/[₱,]/g, "");
-        const roomPrice = parseFloat(priceString);
-
-        if (!isNaN(roomPrice)) {
-          setCalculatedTotalPrice(roomPrice * nights);
+      let priceValue = 0;
+      const priceString = roomData.price_per_night || roomData.room_price;
+      if (priceString) {
+        const numericValue = priceString.toString().replace(/[^\d.]/g, '') || '0';
+        priceValue = parseFloat(numericValue) || 0;
+        let discountPercent = 0;
+        if (nights >= 7) {
+          discountPercent = 10;
+        } else if (nights >= 3) {
+          discountPercent = 5;
         }
+        let finalPrice = priceValue * nights;
+        if (discountPercent > 0) {
+          finalPrice = priceValue * nights * (1 - discountPercent / 100);
+        }
+        setCalculatedTotalPrice(Math.round(finalPrice));
       }
     }
   }, [roomData, selectedArrival, selectedDeparture, priceParam]);
@@ -146,6 +154,28 @@ const ConfirmBooking = () => {
     if (isSubmitting) return;
     if (paymentMethod === 'gcash' && !gcashProof) return;
 
+    // Always recalculate the correct discounted price before submission
+    let priceValue = 0;
+    let discountPercent = 0;
+    let finalPrice = 0;
+    const priceString = roomData?.price_per_night || roomData?.room_price;
+    const start = new Date(selectedArrival);
+    const end = new Date(selectedDeparture);
+    const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    if (priceString) {
+      const numericValue = priceString.toString().replace(/[^\d.]/g, '') || '0';
+      priceValue = parseFloat(numericValue) || 0;
+      if (nights >= 7) {
+        discountPercent = 10;
+      } else if (nights >= 3) {
+        discountPercent = 5;
+      }
+      finalPrice = priceValue * nights;
+      if (discountPercent > 0) {
+        finalPrice = priceValue * nights * (1 - discountPercent / 100);
+      }
+    }
+
     const booking: BookingFormData = {
       firstName: data.firstName,
       lastName: data.lastName,
@@ -156,10 +186,12 @@ const ConfirmBooking = () => {
       checkOut: selectedDeparture,
       arrivalTime: data.arrivalTime,
       numberOfGuests: data.numberOfGuests,
-      totalPrice: calculatedTotalPrice,
+      totalPrice: Math.round(finalPrice),
       paymentMethod: "gcash",
       paymentProof: gcashProof
     };
+    // Debug: log booking data before submit
+    console.log('[DEBUG] Submitting booking:', booking);
 
     setPendingFormData(booking);
     setShowConfirmModal(true);
@@ -283,9 +315,36 @@ const ConfirmBooking = () => {
       <Modal
         icon="fa-solid fa-book"
         title="Confirm Your Room Booking"
-        description={`You're about to book ${roomData?.room_name || "this room"
-          } for ${nights} night${nights !== 1 ? "s" : ""
-          }. The total price is ₱${calculatedTotalPrice.toLocaleString()}. Would you like to proceed?`}
+        description={(() => {
+          // Calculate price and discount for modal
+          let priceValue = 0;
+          let discountPercent = 0;
+          let discountedValue = 0;
+          const priceString = roomData?.price_per_night || roomData?.room_price;
+          try {
+            const numericValue = priceString?.toString().replace(/[^\d.]/g, '') || '0';
+            priceValue = parseFloat(numericValue) || 0;
+            if (nights >= 7) {
+              discountPercent = 10;
+            } else if (nights >= 3) {
+              discountPercent = 5;
+            }
+            discountedValue = priceValue * (1 - discountPercent / 100);
+          } catch {
+            // ignore parse errors
+          }
+          const roomName = roomData?.room_name || "this room";
+          const nightText = `for ${nights} night${nights !== 1 ? 's' : ''}`;
+          if (discountPercent > 0) {
+            return (
+              `You're about to book ${roomName} ${nightText}. The total price is ₱${(discountedValue * nights).toLocaleString(undefined, { maximumFractionDigits: 2 })}. Would you like to proceed?`
+            );
+          } else {
+            return (
+              `You're about to book ${roomName} ${nightText}.\nThe total price is ₱${(priceValue * nights).toLocaleString(undefined, { maximumFractionDigits: 2 })}. Would you like to proceed?`
+            );
+          }
+        })()}
         cancel={() => setShowConfirmModal(false)}
         onConfirm={handleConfirmBooking}
         confirmText={
@@ -877,43 +936,63 @@ const ConfirmBooking = () => {
                 transition={{ delay: 0.4 }}
               >
                 <p className="font-medium">{roomData?.room_name || "Room"}</p>
-                <p className="text-lg text-gray-700">
-                    {roomData?.discount_percent && roomData.discount_percent > 0 ? (
+                {/* Discount/Price summary */}
+                {(() => {
+                  let priceValue = 0;
+                  let discountPercent = 0;
+                  let discountedValue = 0;
+                  const priceString = roomData?.price_per_night || roomData?.room_price;
+                  try {
+                    const numericValue = priceString?.toString().replace(/[^\d.]/g, '') || '0';
+                    priceValue = parseFloat(numericValue) || 0;
+                    if (nights >= 7) {
+                      discountPercent = 10;
+                    } else if (nights >= 3) {
+                      discountPercent = 5;
+                    }
+                    discountedValue = priceValue * (1 - discountPercent / 100);
+                  } catch {
+                    // ignore parse errors
+                  }
+                  return (
                     <>
-                      <span className="line-through text-gray-400 mr-2">
-                      {roomData.room_price}
-                      </span>
-                      <span className="text-green-600 font-bold">
-                      ₱
-                      {(
-                        parseFloat(
-                        (roomData.room_price || "0").replace(/[₱,]/g, "")
-                        ) *
-                        (1 - roomData.discount_percent / 100)
-                      ).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
+                      {discountPercent > 0 ? (
+                        <>
+                          <div className="flex justify-between text-gray-500 line-through text-base">
+                            <span>Original Price:</span>
+                            <span>₱{(priceValue * nights).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="flex justify-between text-green-600 font-semibold text-base">
+                            <span>Long Stay Discount ({discountPercent}%):</span>
+                            <span>-₱{((priceValue * nights) - (discountedValue * nights)).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                          </div>
+                          <div className="flex justify-between text-blue-600 font-bold text-3xl mt-2">
+                            <span>Total Price:</span>
+                            <span>₱{(discountedValue * nights).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex justify-between text-blue-600 font-bold text-xl">
+                          <span>Total Price:</span>
+                          <span>₱{(priceValue * nights).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                        </div>
+                      )}
                     </>
-                    ) : (
-                    <>{roomData?.room_price} per night </>
-                    )}
-                </p>
+                  );
+                })()}
               </motion.div>
-              <motion.div
-                className="border-t pt-3 flex justify-between items-center"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, type: "spring", stiffness: 100 }}
-              >
-                <span className="font-semibold text-2xl">Total Price :</span>
-                <motion.span
-                  className="font-bold text-blue-600 text-2xl"
-                  initial={{ scale: 0.9 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
-                >
-                  ₱{calculatedTotalPrice.toLocaleString()}
-                </motion.span>
-              </motion.div>
+              {((): any => {
+                let discountPercent = 0;
+                if (nights >= 7) {
+                  discountPercent = 10;
+                } else if (nights >= 3) {
+                  discountPercent = 5;
+                }
+                if (discountPercent === 0) {
+                  return null;
+                }
+                return null;
+              })()}
             </motion.div>
 
             <div className="hidden lg:block">

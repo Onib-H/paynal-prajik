@@ -1,22 +1,22 @@
 import { motion } from "framer-motion";
 import { Edit, Eye, Trash2 } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { FC, memo, useCallback, useMemo } from "react";
 import { Room } from "../types/RoomClient";
 import { MemoizedImage } from "./MemoizedImage";
 
-export const RoomCard = memo(
+interface RoomCardProps {
+    room: Room;
+    onView: (room: Room) => void;
+    onEdit: (room: Room) => void;
+    onDelete: (id: number) => void;
+}
+
+export const RoomCard: FC<RoomCardProps> = memo(
     ({
         room,
-        index,
         onView,
         onEdit,
         onDelete,
-    }: {
-        room: Room;
-        index: number;
-        onView: (room: Room) => void;
-        onEdit: (room: Room) => void;
-        onDelete: (id: number) => void;
     }) => {
         // Show the first image from room.images if available, else fallback to a placeholder
         const firstImage =
@@ -40,7 +40,6 @@ export const RoomCard = memo(
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
                     duration: 0.4,
-                    delay: index * 0.05,
                     type: "spring",
                     damping: 12,
                 }}

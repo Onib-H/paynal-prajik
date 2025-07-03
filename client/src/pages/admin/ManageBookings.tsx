@@ -391,13 +391,17 @@ const ManageBookings: FC = () => {
                       </td>
                       <td className="p-3 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center">
-                          <button
-                            onClick={() => handleViewBooking(booking)}
-                            className="p-2 cursor-pointer bg-gray-600 hover:bg-gray-700 rounded-full text-white"
-                            title="View Details"
-                          >
-                            <Eye size={20} className="md:w-6 md:h-6" />
-                          </button>
+                          <div className="relative group">
+                            <button
+                              onClick={() => handleViewBooking(booking)}
+                              className="p-2 cursor-pointer bg-gray-600 hover:bg-gray-700 rounded-full text-white"
+                            >
+                              <Eye size={20} className="md:w-6 md:h-6" />
+                            </button>
+                            <span className="absolute left-1/4 transform -translate-x-1/2 -translate-y-8 bg-gray-800 text-white text-xs font-semibold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              View Details
+                            </span>
+                          </div>
                         </div>
                       </td>
                     </tr>

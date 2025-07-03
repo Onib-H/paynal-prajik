@@ -1,22 +1,22 @@
 import { motion } from "framer-motion";
 import { Edit, Eye, Trash2 } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { FC, memo, useCallback, useMemo } from "react";
 import { Area } from "../types/AreaClient";
 import { MemoizedImage } from "./MemoizedImage";
 
-export const AreaCard = memo(
+interface AreaCardProps {
+    area: Area;
+    onView: (area: Area) => void;
+    onEdit: (area: Area) => void;
+    onDelete: (id: number) => void;
+}
+
+export const AreaCard: FC<AreaCardProps> = memo(
     ({
         area,
-        index,
         onView,
         onEdit,
         onDelete,
-    }: {
-        area: Area;
-        index: number;
-        onView: (area: Area) => void;
-        onEdit: (area: Area) => void;
-        onDelete: (id: number) => void;
     }) => {
         const firstImage =
             Array.isArray(area.images) && area.images.length > 0
@@ -46,7 +46,6 @@ export const AreaCard = memo(
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
                     duration: 0.4,
-                    delay: index * 0.05,
                     type: "spring",
                     damping: 12,
                 }}

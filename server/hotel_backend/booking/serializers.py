@@ -83,13 +83,29 @@ class BookingSerializer(serializers.ModelSerializer):
         return None
     
     def to_representation(self, instance):
-        representation = super().to_representation(instance)        
-        if instance.total_price is not None:
+        representation = super().to_representation(instance)
+        # Add original price and discount percent for frontend display
+        if instance.total_price is not None and instance.room:
             try:
-                representation['total_price'] = f"₱{float(instance.total_price):,.2f}"
-                representation['down_payment'] = f"₱{float(instance.down_payment):,.2f}"
-            except (ValueError, TypeError):
-                pass 
+                nights = (instance.check_out_date - instance.check_in_date).days
+                price_per_night = float(instance.room.price_per_night or instance.room.room_price)
+                original_total = price_per_night * nights
+                discount_percent = 0
+                if nights >= 7:
+                    discount_percent = 10
+                elif nights >= 3:
+                    discount_percent = 5
+                representation['original_price'] = original_total
+                representation['discount_percent'] = discount_percent
+                representation['total_price'] = float(instance.total_price)
+                if hasattr(instance, 'down_payment') and instance.down_payment is not None:
+                    representation['down_payment'] = float(instance.down_payment)
+            except Exception:
+                representation['original_price'] = None
+                representation['discount_percent'] = 0
+        else:
+            representation['original_price'] = None
+            representation['discount_percent'] = 0
         return representation
 
 class BookingRequestSerializer(serializers.Serializer):
@@ -175,9 +191,12 @@ class BookingRequestSerializer(serializers.Serializer):
                         username=username,
                         first_name=validated_data['firstName'],
                         last_name=validated_data['lastName'],
-                        phone_number=validated_data['phoneNumber'],
                         role='guest'
                     )
+                    # Set phone_number separately if the field exists
+                    if hasattr(user, 'phone_number'):
+                        user.phone_number = validated_data['phoneNumber']
+                        user.save()
             else:
                 try:
                     user = CustomUsers.objects.get(email=validated_data['emailAddress'])
@@ -192,32 +211,33 @@ class BookingRequestSerializer(serializers.Serializer):
                         email=validated_data['emailAddress'],
                         first_name=validated_data['firstName'],
                         last_name=validated_data['lastName'],
-                        phone_number=validated_data['phoneNumber'],
                         role='guest'
                     )
+                    # Set phone_number separately if the field exists
+                    if hasattr(user, 'phone_number'):
+                        user.phone_number = validated_data['phoneNumber']
+                        user.save()
 
         is_venue_booking = validated_data.get('isVenueBooking', False)
 
-        if hasattr(user, 'role') and user.role == 'guest' and validated_data.get('checkIn'):
-            check_in_date = validated_data.get('checkIn')
-            today = timezone.now().date()
-            if check_in_date == today:
-                user.last_booking_date = today
-                user.save()
+        # --- Long Stay Discount Calculation ---
+        check_in = validated_data.get('checkIn')
+        check_out = validated_data.get('checkOut')
+        nights = (check_out - check_in).days if check_in and check_out else 1
+        total_price = 0
 
         if is_venue_booking:
             try:
                 area_id = validated_data['roomId']
                 area = Areas.objects.get(id=area_id)
-                
                 start_time = None
                 end_time = None
-                
                 if 'startTime' in validated_data and validated_data['startTime']:
-                    start_time = datetime.strptime(validated_data['startTime'], "%H:%M").time()    
+                    start_time = datetime.strptime(validated_data['startTime'], "%H:%M").time()
                 if 'endTime' in validated_data and validated_data['endTime']:
                     end_time = datetime.strptime(validated_data['endTime'], "%H:%M").time()
-                
+                # For venue bookings, fallback to frontend value or 0
+                total_price = float(validated_data.get('totalPrice', 0))
                 booking = Bookings.objects.create(
                     user=user,
                     area=area,
@@ -225,7 +245,7 @@ class BookingRequestSerializer(serializers.Serializer):
                     check_in_date=validated_data['checkIn'],
                     check_out_date=validated_data['checkOut'],
                     status=validated_data.get('status', 'pending'),
-                    total_price=validated_data.get('totalPrice'),
+                    total_price=total_price,
                     is_venue_booking=True,
                     phone_number=validated_data.get('phoneNumber', ''),
                     time_of_arrival=validated_data.get('arrivalTime'),
@@ -236,17 +256,23 @@ class BookingRequestSerializer(serializers.Serializer):
                     payment_proof=payment_proof_url,
                     payment_date=timezone.now() if payment_method == 'gcash' else None,
                 )
-
                 if user.is_verified != 'verified':
                     user.last_booking_date = timezone.now().date()
                     user.save()
-                
-                return booking                
+                return booking
             except Exception as e:
                 raise serializers.ValidationError(str(e))
         else:
             try:
                 room = Rooms.objects.get(id=validated_data['roomId'])
+                price_per_night = float(room.room_price)
+                discount = 0
+                if nights >= 7:
+                    discount = 0.10
+                elif nights >= 3:
+                    discount = 0.05
+                discounted_price = price_per_night * (1 - discount)
+                total_price = discounted_price * nights
                 booking = Bookings.objects.create(
                     user=user,
                     room=room,
@@ -257,18 +283,16 @@ class BookingRequestSerializer(serializers.Serializer):
                     special_request=validated_data.get('specialRequests', ''),
                     is_venue_booking=False,
                     phone_number=validated_data.get('phoneNumber', ''),
-                    total_price=validated_data.get('totalPrice'),
+                    total_price=total_price,
                     time_of_arrival=validated_data.get('arrivalTime'),
                     number_of_guests=validated_data.get('numberOfGuests', 1),
                     payment_method=payment_method,
                     payment_proof=payment_proof_url,
                     payment_date=timezone.now() if payment_method == 'gcash' else None,
                 )
-
                 if user.is_verified != 'verified':
                     user.last_booking_date = timezone.now().date()
                     user.save()
-                
                 return booking
             except Rooms.DoesNotExist:
                 raise serializers.ValidationError("Room not found")
